@@ -1,0 +1,305 @@
+import { CONFIG } from "./config";
+import { onStorageKeyChanged, runtimeSend, storageGet } from "./platform";
+import type {
+  KBSummaryData,
+  LessonTopicSummary,
+  MessageResponse,
+  RemindersData,
+  SettingsData,
+  TranslateResponse,
+  WordEntry,
+} from "./types";
+
+// ---------------------------------------------------------------------------
+// Auth token
+//
+// The bearer token is issued once by POST /api/auth/register and stored in
+// chrome.storage.local. Every context (popup, content script, background,
+// offscreen) reads it lazily from storage and caches it in-module.
+// The legacy `username` parameters on the functions below are kept so call
+// sites stay unchanged — the server derives the user from the token.
+// ---------------------------------------------------------------------------
+
+let _token: string | null = null;
+
+export function setAuthToken(token: string | null): void {
+  _token = token;
+}
+
+export async function getAuthToken(): Promise<string> {
+  if (_token) return _token;
+  try {
+    const st = await storageGet([CONFIG.STORAGE_KEY_TOKEN]);
+    _token = (st[CONFIG.STORAGE_KEY_TOKEN] as string) || "";
+  } catch {
+    _token = "";
+  }
+  return _token;
+}
+
+// Keep the cache in sync if another extension context updates the token.
+onStorageKeyChanged(CONFIG.STORAGE_KEY_TOKEN, (newValue) => {
+  _token = (newValue as string) || null;
+});
+
+async function _authHeaders(): Promise<Record<string, string>> {
+  const token = await getAuthToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+// ---------------------------------------------------------------------------
+// HTTP helpers
+//
+// Content scripts never fetch() directly: in Firefox such requests run with
+// the page's privileges and get blocked by the site's CSP (connect-src), and
+// Chrome subjects them to the page's CORS. They are proxied through the
+// background (VEKSHA_API_FETCH), which has extension privileges. Extension
+// pages (popup/offscreen/background itself) and the web app fetch directly.
+// ---------------------------------------------------------------------------
+
+const IS_CONTENT_SCRIPT =
+  typeof chrome !== "undefined" && !!chrome.runtime?.id &&
+  typeof location !== "undefined" && /^https?:$/.test(location.protocol);
+
+interface ProxiedFetchResult {
+  ok: boolean;
+  status: number;
+  body: string;
+  error?: string;
+}
+
+async function _request(
+  path: string,
+  init: { method: string; headers: Record<string, string>; body?: string },
+  timeoutMs: number,
+): Promise<{ ok: boolean; status: number; text: string }> {
+  if (IS_CONTENT_SCRIPT) {
+    const resp = (await chrome.runtime.sendMessage({
+      type: "VEKSHA_API_FETCH",
+      path,
+      method: init.method,
+      headers: init.headers,
+      body: init.body,
+      timeoutMs,
+    })) as ProxiedFetchResult | undefined;
+    if (!resp) throw new Error(`${path}: no response from background`);
+    if (resp.error) throw new Error(`${path}: ${resp.error}`);
+    return { ok: resp.ok, status: resp.status, text: resp.body };
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${CONFIG.BACKEND_URL}${path}`, { ...init, signal: controller.signal });
+    return { ok: res.ok, status: res.status, text: await res.text() };
+  } catch (err) {
+    if ((err as Error).name === "AbortError") {
+      throw new Error(`${path} timed out after ${Math.round(timeoutMs / 1000)}s`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function _parse<T>(path: string, res: { ok: boolean; status: number; text: string }): T {
+  if (!res.ok) {
+    throw new Error(`${path} -> HTTP ${res.status}: ${res.text.slice(0, 300)}`);
+  }
+  return JSON.parse(res.text) as T;
+}
+
+function _withQuery(path: string, params?: Record<string, string>): string {
+  const query = new URLSearchParams();
+  for (const [k, v] of Object.entries(params ?? {})) {
+    if (v !== undefined && v !== null) query.set(k, v);
+  }
+  const qs = query.toString();
+  return qs ? `${path}?${qs}` : path;
+}
+
+async function _post<T>(
+  path: string,
+  body: Record<string, unknown>,
+  timeoutMs = 30_000
+): Promise<T> {
+  const res = await _request(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...(await _authHeaders()) },
+    body: JSON.stringify(body),
+  }, timeoutMs);
+  return _parse<T>(path, res);
+}
+
+async function _delete<T>(path: string, params?: Record<string, string>): Promise<T> {
+  const res = await _request(_withQuery(path, params), {
+    method: "DELETE",
+    headers: await _authHeaders(),
+  }, 30_000);
+  return _parse<T>(path, res);
+}
+
+async function _get<T>(path: string, params?: Record<string, string>): Promise<T> {
+  const res = await _request(_withQuery(path, params), {
+    method: "GET",
+    headers: await _authHeaders(),
+  }, 30_000);
+  return _parse<T>(path, res);
+}
+
+// ---------------------------------------------------------------------------
+// Auth
+// ---------------------------------------------------------------------------
+
+export interface RegisterResponse {
+  username: string;
+  token: string;
+}
+
+/** Register a new account; the caller must persist the returned token. */
+export async function register(username: string): Promise<RegisterResponse> {
+  const res = await fetch(`${CONFIG.BACKEND_URL}/api/auth/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username }),
+  });
+  if (res.status === 409) throw new Error("username-taken");
+  if (!res.ok) {
+    const errBody = await res.text().catch(() => "");
+    throw new Error(`/api/auth/register -> HTTP ${res.status}: ${errBody.slice(0, 300)}`);
+  }
+  return res.json() as Promise<RegisterResponse>;
+}
+
+// ---------------------------------------------------------------------------
+// API calls (user derived from the bearer token server-side)
+// ---------------------------------------------------------------------------
+
+export function sendMessage(username: string, text: string): Promise<MessageResponse> {
+  return _post("/api/message", { text });
+}
+
+export function translate(
+  username: string,
+  text: string,
+  sourceLang: string,
+  targetLang: string,
+  bidirectional = false
+): Promise<TranslateResponse> {
+  return _post("/api/translate", {
+    text,
+    source_lang: sourceLang,
+    target_lang: targetLang,
+    bidirectional,
+  });
+}
+
+export async function quickTranslate(
+  username: string,
+  text: string,
+  sourceLang: string,
+  targetLang: string
+): Promise<TranslateResponse> {
+  const resp = await _post<TranslateResponse>(
+    "/api/quick_translate",
+    { text, source_lang: sourceLang, target_lang: targetLang },
+    15_000
+  );
+  // Every translation quietly saves a word — tell the background so it can
+  // schedule the "first review" nudge after the first few words.
+  runtimeSend({ type: "VEKSHA_WORD_SAVED" });
+  return resp;
+}
+
+export interface ImmersionSentence {
+  text: string;
+  cefr: string;
+  translation: string;
+}
+
+export function analyzeImmersion(
+  username: string,
+  blocks: string[]
+): Promise<{ blocks: { sentences: ImmersionSentence[] }[] }> {
+  return _post("/api/immersion/analyze", { blocks }, 45_000);
+}
+
+export function explain(username: string, text: string, translation: string): Promise<{ explanation: string }> {
+  return _post("/api/explain", { text, translation });
+}
+
+export function getReminders(username: string): Promise<RemindersData> {
+  return _get("/api/reminders");
+}
+
+export function getSettings(username: string): Promise<SettingsData> {
+  return _get("/api/settings");
+}
+
+export function saveSettings(
+  username: string,
+  opts: {
+    englishLevel?: string | null;
+    goals?: string;
+    generalPrompt?: string;
+    nativeLang: string;
+    targetLang: string;
+    reminderLevel?: number;
+    overseer?: boolean;
+  }
+): Promise<SettingsData> {
+  const body: Record<string, unknown> = {
+    native_lang: opts.nativeLang,
+    target_lang: opts.targetLang,
+    goals: opts.goals ?? "",
+    general_prompt: opts.generalPrompt ?? "",
+    reminder_level: opts.reminderLevel ?? 2,
+    overseer: opts.overseer ?? false,
+  };
+  if (opts.englishLevel) body.english_level = opts.englishLevel;
+  return _post("/api/settings", body);
+}
+
+export function debugReset(username: string): Promise<{ ok: boolean; deleted: string[] }> {
+  return _post("/api/debug/reset", {});
+}
+
+export function debugSimulateTraining(
+  username: string
+): Promise<{ ok: boolean; words_updated: number; topic_updated: string | null }> {
+  return _post("/api/debug/simulate-training", {});
+}
+
+export function debugAdvanceDay(
+  username: string
+): Promise<{ ok: boolean; words_shifted: number; reminder: RemindersData }> {
+  return _post("/api/debug/advance-day", {});
+}
+
+export function getKbSummary(username: string): Promise<KBSummaryData> {
+  return _get("/api/kb_summary");
+}
+
+export function getKbWords(username: string): Promise<{ words: WordEntry[] }> {
+  return _get("/api/kb_words");
+}
+
+export function deleteKbWord(username: string, word: string): Promise<{ ok: boolean }> {
+  return _delete("/api/kb_word", { word });
+}
+
+export function trainingInit(username: string): Promise<{ available_words: number }> {
+  return _get("/api/training/init");
+}
+
+export function trainingValidate(username: string, wordNames: string[]): Promise<{ valid: string[] }> {
+  return _post("/api/training/validate", { word_names: wordNames });
+}
+
+export function getLessonTopics(username: string): Promise<{ topics: LessonTopicSummary[] }> {
+  return _get("/api/lesson-topics");
+}
+
+export function createLessonTopic(username: string, name: string): Promise<LessonTopicSummary> {
+  return _post("/api/lesson-topics", { name });
+}

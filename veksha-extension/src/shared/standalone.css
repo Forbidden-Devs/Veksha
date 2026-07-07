@@ -1,0 +1,27 @@
+/*
+ * Overrides applied only to standalone extension windows
+ * (training, lesson). Loaded after popup.css to reset popup-specific sizing.
+ */
+
+html, body, #root {
+  width: 100% !important;
+  height: 100% !important;
+  overflow: hidden;
+}
+
+/* Training window fills the whole Chrome popup window */
+.training-window {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  border: none !important;
+}
+
+/* Lesson overlay fills the whole Chrome popup window */
+.lesson-overlay {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+}

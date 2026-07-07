@@ -1,0 +1,1100 @@
+/**
+ * content.css — styles for the floating icon and translation popup.
+ *
+ * Palette matches the main extension UI (chat popup): dark plum
+ * for text/icon, soft pink-blue gradient for accent elements
+ * ("More details" button), light lavender background for cards.
+ */
+
+:root {
+  --av-ink: #1f2430;
+  --av-muted: #6b7280;
+  --av-border: #eceef2;
+  --av-surface: #fbfbfd;
+  --av-accent: #d93d82;
+  --av-accent-soft: #fde8f1;
+  --av-gradient: linear-gradient(135deg, #f26ba6 0%, #4c9fe0 135%);
+  --av-error: #b3413a;
+}
+
+/* ---------------------------------------------------------------------- */
+/* PDF area translate (OCR)                                                 */
+/* ---------------------------------------------------------------------- */
+
+.veksha-pdf-fab {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 2147483600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px 9px 10px;
+  border-radius: 999px;
+  background: rgba(26, 22, 36, 0.82);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.4);
+  color: #fff;
+  font: 600 13px -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.12s ease, box-shadow 0.15s ease;
+}
+
+.veksha-pdf-fab:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.5);
+}
+
+.veksha-pdf-fab img {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  pointer-events: none;
+}
+
+.veksha-pdf-region-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483601;
+  background: rgba(20, 16, 32, 0.18);
+  cursor: crosshair;
+}
+
+.veksha-pdf-region-hint {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: rgba(26, 22, 36, 0.9);
+  color: #fff;
+  font: 600 12.5px -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  pointer-events: none;
+}
+
+.veksha-pdf-region-box {
+  position: absolute;
+  border: 2px solid #f26ba6;
+  border-radius: 6px;
+  background: rgba(242, 107, 166, 0.14);
+  box-shadow: 0 0 0 100vmax rgba(20, 16, 32, 0.12);
+}
+
+.veksha-pdf-region-go {
+  position: absolute;
+  top: -16px;
+  right: -16px;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--av-gradient);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+}
+
+.veksha-pdf-region-go img {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  pointer-events: none;
+}
+
+/* Region box drawn while dragging over an image (no page dimming) */
+.veksha-img-region-box {
+  position: fixed;
+  z-index: 2147483601;
+  border: 2px solid #d93d82;
+  border-radius: 6px;
+  background: rgba(217, 61, 130, 0.12);
+  pointer-events: none;
+}
+
+/* Translated overlay patch (inpaint + text) laid over an OCR'd region */
+.veksha-pdf-patch {
+  position: fixed;
+  z-index: 2147483600;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.veksha-pdf-patch-line {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  border-radius: 2px;
+}
+
+.veksha-pdf-patch-text {
+  white-space: nowrap;
+  transform-origin: left center;
+  font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.veksha-pdf-loading {
+  position: absolute;
+  z-index: 2147483602;
+  padding: 7px 12px;
+  border-radius: 10px;
+  background: rgba(26, 22, 36, 0.9);
+  color: #fff;
+  font: 600 12.5px -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+}
+
+.veksha-icon,
+.veksha-popup {
+  position: absolute;
+  z-index: 2147483647;
+  font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  box-sizing: border-box;
+}
+
+.veksha-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(20, 16, 32, 0.25);
+  border: none;
+  transition: transform 0.12s ease, filter 0.12s ease;
+  user-select: none;
+  overflow: hidden;
+}
+
+.veksha-icon-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.veksha-icon:hover {
+  filter: brightness(1.06);
+  transform: translateY(-1px) scale(1.05);
+}
+
+.veksha-popup {
+  width: min(360px, calc(100vw - 24px));
+  min-width: 280px;
+  max-width: 360px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(20, 16, 32, 0.18), 0 2px 8px rgba(20, 16, 32, 0.08);
+  border: 1px solid var(--av-border);
+  padding: 8px 14px 12px;
+  color: var(--av-ink);
+  font-size: 14px;
+  line-height: 1.45;
+  animation: veksha-pop-in 0.12s ease-out;
+}
+
+@keyframes veksha-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.veksha-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 7px;
+}
+
+.veksha-lang-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+
+.veksha-select {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: #8f899a;
+  border-radius: 5px;
+  padding: 3px 2px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  width: auto;
+  max-width: 36px;
+  cursor: pointer;
+}
+
+.veksha-select:focus {
+  outline: none;
+  color: var(--av-accent);
+}
+
+.veksha-swap {
+  border: none;
+  background: transparent;
+  color: #aaa4b5;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.veksha-swap:hover {
+  background: var(--av-accent-soft);
+}
+
+.veksha-close {
+  border: none;
+  background: transparent;
+  color: var(--av-muted);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.veksha-close:hover {
+  background: var(--av-accent-soft);
+  color: var(--av-ink);
+}
+
+.veksha-result {
+  min-height: 25px;
+  padding: 0px 10px 10px;
+  font-size: 16px;
+  font-weight: 600;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.veksha-result--loading {
+  color: var(--av-muted);
+  animation: veksha-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes veksha-pulse {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+
+.veksha-result.veksha-error {
+  color: var(--av-error);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.veksha-action-row {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 4px;
+  gap: 6px;
+}
+
+.veksha-secondary-actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.veksha-listen-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--av-border);
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--av-accent);
+  cursor: pointer;
+  font-size: 13px;
+  box-shadow: 0 2px 7px rgba(217, 61, 130, 0.12);
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+
+.veksha-listen-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.veksha-listen-btn:disabled {
+  cursor: default;
+  opacity: 0.35;
+}
+
+.veksha-explain-btn {
+  border: none;
+  background: var(--av-gradient);
+  background-size: 220% 220%;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(217, 61, 130, 0.25);
+  transition: transform 0.12s ease, opacity 0.12s ease;
+  animation: veksha-gradient-drift 9s ease-in-out infinite;
+}
+
+.veksha-explain-btn:hover {
+  transform: translateY(-1px);
+}
+
+.veksha-explain-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+  transform: none;
+  animation: none;
+}
+
+@keyframes veksha-gradient-drift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.veksha-explain {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--av-surface);
+  border: 1px solid var(--av-border);
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.veksha-explain.veksha-error {
+  color: var(--av-error);
+  border-color: rgba(179, 65, 58, 0.25);
+}
+
+.veksha-aggressive-reminder {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  background: rgba(31, 29, 36, 0.68);
+  backdrop-filter: grayscale(0.8) blur(1px);
+  font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  animation: veksha-aggressive-fade 0.22s ease-out;
+}
+
+.veksha-terror-reminder {
+  --terror-evasion: 86%;
+  background: rgba(12, 10, 18, 0.78);
+  -webkit-backdrop-filter: grayscale(0.85) blur(7px) saturate(0.8);
+  backdrop-filter: grayscale(0.85) blur(7px) saturate(0.8);
+  overflow: hidden;
+}
+
+.veksha-aggressive-banner {
+  position: absolute;
+  top: 48px;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  width: min(840px, calc(100vw - 36px));
+  gap: 18px;
+  padding: 24px 28px;
+  transform: translateX(-50%);
+  border: 1px solid rgba(255, 255, 255, 0.62);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 18px 55px rgba(25, 18, 38, 0.35);
+  color: #2b2438;
+  animation: veksha-aggressive-drop 0.3s ease-out;
+}
+
+.veksha-terror-logo {
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  box-shadow: 0 8px 22px rgba(217, 61, 130, 0.25);
+}
+
+.veksha-aggressive-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.veksha-aggressive-title {
+  margin-bottom: 4px;
+  font-size: 25px;
+  font-weight: 800;
+}
+
+.veksha-aggressive-subtitle {
+  color: #746d82;
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+.veksha-aggressive-start {
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 8px;
+  padding: 14px 24px;
+  background: linear-gradient(135deg, #e986ad, #8f6bd4);
+  box-shadow: 0 6px 18px rgba(217, 61, 130, 0.28);
+  color: #fff;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.veksha-aggressive-close {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(43, 36, 56, 0.07);
+  color: #746d82;
+  cursor: pointer;
+  font-size: 22px;
+  line-height: 28px;
+}
+
+.veksha-static-close {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 2147483647;
+  width: 46px;
+  height: 46px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.82);
+  color: #2b2438;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.34);
+  cursor: pointer;
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 42px;
+}
+
+.veksha-static-close:hover {
+  background: #ffffff;
+  color: #d93d82;
+}
+
+.veksha-terror-close {
+  position: fixed;
+  z-index: 2147483647;
+  width: 46px;
+  height: 46px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.82);
+  color: #2b2438;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.34);
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 42px;
+  transition: left 0.16s cubic-bezier(.2, .8, .2, 1), top 0.16s cubic-bezier(.2, .8, .2, 1), transform 0.12s ease, background 0.12s ease;
+}
+
+.veksha-terror-close[data-catchable="false"] {
+  cursor: crosshair;
+  transform: rotate(6deg);
+}
+
+.veksha-terror-close[data-catchable="true"] {
+  background: #ffffff;
+  color: #d93d82;
+  cursor: pointer;
+  animation: veksha-catchable 0.7s ease-in-out infinite;
+}
+
+.veksha-terror-captions {
+  position: absolute;
+  left: 50%;
+  top: 48%;
+  width: min(980px, calc(100vw - 32px));
+  min-height: min(42vh, 380px);
+  transform: translate(-50%, -35%);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 18px;
+  pointer-events: none;
+  color: #fff;
+  text-align: center;
+  text-shadow: 0 4px 28px rgba(0, 0, 0, 0.72), 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.veksha-terror-headline {
+  font-size: 48px;
+  font-weight: 900;
+  line-height: 1.22;
+  letter-spacing: 0;
+}
+
+.veksha-terror-headline span {
+  color: #d5a3ff;
+}
+
+.veksha-terror-prompt {
+  margin-top: 18px;
+  color: rgba(255, 255, 255, 0.66);
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.veksha-terror-caption-text {
+  font-size: 23px;
+  font-weight: 650;
+  line-height: 1.35;
+  letter-spacing: 0;
+  color: rgba(255, 255, 255, 0.78);
+  animation: veksha-caption-pulse 4.2s ease-in-out infinite;
+}
+
+.veksha-terror-word-strip {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.veksha-terror-word-strip span {
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 16px;
+  font-weight: 750;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+.veksha-terror-help {
+  position: absolute;
+  left: 18px;
+  top: 34%;
+  width: 238px;
+  padding: 16px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.22);
+  color: #ffffff;
+}
+
+.veksha-terror-help-title {
+  margin-bottom: 12px;
+  font-size: 16px;
+  font-weight: 850;
+  line-height: 1.25;
+}
+
+.veksha-terror-help-row {
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.11);
+}
+
+.veksha-terror-help-row b,
+.veksha-terror-help-row small {
+  display: block;
+}
+
+.veksha-terror-help-row b {
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+.veksha-terror-help-row small,
+.veksha-terror-help-note {
+  margin-top: 7px;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.veksha-terror-help-icon {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(166, 196, 240, 0.35);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.veksha-terror-meter {
+  position: absolute;
+  right: 10%;
+  top: 34%;
+  width: 220px;
+  padding: 0;
+  border-radius: 8px;
+  background: transparent;
+  border: 0;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 18px;
+  font-weight: 750;
+  text-align: left;
+  box-shadow: none;
+  pointer-events: none;
+}
+
+.veksha-terror-meter::before {
+  content: none;
+}
+
+.veksha-aggressive-squirrel {
+  position: absolute;
+  bottom: -25px;
+  left: 18px;
+  width: 370px;
+  border-radius: 24px 24px 0 0;
+  filter: drop-shadow(0 14px 28px rgba(20, 16, 32, 0.35));
+  object-fit: contain;
+  pointer-events: none;
+  animation: veksha-squirrel-rise 0.45s cubic-bezier(.2, .8, .2, 1);
+}
+
+.veksha-terror-reminder .veksha-aggressive-squirrel {
+  display: none;
+}
+
+@keyframes veksha-aggressive-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes veksha-aggressive-drop {
+  from { transform: translate(-50%, -24px); opacity: 0; }
+  to { transform: translate(-50%, 0); opacity: 1; }
+}
+
+@keyframes veksha-squirrel-rise {
+  from { transform: translateY(45px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes veksha-caption-pulse {
+  0%, 100% { opacity: 0.9; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-2px); }
+}
+
+@keyframes veksha-catchable {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(0.92); }
+}
+
+@media (max-width: 640px) {
+  .veksha-aggressive-banner {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .veksha-terror-captions {
+    top: 54%;
+    min-height: 40vh;
+  }
+
+  .veksha-terror-headline {
+    font-size: 31px;
+  }
+
+  .veksha-terror-caption-text {
+    font-size: 18px;
+  }
+
+  .veksha-terror-help {
+    display: none;
+  }
+}
+
+/* ===================================================================
+   YouTube subtitle study mode — frosted, player-friendly UI
+   =================================================================== */
+
+.av-yt-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+  z-index: 2147483000;
+  font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* --- hover icon: fades in, dissolves out with a soft blur --- */
+.av-yt-icon {
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  pointer-events: auto;
+  background: rgba(24, 20, 34, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  -webkit-backdrop-filter: blur(10px) saturate(1.3);
+  backdrop-filter: blur(10px) saturate(1.3);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  transform: translateX(-10px) scale(0.82);
+  transition: opacity 0.26s ease, transform 0.36s cubic-bezier(0.2, 0.9, 0.25, 1.12), filter 0.42s ease;
+}
+
+.av-yt-icon.av-yt-show {
+  opacity: 1;
+  transform: translateX(0) scale(1);
+}
+
+.av-yt-icon.av-yt-dissolve {
+  opacity: 0;
+  filter: blur(6px);
+  transform: translateX(-6px) scale(0.7);
+}
+
+.av-yt-icon:hover {
+  filter: brightness(1.12);
+}
+
+.av-yt-icon img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+/* --- study-mode mini badge pinned to the subs --- */
+.av-yt-badge {
+  position: absolute;
+  width: 17px;
+  height: 17px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  pointer-events: auto;
+  background: rgba(24, 20, 34, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: av-yt-badge-pulse 2.4s ease-in-out infinite;
+}
+
+.av-yt-badge.av-yt-show {
+  opacity: 0.92;
+  transform: scale(1);
+}
+
+.av-yt-badge img {
+  width: 11px;
+  height: 11px;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+@keyframes av-yt-badge-pulse {
+  0%, 100% { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 0 0 rgba(242, 107, 166, 0); }
+  50% { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 0 4px rgba(242, 107, 166, 0.13); }
+}
+
+/* --- selectable captions --- */
+/* We run our own hover-drag word selection, so the browser's native text
+   selection (which would "drag the subtitle shadow") is disabled. */
+.av-yt-captions,
+.av-yt-captions * {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  pointer-events: auto !important;
+}
+
+.av-yt-word {
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 0 1px;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.av-yt-word:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.av-yt-word.av-yt-selected {
+  background: linear-gradient(90deg, #f26ba6, #4c9fe0);
+  color: #fff;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15);
+}
+
+.av-yt-captions ::selection {
+  background: rgba(242, 107, 166, 0.55);
+  color: #fff;
+}
+
+/* --- frosted translation popup floating above the subs --- */
+.av-yt-popup {
+  position: absolute;
+  pointer-events: auto;
+  min-width: 150px;
+  max-width: 320px;
+  padding: 12px 14px 11px;
+  border-radius: 16px;
+  background: rgba(26, 22, 36, 0.52);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  -webkit-backdrop-filter: blur(22px) saturate(1.4);
+  backdrop-filter: blur(22px) saturate(1.4);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  color: #f4f1fa;
+  opacity: 0;
+  transform: translateY(6px) scale(0.97);
+  transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.av-yt-popup.av-yt-show {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.av-yt-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.av-yt-lang-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+
+.av-yt-select {
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  background: transparent;
+  color: rgba(244, 241, 250, 0.7);
+  border-radius: 5px;
+  padding: 2px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  max-width: 52px;
+  cursor: pointer;
+}
+
+.av-yt-select:focus {
+  outline: none;
+  color: #f3b6d2;
+}
+
+/* keep the native dropdown list readable on its white background */
+.av-yt-select option {
+  color: #1a1624;
+}
+
+.av-yt-swap {
+  border: none;
+  background: transparent;
+  color: rgba(244, 241, 250, 0.55);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 5px;
+  border-radius: 6px;
+}
+
+.av-yt-swap:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.av-yt-orig {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: rgba(244, 241, 250, 0.92);
+  margin-bottom: 3px;
+  word-break: break-word;
+}
+
+.av-yt-translation {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.25;
+  background: linear-gradient(95deg, #f3b6d2, #f26ba6 55%, #a6c4f0);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  word-break: break-word;
+}
+
+.av-yt-translation.av-yt-loading {
+  background: none;
+  -webkit-text-fill-color: rgba(244, 241, 250, 0.5);
+  color: rgba(244, 241, 250, 0.5);
+  font-size: 14px;
+  font-weight: 500;
+  animation: av-yt-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes av-yt-pulse {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}
+
+.av-yt-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 11px;
+}
+
+.av-yt-listen,
+.av-yt-breakdown {
+  pointer-events: auto;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.08);
+  color: #f4f1fa;
+  cursor: pointer;
+  border-radius: 999px;
+  transition: background 0.15s ease, transform 0.12s ease, opacity 0.15s ease;
+}
+
+.av-yt-listen {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.av-yt-breakdown {
+  height: 32px;
+  padding: 0 16px;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.av-yt-listen:hover:not(:disabled),
+.av-yt-breakdown:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.17);
+  transform: translateY(-1px);
+}
+
+.av-yt-listen:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.av-yt-breakdown:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.av-yt-explain {
+  margin-top: 10px;
+  padding: 9px 11px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(244, 241, 250, 0.9);
+  font-size: 13px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+/* downward tail pointing at the subtitles */
+.av-yt-pointer {
+  position: absolute;
+  bottom: -7px;
+  width: 14px;
+  height: 14px;
+  background: rgba(26, 22, 36, 0.52);
+  border-right: 1px solid rgba(255, 255, 255, 0.14);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  border-bottom-right-radius: 3px;
+  transform: rotate(45deg);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Page immersion — inline translated sentences ("comprehensible input")   */
+/* Deliberately quiet: inherits the page's font/size/color so it blends in, */
+/* marked only by a faint dotted underline. Hover reveals the original.     */
+/* ---------------------------------------------------------------------- */
+.av-imm {
+  font: inherit;
+  color: inherit;
+  text-decoration: underline dotted;
+  text-decoration-color: rgba(217, 61, 130, 0.5);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+  border-radius: 3px;
+  cursor: help;
+  transition: background-color 0.15s ease, text-decoration-color 0.15s ease;
+}
+
+.av-imm:hover {
+  background-color: rgba(217, 61, 130, 0.1);
+  text-decoration-color: rgba(217, 61, 130, 0.85);
+}
+
+/* Tiny CEFR chip, shown only on hover so it never clutters the page. */
+.av-imm[data-av-cefr]:hover::after {
+  content: attr(data-av-cefr);
+  margin-left: 0.35em;
+  padding: 0 0.35em;
+  border-radius: 4px;
+  background: rgba(217, 61, 130, 0.14);
+  color: #d93d82;
+  font-size: 0.7em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  vertical-align: super;
+  line-height: 1;
+  white-space: nowrap;
+}

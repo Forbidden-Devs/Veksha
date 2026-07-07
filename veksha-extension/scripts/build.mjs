@@ -1,0 +1,37 @@
+/**
+ * build.mjs <browser> [--watch] [--binary <path>] — run the Vite build for a
+ * browser target.
+ *
+ * Sets TARGET_BROWSER (and BROWSER_BINARY from --binary) for vite.config.ts.
+ * A plain `VAR=x vite build` in npm scripts wouldn't work on Windows (same
+ * reason sync-assets.mjs exists). --binary points web-ext at a specific
+ * browser executable (Brave, Zen, …) for the auto-launch in watch mode.
+ */
+import { spawnSync } from "node:child_process";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const root = dirname(dirname(fileURLToPath(import.meta.url)));
+const [browser = "chrome", ...rest] = process.argv.slice(2);
+
+const viteArgs = [];
+let binary = process.env.BROWSER_BINARY;
+for (let i = 0; i < rest.length; i++) {
+  if (rest[i] === "--binary") binary = rest[++i];
+  else viteArgs.push(rest[i]);
+}
+
+const result = spawnSync(
+  process.execPath,
+  [join(root, "node_modules", "vite", "bin", "vite.js"), "build", ...viteArgs],
+  {
+    stdio: "inherit",
+    cwd: root,
+    env: {
+      ...process.env,
+      TARGET_BROWSER: browser,
+      ...(binary ? { BROWSER_BINARY: binary } : {}),
+    },
+  },
+);
+process.exit(result.status ?? 1);
