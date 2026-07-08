@@ -9,6 +9,42 @@ import type { CaptureController } from "../shared/capture";
 // until the popup is opened again.
 const GOOGLE_LINK_RESULT_KEY = "vk_google_link_result";
 
+// WebSocket proxy for session windows (Firefox build): extension pages can
+// have plain ws:// blocked by profile security settings, while this event
+// page opens it reliably. The page connects a Port (see shared/wsProxy.ts)
+// and the socket lives here; the port closing closes the socket and vice
+// versa.
+chrome.runtime.onConnect.addListener((port) => {
+  if (port.name !== "veksha-ws") return;
+  let ws: WebSocket | null = null;
+  const wsBase = CONFIG.BACKEND_URL.replace(/^http/, "ws");
+
+  port.onMessage.addListener((msg: Record<string, unknown>) => {
+    if (msg.type === "ws_connect" && !ws) {
+      const url = String(msg.url || "");
+      if (!url.startsWith(`${wsBase}/`)) {
+        try { port.postMessage({ type: "ws_error" }); } catch { /* page gone */ }
+        port.disconnect();
+        return;
+      }
+      ws = new WebSocket(url);
+      ws.onopen = () => { try { port.postMessage({ type: "ws_open" }); } catch { ws?.close(); } };
+      ws.onmessage = (e) => { try { port.postMessage({ type: "ws_message", data: e.data as string }); } catch { ws?.close(); } };
+      ws.onerror = () => { try { port.postMessage({ type: "ws_error" }); } catch { /* page gone */ } };
+      ws.onclose = () => { try { port.postMessage({ type: "ws_close" }); } catch { /* page gone */ } };
+    } else if (msg.type === "ws_send") {
+      if (ws?.readyState === WebSocket.OPEN) ws.send(String(msg.data ?? ""));
+    } else if (msg.type === "ws_close") {
+      ws?.close();
+    }
+  });
+
+  port.onDisconnect.addListener(() => {
+    ws?.close();
+    ws = null;
+  });
+});
+
 const NOTIFICATION_ID = "veksha-reminder";
 const OFFSCREEN_DOCUMENT_PATH = "src/offscreen/offscreen.html";
 const PERMISSION_PAGE_PATH = "src/permission/permission.html";

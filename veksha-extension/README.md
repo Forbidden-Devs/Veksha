@@ -50,6 +50,13 @@ before the build (`npm run sync-assets`).
   toolbar icon) before content scripts run everywhere.
 - Firefox may prompt for microphone permission on every use unless the user
   ticks "Remember this decision" in the permission popup.
+- Local dev against a plain-HTTP backend: Firefox blocks `ws://` from
+  extension pages as mixed content even for 127.0.0.1
+  (NS_ERROR_CONTENT_BLOCKED in the training/lesson windows). `npm run
+  dev:zen` / `dev:firefox` set the profile pref
+  `network.websocket.allowInsecureFromHTTPS=true` automatically; when
+  loading `dist/firefox` manually, flip that pref in `about:config`
+  yourself. Production (`wss://`) is unaffected.
 
 ## Source map
 

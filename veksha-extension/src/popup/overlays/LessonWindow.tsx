@@ -4,6 +4,7 @@ import { CONFIG } from "../../shared/config";
 import { MicButton } from "../../shared/MicButton";
 import { useMicRecorder } from "../../shared/useMicRecorder";
 import { useT } from "../../shared/i18n";
+import { createSessionSocket, type SessionSocket } from "../../shared/wsProxy";
 import type { BlockContent, ContentSection, LessonBlock, TrainingOutcome } from "../../shared/types";
 
 type Phase = "loading" | "ready" | "asking" | "checking" | "feedback" | "done" | "error";
@@ -75,7 +76,7 @@ export function LessonWindow({
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [errorMsg, setErrorMsg] = useState("");
 
-  const wsRef = useRef<WebSocket | null>(null);
+  const wsRef = useRef<SessionSocket | null>(null);
   const questionQueueRef = useRef<Array<{ question_id: string; block_name: string; question: string }>>([]);
   const currentQRef = useRef<{ question_id: string; block_name: string; question: string } | null>(null);
   const totalRef = useRef(0);
@@ -99,7 +100,7 @@ export function LessonWindow({
       const wsBase = CONFIG.BACKEND_URL.replace(/^http/, "ws");
       const token = await api.getAuthToken();
       if (cancelled) return;
-      const ws = new WebSocket(`${wsBase}/api/lesson/ws`);
+      const ws = createSessionSocket(`${wsBase}/api/lesson/ws`);
       wsRef.current = ws;
 
       ws.onopen = () => {

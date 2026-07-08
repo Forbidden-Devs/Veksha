@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import * as api from "../../shared/api";
 import { CONFIG } from "../../shared/config";
 import { useT } from "../../shared/i18n";
+import { createSessionSocket, type SessionSocket } from "../../shared/wsProxy";
 import { MicButton } from "../../shared/MicButton";
 import { useMicRecorder } from "../../shared/useMicRecorder";
 import type { TrainingOutcome, TrainingTask } from "../../shared/types";
@@ -38,7 +39,7 @@ export function TrainingWindow({ username, onClose }: { username: string; onClos
   const [progress, setProgress] = useState({ done: 0, target: 0 });
   const [errorMsg, setErrorMsg] = useState("");
 
-  const wsRef = useRef<WebSocket | null>(null);
+  const wsRef = useRef<SessionSocket | null>(null);
   const queueRef = useRef<TrainingTask[]>([]);
   const wsExhaustedRef = useRef(false);
   const targetRef = useRef(0);
@@ -79,7 +80,7 @@ export function TrainingWindow({ username, onClose }: { username: string; onClos
 
       const wsBase = CONFIG.BACKEND_URL.replace(/^http/, "ws");
       const token = await api.getAuthToken();
-      const ws = new WebSocket(`${wsBase}/api/training/ws`);
+      const ws = createSessionSocket(`${wsBase}/api/training/ws`);
       wsRef.current = ws;
 
       ws.onopen = () => {

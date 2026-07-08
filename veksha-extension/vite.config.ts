@@ -43,7 +43,15 @@ export default defineConfig({
         keepProfileChanges: true,
         profileCreateIfMissing: true,
         ...(browser === "firefox"
-          ? { firefoxProfile: devProfile, ...(browserBinary ? { firefox: browserBinary } : {}) }
+          ? {
+              firefoxProfile: devProfile,
+              ...(browserBinary ? { firefox: browserBinary } : {}),
+              // Firefox blocks plain ws:// from extension pages as mixed
+              // content even for loopback, which kills the local-dev training
+              // WebSocket (ws://127.0.0.1:8000). Dev-profile-only override;
+              // production uses wss:// and is unaffected.
+              pref: { "network.websocket.allowInsecureFromHTTPS": true },
+            }
           : { chromiumProfile: devProfile, ...(browserBinary ? { chromiumBinary: browserBinary } : {}) }),
       },
     }),
