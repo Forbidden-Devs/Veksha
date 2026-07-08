@@ -286,5 +286,15 @@
   "imm_card2_desc": "Смысл ясен из окружающих слов — без словаря и зубрёжки.",
   "imm_card3_title": "Под ваш уровень",
   "imm_card3_desc": "На шаг выше того, что вы уже знаете — так язык лучше запоминается.",
-  "onboarding_err_taken": "Это имя уже занято."
+  "onboarding_err_taken": "Это имя уже занято.",
+  "onboarding_or": "или",
+  "onboarding_google": "Продолжить с Google",
+  "onboarding_google_err": "Вход через Google не удался. Попробуйте ещё раз.",
+  "settings_display_name": "Ваше имя",
+  "settings_account": "Аккаунт",
+  "settings_google_link": "Привязать аккаунт Google",
+  "settings_google_linked": "Аккаунт Google привязан",
+  "settings_google_link_taken": "Этот аккаунт Google уже привязан к другому профилю.",
+  "settings_signout": "Выйти",
+  "settings_signout_confirm": "Выйти? Без привязанного аккаунта Google вы не сможете снова войти в этот профиль."
 }

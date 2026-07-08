@@ -7,6 +7,7 @@ api/training.py — WebSocket training session endpoints.
   WS   /api/training/ws         — word training session
 
 WebSocket protocol (client → server):
+  {"type": "auth", "token": "..."}   — must be the first message (see auth.py)
   {"type": "init", "exclude": ["word1", ...]}
   {"type": "request_task"}
   {"type": "answer", "task_id": "...", "word": "...", "question": "...", "answer": "..."}
@@ -94,9 +95,7 @@ async def training_review_log(
 async def training_ws(websocket: WebSocket) -> None:
     username = await ws_current_user(websocket)
     if username is None:
-        await websocket.close(code=4401)
-        return
-    await websocket.accept()
+        return  # socket already closed with 4401
     storage = get_storage(username)
     level = storage.settings.english_level or "intermediate"
     native_lang = storage.settings.native_lang or "en"

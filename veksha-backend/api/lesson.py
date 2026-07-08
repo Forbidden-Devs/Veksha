@@ -6,6 +6,7 @@ api/lesson.py — topic lesson endpoints.
   WS   /api/lesson/ws     — topic learning session
 
 WebSocket protocol (client → server):
+  {"type": "auth", "token": "..."}   — must be the first message (see auth.py)
   {"type": "init", "topic_name": "..."}
   {"type": "request_question"}
   {"type": "answer", "question_id": "...", "block_name": "...",
@@ -74,9 +75,7 @@ async def api_create_lesson_topic(req: CreateLessonTopicRequest, username: Curre
 async def lesson_ws(websocket: WebSocket) -> None:
     username = await ws_current_user(websocket)
     if username is None:
-        await websocket.close(code=4401)
-        return
-    await websocket.accept()
+        return  # socket already closed with 4401
     storage = get_storage(username)
     level = storage.settings.english_level or "intermediate"
     native_lang = storage.settings.native_lang or "en"

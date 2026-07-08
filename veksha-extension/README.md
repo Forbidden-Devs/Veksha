@@ -71,13 +71,44 @@ design/            brand-art generator (render.mjs): squirrel logo/icons,
                    mascot GIF frames, popup background pattern
 ```
 
+## Google sign-in (optional)
+
+The onboarding screen shows "Continue with Google" when
+`CONFIG.GOOGLE_CLIENT_ID` (src/shared/config.ts) is set. Local setup:
+
+1. Google Cloud Console → APIs & Services → Credentials → Create credentials
+   → OAuth client ID → type **Web application** (works for Chrome and
+   Firefox; configure the consent screen first if asked).
+2. Find your redirect URI: open the popup's devtools console and run
+   `chrome.identity.getRedirectURL()` — e.g.
+   `https://<extension-id>.chromiumapp.org/` in Chrome/Brave or
+   `https://<hash>.extensions.allizom.org/` in Firefox/Zen. Add both as
+   **Authorized redirect URIs** of the client. (Unpacked extension IDs are
+   derived from the install path, so they are stable per machine.)
+3. Put the client ID into `CONFIG.GOOGLE_CLIENT_ID` and start the backend
+   with the same id: `export GOOGLE_CLIENT_ID="<id>.apps.googleusercontent.com"`.
+
+Flow: the popup asks the background (`VEKSHA_GOOGLE_SIGNIN` /
+`VEKSHA_GOOGLE_LINK`) to run `chrome.identity.launchWebAuthFlow`
+(shared/googleAuth.ts) — the popup dies as soon as the OAuth window takes
+focus, so the flow must live in the background. The obtained ID token
+(implicit flow, nonce-checked) goes to `POST /api/auth/google`, which
+verifies it server-side and returns the regular bearer token; the background
+persists credentials (and the link outcome) to storage so the next popup
+open picks them up even if the original one closed. An existing linked
+account is recovered with its vocabulary; a new Google user continues
+onboarding.
+
 ## Identity
 
-During onboarding the user picks a `username`; the extension registers it via
-`POST /api/auth/register` and stores the returned bearer token in
-`chrome.storage.local` (`veksha_token`). All backend requests carry
-`Authorization: Bearer <token>`; WebSockets pass `?token=`. There is no
-login/recovery yet — clearing extension storage orphans the account.
+During onboarding the user picks a display name; `POST /api/auth/register`
+creates the account under a generated internal id (`username`, e.g.
+`u_3f9c2a7b1d`) and returns it with a bearer token, both stored in
+`chrome.storage.local`. The display name lives in settings and is editable
+on the Settings screen; the id never changes. All backend requests carry
+`Authorization: Bearer <token>`; WebSockets authenticate with a first
+message `{"type": "auth", "token": "..."}`. Without a linked Google
+account, clearing extension storage orphans the account.
 
 ## Known limitations
 

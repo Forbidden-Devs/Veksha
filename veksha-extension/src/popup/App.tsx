@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import * as api from "../shared/api";
 import { CONFIG } from "../shared/config";
 import { useI18n } from "../shared/i18n";
-import { isExtension, storageGet, storageSet } from "../shared/platform";
+import { isExtension, storageGet, storageRemove, storageSet } from "../shared/platform";
 import type { Screen, SettingsMode } from "../shared/types";
 import { LessonWindow } from "./overlays/LessonWindow";
 import { ReminderCard } from "./overlays/ReminderCard";
@@ -72,6 +72,8 @@ interface AppCtx {
   targetLang: string;
   nativeLang: string;
   setLangPair: (targetLang: string, nativeLang: string) => void;
+  /** Clear local credentials and return to onboarding (login/new profile). */
+  signOut: () => Promise<void>;
 }
 
 const AppContext = createContext<AppCtx | null>(null);
@@ -251,7 +253,12 @@ export default function App() {
       } else {
         setScreen("chat");
       }
-    } catch {
+    } catch (err) {
+      // Stale credentials (account wiped server-side) — back to onboarding.
+      if (String((err as Error).message).includes("HTTP 401")) {
+        await signOut();
+        return;
+      }
       setScreen("chat");
     }
   }
@@ -275,6 +282,39 @@ export default function App() {
     });
     setPendingUsername(registered);
     setObStep("target_lang");
+  }
+
+  // Sign out: forget local credentials and restart the onboarding flow,
+  // which doubles as the login screen (Google or a fresh profile).
+  async function signOut() {
+    await storageRemove([CONFIG.STORAGE_KEY_USERNAME, CONFIG.STORAGE_KEY_TOKEN]);
+    api.setAuthToken(null);
+    setObStep("native_lang");
+    setScreen("chat");
+    setUsername(null);
+  }
+
+  // Step 2 alternative: Google sign-in. The OAuth flow runs in the background
+  // (the popup dies when the auth window takes focus); if this popup survives,
+  // continue in place — a brand-new account proceeds with onboarding, an
+  // existing one goes to its usual screen. If the popup died, the background
+  // has already persisted the credentials and the next open picks them up.
+  async function handleGoogleSignIn() {
+    const resp = (await chrome.runtime.sendMessage({ type: "VEKSHA_GOOGLE_SIGNIN" })) as
+      | { ok: true; username: string; created: boolean }
+      | { ok: false; error: string }
+      | undefined;
+    if (!resp) throw new Error("google-cancelled"); // popup lost the response
+    if (!resp.ok) throw new Error(resp.error);
+    const st = await storageGet([CONFIG.STORAGE_KEY_TOKEN]);
+    api.setAuthToken((st[CONFIG.STORAGE_KEY_TOKEN] as string) || null);
+    if (resp.created) {
+      setPendingUsername(resp.username);
+      setObStep("target_lang");
+      return;
+    }
+    setUsername(resp.username);
+    await routeAfterUsername(resp.username);
   }
 
   // Step 3: target language selected → go to level/goals setup
@@ -366,7 +406,10 @@ export default function App() {
           <NativeLangScreen onContinue={handleNativeLangSelected} />
         )}
         {obStep === "username" && (
-          <OnboardingScreen onComplete={handleUsernameEntered} />
+          <OnboardingScreen
+            onComplete={handleUsernameEntered}
+            onGoogle={isExtension && CONFIG.GOOGLE_CLIENT_ID ? handleGoogleSignIn : undefined}
+          />
         )}
         {obStep === "target_lang" && (
           <TargetLangScreen
@@ -395,6 +438,7 @@ export default function App() {
     targetLang,
     nativeLang,
     setLangPair,
+    signOut,
   };
 
   const pageMeta: Record<string, { title: string; sub: string }> = {

@@ -28,13 +28,13 @@ async def api_get_i18n(lang: str) -> dict:
     """Returns the cached translation, auto-filling any keys added since the cache was built."""
     cached = i18n.load_cached(lang)
     if cached is None:
-        cached = await i18n.generate_translation(lang)
+        cached = i18n.merge_translations({}, await i18n.generate_translation(lang))
         i18n.save_cache(lang, cached)
         log.info("[i18n] generated missing cache for lang=%r (%d strings)", lang, len(cached))
     if i18n.untranslated_strings(lang, cached):
-        await i18n.ensure_cache_complete(lang)
+        await i18n.ensure_cache_complete(lang)  # rate-limited internally
         cached = i18n.load_cached(lang) or cached
-    return cached
+    return i18n.public_catalog(cached)
 
 
 @router.post("/api/i18n/translate")
@@ -49,21 +49,24 @@ async def api_post_i18n_translate(req: I18nTranslateRequest) -> dict:
     if req.strings:
         translated = await i18n.translate_strings(req.lang, req.strings)
         cached = i18n.load_cached(req.lang) or {}
-        i18n.save_cache(req.lang, {**cached, **translated})
+        i18n.save_cache(req.lang, i18n.merge_translations(cached, translated))
         log.info("[i18n] patched %d missing keys for lang=%r", len(translated), req.lang)
         return translated
 
     cached = i18n.load_cached(req.lang)
     if cached:
+        # Explicit user request (language switch) — translate inline without
+        # the ensure_cache_complete backoff.
         missing = i18n.untranslated_strings(req.lang, cached)
         if missing:
             log.info("[i18n] translating %d incomplete fields inline for lang=%r", len(missing), req.lang)
             new_strings = await i18n.translate_strings(req.lang, missing)
-            cached = {**cached, **new_strings}
-            i18n.save_cache(req.lang, cached)
-        return cached
+            if new_strings:
+                cached = i18n.merge_translations(cached, new_strings)
+                i18n.save_cache(req.lang, cached)
+        return i18n.public_catalog(cached)
 
-    translated = await i18n.generate_translation(req.lang)
+    translated = i18n.merge_translations({}, await i18n.generate_translation(req.lang))
     i18n.save_cache(req.lang, translated)
     log.info("[i18n] generated translation for lang=%r (%d strings)", req.lang, len(translated))
-    return translated
+    return i18n.public_catalog(translated)

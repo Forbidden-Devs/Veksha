@@ -161,5 +161,15 @@
   "immersion_on": "Занурення увімкнено",
   "immersion_off": "Занурення на сторінці",
   "immersion_hint": "Додавайте до сторінок, які читаєте, речення цільовою мовою, підібрані за вашим рівнем.",
-  "onboarding_err_taken": "Це ім’я вже зайняте."
+  "onboarding_err_taken": "Це ім’я вже зайняте.",
+  "onboarding_or": "або",
+  "onboarding_google": "Продовжити з Google",
+  "onboarding_google_err": "Не вдалося увійти через Google. Спробуйте ще раз.",
+  "settings_display_name": "Ваше ім’я",
+  "settings_account": "Обліковий запис",
+  "settings_google_link": "Прив’язати обліковий запис Google",
+  "settings_google_linked": "Обліковий запис Google прив’язано",
+  "settings_google_link_taken": "Цей обліковий запис Google уже прив’язано до іншого профілю.",
+  "settings_signout": "Вийти",
+  "settings_signout_confirm": "Вийти? Без прив’язаного облікового запису Google ви не зможете знову увійти в цей профіль."
 }

@@ -34,14 +34,6 @@ from models import LessonTopic, Patch, UserSettings, Word
 log = logging.getLogger(__name__)
 
 
-def _safe_username(username: str) -> str:
-    """Guard against path traversal in filename."""
-    safe = re.sub(r"[^a-zA-Z0-9_\-]", "_", username.strip())
-    if not safe:
-        raise ValueError("username must contain at least one valid character")
-    return safe
-
-
 def _is_due(word: Word, now: float) -> bool:
     """A reviewed word is due once next_review is within the look-ahead window
     (or already overdue — FSRS folds lateness into the next interval)."""

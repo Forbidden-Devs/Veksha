@@ -152,23 +152,58 @@ async function _get<T>(path: string, params?: Record<string, string>): Promise<T
 // ---------------------------------------------------------------------------
 
 export interface RegisterResponse {
-  username: string;
+  username: string; // internal account id, not the user-facing name
   token: string;
+  display_name: string;
 }
 
-/** Register a new account; the caller must persist the returned token. */
-export async function register(username: string): Promise<RegisterResponse> {
+/** Register a new account with a display name; the server generates the
+ *  internal account id. The caller must persist the returned token. */
+export async function register(displayName: string): Promise<RegisterResponse> {
   const res = await fetch(`${CONFIG.BACKEND_URL}/api/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username }),
+    body: JSON.stringify({ display_name: displayName }),
   });
-  if (res.status === 409) throw new Error("username-taken");
   if (!res.ok) {
     const errBody = await res.text().catch(() => "");
     throw new Error(`/api/auth/register -> HTTP ${res.status}: ${errBody.slice(0, 300)}`);
   }
   return res.json() as Promise<RegisterResponse>;
+}
+
+export interface GoogleAuthResponse extends RegisterResponse {
+  created: boolean; // true when this login created a brand-new account
+}
+
+/** Sign in with a Google ID token; the caller must persist the returned token. */
+export async function googleAuth(idToken: string): Promise<GoogleAuthResponse> {
+  const res = await fetch(`${CONFIG.BACKEND_URL}/api/auth/google`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id_token: idToken }),
+  });
+  if (!res.ok) {
+    const errBody = await res.text().catch(() => "");
+    throw new Error(`/api/auth/google -> HTTP ${res.status}: ${errBody.slice(0, 300)}`);
+  }
+  return res.json() as Promise<GoogleAuthResponse>;
+}
+
+export interface AccountData {
+  username: string; // internal account id
+  display_name: string;
+  google_linked: boolean;
+  google_email: string;
+}
+
+export function getAccount(): Promise<AccountData> {
+  return _get("/api/auth/account");
+}
+
+/** Attach a Google identity to the current account (409 if taken). */
+export function googleLink(idToken: string): Promise<{ ok: boolean; email: string }> {
+  return _post("/api/auth/google/link", { id_token: idToken });
 }
 
 // ---------------------------------------------------------------------------
@@ -239,6 +274,7 @@ export function getSettings(username: string): Promise<SettingsData> {
 export function saveSettings(
   username: string,
   opts: {
+    displayName?: string;
     englishLevel?: string | null;
     goals?: string;
     generalPrompt?: string;
@@ -257,6 +293,7 @@ export function saveSettings(
     overseer: opts.overseer ?? false,
   };
   if (opts.englishLevel) body.english_level = opts.englishLevel;
+  if (opts.displayName?.trim()) body.display_name = opts.displayName.trim();
   return _post("/api/settings", body);
 }
 

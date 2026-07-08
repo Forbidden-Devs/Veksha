@@ -41,6 +41,9 @@ UI_STRINGS: dict[str, str] = {
     "onboarding_err_long": "Name is too long.",
     "onboarding_err_chars": "Use letters, numbers, spaces, - or _ only.",
     "onboarding_err_taken": "This name is already taken.",
+    "onboarding_or": "or",
+    "onboarding_google": "Continue with Google",
+    "onboarding_google_err": "Google sign-in failed. Try again.",
     # Menu
     "menu_title": "Menu",
     "menu_learn": "Start learning",
@@ -64,6 +67,7 @@ UI_STRINGS: dict[str, str] = {
     # Settings
     "settings_title": "Settings",
     "settings_intro": "Tell us your languages and level so we can pick the right words and difficulty for you.",
+    "settings_display_name": "Your name",
     "settings_native_lang": "Your language",
     "settings_target_lang": "Language I'm learning",
     "settings_level": "My level",
@@ -79,6 +83,12 @@ UI_STRINGS: dict[str, str] = {
     "settings_reminder_level_3": "Blur + frequent",
     "settings_overseer": "Overseer",
     "settings_overseer_desc": "The close button runs away — finish a training or catch it to dismiss.",
+    "settings_account": "Account",
+    "settings_google_link": "Link Google account",
+    "settings_google_linked": "Google account linked",
+    "settings_google_link_taken": "This Google account is already linked to another profile.",
+    "settings_signout": "Sign out",
+    "settings_signout_confirm": "Sign out? Without a linked Google account you won't be able to get back into this profile.",
     "settings_save": "Save",
     "settings_saving": "Saving...",
     "settings_translating": "Translating interface...",
@@ -218,6 +228,18 @@ BACKEND_STRINGS: dict[str, str] = {
 
 _BATCH_SIZE = 20
 
+# Meta key inside a catalogue file: keys whose correct translation is
+# identical to the English source ("Debug", brand names, …). Without this
+# marker such keys look permanently untranslated and would be re-sent to the
+# LLM on every startup and catalogue request.
+_META_SAME_AS_EN = "__same_as_en__"
+
+# Auto-fill attempts per language are rate-limited in-process, so a dead LLM
+# key (quota, network) doesn't get hammered by every startup task and
+# catalogue request.
+_ENSURE_RETRY_SECONDS = 600.0
+_ensure_last_attempt: dict[str, float] = {}
+
 
 def _cache_path(lang: str) -> Path:
     return DATA_DIR / f"i18n_{lang}.json"
@@ -255,19 +277,52 @@ def save_cache(lang: str, strings: dict[str, str]) -> None:
 
 
 def untranslated_strings(lang: str, cached: dict[str, str] | None) -> dict[str, str]:
-    """Return catalogue fields that are absent, empty, or still contain the English source."""
+    """Return catalogue fields that are absent, empty, or still contain the English source.
+
+    Keys listed in the __same_as_en__ meta entry are trusted: the LLM already
+    returned the English text as the correct translation for them.
+    """
     if lang == "en":
         return {}
 
     cached = cached or {}
+    same_as_en = set(cached.get(_META_SAME_AS_EN) or [])
     all_strings = {**UI_STRINGS, **BACKEND_STRINGS}
     return {
         key: english
         for key, english in all_strings.items()
-        if not isinstance(cached.get(key), str)
-        or not cached[key].strip()
-        or cached[key].strip() == english.strip()
+        if key not in same_as_en
+        and (
+            not isinstance(cached.get(key), str)
+            or not cached[key].strip()
+            or cached[key].strip() == english.strip()
+        )
     }
+
+
+def merge_translations(cached: dict, translated: dict[str, str]) -> dict:
+    """Merge fresh LLM output into a cached catalogue, maintaining the
+    __same_as_en__ meta entry for keys the LLM translated to the English
+    source verbatim (so they are not retried forever)."""
+    all_strings = {**UI_STRINGS, **BACKEND_STRINGS}
+    same_as_en = set(cached.get(_META_SAME_AS_EN) or [])
+    for key, value in translated.items():
+        english = all_strings.get(key)
+        if english is not None and value.strip() == english.strip():
+            same_as_en.add(key)
+        else:
+            same_as_en.discard(key)
+    merged = {**cached, **translated}
+    if same_as_en:
+        merged[_META_SAME_AS_EN] = sorted(same_as_en)
+    else:
+        merged.pop(_META_SAME_AS_EN, None)
+    return merged
+
+
+def public_catalog(strings: dict) -> dict[str, str]:
+    """Catalogue as served to clients — meta entries stripped."""
+    return {k: v for k, v in strings.items() if not k.startswith("__")}
 
 
 def get_string(key: str, native_lang: str, **kwargs: object) -> str:
@@ -313,8 +368,9 @@ async def _translate_batch(keys: list[str], values: list[str], lang: str) -> dic
         )
         data = json.loads(raw)
         return {k: str(v) for k, v in data.items() if k in keys}
-    except Exception:
-        log.exception("[i18n] Batch translate failed for lang=%r", lang)
+    except Exception as err:
+        # llm._base already logged the full request failure; one line is enough here.
+        log.warning("[i18n] batch translate failed for lang=%r: %s", lang, err)
         return {}
 
 
@@ -339,17 +395,30 @@ async def translate_strings(lang: str, strings: dict[str, str]) -> dict[str, str
 
 
 async def ensure_cache_complete(lang: str) -> None:
-    """Translate every catalogue field that is missing, empty, or still English."""
+    """Translate every catalogue field that is missing, empty, or still English.
+
+    Rate-limited per language: when the LLM is unavailable (dead key, quota),
+    startup tasks and catalogue requests don't retry more than once per
+    _ENSURE_RETRY_SECONDS.
+    """
     if lang == "en":
         return
     cached = load_cached(lang) or {}
     missing = untranslated_strings(lang, cached)
     if not missing:
         return
+
+    now = asyncio.get_running_loop().time()
+    last = _ensure_last_attempt.get(lang)
+    if last is not None and now - last < _ENSURE_RETRY_SECONDS:
+        return
+    _ensure_last_attempt[lang] = now
+
     log.info("[i18n] translating %d incomplete fields for lang=%r", len(missing), lang)
     translated = await translate_strings(lang, missing)
-    merged = {**cached, **translated}
-    save_cache(lang, merged)
+    if not translated:
+        return  # LLM unavailable — leave the cache as is, retry after backoff
+    save_cache(lang, merge_translations(cached, translated))
 
 
 async def generate_translation(lang: str) -> dict[str, str]:

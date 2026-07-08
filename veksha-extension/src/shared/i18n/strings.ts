@@ -24,6 +24,9 @@ export interface Strings {
   onboarding_err_empty: string;
   onboarding_err_long: string;
   onboarding_err_taken: string;
+  onboarding_or: string;
+  onboarding_google: string;
+  onboarding_google_err: string;
   // Menu
   menu_title: string;
   menu_learn: string;
@@ -47,6 +50,7 @@ export interface Strings {
   // Settings
   settings_title: string;
   settings_intro: string;
+  settings_display_name: string;
   settings_native_lang: string;
   settings_target_lang: string;
   settings_level: string;
@@ -62,6 +66,12 @@ export interface Strings {
   settings_reminder_level_3: string;
   settings_persistent: string;
   settings_persistent_desc: string;
+  settings_account: string;
+  settings_google_link: string;
+  settings_google_linked: string;
+  settings_google_link_taken: string;
+  settings_signout: string;
+  settings_signout_confirm: string;
   settings_save: string;
   settings_saving: string;
   settings_translating: string;
@@ -299,6 +309,9 @@ export const EN: Strings = {
   onboarding_err_empty: "Please enter a name.",
   onboarding_err_long: "Name is too long.",
   onboarding_err_taken: "This name is already taken.",
+  onboarding_or: "or",
+  onboarding_google: "Continue with Google",
+  onboarding_google_err: "Google sign-in failed. Try again.",
   menu_title: "Menu",
   menu_learn: "Start learning",
   menu_training: "Training",
@@ -319,6 +332,7 @@ export const EN: Strings = {
   immersion_hint: "Sprinkle level-appropriate sentences in your target language right into the pages you read.",
   settings_title: "Settings",
   settings_intro: "Tell us your languages and level so we can pick the right words and difficulty for you.",
+  settings_display_name: "Your name",
   settings_native_lang: "Your language",
   settings_target_lang: "Language I'm learning",
   settings_level: "My level",
@@ -334,6 +348,12 @@ export const EN: Strings = {
   settings_reminder_level_3: "Blur + frequent",
   settings_persistent: "Persistent reminders",
   settings_persistent_desc: "Hard-to-dismiss reminders: the close button runs away — finish a quick training or catch it to clear them.",
+  settings_account: "Account",
+  settings_google_link: "Link Google account",
+  settings_google_linked: "Google account linked",
+  settings_google_link_taken: "This Google account is already linked to another profile.",
+  settings_signout: "Sign out",
+  settings_signout_confirm: "Sign out? Without a linked Google account you won't be able to get back into this profile.",
   settings_save: "Save",
   settings_saving: "Saving...",
   settings_translating: "Translating interface...",

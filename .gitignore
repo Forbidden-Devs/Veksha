@@ -31,6 +31,9 @@ veksha-extension/public/tesseract/
 # Rendered brand-art intermediates (design/render.mjs)
 veksha-extension/design/out/
 
+# Persistent web-ext dev browser profiles (watch mode)
+veksha-extension/.dev-profiles/
+
 # Old icon drafts
 veksha-extension/icons/*_old.png
 veksha-extension/icons/Untitled.png

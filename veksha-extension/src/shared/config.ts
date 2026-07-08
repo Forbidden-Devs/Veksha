@@ -1,5 +1,9 @@
 export const CONFIG = {
   BACKEND_URL: "http://127.0.0.1:8000",
+  // Google OAuth client id ("Web application" type in Google Cloud Console).
+  // Must match the backend's GOOGLE_CLIENT_ID env var. Empty string hides the
+  // "Continue with Google" button.
+  GOOGLE_CLIENT_ID: "213004589034-fgni2g4c9fmh10bn9quq9de5qn8h8kjc.apps.googleusercontent.com" as string,
   STORAGE_KEY_USERNAME: "veksha_username",
   STORAGE_KEY_TOKEN: "veksha_token",
   STORAGE_KEY_LANG_PAIR: "veksha_lang_pair",

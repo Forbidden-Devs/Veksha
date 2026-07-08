@@ -1,7 +1,13 @@
 import { CONFIG } from "../shared/config";
-import { getReminders, getSettings } from "../shared/api";
+import { getReminders, getSettings, googleAuth, googleLink } from "../shared/api";
+import { googleSignIn } from "../shared/googleAuth";
 import type { RemindersData } from "../shared/types";
 import type { CaptureController } from "../shared/capture";
+
+// Google-link outcome persisted for the Settings screen: the popup usually
+// closes as soon as the OAuth window takes focus, so the result must survive
+// until the popup is opened again.
+const GOOGLE_LINK_RESULT_KEY = "vk_google_link_result";
 
 const NOTIFICATION_ID = "veksha-reminder";
 const OFFSCREEN_DOCUMENT_PATH = "src/offscreen/offscreen.html";
@@ -123,7 +129,6 @@ async function fireFirstReview(): Promise<void> {
       iconUrl: "icons/icon128.png",
       title: "Time to review! 💪",
       message: "Your first words are ready for a quick training.",
-      priority: 1,
     });
   }
 }
@@ -216,7 +221,6 @@ function showReminderNotification(result: { due_words: number; due_topic: string
     iconUrl: "icons/icon128.png",
     title: "Time to practice! \u{1F4AA}",
     message,
-    priority: 1,
   });
 }
 
@@ -259,6 +263,45 @@ chrome.runtime.onMessage.addListener((msg: Record<string, unknown>, _sender, sen
     handleVoiceCaptureEvent(msg);
     sendResponse({ ok: true });
     return false;
+  }
+
+  if (msg.type === "VEKSHA_GOOGLE_SIGNIN") {
+    // The whole OAuth flow runs here (not in the popup): the popup dies when
+    // the auth window takes focus, the background survives. Credentials are
+    // persisted before responding, so even a dead popup ends up signed in.
+    (async () => {
+      const idToken = await googleSignIn();
+      const resp = await googleAuth(idToken);
+      await chrome.storage.local.set({
+        [CONFIG.STORAGE_KEY_USERNAME]: resp.username,
+        [CONFIG.STORAGE_KEY_TOKEN]: resp.token,
+      });
+      return resp;
+    })()
+      .then((resp) => sendResponse({ ok: true, username: resp.username, created: resp.created }))
+      .catch((err) => sendResponse({ ok: false, error: String((err as Error).message ?? err) }));
+    return true;
+  }
+
+  if (msg.type === "VEKSHA_GOOGLE_LINK") {
+    (async () => {
+      try {
+        const idToken = await googleSignIn();
+        const res = await googleLink(idToken);
+        const result = { ok: true, email: res.email };
+        await chrome.storage.local.set({ [GOOGLE_LINK_RESULT_KEY]: result });
+        sendResponse(result);
+      } catch (err) {
+        const m = String((err as Error).message ?? err);
+        const error = m === "google-cancelled" ? "cancelled" : m.includes("HTTP 409") ? "taken" : "failed";
+        // A cancelled window is not worth reporting after the fact.
+        if (error !== "cancelled") {
+          await chrome.storage.local.set({ [GOOGLE_LINK_RESULT_KEY]: { ok: false, error } });
+        }
+        sendResponse({ ok: false, error });
+      }
+    })();
+    return true;
   }
 
   if (msg.type === "VEKSHA_API_FETCH") {

@@ -1,11 +1,14 @@
 import { useState } from "react";
+import { GoogleMark } from "../../shared/GoogleMark";
 import { useT } from "../../shared/i18n";
 
 interface Props {
   onComplete: (username: string) => Promise<void>;
+  /** Google sign-in; omitted when CONFIG.GOOGLE_CLIENT_ID is not set. */
+  onGoogle?: () => Promise<void>;
 }
 
-export function OnboardingScreen({ onComplete }: Props) {
+export function OnboardingScreen({ onComplete, onGoogle }: Props) {
   const t = useT();
   const [value, setValue] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -27,8 +30,23 @@ export function OnboardingScreen({ onComplete }: Props) {
     try {
       await onComplete(value.trim());
     } catch (e) {
-      const msg = (e as Error).message;
-      setError(msg === "username-taken" ? (t.onboarding_err_taken ?? "This name is already taken.") : msg);
+      // Display names don't collide (the account id is generated server-side),
+      // so any failure here is a real error worth showing as-is.
+      setError((e as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleGoogle() {
+    if (!onGoogle) return;
+    setError(null);
+    setLoading(true);
+    try {
+      await onGoogle();
+    } catch (e) {
+      // Closing the Google window is not an error worth showing.
+      if ((e as Error).message !== "google-cancelled") setError(t.onboarding_google_err);
     } finally {
       setLoading(false);
     }
@@ -54,6 +72,15 @@ export function OnboardingScreen({ onComplete }: Props) {
         <button className="btn btn-gradient" disabled={loading} onClick={handleContinue}>
           {loading ? t.onboarding_loading : t.onboarding_continue}
         </button>
+        {onGoogle && (
+          <>
+            <div className="onboarding-divider">{t.onboarding_or}</div>
+            <button className="btn btn-google" disabled={loading} onClick={handleGoogle}>
+              <GoogleMark />
+              {t.onboarding_google}
+            </button>
+          </>
+        )}
         {error && <p className="onboarding-error">{error}</p>}
       </div>
     </section>

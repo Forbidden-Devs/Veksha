@@ -8,18 +8,22 @@
  *   tesseract.js worker + wasm cores  -> public/tesseract/
  *   source/tesseract-lang/*.gz        -> public/tesseract/lang/
  */
-import { cpSync, copyFileSync, existsSync, mkdirSync, readdirSync } from "node:fs";
+import { cpSync, copyFileSync, existsSync, mkdirSync, readdirSync, rmSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 
 const sourceDir = join(root, "source");
+// Recreate the generated dirs from scratch so files deleted from source/
+// don't linger in public/ (and end up shipped in dist/).
 const publicSource = join(root, "public", "source");
+rmSync(publicSource, { recursive: true, force: true });
 mkdirSync(publicSource, { recursive: true });
 cpSync(sourceDir, publicSource, { recursive: true });
 
 const publicIcons = join(root, "public", "icons");
+rmSync(publicIcons, { recursive: true, force: true });
 mkdirSync(publicIcons, { recursive: true });
 for (const name of ["icon16.png", "icon48.png", "icon128.png"]) {
   copyFileSync(join(root, "icons", name), join(publicIcons, name));
@@ -28,6 +32,7 @@ for (const name of ["icon16.png", "icon48.png", "icon128.png"]) {
 // --- Tesseract.js OCR assets (worker + wasm core + language models) ---
 const tessPublic = join(root, "public", "tesseract");
 const tessLangPublic = join(tessPublic, "lang");
+rmSync(tessPublic, { recursive: true, force: true });
 mkdirSync(tessLangPublic, { recursive: true });
 
 const tessWorker = join(root, "node_modules", "tesseract.js", "dist", "worker.min.js");

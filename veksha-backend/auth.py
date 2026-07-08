@@ -1,10 +1,13 @@
 """auth.py — bearer-token authentication dependencies.
 
 HTTP endpoints:   Authorization: Bearer <token>  → CurrentUser (username)
-WebSocket routes: ?token=<token> query parameter → ws_current_user()
+WebSocket routes: first message {"type": "auth", "token": "..."}
+                  → ws_current_user() (accepts + authenticates the socket)
 """
 from __future__ import annotations
 
+import asyncio
+import json
 import logging
 from typing import Annotated, Optional
 
@@ -13,6 +16,9 @@ from fastapi import Depends, Header, HTTPException, WebSocket
 import db
 
 log = logging.getLogger(__name__)
+
+# How long a fresh WebSocket connection may take to send its auth message.
+WS_AUTH_TIMEOUT_SECONDS = 10.0
 
 
 async def current_user(authorization: Optional[str] = Header(None)) -> str:
@@ -29,7 +35,30 @@ CurrentUser = Annotated[str, Depends(current_user)]
 
 
 async def ws_current_user(websocket: WebSocket) -> Optional[str]:
-    """Resolve the user for a WebSocket connection; returns None if unauthorized
-    (caller should close with 4401)."""
-    token = websocket.query_params.get("token", "")
-    return db.token_owner(token)
+    """Accept the connection and authenticate it via the first message:
+
+        {"type": "auth", "token": "<bearer token>"}
+
+    The token deliberately does not travel in the URL — query strings end up
+    in access logs and proxy logs. Returns the username, or None after
+    closing the socket (code 4401) on a missing/invalid/late auth message.
+    """
+    await websocket.accept()
+    token = ""
+    try:
+        raw = await asyncio.wait_for(websocket.receive_text(), WS_AUTH_TIMEOUT_SECONDS)
+        msg = json.loads(raw)
+        if isinstance(msg, dict) and msg.get("type") == "auth":
+            token = str(msg.get("token") or "")
+    except Exception:
+        token = ""
+
+    username = db.token_owner(token) if token else None
+    if username is None:
+        log.info("[auth] websocket auth failed (%s)", "no token" if not token else "bad token")
+        try:
+            await websocket.close(code=4401)
+        except Exception:
+            pass
+        return None
+    return username

@@ -3,8 +3,8 @@
   "name": "Veksha",
   "version": "0.6.1",
   "description": "Translate any selection with one click, build your vocabulary, and train it through a built-in chat — powered by Veksha backend.",
-  "{{chrome}}.permissions": ["storage", "activeTab", "alarms", "notifications", "tabs", "offscreen", "scripting", "contextMenus"],
-  "{{firefox}}.permissions": ["storage", "activeTab", "alarms", "notifications", "tabs", "scripting", "contextMenus"],
+  "{{chrome}}.permissions": ["storage", "activeTab", "alarms", "notifications", "tabs", "offscreen", "scripting", "contextMenus", "identity"],
+  "{{firefox}}.permissions": ["storage", "activeTab", "alarms", "notifications", "tabs", "scripting", "contextMenus", "identity"],
   "host_permissions": [
     "https://veksha-production.up.railway.app/*",
     "wss://veksha-production.up.railway.app/*",

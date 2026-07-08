@@ -6,9 +6,10 @@ db_cache.py). The KB is stored as a JSON document per user — normalizing
 words/topics into tables is deferred until the FSRS rework changes the word
 schema anyway.
 
-Auth model: a user registers once with a self-chosen username and receives a
-bearer token (returned only at registration). Every request must present the
-token; the username is derived server-side.
+Auth model: `username` is a generated internal account id (the user-facing
+name lives in settings.display_name); registration returns a bearer token.
+Every request must present the token; the username is derived server-side.
+Google identities map onto the same accounts (identities table).
 """
 from __future__ import annotations
 
@@ -55,6 +56,19 @@ def _conn() -> sqlite3.Connection:
                    username TEXT PRIMARY KEY,
                    data     TEXT NOT NULL,
                    updated  REAL NOT NULL
+               )"""
+        )
+        # External identities (Google, …) linked to local accounts. A user may
+        # register by username first and link Google later, or be created
+        # directly by the first Google sign-in.
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS identities (
+                   provider TEXT NOT NULL,
+                   subject  TEXT NOT NULL,
+                   email    TEXT NOT NULL DEFAULT '',
+                   username TEXT NOT NULL,
+                   created  REAL NOT NULL,
+                   PRIMARY KEY (provider, subject)
                )"""
         )
         # One row per review; the raw material for FSRS weight optimization
@@ -117,6 +131,46 @@ def token_owner(token: str) -> Optional[str]:
 def user_exists(username: str) -> bool:
     row = _conn().execute("SELECT 1 FROM users WHERE username=?", (username,)).fetchone()
     return row is not None
+
+
+def user_token(username: str) -> Optional[str]:
+    """The bearer token of an existing user (re-issued at Google login)."""
+    row = _conn().execute("SELECT token FROM users WHERE username=?", (username,)).fetchone()
+    return row[0] if row else None
+
+
+# ---------------------------------------------------------------------------
+# External identities (Google OAuth)
+# ---------------------------------------------------------------------------
+
+def identity_owner(provider: str, subject: str) -> Optional[str]:
+    row = _conn().execute(
+        "SELECT username FROM identities WHERE provider=? AND subject=?",
+        (provider, subject),
+    ).fetchone()
+    return row[0] if row else None
+
+
+def identity_link(provider: str, subject: str, email: str, username: str) -> bool:
+    """Attach an external identity to a user. False if the identity is already
+    linked (concurrent login race) — re-read identity_owner in that case."""
+    try:
+        with _conn() as c:
+            c.execute(
+                "INSERT INTO identities (provider, subject, email, username, created) VALUES (?,?,?,?,?)",
+                (provider, subject, email, username, time.time()),
+            )
+        return True
+    except sqlite3.IntegrityError:
+        return False
+
+
+def identity_for_user(username: str, provider: str) -> Optional[dict]:
+    row = _conn().execute(
+        "SELECT subject, email FROM identities WHERE provider=? AND username=?",
+        (provider, username),
+    ).fetchone()
+    return {"subject": row[0], "email": row[1]} if row else None
 
 
 def delete_user_data(username: str) -> None:

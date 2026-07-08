@@ -99,10 +99,13 @@ export function LessonWindow({
       const wsBase = CONFIG.BACKEND_URL.replace(/^http/, "ws");
       const token = await api.getAuthToken();
       if (cancelled) return;
-      const ws = new WebSocket(`${wsBase}/api/lesson/ws?token=${encodeURIComponent(token)}`);
+      const ws = new WebSocket(`${wsBase}/api/lesson/ws`);
       wsRef.current = ws;
 
       ws.onopen = () => {
+        // Auth must be the first message — the token never travels in the
+        // URL (query strings leak into server/proxy logs).
+        ws.send(JSON.stringify({ type: "auth", token }));
         ws.send(JSON.stringify({ type: "init", topic_name: topicName }));
       };
 

@@ -144,6 +144,73 @@ html, body, #root {
   animation: none;
 }
 
+.btn-google {
+  gap: 8px;
+  background: #ffffff;
+  color: #3c4043;
+  border: 1px solid rgba(60, 64, 67, 0.22);
+  box-shadow: 0 2px 8px rgba(20, 16, 32, 0.08);
+}
+
+.btn-google:disabled {
+  opacity: 0.55;
+  cursor: default;
+  transform: none;
+}
+
+.google-mark {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
+.onboarding-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 2px 0;
+  color: rgba(60, 52, 90, 0.45);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: lowercase;
+}
+
+.onboarding-divider::before,
+.onboarding-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(60, 52, 90, 0.16);
+}
+
+.settings-account {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(60, 52, 90, 0.12);
+}
+
+.settings-account-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 13px;
+  color: rgba(60, 52, 90, 0.75);
+}
+
+.btn-signout {
+  background: transparent;
+  color: #b04a5e;
+  border: 1px solid rgba(176, 74, 94, 0.4);
+}
+
+.btn-signout:hover {
+  background: rgba(176, 74, 94, 0.06);
+}
+
 @keyframes av-gradient-drift {
   0%, 100% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }

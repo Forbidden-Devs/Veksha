@@ -122,6 +122,7 @@ VALID_ENGLISH_LEVELS: tuple[str, ...] = (
 
 @dataclass
 class UserSettings:
+    display_name: str = ""                 # user-facing name; the account id (username) is internal
     english_level: Optional[str] = None    # one of VALID_ENGLISH_LEVELS, None = not set (onboarding)
     goals: str = ""                        # "Improve speaking, expand vocabulary, ..."
     general_prompt: str = ""               # "Be supportive, correct my mistakes, ..."
@@ -147,6 +148,7 @@ class UserSettings:
             aggressive = d.get("aggressive_notifications", True)
             level = (3 if aggressive else 2) if intrusive else (2 if aggressive else 1)
         return UserSettings(
+            display_name=d.get("display_name", ""),
             english_level=d.get("english_level"),
             goals=d.get("goals", ""),
             general_prompt=d.get("general_prompt", ""),

@@ -24,6 +24,8 @@ export interface TranslateResponse {
 }
 
 export interface SettingsData {
+  /** User-facing name (editable); the `username` account id is internal. */
+  display_name?: string;
   english_level: string | null;
   goals: string;
   general_prompt: string;

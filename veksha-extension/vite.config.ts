@@ -1,3 +1,6 @@
+import { mkdirSync } from "node:fs";
+import { basename, dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import webExtension from "vite-plugin-web-extension";
@@ -12,6 +15,17 @@ const browser = process.env.TARGET_BROWSER === "firefox" ? "firefox" : "chrome";
 // (Brave, Zen, …). Set via `scripts/build.mjs --binary <path>`.
 const browserBinary = process.env.BROWSER_BINARY;
 
+// Persistent dev profile per launched browser, so the extension keeps its
+// storage (auth token, onboarding) and the browser skips first-run setup
+// between watch sessions. Keyed by executable name — Zen and stock Firefox
+// must not share a profile (version downgrade protection would trip).
+const profileKey = (browserBinary ? basename(browserBinary) : browser)
+  .toLowerCase().replace(/[^a-z0-9_-]/g, "_");
+const devProfile = join(
+  dirname(fileURLToPath(import.meta.url)), ".dev-profiles", profileKey,
+);
+mkdirSync(devProfile, { recursive: true });
+
 export default defineConfig({
   plugins: [
     react(),
@@ -25,9 +39,13 @@ export default defineConfig({
         "src/permission/permission.html",
       ],
       watchFilePaths: ["manifest.json"],
-      webExtConfig: browserBinary
-        ? (browser === "firefox" ? { firefox: browserBinary } : { chromiumBinary: browserBinary })
-        : undefined,
+      webExtConfig: {
+        keepProfileChanges: true,
+        profileCreateIfMissing: true,
+        ...(browser === "firefox"
+          ? { firefoxProfile: devProfile, ...(browserBinary ? { firefox: browserBinary } : {}) }
+          : { chromiumProfile: devProfile, ...(browserBinary ? { chromiumBinary: browserBinary } : {}) }),
+      },
     }),
   ],
   // Build-time constant so the Chrome background tree-shakes the Firefox-only

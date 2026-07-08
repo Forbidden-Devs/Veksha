@@ -21,10 +21,23 @@ production), `CORS_ALLOW_ORIGINS`, `VEKSHA_DEBUG_API`.
 
 ## Auth & storage
 
-`POST /api/auth/register {"username"}` issues a bearer token (once). Every
-other endpoint requires `Authorization: Bearer <token>`; WebSocket routes take
-`?token=`. There is no login/recovery yet — a lost token means a new account
-(Google OAuth is the planned replacement).
+`POST /api/auth/register {"display_name"}` creates an account under a
+generated internal id (`username`, keys every table; the display name is an
+editable settings field) and issues a bearer token (once). Accounts created
+before the id/name split keep their self-chosen username as the id and fall
+back to it as the display name. Every other endpoint requires
+`Authorization: Bearer <token>`; WebSocket routes authenticate with a first
+message `{"type": "auth", "token": "..."}` after connecting (never in the
+URL — query strings end up in access logs).
+
+Google sign-in (`POST /api/auth/google {"id_token"}`) is enabled by setting
+`GOOGLE_CLIENT_ID`: the ID token is verified via Google's tokeninfo endpoint
+(audience/issuer checked locally), and the linked account's bearer token is
+re-issued on every login — so a Google-linked account survives cleared client
+storage. First login creates an account with the Google profile name (or
+e-mail local part) as the display name. `POST /api/auth/google/link` attaches
+a Google identity to an existing account (409 if the identity belongs to
+someone else). Without a Google link, a lost token still means a new account.
 
 All user data (accounts, KBs, chat history) lives in SQLite at
 `data/veksha.db` (WAL mode). The KB is stored as one JSON document per user;
@@ -58,6 +71,7 @@ api/                  routers (one file per domain)
 | Route | Purpose |
 |---|---|
 | `POST /api/auth/register` | create account, returns bearer token |
+| `POST /api/auth/google`, `/api/auth/google/link` | Google sign-in / link identity |
 | `POST /api/message` | assistant chat: answer questions or edit the KB |
 | `POST /api/translate`, `/api/quick_translate` | selection translation (+background KB update) |
 | `POST /api/explain` | expanded explanation for a selection |

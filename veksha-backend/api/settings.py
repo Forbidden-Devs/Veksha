@@ -27,6 +27,7 @@ router = APIRouter()
 
 
 class SettingsRequest(BaseModel):
+    display_name: str | None = Field(None, max_length=64)  # None = keep stored value
     english_level: str | None = None
     goals: str = ""
     general_prompt: str = ""
@@ -37,6 +38,7 @@ class SettingsRequest(BaseModel):
 
 
 class SettingsResponse(BaseModel):
+    display_name: str = ""
     english_level: str | None = None
     goals: str = ""
     general_prompt: str = ""
@@ -100,6 +102,9 @@ def _due_word_names(storage: UserStorage, limit: int = 8) -> list[str]:
 def _settings_response(storage: UserStorage) -> SettingsResponse:
     s = storage.settings
     return SettingsResponse(
+        # Accounts created before the id/display-name split have no
+        # display_name — fall back to their self-chosen account id.
+        display_name=s.display_name or storage.username,
         english_level=s.english_level,
         goals=s.goals,
         general_prompt=s.general_prompt,
@@ -124,9 +129,15 @@ async def api_post_settings(req: SettingsRequest, username: CurrentUser) -> Sett
             detail=f"Invalid english_level. Must be one of: {', '.join(VALID_ENGLISH_LEVELS)}",
         )
     storage = get_storage(username)
-    # Preserve the stored level when the client omits it (partial update).
+    # Preserve stored values when the client omits them (partial update).
     level = req.english_level if req.english_level is not None else storage.settings.english_level
+    display_name = (
+        req.display_name.strip()
+        if req.display_name is not None and req.display_name.strip()
+        else storage.settings.display_name
+    )
     storage.settings = UserSettings(
+        display_name=display_name,
         english_level=level,
         goals=req.goals,
         general_prompt=req.general_prompt,

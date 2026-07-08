@@ -79,10 +79,13 @@ export function TrainingWindow({ username, onClose }: { username: string; onClos
 
       const wsBase = CONFIG.BACKEND_URL.replace(/^http/, "ws");
       const token = await api.getAuthToken();
-      const ws = new WebSocket(`${wsBase}/api/training/ws?token=${encodeURIComponent(token)}`);
+      const ws = new WebSocket(`${wsBase}/api/training/ws`);
       wsRef.current = ws;
 
       ws.onopen = () => {
+        // Auth must be the first message — the token never travels in the
+        // URL (query strings leak into server/proxy logs).
+        ws.send(JSON.stringify({ type: "auth", token }));
         for (let i = 0; i < target; i++) {
           ws.send(JSON.stringify({ type: "request_task" }));
         }

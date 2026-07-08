@@ -20,6 +20,10 @@ OPENAI_SMART_MODEL = os.getenv("OPENAI_SMART_MODEL", "gpt-4.1")   # smarter mode
 OPENAI_STT_MODEL = os.getenv("OPENAI_STT_MODEL", "gpt-4o-mini-transcribe")  # low-cost speech-to-text
 OPENAI_STT_FALLBACK_MODEL = os.getenv("OPENAI_STT_FALLBACK_MODEL", "whisper-1")
 
+# Google OAuth: the client ID whose ID tokens /api/auth/google accepts
+# (audience check). Empty = Google sign-in disabled (503 from the endpoint).
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
+
 # Optional Redis cache for one- and two-word translations.
 # Leave REDIS_URL empty to run without caching.
 REDIS_URL = os.getenv("REDIS_URL", "")
@@ -44,10 +48,16 @@ CORS_ALLOW_ORIGINS = [
     o.strip() for o in os.getenv("CORS_ALLOW_ORIGINS", "*").split(",") if o.strip()
 ]
 
-# Debug endpoints (/api/debug/*): enabled by default only for local hosts.
+# Debug endpoints (/api/debug/*): enabled by default only for local runs.
+# The Procfile passes the host as a CLI flag (env HOST stays unset), so the
+# HOST check alone would enable debug in production — treat any Railway
+# environment as non-local explicitly.
+_IS_LOCAL_RUN = (
+    os.getenv("HOST", "127.0.0.1") in ("127.0.0.1", "localhost")
+    and not os.getenv("RAILWAY_ENVIRONMENT")
+)
 DEBUG_API = os.getenv(
-    "VEKSHA_DEBUG_API",
-    "1" if os.getenv("HOST", "127.0.0.1") in ("127.0.0.1", "localhost") else "0",
+    "VEKSHA_DEBUG_API", "1" if _IS_LOCAL_RUN else "0",
 ).lower() in {"1", "true", "yes"}
 
 # ---------------------------------------------------------------------------

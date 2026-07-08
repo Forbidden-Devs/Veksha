@@ -1,10 +1,17 @@
 import { useEffect, useState } from "react";
 import * as api from "../../shared/api";
+import { GoogleMark } from "../../shared/GoogleMark";
 import { useI18n, useT } from "../../shared/i18n";
 import { CONFIG } from "../../shared/config";
 import { LANGUAGES } from "../../shared/languages";
-import { storageSet } from "../../shared/platform";
+import { isExtension, storageGet, storageRemove, storageSet } from "../../shared/platform";
 import { useApp } from "../App";
+
+// Written by the background when a Google-link flow finishes after the popup
+// has already closed (the OAuth window steals focus and kills the popup).
+const GOOGLE_LINK_RESULT_KEY = "vk_google_link_result";
+
+type GoogleLinkResult = { ok: boolean; email?: string; error?: string };
 
 const LANG_OPTIONS = LANGUAGES.filter((l) => l.code !== "auto");
 
@@ -14,10 +21,14 @@ function detectNativeLang(): string {
 }
 
 export function SettingsScreen() {
-  const { username, settingsMode, navigateTo, setLangPair, targetLang: appTargetLang, nativeLang: appNativeLang } = useApp();
+  const { username, settingsMode, navigateTo, setLangPair, signOut, targetLang: appTargetLang, nativeLang: appNativeLang } = useApp();
   const { switchLanguage, translating } = useI18n();
   const t = useT();
 
+  const [displayName, setDisplayName] = useState("");
+  const [account, setAccount] = useState<api.AccountData | null>(null);
+  const [linking, setLinking] = useState(false);
+  const [linkError, setLinkError] = useState<string | null>(null);
   const [level, setLevel] = useState("");
   const [goals, setGoals] = useState("");
   const [prompt, setPrompt] = useState("");
@@ -31,6 +42,54 @@ export function SettingsScreen() {
   const [settingsLoaded, setSettingsLoaded] = useState(false);
 
   const isOnboarding = settingsMode === "onboarding";
+  const canLinkGoogle = isExtension && Boolean(CONFIG.GOOGLE_CLIENT_ID);
+
+  useEffect(() => {
+    if (isOnboarding) return;
+    api.getAccount().then(setAccount).catch(() => {});
+    // Show the outcome of a link flow that finished after the popup closed.
+    storageGet([GOOGLE_LINK_RESULT_KEY]).then((res) => {
+      const r = res[GOOGLE_LINK_RESULT_KEY] as GoogleLinkResult | undefined;
+      if (!r) return;
+      storageRemove([GOOGLE_LINK_RESULT_KEY]);
+      applyLinkResult(r);
+    }).catch(() => {});
+  }, [username, isOnboarding]);
+
+  function applyLinkResult(r: GoogleLinkResult) {
+    if (r.ok) {
+      setLinkError(null);
+      setAccount((a) => (a ? { ...a, google_linked: true, google_email: r.email ?? "" } : a));
+    } else if (r.error !== "cancelled") {
+      setLinkError(r.error === "taken" ? t.settings_google_link_taken : t.onboarding_google_err);
+    }
+  }
+
+  async function handleLinkGoogle() {
+    setLinking(true);
+    setLinkError(null);
+    try {
+      // The flow runs in the background — it survives this popup closing.
+      const r = (await chrome.runtime.sendMessage({ type: "VEKSHA_GOOGLE_LINK" })) as
+        | GoogleLinkResult
+        | undefined;
+      if (r) {
+        applyLinkResult(r);
+        await storageRemove([GOOGLE_LINK_RESULT_KEY]);
+      }
+    } catch {
+      // Popup survived but messaging failed — the persisted result (if any)
+      // will be shown on the next open.
+    } finally {
+      setLinking(false);
+    }
+  }
+
+  async function handleSignOut() {
+    // Without a Google link the profile becomes unreachable after sign-out.
+    if (!account?.google_linked && !confirm(t.settings_signout_confirm)) return;
+    await signOut();
+  }
 
   // CEFR grade scale (labels are universal codes — no translation needed).
   const ENGLISH_LEVELS = [
@@ -54,6 +113,7 @@ export function SettingsScreen() {
     setError(null);
     api.getSettings(username).then((s) => {
       if (!alive) return;
+      setDisplayName(s.display_name ?? "");
       setLevel(s.english_level ?? "");
       setGoals(s.goals);
       setPrompt(s.general_prompt);
@@ -81,6 +141,7 @@ export function SettingsScreen() {
     setSaving(true);
     try {
       await api.saveSettings(username, {
+        displayName,
         englishLevel: level,
         goals,
         generalPrompt: prompt,
@@ -127,6 +188,17 @@ export function SettingsScreen() {
         {isOnboarding && (
           <p className="settings-intro">{t.settings_intro}</p>
         )}
+
+        <label className="field-label" htmlFor="settings-display-name">{t.settings_display_name}</label>
+        <input
+          id="settings-display-name"
+          className="text-input"
+          type="text"
+          maxLength={64}
+          placeholder={t.onboarding_name_placeholder}
+          value={displayName}
+          onChange={(e) => setDisplayName(e.target.value)}
+        />
 
         <label className="field-label" htmlFor="settings-native-lang">{t.settings_native_lang}</label>
         <select
@@ -237,6 +309,28 @@ export function SettingsScreen() {
         </label>
 
         {error && <p className="onboarding-error">{error}</p>}
+
+        {!isOnboarding && (
+          <div className="settings-account">
+            <label className="field-label">{t.settings_account}</label>
+            {account?.google_linked ? (
+              <p className="settings-account-status">
+                <GoogleMark />
+                {t.settings_google_linked}
+                {account.google_email ? ` · ${account.google_email}` : ""}
+              </p>
+            ) : canLinkGoogle ? (
+              <button className="btn btn-google" disabled={linking} onClick={handleLinkGoogle}>
+                <GoogleMark />
+                {t.settings_google_link}
+              </button>
+            ) : null}
+            {linkError && <p className="onboarding-error">{linkError}</p>}
+            <button className="btn btn-signout" onClick={handleSignOut}>
+              {t.settings_signout}
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="settings-footer">
