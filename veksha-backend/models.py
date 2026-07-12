@@ -17,7 +17,10 @@ from typing import Any, Literal, Optional, Union
 @dataclass
 class Word:
     name: str                              # word or phrase
+    language: str = ""                     # target language this word belongs to
     context: str = ""                      # context from the source text (empty if none)
+    translation: str = ""                  # saved dictionary translation
+    transcription: str = ""                # IPA or readable phonetic transcription
     counter: int = -1                      # -1 = new (not reviewed yet); otherwise number of reviews
     known: Union[bool, str] = False        # True/False or string explaining what user doesn't know
     delayed: bool = False                  # delayed — priority +1 in next training session
@@ -38,7 +41,10 @@ class Word:
     def from_dict(d: dict) -> "Word":
         return Word(
             name=d["name"],
+            language=d.get("language", ""),
             context=d.get("context", ""),
+            translation=d.get("translation", ""),
+            transcription=d.get("transcription", ""),
             counter=d.get("counter", -1),
             known=d.get("known", False),
             delayed=d.get("delayed", False),
@@ -123,11 +129,9 @@ VALID_ENGLISH_LEVELS: tuple[str, ...] = (
 @dataclass
 class UserSettings:
     display_name: str = ""                 # user-facing name; the account id (username) is internal
-    english_level: Optional[str] = None    # one of VALID_ENGLISH_LEVELS, None = not set (onboarding)
-    goals: str = ""                        # "Improve speaking, expand vocabulary, ..."
-    general_prompt: str = ""               # "Be supportive, correct my mistakes, ..."
     native_lang: str = ""                  # ISO 639-1, e.g. "ru" — user's native language
-    target_lang: str = "en"               # ISO 639-1, e.g. "en" — language being studied
+    target_lang: str = ""                  # active language being studied
+    language_settings: dict[str, dict[str, str]] = field(default_factory=dict)
     # Reminder intensity (single slider):
     #   1 = plain system notification only
     #   2 = + in-page pop-up with page blur
@@ -135,28 +139,23 @@ class UserSettings:
     reminder_level: int = 2
     # Separate flag: the in-page close button runs away ("overseer" mode).
     overseer: bool = False
+    voice_enabled: bool = True
 
-    def to_dict(self) -> dict:
-        return asdict(self)
+    @property
+    def target_langs(self) -> list[str]:
+        return list(self.language_settings)
 
-    @staticmethod
-    def from_dict(d: dict) -> "UserSettings":
-        # Migrate legacy fields: aggressive_notifications / intrusive_notifications
-        level = d.get("reminder_level")
-        if level is None:
-            intrusive = d.get("intrusive_notifications", False)
-            aggressive = d.get("aggressive_notifications", True)
-            level = (3 if aggressive else 2) if intrusive else (2 if aggressive else 1)
-        return UserSettings(
-            display_name=d.get("display_name", ""),
-            english_level=d.get("english_level"),
-            goals=d.get("goals", ""),
-            general_prompt=d.get("general_prompt", ""),
-            native_lang=d.get("native_lang", ""),
-            target_lang=d.get("target_lang", "en"),
-            reminder_level=int(level),
-            overseer=d.get("overseer", d.get("intrusive_notifications", False)),
-        )
+    @property
+    def english_level(self) -> Optional[str]:
+        return self.language_settings.get(self.target_lang, {}).get("level") or None
+
+    @property
+    def goals(self) -> str:
+        return self.language_settings.get(self.target_lang, {}).get("goals", "")
+
+    @property
+    def general_prompt(self) -> str:
+        return self.language_settings.get(self.target_lang, {}).get("prompt", "")
 
     def is_onboarded(self) -> bool:
         return bool(self.native_lang and self.target_lang)

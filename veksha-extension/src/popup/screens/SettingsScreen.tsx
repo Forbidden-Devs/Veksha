@@ -5,6 +5,7 @@ import { useI18n, useT } from "../../shared/i18n";
 import { CONFIG } from "../../shared/config";
 import { LANGUAGES } from "../../shared/languages";
 import { isExtension, storageGet, storageRemove, storageSet } from "../../shared/platform";
+import { THEMES, type ThemeName, getTheme, setTheme } from "../../shared/theme";
 import { useApp } from "../App";
 
 // Written by the background when a Google-link flow finishes after the popup
@@ -26,6 +27,7 @@ export function SettingsScreen() {
   const t = useT();
 
   const [displayName, setDisplayName] = useState("");
+  const [theme, setThemeState] = useState<ThemeName>("dusk");
   const [account, setAccount] = useState<api.AccountData | null>(null);
   const [linking, setLinking] = useState(false);
   const [linkError, setLinkError] = useState<string | null>(null);
@@ -34,8 +36,11 @@ export function SettingsScreen() {
   const [prompt, setPrompt] = useState("");
   const [nativeLang, setNativeLang] = useState(() => appNativeLang || detectNativeLang());
   const [targetLang, setTargetLang] = useState(() => appTargetLang || "en");
+  const [targetLangs, setTargetLangs] = useState<string[]>(() => [appTargetLang || "en"]);
+  const [languageSettings, setLanguageSettings] = useState<Record<string, { level: string; goals: string; prompt: string }>>({});
   const [reminderLevel, setReminderLevel] = useState(2);
   const [overseer, setOverseer] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [loadingSettings, setLoadingSettings] = useState(true);
@@ -43,6 +48,13 @@ export function SettingsScreen() {
 
   const isOnboarding = settingsMode === "onboarding";
   const canLinkGoogle = isExtension && Boolean(CONFIG.GOOGLE_CLIENT_ID);
+
+  useEffect(() => { getTheme().then(setThemeState); }, []);
+
+  async function pickTheme(name: ThemeName) {
+    setThemeState(name);
+    await setTheme(name);
+  }
 
   useEffect(() => {
     if (isOnboarding) return;
@@ -119,8 +131,12 @@ export function SettingsScreen() {
       setPrompt(s.general_prompt);
       setNativeLang(s.native_lang || detectNativeLang());
       setTargetLang(s.target_lang || "en");
+      setTargetLangs(s.target_langs?.length ? s.target_langs : [s.target_lang || "en"]);
+      setLanguageSettings(s.language_settings ?? {});
       setReminderLevel(s.reminder_level ?? 2);
       setOverseer(s.overseer ?? false);
+      setVoiceEnabled(s.voice_enabled ?? true);
+      storageSet({ [`vk_voice_enabled_${username}`]: s.voice_enabled ?? true });
       setSettingsLoaded(true);
     }).catch((err) => {
       if (!alive) return;
@@ -140,6 +156,10 @@ export function SettingsScreen() {
     setError(null);
     setSaving(true);
     try {
+      const updatedLanguageSettings = {
+        ...languageSettings,
+        [targetLang]: { level, goals, prompt },
+      };
       await api.saveSettings(username, {
         displayName,
         englishLevel: level,
@@ -147,17 +167,41 @@ export function SettingsScreen() {
         generalPrompt: prompt,
         nativeLang,
         targetLang,
+        targetLangs,
+        languageSettings: updatedLanguageSettings,
         reminderLevel,
         overseer,
+        voiceEnabled,
       });
       storageSet({ [CONFIG.STORAGE_KEY_NATIVE_LANG]: nativeLang });
       setLangPair(targetLang, nativeLang);
       await switchLanguage(nativeLang);
-      navigateTo("chat");
+      navigateTo("home");
     } catch (err) {
       setError(`${t.settings_err_save}: ${(err as Error).message}`);
     } finally {
       setSaving(false);
+    }
+  }
+
+  function handleTargetLangChange(nextLang: string) {
+    const updated = {
+      ...languageSettings,
+      [targetLang]: { level, goals, prompt },
+    };
+    const next = updated[nextLang] ?? { level: "", goals: "", prompt: "" };
+    setLanguageSettings(updated);
+    setTargetLang(nextLang);
+    setLevel(next.level);
+    setGoals(next.goals);
+    setPrompt(next.prompt);
+  }
+
+  function handleVoiceEnabled(enabled: boolean) {
+    setVoiceEnabled(enabled);
+    storageSet({ [`vk_voice_enabled_${username}`]: enabled });
+    if (enabled && isExtension) {
+      chrome.storage.local.set({ vk_voice_permission_state: "unknown" }).catch(() => {});
     }
   }
 
@@ -172,7 +216,7 @@ export function SettingsScreen() {
       <header className="menu-header">
         <span className="menu-title">{t.settings_title}</span>
         {!isOnboarding && (
-          <button className="icon-btn" aria-label="Close" style={{ marginLeft: "auto" }} onClick={() => navigateTo("chat")}>
+          <button className="icon-btn" aria-label="Close" style={{ marginLeft: "auto" }} onClick={() => navigateTo("home")}>
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M18 6L6 18M6 6l12 12" />
             </svg>
@@ -187,6 +231,24 @@ export function SettingsScreen() {
 
         {isOnboarding && (
           <p className="settings-intro">{t.settings_intro}</p>
+        )}
+
+        {!isOnboarding && (
+          <>
+            <label className="field-label">{t.settings_theme}</label>
+            <div className="theme-swatches">
+              {THEMES.map((name) => (
+                <button
+                  key={name}
+                  type="button"
+                  className={`theme-swatch theme-swatch-${name}${theme === name ? " is-active" : ""}`}
+                  title={name}
+                  aria-label={name}
+                  onClick={() => pickTheme(name)}
+                />
+              ))}
+            </div>
+          </>
         )}
 
         <label className="field-label" htmlFor="settings-display-name">{t.settings_display_name}</label>
@@ -217,9 +279,9 @@ export function SettingsScreen() {
           id="settings-target-lang"
           className="select-input"
           value={targetLang}
-          onChange={(e) => setTargetLang(e.target.value)}
+          onChange={(e) => handleTargetLangChange(e.target.value)}
         >
-          {LANG_OPTIONS.map((l) => (
+          {LANG_OPTIONS.filter((l) => targetLangs.includes(l.code)).map((l) => (
             <option key={l.code} value={l.code}>{l.name}</option>
           ))}
         </select>
@@ -305,6 +367,15 @@ export function SettingsScreen() {
             disabled={reminderLevel < 2}
             onChange={(e) => setOverseer(e.target.checked)}
           />
+          <span className="settings-toggle-slider" aria-hidden="true" />
+        </label>
+
+        <label className="settings-toggle">
+          <span className="settings-toggle-copy">
+            <span className="settings-toggle-title">{t.settings_voice_input}</span>
+            <span className="settings-toggle-desc">{t.settings_voice_input_desc}</span>
+          </span>
+          <input type="checkbox" checked={voiceEnabled} onChange={(e) => handleVoiceEnabled(e.target.checked)} />
           <span className="settings-toggle-slider" aria-hidden="true" />
         </label>
 

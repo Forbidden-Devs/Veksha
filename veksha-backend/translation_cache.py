@@ -78,7 +78,7 @@ def _cache_key(
         separators=(",", ":"),
     )
     digest = hashlib.sha256(payload.encode("utf-8")).hexdigest()
-    return f"veksha:translation:v1:{digest}"
+    return f"veksha:translation:v2:{digest}"
 
 
 async def _get_redis() -> Any:

@@ -18,7 +18,7 @@ import time
 import uuid
 
 import i18n
-from llm.training import check_synonym_appropriate, get_reverse_translations, check_training_answer
+from llm.training import check_synonym_appropriate, get_reverse_translations, check_training_answer, generate_tutor_task
 from config import REVIEW_WINDOW_HOURS
 from models import Word
 from storage import UserStorage
@@ -45,7 +45,7 @@ def get_available_words(storage: UserStorage) -> list[Word]:
     now = time.time()
     window = REVIEW_WINDOW_HOURS * 3600
 
-    active = [w for w in storage.words if not w.known]
+    active = [w for w in storage.words if w.language == storage.settings.target_lang and not w.known]
     due = [w for w in active if w.counter >= 0 and w.next_review - now <= window]
     seen = {w.name for w in due}
     new_words = [w for w in active if w.counter == -1 and w.name not in seen]
@@ -87,6 +87,17 @@ async def generate_task(word: Word, level: str, native_lang: str = "en") -> dict
     else:  # example
         question = i18n.get_string("training_q_example", native_lang, word=word.name)
 
+    tutor_task = await generate_tutor_task(
+        word=word.name,
+        context=word.context,
+        task_type=task_type,
+        level=level,
+        native_lang=native_lang,
+        seed_question=question,
+    )
+    if tutor_task["question"]:
+        question = tutor_task["question"]
+
     task = {
         "task_id": str(uuid.uuid4()),
         "word": word.name,
@@ -94,6 +105,7 @@ async def generate_task(word: Word, level: str, native_lang: str = "en") -> dict
         "task_type": task_type,
         "question": question,
         "counter": word.counter,
+        "skill": tutor_task["skill"],
         **extra,
     }
     log.info("[generate_task] word=%r task_type=%s", word.name, task_type)

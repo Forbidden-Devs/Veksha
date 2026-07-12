@@ -19,6 +19,7 @@ chrome.runtime.onMessage.addListener((msg: Record<string, unknown>, _sender, sen
     void capture.startVoice({
       requestId: String(msg.requestId || ""),
       language: typeof msg.language === "string" ? msg.language : undefined,
+      token: typeof msg.token === "string" ? msg.token : undefined,
     });
     sendResponse({ ok: true });
     return false;

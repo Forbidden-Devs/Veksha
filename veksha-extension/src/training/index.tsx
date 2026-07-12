@@ -4,6 +4,10 @@ import { TrainingWindow } from "../popup/overlays/TrainingWindow";
 import { I18nProvider, useT } from "../shared/i18n";
 import { CONFIG } from "../shared/config";
 import "../popup/popup.css";
+import "../popup/theme.css";
+import { initTheme } from "../shared/theme";
+
+void initTheme();
 import "../shared/standalone.css";
 
 function TrainingApp() {

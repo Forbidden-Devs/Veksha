@@ -83,13 +83,13 @@ class UserStorage:
         data = db.kb_get(username)
         if data is None:
             log.info("[storage] no KB for user %r, starting empty", username)
-            return cls(username=username)
+            return cls(username=username, settings=UserSettings(**(db.settings_get(username) or {})))
 
         storage = cls(
             username=username,
             words=[Word.from_dict(w) for w in data.get("words", [])],
             lesson_topics=[LessonTopic.from_dict(t) for t in data.get("lesson_topics", [])],
-            settings=UserSettings.from_dict(data.get("settings", {})),
+            settings=UserSettings(**(db.settings_get(username) or {})),
         )
         log.info(
             "[storage] loaded KB for user %r: %d words, %d topics, onboarded=%s",
@@ -101,8 +101,8 @@ class UserStorage:
         db.kb_set(self.username, {
             "words": [w.to_dict() for w in self.words],
             "lesson_topics": [t.to_dict() for t in self.lesson_topics],
-            "settings": self.settings.to_dict(),
         })
+        db.settings_set(self.username, self.settings)
         log.debug(
             "[storage] saved KB for user %r: %d words, %d topics",
             self.username, len(self.words), len(self.lesson_topics),
@@ -115,7 +115,7 @@ class UserStorage:
     def find_word(self, name: str) -> Optional[Word]:
         n = _normalize(name)
         for w in self.words:
-            if _normalize(w.name) == n:
+            if w.language == self.settings.target_lang and _normalize(w.name) == n:
                 return w
         return None
 
@@ -199,6 +199,7 @@ class UserStorage:
         self.words.append(
             Word(
                 name=patch.value,
+                language=self.settings.target_lang,
                 context=patch.context,
                 counter=patch.counter,
                 known=patch.known,
@@ -417,4 +418,3 @@ def get_storage(username: str) -> UserStorage:
 def drop_storage(username: str) -> None:
     """Forget the cached object (used by debug reset)."""
     _storages.pop(username, None)
-

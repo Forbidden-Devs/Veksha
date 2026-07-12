@@ -964,6 +964,149 @@ html, body, #root {
   flex-shrink: 0;
 }
 
+.immersion-screen {
+  gap: 12px;
+  padding: 18px 16px;
+  overflow-y: auto;
+}
+
+.immersion-screen .imm-modal-icon {
+  margin: 0 auto;
+  font-size: 34px;
+}
+
+.immersion-screen .btn {
+  margin-top: auto;
+  flex-shrink: 0;
+}
+
+.dictionary-screen {
+  padding: 12px 14px 16px;
+  gap: 12px;
+}
+
+.dictionary-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+.dictionary-actions .btn {
+  padding: 9px 14px;
+}
+
+.dictionary-screen .word-list {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.dictionary-word {
+  display: grid;
+  grid-template-columns: minmax(90px, 1fr) minmax(70px, .8fr) minmax(100px, 1.25fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  cursor: pointer;
+}
+
+.dictionary-word-main {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dictionary-inline-transcription {
+  color: var(--av-muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.dictionary-row-translation {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.dictionary-details {
+  display: grid;
+  gap: 7px;
+  padding: 0 12px 12px;
+  color: var(--av-ink);
+  font-size: 12px;
+}
+
+.dictionary-details > div > span:first-child {
+  color: var(--av-muted);
+}
+
+.dictionary-word-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.anki-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: min(480px, 100%);
+  height: 100%;
+  margin: 0 auto;
+}
+
+.anki-progress {
+  color: var(--m-dim);
+  text-align: center;
+  font-size: 12px;
+}
+
+.anki-card {
+  flex: 1;
+  min-height: 180px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 18px;
+  padding: 24px;
+  border-radius: var(--r-lg);
+  background: var(--m-surface);
+  color: var(--m-fg);
+  text-align: center;
+}
+
+.anki-front { font-size: 30px; font-weight: 650; }
+.anki-back { font-size: 22px; color: var(--m-fg); }
+.anki-back small { display: block; margin-top: 6px; color: var(--m-dim); font-size: 13px; }
+
+.anki-answer-row {
+  display: flex;
+  gap: 8px;
+}
+
+.anki-answer-row .text-input { flex: 1; }
+.anki-answer-row .mic-btn { position: static; flex: 0 0 42px; height: 42px; }
+.anki-rating { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.anki-again { background: #a63243 !important; color: #fff !important; }
+.anki-good { background: #267a48 !important; color: #fff !important; }
+.anki-empty { display: grid; place-items: center; gap: 18px; height: 100%; font-size: 44px; }
+
+.training-skill {
+  align-self: flex-start;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: var(--m-surface-2);
+  color: var(--m-dim);
+  font-size: 11px;
+}
+
 .btn-block {
   width: 100%;
 }
@@ -2518,11 +2661,38 @@ html, body, #root {
 }
 
 .lang-pick-header {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 20px 20px 0;
   flex-shrink: 0;
+}
+
+.onboarding-card {
+  position: relative;
+}
+
+.onboarding-back {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  border: 0;
+  background: transparent;
+  color: var(--av-muted);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 6px;
+}
+
+.onboarding-back:hover {
+  color: var(--av-ink);
+}
+
+.onboarding-back:disabled {
+  cursor: default;
+  opacity: 0.5;
 }
 
 .lang-pick-header .logo-badge {

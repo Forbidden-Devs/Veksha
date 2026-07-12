@@ -28,14 +28,22 @@ export function speakText(text: string, languageCode: string): boolean {
   const synth = window.speechSynthesis;
   const utterance = new SpeechSynthesisUtterance(cleanText);
   utterance.lang = locale;
-  utterance.rate = 0.95;
+  utterance.rate = 0.86;
   utterance.pitch = 1;
 
   const voices = synth.getVoices();
-  utterance.voice =
-    voices.find((voice) => voice.lang.toLowerCase() === locale.toLowerCase())
-    ?? voices.find((voice) => voice.lang.toLowerCase().startsWith(`${prefix}-`))
-    ?? null;
+  const matching = voices.filter((voice) => voice.lang.toLowerCase().startsWith(prefix));
+  const score = (voice: SpeechSynthesisVoice) => {
+    const name = voice.name.toLowerCase();
+    let value = 0;
+    if (voice.lang.toLowerCase() === locale.toLowerCase()) value += 20;
+    if (voice.localService) value += 8;
+    if (/google|microsoft|apple|samantha|daniel|anna|milena/.test(name)) value += 6;
+    if (/compact|enhanced|natural|premium/.test(name)) value += 3;
+    if (/zarvox|whisper|bells|boing|bubbles|cellos|organ|trinoids/.test(name)) value -= 50;
+    return value;
+  };
+  utterance.voice = matching.sort((a, b) => score(b) - score(a))[0] ?? null;
 
   synth.cancel();
   synth.speak(utterance);

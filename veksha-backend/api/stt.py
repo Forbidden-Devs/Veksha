@@ -30,7 +30,7 @@ class STTResponse(BaseModel):
 @router.post("/api/stt", response_model=STTResponse)
 @router.post("/stt/", response_model=STTResponse)
 async def api_stt(
-    username: CurrentUser,
+    _username: CurrentUser,
     file: UploadFile = File(...),
     language: str = Form(""),
 ) -> STTResponse:

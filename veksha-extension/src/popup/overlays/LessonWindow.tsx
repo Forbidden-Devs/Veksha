@@ -428,7 +428,7 @@ export function LessonWindow({
                     state={mic.state}
                     volume={mic.volume}
                     onClick={mic.toggle}
-                    disabled={!isAsking}
+                    disabled={!isAsking || mic.disabled}
                   />
                   {mic.state === "transcribing" && (
                     <div className="stt-overlay"><span className="stt-overlay-dot" /></div>

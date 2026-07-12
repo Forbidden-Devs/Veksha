@@ -1,4 +1,9 @@
 async function requestPermission() {
+  const button = document.querySelector<HTMLButtonElement>("#allow-microphone");
+  if (button) {
+    button.disabled = true;
+    button.textContent = "Requesting access…";
+  }
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     stream.getTracks().forEach(track => track.stop());
@@ -9,8 +14,10 @@ async function requestPermission() {
       error: err instanceof Error ? err.name : String(err),
     });
   } finally {
-    window.close();
+    window.setTimeout(() => window.close(), 100);
   }
 }
 
-void requestPermission();
+document.querySelector("#allow-microphone")?.addEventListener("click", () => {
+  void requestPermission();
+}, { once: true });

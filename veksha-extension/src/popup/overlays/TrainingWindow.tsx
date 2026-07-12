@@ -122,6 +122,7 @@ export function TrainingWindow({ username, onClose }: { username: string; onClos
         question: msg.question as string,
         reverse_text: (msg.reverse_text as string | undefined) ?? undefined,
         counter: msg.counter as number | undefined,
+        skill: (msg.skill as string | undefined) ?? undefined,
       };
       queueRef.current.push(task);
       if (phaseRef.current === "loading") showNext();
@@ -267,6 +268,7 @@ export function TrainingWindow({ username, onClose }: { username: string; onClos
               className="training-prompt"
               dangerouslySetInnerHTML={{ __html: sanitize(currentTask.question) }}
             />
+            {currentTask.skill && <div className="training-skill">🎓 {currentTask.skill}</div>}
 
             {checkResult && (
               <div
@@ -295,7 +297,7 @@ export function TrainingWindow({ username, onClose }: { username: string; onClos
                 state={mic.state}
                 volume={mic.volume}
                 onClick={mic.toggle}
-                disabled={!isAsking}
+                disabled={!isAsking || mic.disabled}
               />
               {mic.state === "transcribing" && (
                 <div className="stt-overlay"><span className="stt-overlay-dot" /></div>

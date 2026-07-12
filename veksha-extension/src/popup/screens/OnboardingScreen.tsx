@@ -3,14 +3,16 @@ import { GoogleMark } from "../../shared/GoogleMark";
 import { useT } from "../../shared/i18n";
 
 interface Props {
+  initialName?: string;
   onComplete: (username: string) => Promise<void>;
   /** Google sign-in; omitted when CONFIG.GOOGLE_CLIENT_ID is not set. */
   onGoogle?: () => Promise<void>;
+  onBack: () => void;
 }
 
-export function OnboardingScreen({ onComplete, onGoogle }: Props) {
+export function OnboardingScreen({ initialName = "", onComplete, onGoogle, onBack }: Props) {
   const t = useT();
-  const [value, setValue] = useState("");
+  const [value, setValue] = useState(initialName);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -55,6 +57,9 @@ export function OnboardingScreen({ onComplete, onGoogle }: Props) {
   return (
     <section className="screen screen-onboarding">
       <div className="onboarding-card">
+        <button className="onboarding-back" type="button" onClick={onBack} disabled={loading}>
+          <span aria-hidden="true">←</span> {t.tutorial_back}
+        </button>
         <div className="logo-badge">Ve</div>
         <h1 className="onboarding-title">{t.onboarding_title}</h1>
         <p className="onboarding-subtitle">{t.onboarding_subtitle}</p>

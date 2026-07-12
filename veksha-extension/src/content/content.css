@@ -17,6 +17,51 @@
   --av-error: #b3413a;
 }
 
+
+/* ---------------------------------------------------------------------- */
+/* Themes: content overlays follow the app palette (shared/theme.ts).      */
+/* The attribute is set on <html> by content.ts from storage (vk_theme).   */
+/* ---------------------------------------------------------------------- */
+
+html[data-vk-theme="dusk"] {
+  --av-ink: #f2eefb;
+  --av-muted: rgba(242, 238, 251, 0.6);
+  --av-border: #3a3448;
+  --av-surface: #221e2c;
+  --av-accent: #d4408d;
+  --av-accent-soft: rgba(212, 64, 141, 0.18);
+  --av-gradient: linear-gradient(135deg, #d4408d 0%, #7a5cd0 135%);
+  --av-error: #e07b74;
+}
+
+html[data-vk-theme="hazel"] {
+  --av-ink: #f7efe6;
+  --av-muted: rgba(247, 239, 230, 0.6);
+  --av-border: #453931;
+  --av-surface: #2a221b;
+  --av-accent: #d98e3b;
+  --av-accent-soft: rgba(217, 142, 59, 0.18);
+  --av-gradient: linear-gradient(135deg, #d98e3b 0%, #b25b4a 135%);
+  --av-error: #e07b74;
+}
+
+html[data-vk-theme="lavender"] {
+  --av-accent: #c04a94;
+  --av-accent-soft: #f5e3ef;
+  --av-gradient: linear-gradient(135deg, #c04a94 0%, #7a5cd0 135%);
+}
+
+html[data-vk-theme="midnight"] {
+  --av-ink: #eef4f8;
+  --av-muted: rgba(238, 244, 248, 0.6);
+  --av-border: #2c3a48;
+  --av-surface: #1b242e;
+  --av-accent: #2fa8c9;
+  --av-accent-soft: rgba(47, 168, 201, 0.18);
+  --av-gradient: linear-gradient(135deg, #2fa8c9 0%, #4a6bd8 135%);
+  --av-error: #e07b74;
+}
+
 /* ---------------------------------------------------------------------- */
 /* PDF area translate (OCR)                                                 */
 /* ---------------------------------------------------------------------- */
@@ -1097,4 +1142,73 @@
   vertical-align: super;
   line-height: 1;
   white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------------------
+   Dual subtitles — translated row above the original captions (dualsubs.ts)
+   --------------------------------------------------------------------------- */
+
+.av-dualsub {
+  position: absolute;
+  z-index: 60;
+  max-width: 86%;
+  padding: 6px 14px;
+  border-radius: 10px;
+  background: rgba(14, 12, 24, 0.78);
+  backdrop-filter: blur(6px);
+  color: #f4efff;
+  font-size: 20px;
+  line-height: 1.35;
+  text-align: center;
+  pointer-events: none;
+  white-space: normal;
+}
+
+.av-dualsub-loading {
+  color: rgba(244, 239, 255, 0.55);
+}
+
+.av-dualsub-word {
+  border-radius: 4px;
+  padding: 0 2px;
+  transition: background 0.1s ease, color 0.1s ease;
+}
+
+.av-dualsub-word.av-dualsub-hl {
+  background: var(--av-accent, #f5a9c4);
+  color: #fff;
+}
+
+.av-yt-word.av-yt-hl-src {
+  background: color-mix(in srgb, var(--av-accent, #f5a9c4) 45%, transparent);
+  border-radius: 4px;
+}
+
+.av-dualsub-toggle {
+  position: absolute;
+  z-index: 61;
+  width: 30px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 8px;
+  background: rgba(14, 12, 24, 0.6);
+  font-size: 14px;
+  cursor: pointer;
+  opacity: 0.45;
+  transition: opacity 0.12s ease;
+  pointer-events: auto;
+  filter: grayscale(1);
+}
+
+.av-dualsub-toggle:hover {
+  opacity: 1;
+}
+
+.av-dualsub-toggle.av-dualsub-toggle-on {
+  opacity: 0.9;
+  filter: none;
+  background: rgba(120, 82, 169, 0.75);
 }

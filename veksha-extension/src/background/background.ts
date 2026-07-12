@@ -58,9 +58,25 @@ type VoiceRequest = {
   language?: string;
   tabId?: number;
   permissionTried: boolean;
+  resumeTarget?: string;
 };
 
 let activeVoiceRequest: VoiceRequest | null = null;
+let pendingVoiceResumeTarget: string | undefined;
+// Once the dedicated permission page has completed, never open it again for
+// an automatically resumed request. If capture still fails, report the error
+// to the UI instead of trapping the user in a permission-window loop.
+type VoicePermissionState = "unknown" | "granted" | "denied";
+let voicePermissionState: VoicePermissionState = "unknown";
+chrome.storage.local.get(["vk_voice_permission_state"]).then((result) => {
+  const stored = result.vk_voice_permission_state;
+  if (stored === "granted" || stored === "denied") voicePermissionState = stored;
+}).catch(() => {});
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== "local" || !changes.vk_voice_permission_state) return;
+  const next = changes.vk_voice_permission_state.newValue;
+  voicePermissionState = next === "granted" || next === "denied" ? next : "unknown";
+});
 
 // Chrome backgrounds are service workers and must delegate getUserMedia/OCR to
 // an offscreen document. Firefox has no offscreen API, but its MV3 background
@@ -68,6 +84,7 @@ let activeVoiceRequest: VoiceRequest | null = null;
 // Build-time constant: on Chrome the whole direct-capture path (including the
 // tesseract.js import below) is tree-shaken out of the service worker.
 const supportsOffscreen = __BROWSER__ === "chrome";
+let creatingOffscreen: Promise<void> | null = null;
 
 let localCapturePromise: Promise<CaptureController> | null = null;
 
@@ -267,6 +284,14 @@ chrome.notifications.onClicked.addListener((notificationId) => {
 });
 
 chrome.runtime.onMessage.addListener((msg: Record<string, unknown>, _sender, sendResponse) => {
+  if (msg.type === "VOICE_PERMISSION_REQUEST") {
+    pendingVoiceResumeTarget = typeof msg.resumeTarget === "string" ? msg.resumeTarget : undefined;
+    openVoicePermissionPage()
+      .then(() => sendResponse({ ok: true }))
+      .catch((err) => sendResponse({ ok: false, error: String(err) }));
+    return true;
+  }
+
   if (msg.type === "VOICE_CAPTURE_START") {
     const requestId = String(msg.requestId || "");
     if (!requestId) {
@@ -277,18 +302,25 @@ chrome.runtime.onMessage.addListener((msg: Record<string, unknown>, _sender, sen
       requestId,
       language: typeof msg.language === "string" ? msg.language : undefined,
       tabId: _sender.tab?.id,
-      permissionTried: false,
+      permissionTried: voicePermissionState !== "unknown",
+      resumeTarget: typeof msg.resumeTarget === "string" ? msg.resumeTarget : undefined,
     };
     startVoiceCapture(activeVoiceRequest)
       .then(() => sendResponse({ ok: true }))
       .catch((err) => {
         relayVoiceMessage({ type: "VOICE_CAPTURE_ERROR", requestId, code: "capture-failed", error: String(err) });
+        if (activeVoiceRequest?.requestId === requestId) activeVoiceRequest = null;
         sendResponse({ ok: false, error: String(err) });
       });
     return true;
   }
 
   if (msg.type === "VOICE_CAPTURE_STOP") {
+    const requestId = String(msg.requestId || "");
+    if (activeVoiceRequest && requestId && activeVoiceRequest.requestId !== requestId) {
+      sendResponse({ ok: false, error: "stale-request" });
+      return false;
+    }
     stopVoiceCapture()
       .then(() => sendResponse({ ok: true }))
       .catch((err) => sendResponse({ ok: false, error: String(err) }));
@@ -405,18 +437,28 @@ chrome.runtime.onMessage.addListener((msg: Record<string, unknown>, _sender, sen
   }
 
   if (msg.type === "VOICE_PERMISSION_GRANTED") {
-    const request = activeVoiceRequest;
-    if (request) startVoiceCapture(request).catch((err) => {
-      relayVoiceMessage({ type: "VOICE_CAPTURE_ERROR", requestId: request.requestId, code: "capture-failed", error: String(err) });
-    });
+    // Focusing the permission window closes the extension popup and destroys
+    // its capture listener. Reopen a fresh popup instead of resuming a stale
+    // request that nobody can stop or receive.
+    const resumeTarget = activeVoiceRequest?.resumeTarget ?? pendingVoiceResumeTarget;
+    voicePermissionState = "granted";
+    chrome.storage.local.set({ vk_voice_permission_state: "granted" }).catch(() => {});
+    activeVoiceRequest = null;
+    pendingVoiceResumeTarget = undefined;
+    const reopen = () => setTimeout(() => chrome.action?.openPopup?.().catch(() => {}), 250);
+    if (resumeTarget) chrome.storage.local.set({ vk_voice_resume: resumeTarget }).then(reopen).catch(reopen);
+    else reopen();
     sendResponse({ ok: true });
     return false;
   }
 
   if (msg.type === "VOICE_PERMISSION_DENIED") {
+    voicePermissionState = "denied";
+    chrome.storage.local.set({ vk_voice_permission_state: "denied" }).catch(() => {});
     const requestId = activeVoiceRequest?.requestId;
     if (requestId) relayVoiceMessage({ type: "VOICE_CAPTURE_ERROR", requestId, code: "permission-denied" });
     activeVoiceRequest = null;
+    pendingVoiceResumeTarget = undefined;
     sendResponse({ ok: true });
     return false;
   }
@@ -443,9 +485,12 @@ chrome.runtime.onMessage.addListener((msg: Record<string, unknown>, _sender, sen
 });
 
 async function startVoiceCapture(request: VoiceRequest) {
+  const stored = await chrome.storage.local.get([CONFIG.STORAGE_KEY_TOKEN]);
+  const token = String(stored[CONFIG.STORAGE_KEY_TOKEN] || "");
+  if (!token) throw new Error("Missing bearer token in extension storage.");
   if (!supportsOffscreen) {
     const capture = await getLocalCapture();
-    await capture.startVoice({ requestId: request.requestId, language: request.language });
+    await capture.startVoice({ requestId: request.requestId, language: request.language, token });
     return;
   }
   await ensureOffscreenDocument();
@@ -454,6 +499,7 @@ async function startVoiceCapture(request: VoiceRequest) {
     type: "VOICE_CAPTURE_START",
     requestId: request.requestId,
     language: request.language,
+    token,
   });
 }
 
@@ -477,11 +523,17 @@ async function ensureOffscreenDocument() {
   });
   if (contexts.length > 0) return;
 
-  await offscreen.createDocument({
-    url: OFFSCREEN_DOCUMENT_PATH,
-    reasons: [chrome.offscreen.Reason.USER_MEDIA],
-    justification: "Record short microphone clips for Veksha voice answers.",
-  });
+  // Voice and OCR can request the shared offscreen host at the same time.
+  // Chrome allows only one document, so concurrent createDocument calls must
+  // share one promise.
+  if (!creatingOffscreen) {
+    creatingOffscreen = offscreen.createDocument({
+      url: OFFSCREEN_DOCUMENT_PATH,
+      reasons: [chrome.offscreen.Reason.USER_MEDIA],
+      justification: "Record short microphone clips for Veksha voice answers.",
+    }).finally(() => { creatingOffscreen = null; });
+  }
+  await creatingOffscreen;
 }
 
 function handleVoiceCaptureEvent(msg: Record<string, unknown>) {
@@ -490,8 +542,13 @@ function handleVoiceCaptureEvent(msg: Record<string, unknown>) {
 
   if (msg.type === "VOICE_CAPTURE_ERROR" && msg.code === "permission-denied" && !activeVoiceRequest.permissionTried) {
     activeVoiceRequest.permissionTried = true;
-    openVoicePermissionPage();
+    void openVoicePermissionPage().catch(() => {});
     return;
+  }
+
+  if (msg.type === "VOICE_CAPTURE_ERROR" && msg.code === "permission-denied") {
+    voicePermissionState = "denied";
+    chrome.storage.local.set({ vk_voice_permission_state: "denied" }).catch(() => {});
   }
 
   relayVoiceMessage(msg);
@@ -518,8 +575,8 @@ function relayVoiceMessage(msg: Record<string, unknown>) {
   if (tabId !== undefined) chrome.tabs.sendMessage(tabId, msg).catch(() => {});
 }
 
-function openVoicePermissionPage() {
-  chrome.windows.create({
+async function openVoicePermissionPage(): Promise<void> {
+  await chrome.windows.create({
     url: chrome.runtime.getURL(PERMISSION_PAGE_PATH),
     type: "popup",
     width: 420,
@@ -529,5 +586,7 @@ function openVoicePermissionPage() {
     const requestId = activeVoiceRequest?.requestId;
     if (requestId) relayVoiceMessage({ type: "VOICE_CAPTURE_ERROR", requestId, code: "permission-denied", error: String(err) });
     activeVoiceRequest = null;
+    pendingVoiceResumeTarget = undefined;
+    throw err;
   });
 }

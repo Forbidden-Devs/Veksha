@@ -20,6 +20,7 @@ for (let i = 0; i < rest.length; i++) {
   if (rest[i] === "--binary") binary = rest[++i];
   else viteArgs.push(rest[i]);
 }
+const devBuild = viteArgs.includes("--watch");
 
 const result = spawnSync(
   process.execPath,
@@ -30,6 +31,7 @@ const result = spawnSync(
     env: {
       ...process.env,
       TARGET_BROWSER: browser,
+      DEV_BUILD: devBuild ? "1" : "0",
       ...(binary ? { BROWSER_BINARY: binary } : {}),
     },
   },

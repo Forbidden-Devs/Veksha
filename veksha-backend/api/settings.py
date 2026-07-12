@@ -16,6 +16,8 @@ import time
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
+import llm
+import db
 from auth import CurrentUser
 from config import REMINDER_MIN_WORDS, REVIEW_WINDOW_HOURS, SCHEDULER_INTERVAL_MINUTES
 from models import VALID_ENGLISH_LEVELS, Patch, UserSettings
@@ -33,8 +35,11 @@ class SettingsRequest(BaseModel):
     general_prompt: str = ""
     native_lang: str = ""
     target_lang: str = "en"
+    target_langs: list[str] | None = None
+    language_settings: dict[str, dict[str, str]] | None = None
     reminder_level: int = Field(2, ge=1, le=3)
     overseer: bool = False
+    voice_enabled: bool | None = None
 
 
 class SettingsResponse(BaseModel):
@@ -44,8 +49,11 @@ class SettingsResponse(BaseModel):
     general_prompt: str = ""
     native_lang: str = ""
     target_lang: str = "en"
+    target_langs: list[str] = Field(default_factory=list)
+    language_settings: dict[str, dict[str, str]] = Field(default_factory=dict)
     reminder_level: int = 2
     overseer: bool = False
+    voice_enabled: bool = True
     is_onboarded: bool = False
 
 
@@ -61,11 +69,15 @@ class KBSummaryResponse(BaseModel):
     learning_count: int
     known_count: int
     topics_count: int
+    anki_reviews: int
+    training_reviews: int
 
 
 class WordEntryResponse(BaseModel):
     name: str
     context: str
+    translation: str = ""
+    transcription: str = ""
     counter: int
     known: bool
     next_review: float
@@ -73,6 +85,11 @@ class WordEntryResponse(BaseModel):
 
 class KBWordsResponse(BaseModel):
     words: list[WordEntryResponse]
+
+
+class WordReviewRequest(BaseModel):
+    word: str
+    rating: str
 
 
 def _topic_needing_review(storage: UserStorage) -> str | None:
@@ -101,6 +118,12 @@ def _due_word_names(storage: UserStorage, limit: int = 8) -> list[str]:
 
 def _settings_response(storage: UserStorage) -> SettingsResponse:
     s = storage.settings
+    language_settings = dict(s.language_settings)
+    language_settings.setdefault(s.target_lang, {
+        "level": s.english_level or "",
+        "goals": s.goals,
+        "prompt": s.general_prompt,
+    })
     return SettingsResponse(
         # Accounts created before the id/display-name split have no
         # display_name — fall back to their self-chosen account id.
@@ -110,8 +133,11 @@ def _settings_response(storage: UserStorage) -> SettingsResponse:
         general_prompt=s.general_prompt,
         native_lang=s.native_lang,
         target_lang=s.target_lang,
+        target_langs=s.target_langs or [s.target_lang],
+        language_settings=language_settings,
         reminder_level=s.reminder_level,
         overseer=s.overseer,
+        voice_enabled=s.voice_enabled,
         is_onboarded=s.is_onboarded(),
     )
 
@@ -136,15 +162,37 @@ async def api_post_settings(req: SettingsRequest, username: CurrentUser) -> Sett
         if req.display_name is not None and req.display_name.strip()
         else storage.settings.display_name
     )
+    if req.native_lang == req.target_lang:
+        raise HTTPException(status_code=400, detail="Native language cannot be a target language.")
+    requested_targets = req.target_langs if req.target_langs is not None else storage.settings.target_langs
+    target_langs = [
+        lang for lang in dict.fromkeys([req.target_lang, *(requested_targets or [])])
+        if lang != req.native_lang
+    ]
+    language_settings = dict(storage.settings.language_settings)
+    if req.language_settings is not None:
+        for lang, prefs in req.language_settings.items():
+            profile_level = prefs.get("level", "")
+            if profile_level and profile_level not in VALID_ENGLISH_LEVELS:
+                raise HTTPException(status_code=400, detail=f"Invalid level for {lang}.")
+        language_settings.update(req.language_settings)
+    language_settings = {
+        lang: prefs for lang, prefs in language_settings.items()
+        if lang in target_langs
+    }
+    language_settings.setdefault(req.target_lang, {
+        "level": level or "",
+        "goals": req.goals,
+        "prompt": req.general_prompt,
+    })
     storage.settings = UserSettings(
         display_name=display_name,
-        english_level=level,
-        goals=req.goals,
-        general_prompt=req.general_prompt,
         native_lang=req.native_lang,
         target_lang=req.target_lang,
+        language_settings=language_settings,
         reminder_level=req.reminder_level,
         overseer=req.overseer,
+        voice_enabled=req.voice_enabled if req.voice_enabled is not None else storage.settings.voice_enabled,
     )
     storage.save()
     log.info(
@@ -174,10 +222,12 @@ async def api_reminders(username: CurrentUser) -> RemindersResponse:
 @router.get("/api/kb_summary", response_model=KBSummaryResponse)
 async def api_kb_summary(username: CurrentUser) -> KBSummaryResponse:
     storage = get_storage(username)
+    review_counts = db.review_log_counts(username)
     return KBSummaryResponse(
         learning_count=storage.learning_count(),
         known_count=storage.known_count(),
         topics_count=len(storage.lesson_topics),
+        **review_counts,
     )
 
 
@@ -192,14 +242,58 @@ async def api_delete_kb_word(word: str, username: CurrentUser) -> dict:
 @router.get("/api/kb_words", response_model=KBWordsResponse)
 async def api_kb_words(username: CurrentUser) -> KBWordsResponse:
     storage = get_storage(username)
-    words = sorted(storage.words, key=lambda w: (w.known is True, w.name.lower()))
+    words = sorted(
+        (w for w in storage.words if w.language == storage.settings.target_lang),
+        key=lambda w: (w.known is True, w.name.lower()),
+    )
     return KBWordsResponse(words=[
         WordEntryResponse(
             name=w.name,
             context=w.context or "",
+            translation=w.translation,
+            transcription=w.transcription,
             counter=w.counter,
             known=bool(w.known),
             next_review=w.next_review,
         )
         for w in words
     ])
+
+
+@router.get("/api/kb_word_details", response_model=WordEntryResponse)
+async def api_kb_word_details(word: str, username: CurrentUser) -> WordEntryResponse:
+    storage = get_storage(username)
+    entry = storage.find_word(word)
+    if entry is None:
+        raise HTTPException(status_code=404, detail="Word not found.")
+    if not entry.translation or not entry.transcription:
+        result = await llm.translate_selection(
+            entry.name,
+            storage.settings.target_lang,
+            storage.settings.native_lang,
+            level=storage.settings.english_level or "intermediate",
+        )
+        entry.translation = result.get("translation", "")
+        entry.transcription = result.get("transcription", "")
+        storage.save()
+    return WordEntryResponse(
+        name=entry.name,
+        context=entry.context,
+        translation=entry.translation,
+        transcription=entry.transcription,
+        counter=entry.counter,
+        known=bool(entry.known),
+        next_review=entry.next_review,
+    )
+
+
+@router.post("/api/kb_word_review")
+async def api_kb_word_review(req: WordReviewRequest, username: CurrentUser) -> dict:
+    storage = get_storage(username)
+    entry = storage.find_word(req.word)
+    if entry is None:
+        raise HTTPException(status_code=404, detail="Word not found.")
+    outcome = "incorrect" if req.rating == "again" else "correct"
+    storage.apply_review_result(entry, outcome, task_type="anki")
+    storage.save()
+    return {"ok": True, "next_review": entry.next_review}

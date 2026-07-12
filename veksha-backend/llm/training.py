@@ -15,6 +15,43 @@ from llm._base import _LANG_NAMES, _call, _clean_json, _native_lang_note, _trunc
 log = logging.getLogger(__name__)
 
 
+_TUTOR_TASK_SYSTEM = """\
+You are an experienced one-to-one language tutor preparing one short retrieval-practice task.
+Target item: "{word}"
+Student CEFR level: {level}
+Task skill: {task_type}
+Saved context: {context}
+Required task direction: {seed_question}
+
+Use the task style a professional tutor would use at this level:
+- A1-A2: one concrete situation, short familiar vocabulary, one unambiguous operation.
+- B1-B2: a realistic sentence or mini-dialogue, collocation and register awareness.
+- C1-C2: nuance, connotation, natural register, or precise reformulation in context.
+
+Do not mention CEFR, the answer, or grading. Do not ask an abstract dictionary question if a
+short situation can test the same skill. Keep it to at most 3 short sentences. Address the
+student directly. Write the instruction in the student's native language when appropriate.
+Reply ONLY in JSON: {{"question":"...","skill":"short pedagogical focus"}}
+"""
+
+
+async def generate_tutor_task(word: str, context: str, task_type: str, level: str, native_lang: str, seed_question: str) -> dict:
+    system = _TUTOR_TASK_SYSTEM.format(
+        word=word,
+        context=context or "none",
+        task_type=task_type,
+        level=level,
+        seed_question=seed_question,
+    ) + _native_lang_note(native_lang)
+    try:
+        raw = await _call(system, user="", max_tokens=220, temp=0.4, json_mode=True, call_name="generate_tutor_task")
+        data = json.loads(_clean_json(raw))
+        return {"question": str(data.get("question", "")).strip(), "skill": str(data.get("skill", "")).strip()}
+    except Exception:
+        log.exception("[generate_tutor_task] failed")
+        return {"question": "", "skill": "vocabulary recall"}
+
+
 # ---------------------------------------------------------------------------
 # WebSocket training — synonym check
 # ---------------------------------------------------------------------------
@@ -78,7 +115,7 @@ async def get_reverse_translations(word: str, native_lang: str = "en") -> list[s
 # ---------------------------------------------------------------------------
 
 _CHECK_TRAINING_ANSWER_SYSTEM = """\
-You are checking a user's answer in a word training session for English learning.
+You are checking a user's answer in a language-learning session.
 
 Correct word/expression: "{word}"
 Task: "{question}"

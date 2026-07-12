@@ -9,12 +9,19 @@ import { useApp } from "../App";
 type ChatMode = "assistant" | "translator";
 
 export function ChatScreen() {
-  const { username, openReminder, targetLang, nativeLang } = useApp();
+  const { username, openReminder, targetLang, nativeLang, takePendingChat } = useApp();
   const t = useT();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sending, setSending] = useState(false);
   const [chatMode, setChatMode] = useState<ChatMode>("assistant");
   const [explainedMsgs, setExplainedMsgs] = useState<Set<string>>(new Set());
+
+  // A question typed on the home-screen ask bar arrives here ready to send.
+  useEffect(() => {
+    const pending = takePendingChat();
+    if (pending) void handleSend(pending);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function addMessage(text: string, role: ChatMessage["role"]): void {
     setMessages((prev) => [

@@ -94,6 +94,33 @@ def _conn() -> sqlite3.Connection:
         conn.execute(
             "CREATE INDEX IF NOT EXISTS ix_review_log_user_ts ON review_log (username, ts)"
         )
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS user_settings (
+                   username           TEXT PRIMARY KEY,
+                   display_name       TEXT NOT NULL DEFAULT '',
+                   native_lang        TEXT NOT NULL DEFAULT '',
+                   active_target_lang TEXT NOT NULL DEFAULT '',
+                   reminder_level     INTEGER NOT NULL DEFAULT 2,
+                   overseer           INTEGER NOT NULL DEFAULT 0,
+                   voice_enabled      INTEGER NOT NULL DEFAULT 1,
+                   FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
+               )"""
+        )
+        columns = {row[1] for row in conn.execute("PRAGMA table_info(user_settings)").fetchall()}
+        if "voice_enabled" not in columns:
+            conn.execute("ALTER TABLE user_settings ADD COLUMN voice_enabled INTEGER NOT NULL DEFAULT 1")
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS user_languages (
+                   username TEXT NOT NULL,
+                   lang     TEXT NOT NULL,
+                   level    TEXT NOT NULL,
+                   goals    TEXT NOT NULL DEFAULT '',
+                   prompt   TEXT NOT NULL DEFAULT '',
+                   position INTEGER NOT NULL,
+                   PRIMARY KEY (username, lang),
+                   FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
+               )"""
+        )
         conn.commit()
         _local.conn = conn
     return conn
@@ -181,6 +208,58 @@ def delete_user_data(username: str) -> None:
         c.execute("DELETE FROM review_log WHERE username=?", (username,))
 
 
+def settings_get(username: str) -> Optional[dict]:
+    row = _conn().execute(
+        "SELECT display_name, native_lang, active_target_lang, reminder_level, overseer, voice_enabled "
+        "FROM user_settings WHERE username=?", (username,),
+    ).fetchone()
+    if row is None:
+        return None
+    languages = _conn().execute(
+        "SELECT lang, level, goals, prompt FROM user_languages "
+        "WHERE username=? ORDER BY position", (username,),
+    ).fetchall()
+    return {
+        "display_name": row[0],
+        "native_lang": row[1],
+        "target_lang": row[2],
+        "reminder_level": row[3],
+        "overseer": bool(row[4]),
+        "voice_enabled": bool(row[5]),
+        "language_settings": {
+            lang: {"level": level, "goals": goals, "prompt": prompt}
+            for lang, level, goals, prompt in languages
+        },
+    }
+
+
+def settings_set(username: str, settings: Any) -> None:
+    with _conn() as c:
+        c.execute(
+            "INSERT OR REPLACE INTO user_settings "
+            "(username, display_name, native_lang, active_target_lang, reminder_level, overseer, voice_enabled) "
+            "VALUES (?,?,?,?,?,?,?)",
+            (username, settings.display_name, settings.native_lang, settings.target_lang,
+             settings.reminder_level, int(settings.overseer), int(settings.voice_enabled)),
+        )
+        c.execute("DELETE FROM user_languages WHERE username=?", (username,))
+        c.executemany(
+            "INSERT INTO user_languages (username, lang, level, goals, prompt, position) "
+            "VALUES (?,?,?,?,?,?)",
+            [
+                (username, lang, prefs["level"], prefs.get("goals", ""), prefs.get("prompt", ""), position)
+                for position, (lang, prefs) in enumerate(settings.language_settings.items())
+            ],
+        )
+
+
+def purge_all_users() -> None:
+    """Destructively remove every account and all account-owned data."""
+    with _conn() as c:
+        for table in ("identities", "review_log", "chat_history", "kb", "user_languages", "user_settings", "users"):
+            c.execute(f"DELETE FROM {table}")
+
+
 # ---------------------------------------------------------------------------
 # KB / chat history documents
 # ---------------------------------------------------------------------------
@@ -249,6 +328,16 @@ def review_log_recent(username: str, word: Optional[str] = None, limit: int = 50
     cols = ("word", "ts", "rating", "outcome", "task_type", "elapsed_days",
             "scheduled_days", "stability", "difficulty", "retrievability")
     return [dict(zip(cols, row)) for row in _conn().execute(sql, args).fetchall()]
+
+
+def review_log_counts(username: str) -> dict[str, int]:
+    rows = _conn().execute(
+        "SELECT task_type, COUNT(*) FROM review_log WHERE username=? GROUP BY task_type",
+        (username,),
+    ).fetchall()
+    anki = sum(count for task_type, count in rows if task_type == "anki")
+    training = sum(count for task_type, count in rows if task_type != "anki")
+    return {"anki_reviews": anki, "training_reviews": training}
 
 
 def review_log_delete_user(username: str) -> None:

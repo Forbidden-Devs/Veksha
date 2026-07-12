@@ -4,7 +4,7 @@ from fastapi import FastAPI, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from faster_whisper import WhisperModel
 
-model = WhisperModel("large-v3", device="cuda", compute_type="float16")
+model = WhisperModel("large-v3", device="cpu", compute_type="float16")
 
 app = FastAPI()
 app.add_middleware(

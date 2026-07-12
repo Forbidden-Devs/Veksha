@@ -1,0 +1,649 @@
+/**
+ * theme.css — the Veksha design system, layered over popup.css.
+ *
+ * Metro-inspired (tile home screen, lowercase thin headers, flat accent
+ * surfaces) but softened: rounded corners and gentle shadows instead of the
+ * strict flat-and-sharp look. Imported after popup.css by every entry
+ * (popup, training/lesson pages, veksha-web).
+ *
+ * Palettes are swappable at runtime: shared/theme.ts sets
+ * `data-veksha-theme` on <html>; each theme below only redefines tokens.
+ */
+
+:root {
+  /* radii — one knob for how "tiley" the UI feels */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 18px;
+
+  /* dusk (default): dark violet-magenta, the Metro prototype's palette */
+  --m-bg: #14121a;
+  --m-surface: #1f1c27;
+  --m-surface-2: #2b2735;
+  --m-fg: #ffffff;
+  --m-dim: rgba(255, 255, 255, 0.55);
+  --m-accent: #d4408d;
+  --m-accent-2: #7a5cd0;
+  --m-on-accent: #ffffff;
+  --m-border: rgba(255, 255, 255, 0.22);
+  --m-input-bg: #ffffff;
+  --m-input-fg: #171522;
+  --m-input-border: transparent;
+  --m-tile-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  --av-bg: var(--m-bg);
+  --av-surface: var(--m-surface);
+  --av-ink: var(--m-fg);
+  --av-muted: var(--m-dim);
+  --av-border: var(--m-border);
+}
+
+/* hazel — warm nutty dark, the squirrel's autumn */
+:root[data-veksha-theme="hazel"] {
+  --m-bg: #191411;
+  --m-surface: #241d17;
+  --m-surface-2: #322820;
+  --m-fg: #f7efe6;
+  --m-dim: rgba(247, 239, 230, 0.55);
+  --m-accent: #d98e3b;
+  --m-accent-2: #b25b4a;
+  --m-on-accent: #241505;
+  --m-border: rgba(247, 239, 230, 0.22);
+  --m-input-bg: #fdf7ee;
+  --m-input-fg: #241d15;
+  --m-input-border: transparent;
+  --m-tile-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+
+/* lavender — light heir of the original pastel identity */
+:root[data-veksha-theme="lavender"] {
+  --m-bg: #f2eefb;
+  --m-surface: #ffffff;
+  --m-surface-2: #e9e2f7;
+  --m-fg: #392f55;
+  --m-dim: rgba(57, 47, 85, 0.55);
+  --m-accent: #c04a94;
+  --m-accent-2: #7a5cd0;
+  --m-on-accent: #ffffff;
+  --m-border: rgba(57, 47, 85, 0.2);
+  --m-input-bg: #ffffff;
+  --m-input-fg: #392f55;
+  --m-input-border: rgba(122, 92, 208, 0.35);
+  --m-tile-shadow: 0 8px 20px rgba(101, 78, 163, 0.22);
+}
+
+/* midnight — cool neutral blue with cyan accent */
+:root[data-veksha-theme="midnight"] {
+  --m-bg: #0f1419;
+  --m-surface: #182028;
+  --m-surface-2: #223040;
+  --m-fg: #eef4f8;
+  --m-dim: rgba(238, 244, 248, 0.55);
+  --m-accent: #2fa8c9;
+  --m-accent-2: #4a6bd8;
+  --m-on-accent: #06222c;
+  --m-border: rgba(238, 244, 248, 0.22);
+  --m-input-bg: #f4f8fb;
+  --m-input-fg: #14202a;
+  --m-input-border: transparent;
+  --m-tile-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+
+body,
+.app {
+  background: var(--m-bg) !important;
+  color: var(--m-fg);
+  font-family: "Segoe UI", "Helvetica Neue", "Roboto", system-ui, sans-serif;
+}
+
+.shell-main {
+  background: var(--m-bg) !important;
+}
+
+/* Metro page header: big, thin, lowercase */
+.shell-topbar {
+  background: transparent !important;
+  border: none !important;
+  padding: 14px 18px 6px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.shell-page-title {
+  font-size: 30px !important;
+  font-weight: 200 !important;
+  letter-spacing: 0.01em;
+  text-transform: lowercase;
+  color: var(--m-fg) !important;
+}
+
+.shell-page-sub { display: none !important; }
+
+.m-back {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 2px solid var(--m-fg);
+  border-radius: 50% !important;
+  color: var(--m-fg);
+  cursor: pointer;
+}
+
+.m-debug {
+  background: transparent;
+  border: none;
+  color: var(--m-dim);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 6px;
+}
+
+/* ---------------------------------------------------------------------------
+   Home screen: tile grid + ask bar
+   --------------------------------------------------------------------------- */
+
+.screen-home {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 8px 18px 16px;
+  gap: 14px;
+}
+
+.m-tiles {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: 108px;
+  gap: 8px;
+  align-content: start;
+}
+
+.m-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0;
+  padding: 10px 12px;
+  border: none;
+  border-radius: var(--r-lg);
+  background: var(--m-accent);
+  color: var(--m-on-accent);
+  box-shadow: var(--m-tile-shadow);
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.09s ease;
+  text-align: left;
+}
+
+.m-tile:hover { transform: scale(0.985); }
+.m-tile:active { transform: scale(0.955); }
+
+.m-tile-alt { background: var(--m-accent-2); }
+
+.m-tile-ghost {
+  background: var(--m-surface);
+  box-shadow: none;
+  cursor: default;
+  pointer-events: none;
+}
+
+.m-tile-icon {
+  width: 34px;
+  height: 34px;
+  margin: auto;
+  display: grid;
+  place-items: center;
+  font-size: 30px;
+  line-height: 1;
+}
+
+.m-tile-icon svg { width: 100%; height: 100%; }
+
+.m-tile:disabled {
+  cursor: default;
+  opacity: 0.65;
+}
+
+.m-tile-label {
+  position: absolute;
+  left: 10px;
+  bottom: 7px;
+  font-size: 12px;
+  font-weight: 400;
+  text-transform: lowercase;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: calc(100% - 20px);
+}
+
+.m-tile-badge {
+  position: absolute;
+  top: 7px;
+  right: 9px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* wide live tile */
+.m-tile-wide {
+  grid-column: span 2;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+}
+
+.m-tile-big {
+  font-size: 52px;
+  font-weight: 200;
+  line-height: 1;
+}
+
+.m-tile-wide-text {
+  font-size: 13px;
+  line-height: 1.3;
+  color: var(--m-on-accent);
+  opacity: 0.85;
+  max-width: 150px;
+}
+
+/* ask bar */
+.m-ask {
+  margin-top: auto;
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.m-ask-input {
+  flex: 1;
+  min-width: 0;
+  padding: 11px 12px;
+  border: 2px solid var(--m-border);
+  border-radius: var(--r-md);
+  background: var(--m-surface);
+  color: var(--m-fg);
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+}
+
+.m-ask-input:focus { border-color: var(--m-accent); background: var(--m-surface-2); }
+.m-ask-input::placeholder { color: var(--m-dim); text-transform: lowercase; }
+
+.m-ask .mic-btn,
+.m-ask-send {
+  width: 44px;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--m-border);
+  border-radius: var(--r-md);
+  background: var(--m-surface);
+  color: var(--m-fg);
+  cursor: pointer;
+}
+
+.m-ask-send svg { width: 18px; height: 18px; }
+.m-ask-send:hover, .m-ask .mic-btn:hover { border-color: var(--m-accent); }
+
+/* ---------------------------------------------------------------------------
+   Re-skin of existing components (surfaces, buttons, inputs, chat)
+   --------------------------------------------------------------------------- */
+
+/* background sheet (was the lavender squirrel pattern) */
+.chat-messages {
+  background: var(--m-bg) !important;
+}
+
+.screen, .settings-body, .shell-content {
+  background: transparent !important;
+  color: var(--m-fg);
+}
+
+/* buttons: primary = flat accent; the gradient animation dies here */
+.btn,
+.btn-gradient,
+.shell-btn-primary {
+  background: var(--m-accent) !important;
+  color: var(--m-on-accent) !important;
+  border: 2px solid transparent !important;
+  animation: none !important;
+  font-weight: 600;
+  text-transform: lowercase;
+}
+
+.btn:disabled { opacity: 0.45; }
+
+.btn-google {
+  background: #ffffff !important;
+  color: #1b1b1b !important;
+}
+
+.btn-signout {
+  background: transparent !important;
+  color: var(--m-fg) !important;
+  border: 2px solid var(--m-border) !important;
+}
+
+/* inputs: WP-style light fields on the dark canvas */
+.text-input,
+.textarea-input,
+.select-input,
+.chat-input textarea,
+.chat-input input,
+.training-answer textarea {
+  background: var(--m-input-bg) !important;
+  color: var(--m-input-fg) !important;
+  border: 2px solid var(--m-input-border) !important;
+}
+
+.text-input:focus,
+.textarea-input:focus,
+.select-input:focus,
+.chat-input textarea:focus {
+  border-color: var(--m-accent) !important;
+  outline: none;
+}
+
+.field-label {
+  color: var(--m-dim) !important;
+  text-transform: lowercase;
+  font-size: 12px !important;
+}
+
+/* chat bubbles: user = accent block, bot = dark surface */
+.msg {
+  border: none !important;
+}
+
+.msg-user {
+  background: var(--m-accent) !important;
+  color: var(--m-on-accent) !important;
+}
+
+.msg-bot {
+  background: var(--m-surface-2) !important;
+  color: var(--m-fg) !important;
+}
+
+.chat-mode-tab {
+  background: transparent !important;
+  color: var(--m-dim) !important;
+  border: none !important;
+  text-transform: lowercase;
+  font-size: 17px !important;
+  font-weight: 300 !important;
+}
+
+.chat-mode-tab.active {
+  color: var(--m-fg) !important;
+  font-weight: 600 !important;
+}
+
+.chat-header {
+  background: transparent !important;
+  border-bottom: 1px solid var(--m-border) !important;
+}
+
+.chat-chip {
+  background: transparent !important;
+  color: var(--m-fg) !important;
+  border: 2px solid var(--m-border) !important;
+}
+
+.chat-chip:hover { border-color: var(--m-accent) !important; }
+
+/* cards / list rows on stats, topics, settings */
+.word-row, .word-list-item, .topic-row, .stat-card, .debug-info-block,
+.onboarding-card, .imm-modal, .imm-card,
+.settings-account-status {
+  background: var(--m-surface) !important;
+  color: var(--m-fg) !important;
+  border: none !important;
+}
+
+.word-list-name,
+.word-list-primary,
+.dictionary-details,
+.dictionary-word-main,
+.stat-label,
+.stat-value,
+.settings-section-title {
+  color: var(--m-fg) !important;
+}
+
+.word-list-context,
+.word-list-review,
+.dictionary-inline-transcription,
+.optional-tag,
+.settings-section-desc {
+  color: var(--m-dim) !important;
+}
+
+.menu-header, .menu-title {
+  background: transparent !important;
+  color: var(--m-fg) !important;
+}
+
+.icon-btn { color: var(--m-fg) !important; background: transparent !important; }
+
+/* overlays (training / lesson windows) */
+.training-window, .lesson-window {
+  background: var(--m-bg) !important;
+  color: var(--m-fg);
+  border: 1px solid var(--m-surface-2) !important;
+}
+
+.training-window-header, .lesson-window-header {
+  background: var(--m-surface) !important;
+}
+
+.feedback-correct { background: #1e5631 !important; color: #d9f2df !important; }
+.feedback-incorrect { background: #7a1f2b !important; color: #ffe0e4 !important; }
+.feedback-vague { background: #6b5b13 !important; color: #fff6cf !important; }
+
+/* the pastel logo badge becomes a flat accent square */
+.logo-badge, .logo-badge-sm, .shell-brand-mark {
+  background: var(--m-accent) !important;
+  color: var(--m-on-accent) !important;
+  border-radius: var(--r-sm) !important;
+}
+
+/* menu book decoration and other pastel flourishes have no place in Metro */
+.menu-book-decoration, .help-bubble-icon { display: none !important; }
+
+.help-bubble {
+  background: var(--m-surface) !important;
+  color: var(--m-fg) !important;
+  border: 1px solid var(--m-border) !important;
+}
+
+.toast {
+  background: var(--m-surface-2) !important;
+  color: var(--m-fg) !important;
+}
+
+/* scrollbars */
+.app ::-webkit-scrollbar { width: 8px; }
+.app ::-webkit-scrollbar-thumb { background: var(--m-surface-2); }
+.app ::-webkit-scrollbar-track { background: transparent; }
+
+/* --- fixes after the first visual pass ------------------------------------ */
+
+/* MicButton is absolutely positioned for the chat textarea corner; in the
+   home ask-bar it is a regular flex cell. */
+.m-ask .mic-btn {
+  position: static !important;
+  height: auto !important;
+}
+
+/* Headings drawn with gradient text-fill in the pastel theme become plain
+   white — the gradient is invisible on the dark canvas. */
+.onboarding-title,
+.onboarding-card h1,
+.imm-modal h3,
+.screen h1, .screen h2 {
+  background: none !important;
+  -webkit-background-clip: initial !important;
+  -webkit-text-fill-color: currentColor !important;
+  color: var(--m-fg) !important;
+}
+
+.onboarding-subtitle, .imm-modal-sub {
+  color: var(--m-dim) !important;
+}
+
+/* chat mode tabs: Metro pivot — plain lowercase words side by side */
+.chat-mode-tabs {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+}
+
+/* chat input row: dark bar, white field, accent send */
+.chat-input-row {
+  background: var(--m-bg) !important;
+  border-top: 1px solid var(--m-border) !important;
+  padding: 10px 12px !important;
+}
+
+.chat-input-area {
+  background: var(--m-input-bg) !important;
+  border: 2px solid var(--m-input-border) !important;
+}
+
+.chat-input-area:focus-within {
+  border-color: var(--m-accent) !important;
+}
+
+.chat-input {
+  background: transparent !important;
+  color: var(--m-input-fg) !important;
+}
+
+.send-btn {
+  background: var(--m-accent) !important;
+  color: var(--m-on-accent) !important;
+  border: none !important;
+  opacity: 1 !important;
+}
+
+.send-btn:disabled { opacity: 0.4 !important; }
+
+/* screens carry their own legacy headers — the Metro topbar replaces them */
+.menu-header { display: none !important; }
+
+/* settings: reminder-intensity + overseer cards go dark */
+.settings-level,
+.settings-toggle {
+  background: var(--m-surface) !important;
+  color: var(--m-fg) !important;
+  border: none !important;
+}
+
+.settings-toggle-title { color: var(--m-fg) !important; }
+.settings-toggle-desc, .settings-level .settings-toggle-desc { color: var(--m-dim) !important; }
+
+.settings-level-ticks button {
+  background: transparent !important;
+  color: var(--m-dim) !important;
+  border: 2px solid var(--m-border) !important;
+}
+
+.settings-level-ticks button.is-active,
+.settings-level-ticks .is-active {
+  background: var(--m-accent) !important;
+  color: var(--m-on-accent) !important;
+  border-color: var(--m-accent) !important;
+}
+
+/* ---------------------------------------------------------------------------
+   Theme swatches (settings)
+   --------------------------------------------------------------------------- */
+
+.theme-swatches {
+  display: flex;
+  gap: 12px;
+  margin: 2px 0 6px;
+}
+
+.theme-swatch {
+  width: 38px;
+  height: 38px;
+  border-radius: 50% !important;
+  border: 2px solid var(--m-border);
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.theme-swatch:hover { transform: scale(1.08); }
+
+.theme-swatch.is-active {
+  border-color: var(--m-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--m-accent) 40%, transparent);
+}
+
+.theme-swatch-dusk     { background: linear-gradient(135deg, #14121a 38%, #d4408d 38% 69%, #7a5cd0 69%); }
+.theme-swatch-hazel    { background: linear-gradient(135deg, #191411 38%, #d98e3b 38% 69%, #b25b4a 69%); }
+.theme-swatch-lavender { background: linear-gradient(135deg, #f2eefb 38%, #c04a94 38% 69%, #7a5cd0 69%); }
+.theme-swatch-midnight { background: linear-gradient(135deg, #0f1419 38%, #2fa8c9 38% 69%, #4a6bd8 69%); }
+
+/* ---------------------------------------------------------------------------
+   Post-registration tour: repaint the pastel scenes with theme tokens
+   --------------------------------------------------------------------------- */
+
+.tour {
+  background: var(--m-bg) !important;
+  color: var(--m-fg) !important;
+}
+
+.tour-copy h1 {
+  color: var(--m-fg) !important;
+  background: none !important;
+  -webkit-background-clip: initial !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+
+.tour-copy h1 em {
+  color: var(--m-accent) !important;
+  background: none !important;
+  -webkit-background-clip: initial !important;
+  -webkit-text-fill-color: currentColor !important;
+  font-style: normal;
+}
+
+.tour-copy p { color: var(--m-dim) !important; }
+
+.tour-viz, .tour-scene, .tour-plain {
+  background: var(--m-surface) !important;
+  color: var(--m-fg) !important;
+  border-radius: var(--r-lg);
+}
+
+.tour-dot { background: var(--m-border) !important; }
+.tour-dot.active { background: var(--m-accent) !important; }
+.tour-dot.done { background: color-mix(in srgb, var(--m-accent) 45%, var(--m-bg)) !important; }
+
+.tour-skip { color: var(--m-dim) !important; }
+.tour-skip:hover { color: var(--m-fg) !important; }
+
+.tour-tag {
+  background: var(--m-surface-2) !important;
+  color: var(--m-fg) !important;
+  border: 1px solid var(--m-border) !important;
+}
+
+input[type="range"] { accent-color: var(--m-accent); }

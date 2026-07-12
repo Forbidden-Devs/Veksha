@@ -50,6 +50,7 @@ export interface Strings {
   // Settings
   settings_title: string;
   settings_intro: string;
+  settings_theme: string;
   settings_display_name: string;
   settings_native_lang: string;
   settings_target_lang: string;
@@ -66,6 +67,8 @@ export interface Strings {
   settings_reminder_level_3: string;
   settings_persistent: string;
   settings_persistent_desc: string;
+  settings_voice_input: string;
+  settings_voice_input_desc: string;
   settings_account: string;
   settings_google_link: string;
   settings_google_linked: string;
@@ -91,9 +94,18 @@ export interface Strings {
   stats_known: string;
   stats_topics: string;
   stats_ready: string;
+  stats_anki_reviews: string;
+  stats_training_reviews: string;
   stats_badge_new: string;
   stats_badge_known: string;
   stats_vocabulary: string;
+  dictionary_title: string;
+  dictionary_cards: string;
+  dictionary_translation: string;
+  dictionary_transcription: string;
+  dictionary_show_answer: string;
+  dictionary_again: string;
+  dictionary_good: string;
   stats_review_today: string;
   stats_review_in_days: string;
   stats_review_overdue: string;
@@ -256,6 +268,7 @@ export interface Strings {
   sub_stats: string;
   sub_settings: string;
   sidebar_collected: string;  // placeholder: {n}
+  home_ask_placeholder: string;
   // PDF area translate (OCR)
   pdf_translate_region: string;
   pdf_region_hint: string;
@@ -269,6 +282,7 @@ export interface Strings {
   content_edit_text: string;
   content_hide_source: string;
   content_no_user: string;
+  content_dualsubs: string;
   // Level setup (step 4 of onboarding)
   level_setup_title: string;
   level_setup_subtitle: string;
@@ -299,7 +313,7 @@ export const EN: Strings = {
   native_lang_title: "What's your language?",
   native_lang_subtitle: "We'll show translations and the interface in your language",
   target_lang_title: "What do you want to learn?",
-  target_lang_subtitle: "Choose the language you want to study",
+  target_lang_subtitle: "Choose one or more languages you want to study",
   target_lang_start: "Let's start!",
   onboarding_title: "And what's your name?",
   onboarding_subtitle: "Pick a name to keep your vocabulary and progress. You can change it later in Settings.",
@@ -332,9 +346,10 @@ export const EN: Strings = {
   immersion_hint: "Sprinkle level-appropriate sentences in your target language right into the pages you read.",
   settings_title: "Settings",
   settings_intro: "Tell us your languages and level so we can pick the right words and difficulty for you.",
+  settings_theme: "Theme",
   settings_display_name: "Your name",
   settings_native_lang: "Your language",
-  settings_target_lang: "Language I'm learning",
+  settings_target_lang: "Active learning language",
   settings_level: "My level",
   settings_level_placeholder: "Select your level...",
   settings_goals: "Your goals",
@@ -348,6 +363,8 @@ export const EN: Strings = {
   settings_reminder_level_3: "Blur + frequent",
   settings_persistent: "Persistent reminders",
   settings_persistent_desc: "Hard-to-dismiss reminders: the close button runs away — finish a quick training or catch it to clear them.",
+  settings_voice_input: "Voice input",
+  settings_voice_input_desc: "Enable microphone features for this account.",
   settings_account: "Account",
   settings_google_link: "Link Google account",
   settings_google_linked: "Google account linked",
@@ -371,9 +388,18 @@ export const EN: Strings = {
   stats_known: "Words known",
   stats_topics: "Topics",
   stats_ready: "Ready to review now",
+  stats_anki_reviews: "Card reviews",
+  stats_training_reviews: "Training answers",
   stats_badge_new: "new",
   stats_badge_known: "known",
   stats_vocabulary: "Vocabulary",
+  dictionary_title: "Dictionary",
+  dictionary_cards: "Practice cards",
+  dictionary_translation: "Translation",
+  dictionary_transcription: "Transcription",
+  dictionary_show_answer: "Show answer",
+  dictionary_again: "Again",
+  dictionary_good: "Good",
   stats_review_today: "review today",
   stats_review_in_days: "review in {n}d",
   stats_review_overdue: "review overdue",
@@ -526,6 +552,7 @@ export const EN: Strings = {
   sub_stats: "How much you've already remembered without writing",
   sub_settings: "Languages, level, reminders",
   sidebar_collected: "{n} words collected — no writing out",
+  home_ask_placeholder: "Ask or type anything…",
   pdf_translate_region: "Translate area",
   pdf_region_hint: "Drag to select an area, then click the icon",
   pdf_no_text: "No text recognized in this area.",
@@ -537,6 +564,7 @@ export const EN: Strings = {
   content_edit_text: "Edit text",
   content_hide_source: "Hide source",
   content_no_user: "Open the Veksha popup and enter your name first.",
+  content_dualsubs: "Dual subtitles",
   level_setup_title: "Almost there!",
   level_setup_subtitle: "Tell us your level so we can pick the right tasks for you.",
   level_setup_optional: "optional",

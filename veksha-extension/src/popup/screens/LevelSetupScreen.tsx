@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useT } from "../../shared/i18n";
+import { LANGUAGES } from "../../shared/languages";
 
 interface LevelSetupResult {
   level: string;
@@ -7,13 +8,24 @@ interface LevelSetupResult {
   prompt: string;
 }
 
-export function LevelSetupScreen({ onComplete }: { onComplete: (opts: LevelSetupResult) => Promise<void> }) {
+export function LevelSetupScreen({
+  initialValues,
+  targetLang,
+  onComplete,
+  onBack,
+}: {
+  initialValues?: LevelSetupResult;
+  targetLang: string;
+  onComplete: (opts: LevelSetupResult) => Promise<void>;
+  onBack: () => void;
+}) {
   const t = useT();
-  const [level, setLevel] = useState("");
-  const [goals, setGoals] = useState("");
-  const [prompt, setPrompt] = useState("");
+  const [level, setLevel] = useState(initialValues?.level ?? "");
+  const [goals, setGoals] = useState(initialValues?.goals ?? "");
+  const [prompt, setPrompt] = useState(initialValues?.prompt ?? "");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const targetName = LANGUAGES.find((language) => language.code === targetLang)?.name ?? targetLang.toUpperCase();
 
   // CEFR grade scale (labels are universal codes — no translation needed).
   const LEVELS = [
@@ -40,8 +52,12 @@ export function LevelSetupScreen({ onComplete }: { onComplete: (opts: LevelSetup
   return (
     <section className="screen screen-settings">
       <div className="lang-pick-header">
+        <button className="onboarding-back" type="button" onClick={onBack} disabled={loading}>
+          <span aria-hidden="true">←</span> {t.tutorial_back}
+        </button>
         <div className="logo-badge">Ve</div>
         <h1 className="lang-pick-title">{t.level_setup_title}</h1>
+        <div className="lang-code">{targetName}</div>
         <p className="lang-pick-subtitle">{t.level_setup_subtitle}</p>
       </div>
 

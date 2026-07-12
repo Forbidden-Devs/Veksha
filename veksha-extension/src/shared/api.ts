@@ -259,6 +259,30 @@ export function analyzeImmersion(
   return _post("/api/immersion/analyze", { blocks }, 45_000);
 }
 
+export interface SubtitleAlignmentGroup {
+  src: number[];
+  dst: number[];
+}
+
+export interface SubtitleTranslation {
+  translation_tokens: string[];
+  alignment: SubtitleAlignmentGroup[];
+  detected_source_lang: string | null;
+}
+
+/** Translate one subtitle line (tokens as rendered) with word alignment. */
+export function subtitleTranslate(
+  tokens: string[],
+  sourceLang: string,
+  targetLang: string
+): Promise<SubtitleTranslation> {
+  return _post("/api/subtitles/translate", {
+    tokens,
+    source_lang: sourceLang,
+    target_lang: targetLang,
+  }, 20_000);
+}
+
 export function explain(username: string, text: string, translation: string): Promise<{ explanation: string }> {
   return _post("/api/explain", { text, translation });
 }
@@ -280,13 +304,18 @@ export function saveSettings(
     generalPrompt?: string;
     nativeLang: string;
     targetLang: string;
+    targetLangs?: string[];
+    languageSettings?: Record<string, { level: string; goals: string; prompt: string }>;
     reminderLevel?: number;
     overseer?: boolean;
+    voiceEnabled?: boolean;
   }
 ): Promise<SettingsData> {
   const body: Record<string, unknown> = {
     native_lang: opts.nativeLang,
     target_lang: opts.targetLang,
+    target_langs: opts.targetLangs ?? [opts.targetLang],
+    language_settings: opts.languageSettings,
     goals: opts.goals ?? "",
     general_prompt: opts.generalPrompt ?? "",
     reminder_level: opts.reminderLevel ?? 2,
@@ -294,6 +323,7 @@ export function saveSettings(
   };
   if (opts.englishLevel) body.english_level = opts.englishLevel;
   if (opts.displayName?.trim()) body.display_name = opts.displayName.trim();
+  if (opts.voiceEnabled !== undefined) body.voice_enabled = opts.voiceEnabled;
   return _post("/api/settings", body);
 }
 
@@ -319,6 +349,14 @@ export function getKbSummary(username: string): Promise<KBSummaryData> {
 
 export function getKbWords(username: string): Promise<{ words: WordEntry[] }> {
   return _get("/api/kb_words");
+}
+
+export function getKbWordDetails(username: string, word: string): Promise<WordEntry> {
+  return _get(`/api/kb_word_details?word=${encodeURIComponent(word)}`);
+}
+
+export function reviewKbWord(username: string, word: string, rating: "again" | "good"): Promise<{ ok: boolean; next_review: number }> {
+  return _post("/api/kb_word_review", { word, rating });
 }
 
 export function deleteKbWord(username: string, word: string): Promise<{ ok: boolean }> {

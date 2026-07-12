@@ -60,6 +60,7 @@ export default defineConfig({
   // direct-capture path (and its tesseract.js import) out of the service worker.
   define: {
     __BROWSER__: JSON.stringify(browser),
+    __DEV_BUILD__: JSON.stringify(process.env.DEV_BUILD === "1"),
   },
   build: {
     outDir: `dist/${browser}`,

@@ -7,51 +7,45 @@ import { isExtension } from "./platform";
 
 export type MicState = "idle" | "recording" | "transcribing" | "error";
 
-type VoiceMessage = {
-  type?: string;
-  requestId?: string;
-  volume?: number;
-  text?: string;
-  code?: string;
-};
-
-function createRequestId(): string {
-  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
-}
-
 /**
  * Microphone recording + speech-to-text.
  *
- * In the extension the popup can close at any moment, so recording is
- * delegated to the offscreen document via runtime messages. On the web the
- * page owns its lifetime — record locally with MediaRecorder and POST the
- * clip to /api/stt directly.
+ * Recording deliberately stays in the visible page that received the click.
+ * Brave's temporary permission and Firefox/Zen's microphone grant are scoped
+ * to that document and are not inherited reliably by an offscreen document or
+ * a hidden background page.
  */
 export function useMicRecorder(
   onResult: (text: string) => void,
   lang?: string,
+  resumeTarget?: string,
 ): {
   state: MicState;
   volume: number;
   errorMsg: string;
+  disabled: boolean;
   toggle: () => void;
 } {
   const t = useT();
   const [state, setState] = useState<MicState>("idle");
   const [volume, setVolume] = useState(0);
   const [errorMsg, setErrorMsg] = useState("");
+  const [accountVoiceEnabled, setAccountVoiceEnabled] = useState(true);
 
   const stateRef = useRef<MicState>("idle");
-  const requestIdRef = useRef<string | null>(null);
   const onResultRef = useRef(onResult);
   const tRef = useRef(t);
   const langRef = useRef(lang);
 
-  // Web recording state
+  // The visible popup/page owns the recording state.
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const volumeTimerRef = useRef<number>(0);
+  const localStopPendingRef = useRef(false);
+  const recordingStartedAtRef = useRef(0);
+  const speechDetectedRef = useRef(false);
+  const lastSpeechAtRef = useRef(0);
 
   onResultRef.current = onResult;
   tRef.current = t;
@@ -62,22 +56,20 @@ export function useMicRecorder(
     setState(nextState);
   }
 
-  function finishWithError(code?: string) {
+  function finishWithError(code?: string, detail?: string) {
     const strings = tRef.current;
-    requestIdRef.current = null;
     setVolume(0);
     setS("error");
-    setErrorMsg(
+    const friendly =
       code === "permission-denied"
         ? strings.mic_err_denied
         : code === "stt-failed"
         ? strings.mic_err_service
-        : strings.mic_err_generic,
-    );
+        : strings.mic_err_generic;
+    setErrorMsg(detail ? `${friendly} (${detail})` : friendly);
   }
 
   function deliverText(text: string) {
-    requestIdRef.current = null;
     setVolume(0);
     if (!text) {
       setS("error");
@@ -90,43 +82,39 @@ export function useMicRecorder(
   }
 
   // ------------------------------------------------------------------
-  // Extension path: offscreen document via runtime messages
+  // Extension-only account preference
   // ------------------------------------------------------------------
 
   useEffect(() => {
     if (!isExtension) return;
 
-    const handler = (msg: VoiceMessage) => {
-      if (!msg.type?.startsWith("VOICE_CAPTURE_")) return;
-      if (!requestIdRef.current || msg.requestId !== requestIdRef.current) return;
-
-      if (msg.type === "VOICE_CAPTURE_VOLUME") {
-        setVolume(typeof msg.volume === "number" ? msg.volume : 0);
-        return;
-      }
-      if (msg.type === "VOICE_CAPTURE_DONE") {
-        deliverText((msg.text ?? "").trim());
-        return;
-      }
-      if (msg.type === "VOICE_CAPTURE_ERROR") {
-        finishWithError(msg.code);
+    let accountVoiceKey = "";
+    chrome.storage.local.get([CONFIG.STORAGE_KEY_USERNAME]).then((result) => {
+      const username = result[CONFIG.STORAGE_KEY_USERNAME] as string | undefined;
+      if (!username) return;
+      accountVoiceKey = `vk_voice_enabled_${username}`;
+      return chrome.storage.local.get([accountVoiceKey]).then((accountResult) => {
+        setAccountVoiceEnabled(accountResult[accountVoiceKey] !== false);
+      });
+    }).catch(() => {});
+    const storageHandler = (changes: Record<string, chrome.storage.StorageChange>, area: string) => {
+      if (area !== "local") return;
+      if (accountVoiceKey && changes[accountVoiceKey]) {
+        setAccountVoiceEnabled(changes[accountVoiceKey].newValue !== false);
       }
     };
+    chrome.storage.onChanged.addListener(storageHandler);
 
-    chrome.runtime.onMessage.addListener(handler);
     return () => {
-      chrome.runtime.onMessage.removeListener(handler);
-      if (requestIdRef.current && stateRef.current === "recording") {
-        chrome.runtime.sendMessage({ type: "VOICE_CAPTURE_STOP", requestId: requestIdRef.current }).catch(() => {});
-      }
+      chrome.storage.onChanged.removeListener(storageHandler);
     };
   }, []);
 
   // ------------------------------------------------------------------
-  // Web path: local MediaRecorder + POST /api/stt
+  // Visible-page MediaRecorder + POST /api/stt
   // ------------------------------------------------------------------
 
-  function webCleanup() {
+  function localCleanup() {
     window.clearInterval(volumeTimerRef.current);
     streamRef.current?.getTracks().forEach((track) => track.stop());
     streamRef.current = null;
@@ -136,28 +124,47 @@ export function useMicRecorder(
   }
 
   useEffect(() => {
-    if (isExtension) return;
-    return () => webCleanup();
+    return () => localCleanup();
   }, []);
 
-  async function webStart() {
+  async function localStart() {
     try {
+      localStopPendingRef.current = false;
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
+      recordingStartedAtRef.current = Date.now();
+      speechDetectedRef.current = false;
+      lastSpeechAtRef.current = recordingStartedAtRef.current;
 
       // Lightweight volume meter for the recording indicator.
       try {
         const ctx = new AudioContext();
         audioCtxRef.current = ctx;
         const analyser = ctx.createAnalyser();
-        analyser.fftSize = 256;
+        analyser.fftSize = 2048;
         ctx.createMediaStreamSource(stream).connect(analyser);
-        const buf = new Uint8Array(analyser.frequencyBinCount);
+        const buf = new Float32Array(analyser.fftSize);
         volumeTimerRef.current = window.setInterval(() => {
-          analyser.getByteFrequencyData(buf);
-          const avg = buf.reduce((a, b) => a + b, 0) / buf.length;
-          setVolume(Math.min(1, avg / 128));
-        }, 100);
+          analyser.getFloatTimeDomainData(buf);
+          let sum = 0;
+          for (let index = 0; index < buf.length; index++) sum += buf[index] * buf[index];
+          const rms = Math.sqrt(sum / buf.length);
+          setVolume(Math.min(1, rms * 8));
+
+          const now = Date.now();
+          if (rms >= 0.012) {
+            speechDetectedRef.current = true;
+            lastSpeechAtRef.current = now;
+          }
+          const silenceReached = speechDetectedRef.current && now - lastSpeechAtRef.current >= 1200;
+          const maxDurationReached = now - recordingStartedAtRef.current >= 12000;
+          const activeRecorder = recorderRef.current;
+          if ((silenceReached || maxDurationReached) && activeRecorder?.state === "recording") {
+            setS("transcribing");
+            setVolume(0);
+            activeRecorder.stop();
+          }
+        }, 50);
       } catch { /* volume meter is cosmetic */ }
 
       const chunks: Blob[] = [];
@@ -167,7 +174,7 @@ export function useMicRecorder(
       recorderRef.current = recorder;
       recorder.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
       recorder.onstop = async () => {
-        webCleanup();
+        localCleanup();
         try {
           const audio = new Blob(chunks, { type: meta.type });
           if (!audio.size) { deliverText(""); return; }
@@ -184,53 +191,61 @@ export function useMicRecorder(
           if (!res.ok) throw new Error(`STT HTTP ${res.status}`);
           const json = (await res.json()) as { text?: string };
           deliverText((json.text ?? "").trim());
-        } catch {
-          finishWithError("stt-failed");
+        } catch (err) {
+          finishWithError("stt-failed", err instanceof Error ? err.message : String(err));
         }
       };
       recorder.start();
+      // A second click can arrive while getUserMedia is still pending. Honour
+      // that stop as soon as MediaRecorder is ready instead of recording in
+      // the background while the UI is stuck on "transcribing".
+      if (localStopPendingRef.current && recorder.state !== "inactive") recorder.stop();
     } catch (err) {
-      webCleanup();
+      localCleanup();
       const name = (err as DOMException)?.name;
-      finishWithError(name === "NotAllowedError" ? "permission-denied" : "capture-failed");
+      const permissionDenied = name === "NotAllowedError" || name === "SecurityError";
+      if (permissionDenied && isExtension) {
+        setS("idle");
+        setErrorMsg("");
+        try {
+          const response = await chrome.runtime.sendMessage({
+            type: "VOICE_PERMISSION_REQUEST",
+            resumeTarget,
+          }) as { ok?: boolean; error?: string } | undefined;
+          if (response?.ok) return;
+          finishWithError("permission-denied", response?.error || name);
+          return;
+        } catch (permissionError) {
+          finishWithError("permission-denied", permissionError instanceof Error ? permissionError.message : name);
+          return;
+        }
+      }
+      finishWithError(
+        permissionDenied ? "permission-denied" : "capture-failed",
+        name || undefined,
+      );
     }
   }
 
   const toggle = useCallback(() => {
+    if (!accountVoiceEnabled) return;
     if (stateRef.current === "recording") {
       setS("transcribing");
       setVolume(0);
-      if (isExtension) {
-        chrome.runtime.sendMessage({ type: "VOICE_CAPTURE_STOP", requestId: requestIdRef.current }).catch(() => {
-          finishWithError("capture-failed");
-        });
-      } else {
-        recorderRef.current?.stop();
-      }
+      const recorder = recorderRef.current;
+      if (recorder && recorder.state !== "inactive") recorder.stop();
+      else localStopPendingRef.current = true;
       return;
     }
 
     if (stateRef.current !== "idle" && stateRef.current !== "error") return;
 
-    const requestId = createRequestId();
-    requestIdRef.current = requestId;
     setErrorMsg("");
     setVolume(0);
     setS("recording");
 
-    if (isExtension) {
-      chrome.runtime.sendMessage({
-        type: "VOICE_CAPTURE_START",
-        requestId,
-        language: langRef.current,
-      }).catch((err) => {
-        console.error("[voice] start failed:", err);
-        finishWithError("capture-failed");
-      });
-    } else {
-      void webStart();
-    }
-  }, []);
+    void localStart();
+  }, [accountVoiceEnabled, resumeTarget]);
 
-  return { state, volume, errorMsg, toggle };
+  return { state, volume, errorMsg, disabled: !accountVoiceEnabled, toggle };
 }

@@ -85,8 +85,14 @@ async def update_kb_from_selection(storage: UserStorage, text: str, result: dict
             log.info("[selection] single=true -> add_word(%r, counter=0)", normalized)
             patch = Patch(type="add_word", value=normalized, context="", counter=0, known=False)
             storage.apply_kb_changes([patch])
+            existing = storage.find_word(normalized)
         else:
             log.info("[selection] single=true -> word %r already in KB, skipping add_word", normalized)
+
+        if existing is not None:
+            existing.translation = result.get("translation", "")
+            existing.transcription = result.get("transcription", "")
+            storage.save()
 
         result["normalized_text"] = normalized
     else:

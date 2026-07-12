@@ -32,6 +32,7 @@ dictionary form without typos or grammatical distortions in the source language 
 If single == false — empty string "".
 - "detected_source_lang": two-letter ISO 639-1 code of the source text's language \
 (detect independently of what is specified as source).
+- "transcription": pronunciation of a single source-language word or expression in IPA; empty for longer text.
 
 Translation rules:
 - If single == true — give the most natural dictionary translation (as in a dictionary), \
@@ -40,7 +41,7 @@ not a word-by-word one.
 
 Reply ONLY in JSON without markdown:
 {{"translation": "...", "single": true|false, "normalized_text": "...", \
-"detected_source_lang": "xx"}}
+"transcription": "...", "detected_source_lang": "xx"}}
 """
 
 _BIDIRECTIONAL_TRANSLATE_SYSTEM = """\
@@ -64,6 +65,7 @@ false if it is an extended phrase/sentence/text.
 dictionary form without typos or grammatical distortions in the detected source language. \
 If single == false — empty string "".
 - "detected_source_lang": two-letter ISO 639-1 code of the language detected in the source text.
+- "transcription": pronunciation of a single source-language word or expression in IPA; empty for longer text.
 
 Translation rules:
 - If single == true — give the most natural dictionary translation, not a word-by-word one.
@@ -71,7 +73,7 @@ Translation rules:
 
 Reply ONLY in JSON without markdown:
 {{"translation": "...", "single": true|false, "normalized_text": "...", \
-"detected_source_lang": "xx"}}
+"transcription": "...", "detected_source_lang": "xx"}}
 """
 
 
@@ -112,6 +114,7 @@ async def translate_selection(
             "translation": data.get("translation", ""),
             "single": bool(data.get("single", False)),
             "normalized_text": data.get("normalized_text", "") or "",
+            "transcription": data.get("transcription", "") or "",
             "detected_source_lang": data.get("detected_source_lang"),
         }
         await set_translation(
@@ -129,7 +132,7 @@ async def translate_selection(
         return result
     except Exception:
         log.exception("[translate_selection] failed")
-        return {"translation": "", "single": False, "normalized_text": "", "detected_source_lang": None}
+        return {"translation": "", "single": False, "normalized_text": "", "transcription": "", "detected_source_lang": None}
 
 
 _EXPLAIN_SELECTION_SYSTEM = """\

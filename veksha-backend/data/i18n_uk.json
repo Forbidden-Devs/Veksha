@@ -55,7 +55,7 @@
   "native_lang_title": "Яка ваша мова?",
   "native_lang_subtitle": "Ми показуватимемо переклади та інтерфейс вашою мовою",
   "target_lang_title": "Що ви хочете вивчати?",
-  "target_lang_subtitle": "Оберіть мову, яку хочете вивчати",
+  "target_lang_subtitle": "Оберіть одну або кілька мов для вивчення",
   "target_lang_start": "Почнімо!",
   "level_setup_title": "Майже готово!",
   "level_setup_subtitle": "Підкажіть ваш рівень, щоб ми могли підібрати для вас правильні завдання.",
@@ -171,5 +171,18 @@
   "settings_google_linked": "Обліковий запис Google прив’язано",
   "settings_google_link_taken": "Цей обліковий запис Google уже прив’язано до іншого профілю.",
   "settings_signout": "Вийти",
-  "settings_signout_confirm": "Вийти? Без прив’язаного облікового запису Google ви не зможете знову увійти в цей профіль."
+  "settings_signout_confirm": "Вийти? Без прив’язаного облікового запису Google ви не зможете знову увійти в цей профіль.",
+  "content_dualsubs": "Подвійні субтитри",
+  "settings_theme": "Тема",
+  "dictionary_title": "Словник",
+  "dictionary_cards": "Картки для практики",
+  "dictionary_translation": "Переклад",
+  "dictionary_transcription": "Транскрипція",
+  "dictionary_show_answer": "Показати відповідь",
+  "dictionary_again": "Ще раз",
+  "dictionary_good": "Добре",
+  "stats_anki_reviews": "Перегляди карток",
+  "stats_training_reviews": "Відповіді під час тренування",
+  "settings_voice_input": "Голосове введення",
+  "settings_voice_input_desc": "Увімкніть функції мікрофона для цього облікового запису."
 }

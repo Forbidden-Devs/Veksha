@@ -1,4 +1,4 @@
-export type Screen = "onboarding" | "chat" | "topics" | "settings" | "statistics" | "debug";
+export type Screen = "onboarding" | "home" | "chat" | "topics" | "dictionary" | "immersion" | "settings" | "statistics" | "debug";
 export type Overlay = "training" | "reminder" | null;
 export type SettingsMode = "onboarding" | "menu";
 
@@ -31,9 +31,18 @@ export interface SettingsData {
   general_prompt: string;
   native_lang: string;
   target_lang: string;
+  target_langs?: string[];
+  language_settings?: Record<string, LanguageSettings>;
   reminder_level: number;
   overseer: boolean;
+  voice_enabled: boolean;
   is_onboarded: boolean;
+}
+
+export interface LanguageSettings {
+  level: string;
+  goals: string;
+  prompt: string;
 }
 
 export interface RemindersData {
@@ -48,6 +57,8 @@ export interface KBSummaryData {
   learning_count: number;
   known_count: number;
   topics_count: number;
+  anki_reviews: number;
+  training_reviews: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -66,6 +77,7 @@ export interface TrainingTask {
   question: string;
   reverse_text?: string;
   counter?: number;
+  skill?: string;
 }
 
 export interface TrainingResult {
@@ -100,6 +112,8 @@ export interface LessonBlock {
 export interface WordEntry {
   name: string;
   context: string;
+  translation: string;
+  transcription: string;
   counter: number;
   known: boolean;
   next_review: number;

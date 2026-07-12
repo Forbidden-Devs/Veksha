@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useT } from "../../shared/i18n";
 import { MicButton } from "../../shared/MicButton";
 import { useMicRecorder } from "../../shared/useMicRecorder";
+import { useApp } from "../App";
 
 interface Props {
   onSend: (text: string) => void;
@@ -10,13 +11,21 @@ interface Props {
 
 export function ChatInput({ onSend, disabled }: Props) {
   const t = useT();
+  const { takeVoiceResume } = useApp();
   const [value, setValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const mic = useMicRecorder((text) => {
     if (!text) return;
     setValue(prev => (prev.trim() ? `${prev.trimEnd()} ${text}` : text));
     requestAnimationFrame(() => textareaRef.current?.focus());
-  });
+  }, undefined, "chat");
+
+  useEffect(() => {
+    if (takeVoiceResume() !== "chat") return;
+    const timer = window.setTimeout(() => mic.toggle(), 500);
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function autoResize() {
     const el = textareaRef.current;
@@ -56,7 +65,7 @@ export function ChatInput({ onSend, disabled }: Props) {
           state={mic.state}
           volume={mic.volume}
           onClick={mic.toggle}
-          disabled={disabled}
+          disabled={disabled || mic.disabled}
         />
         {mic.state === "transcribing" && (
           <div className="stt-overlay"><span className="stt-overlay-dot" /></div>

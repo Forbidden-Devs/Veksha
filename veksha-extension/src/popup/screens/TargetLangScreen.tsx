@@ -4,14 +4,21 @@ import { LANGUAGES } from "../../shared/languages";
 
 export function TargetLangScreen({
   nativeLang,
+  initialLangs,
   onContinue,
+  onBack,
 }: {
   nativeLang: string;
-  onContinue: (lang: string) => Promise<void>;
+  initialLangs?: string[];
+  onContinue: (langs: string[]) => Promise<void>;
+  onBack: () => void;
 }) {
   const t = useT();
   const options = LANGUAGES.filter((l) => l.code !== "auto" && l.code !== nativeLang);
-  const [selected, setSelected] = useState<string>(options[0]?.code ?? "en");
+  const [selected, setSelected] = useState<string[]>(() => {
+    const valid = (initialLangs ?? []).filter((code) => options.some((l) => l.code === code));
+    return valid.length ? valid : [options[0]?.code ?? "en"];
+  });
   const [loading, setLoading] = useState(false);
 
   async function handleContinue() {
@@ -26,6 +33,9 @@ export function TargetLangScreen({
   return (
     <section className="screen screen-lang-pick">
       <div className="lang-pick-header">
+        <button className="onboarding-back" type="button" onClick={onBack} disabled={loading}>
+          <span aria-hidden="true">←</span> {t.tutorial_back}
+        </button>
         <div className="logo-badge">Ve</div>
         <h1 className="lang-pick-title">{t.target_lang_title}</h1>
         <p className="lang-pick-subtitle">{t.target_lang_subtitle}</p>
@@ -35,8 +45,13 @@ export function TargetLangScreen({
         {options.map((lang) => (
           <button
             key={lang.code}
-            className={`lang-card${selected === lang.code ? " lang-card--selected" : ""}`}
-            onClick={() => setSelected(lang.code)}
+            className={`lang-card${selected.includes(lang.code) ? " lang-card--selected" : ""}`}
+            aria-pressed={selected.includes(lang.code)}
+            onClick={() => setSelected((current) =>
+              current.includes(lang.code)
+                ? current.filter((code) => code !== lang.code)
+                : [...current, lang.code]
+            )}
             type="button"
           >
             <span className="lang-code">{lang.code.toUpperCase()}</span>
@@ -49,7 +64,7 @@ export function TargetLangScreen({
         <button
           className="btn btn-gradient btn-block"
           onClick={handleContinue}
-          disabled={loading}
+          disabled={loading || selected.length === 0}
           type="button"
         >
           {loading ? t.onboarding_loading : t.target_lang_start}

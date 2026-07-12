@@ -8,7 +8,6 @@
  * and calls it directly. `emit` abstracts the reply channel for both cases.
  */
 import { CONFIG } from "./config";
-import { getAuthToken } from "./api";
 import { audioUploadMeta, pickAudioMime } from "./audio";
 import { createWorker, type Worker as TessWorker } from "tesseract.js";
 
@@ -22,6 +21,7 @@ export type CaptureEmit = (message: Record<string, unknown>) => void;
 export interface VoiceStartOptions {
   requestId: string;
   language?: string;
+  token?: string;
 }
 
 export interface CaptureController {
@@ -166,16 +166,30 @@ export function createCaptureController(emit: CaptureEmit): CaptureController {
   let chunks: Blob[] = [];
   let isRecording = false;
   let currentLanguage = "";
+  let currentToken = "";
+  let voiceStartedAt = 0;
+  let speechDetected = false;
+  let lastSpeechAt = 0;
+  let voiceGeneration = 0;
 
   async function startVoice(opts: VoiceStartOptions) {
     if (isRecording) await stopVoice();
+    const generation = ++voiceGeneration;
     requestId = opts.requestId;
     currentLanguage = opts.language ?? "";
+    currentToken = opts.token ?? "";
 
     try {
-      stream = await navigator.mediaDevices.getUserMedia({
+      const acquiredStream = await navigator.mediaDevices.getUserMedia({
         audio: { sampleRate: 16000, channelCount: 1, echoCancellation: true },
       });
+      // stopVoice may have been called while the permission/device request was
+      // pending. Never let that stale request start an orphaned recording.
+      if (generation !== voiceGeneration || requestId !== opts.requestId) {
+        acquiredStream.getTracks().forEach(track => track.stop());
+        return;
+      }
+      stream = acquiredStream;
 
       audioCtx = new AudioContext();
       const analyser = audioCtx.createAnalyser();
@@ -192,8 +206,13 @@ export function createCaptureController(emit: CaptureEmit): CaptureController {
         console.error("[voice/capture] recorder error:", event);
         void stopVoice("recorder-error");
       };
-      mediaRecorder.start(200);
+      // A single final dataavailable event produces a self-contained WebM/Ogg
+      // file. The volume meter does not need MediaRecorder timeslices.
+      mediaRecorder.start();
       isRecording = true;
+      voiceStartedAt = Date.now();
+      speechDetected = false;
+      lastSpeechAt = voiceStartedAt;
 
       const data = new Float32Array(analyser.fftSize);
       frameTimer = setInterval(() => {
@@ -203,8 +222,17 @@ export function createCaptureController(emit: CaptureEmit): CaptureController {
         for (let i = 0; i < data.length; i++) sum += data[i] * data[i];
         const rms = Math.sqrt(sum / data.length);
         emit({ type: "VOICE_CAPTURE_VOLUME", requestId, volume: Math.min(1, rms * 8) });
+        const now = Date.now();
+        if (rms >= 0.012) {
+          speechDetected = true;
+          lastSpeechAt = now;
+        }
+        if ((speechDetected && now - lastSpeechAt >= 1200) || now - voiceStartedAt >= 12000) {
+          void stopVoice();
+        }
       }, FRAME_MS);
     } catch (err) {
+      if (generation !== voiceGeneration) return;
       console.error("[voice/capture] getUserMedia error:", err);
       cleanup();
       emit({
@@ -217,6 +245,7 @@ export function createCaptureController(emit: CaptureEmit): CaptureController {
   }
 
   async function stopVoice(errorCode?: string) {
+    ++voiceGeneration;
     if (!isRecording) {
       cleanup();
       return;
@@ -228,6 +257,8 @@ export function createCaptureController(emit: CaptureEmit): CaptureController {
     }
 
     const currentRequestId = requestId;
+    const language = currentLanguage;
+    const token = currentToken;
     const recorder = mediaRecorder;
     if (!currentRequestId || !recorder || recorder.state === "inactive") {
       cleanup();
@@ -263,19 +294,21 @@ export function createCaptureController(emit: CaptureEmit): CaptureController {
 
       const form = new FormData();
       form.append("file", audio, meta.filename);
-      if (currentLanguage) form.append("language", currentLanguage);
-      const token = await getAuthToken();
+      if (language) form.append("language", language);
       const res = await fetch(`${CONFIG.BACKEND_URL}/api/stt`, {
         method: "POST",
         body: form,
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
-      if (!res.ok) throw new Error(`STT HTTP ${res.status}`);
+      if (!res.ok) {
+        const body = await res.text().catch(() => "");
+        throw new Error(`STT HTTP ${res.status}: ${body.slice(0, 240)}`);
+      }
       const json = await res.json() as { text?: string };
       emit({ type: "VOICE_CAPTURE_DONE", requestId: currentRequestId, text: json.text?.trim() ?? "" });
     } catch (err) {
       console.error("[voice/capture] STT error:", err);
-      emit({ type: "VOICE_CAPTURE_ERROR", requestId: currentRequestId, code: "stt-failed" });
+      emit({ type: "VOICE_CAPTURE_ERROR", requestId: currentRequestId, code: "stt-failed", error: String(err) });
     }
   }
 
@@ -291,6 +324,7 @@ export function createCaptureController(emit: CaptureEmit): CaptureController {
     isRecording = false;
     requestId = null;
     currentLanguage = "";
+    currentToken = "";
   }
 
   return { startVoice, stopVoice, handleOcrRegion };

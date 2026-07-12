@@ -17,6 +17,7 @@
 import { quickTranslate, explain } from "../shared/api";
 import { canSpeak, speakText } from "../shared/speech";
 import { LANGUAGES } from "../shared/languages";
+import { initDualSubs, sync as syncDualSubs } from "./dualsubs";
 
 export interface YouTubeStudyDeps {
   getUsername: () => Promise<string | null>;
@@ -34,7 +35,7 @@ const SEL = {
 // Anything that belongs to our own UI or to the captions we made interactive.
 // content.ts uses this to keep the page-wide selection popup out of the way.
 export const YT_STUDY_GUARD_SELECTOR =
-  ".ytp-caption-window-container, .av-yt-layer, .av-yt-popup";
+  ".ytp-caption-window-container, .av-yt-layer, .av-yt-popup, .av-dualsub, .av-dualsub-toggle";
 
 let deps: YouTubeStudyDeps;
 
@@ -113,6 +114,18 @@ function ensureCaptionsInteractive(): void {
   wrapWords();
   markCaptionsInteractive();
   syncCaptionObserver();
+  updateDualSubs();
+}
+
+/** Feed the current line to the dual-subtitle row (see dualsubs.ts). */
+function updateDualSubs(): void {
+  const words = Array.from(
+    document.querySelectorAll<HTMLElement>(`${SEL.captionContainer} .av-yt-word`),
+  );
+  let rect: DOMRect | null = null;
+  const windows = Array.from(document.querySelectorAll<HTMLElement>(SEL.captionWindow));
+  if (windows.length) rect = unionRect(windows);
+  syncDualSubs(words, words.length ? rect : null);
 }
 
 /** Watch the caption container so words are re-wrapped the instant YouTube
@@ -141,6 +154,7 @@ function onCaptionMutation(): void {
   captionObserver.disconnect();
   wrapWords();
   markCaptionsInteractive();
+  updateDualSubs();
   captionObserver.observe(observedContainer, { childList: true, subtree: true, characterData: true });
 }
 
@@ -553,6 +567,14 @@ export function initYouTubeStudy(d: YouTubeStudyDeps): void {
   if (initialized) return;
   initialized = true;
   deps = d;
+
+  initDualSubs({
+    getUsername: d.getUsername,
+    t: d.t,
+    state: d.state,
+    getLayer: ensureLayer,
+    getPlayer,
+  });
 
   // Media events don't bubble, but the capture phase still reaches the
   // document — so these survive YouTube's SPA navigations without re-binding.

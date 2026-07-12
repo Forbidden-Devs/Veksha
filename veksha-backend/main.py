@@ -25,6 +25,7 @@ from api import auth as api_auth
 from api import debug, lesson, message, settings, stt, training
 from api import i18n as api_i18n
 from api import immersion
+from api import subtitles as api_subtitles
 from api import translate
 from config import CORS_ALLOW_ORIGINS, DEBUG_API, HOST, LOG_LEVEL, PORT, RELOAD
 
@@ -73,6 +74,7 @@ app.include_router(stt.router)
 app.include_router(lesson.router)
 app.include_router(api_i18n.router)
 app.include_router(immersion.router)
+app.include_router(api_subtitles.router)
 if DEBUG_API:
     app.include_router(debug.router)
     log.warning("Debug API is enabled (/api/debug/*) — do not use in production.")
