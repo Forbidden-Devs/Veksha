@@ -1,6 +1,6 @@
 import io
 import uvicorn
-from fastapi import FastAPI, UploadFile
+from fastapi import FastAPI, File, Form, Header, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from faster_whisper import WhisperModel
 
@@ -15,9 +15,14 @@ app.add_middleware(
 )
 
 @app.post("/stt/")
-async def transcribe(file: UploadFile):
+async def transcribe(
+    file: UploadFile = File(...),
+    language: str = Form(""),
+    language_header: str = Header("", alias="X-Veksha-STT-Language"),
+):
     data = await file.read()
-    segments, _ = model.transcribe(io.BytesIO(data))
+    language_hint = (language or language_header).strip().lower().split("-", 1)[0].split("_", 1)[0]
+    segments, _ = model.transcribe(io.BytesIO(data), language=language_hint or None)
     text = " ".join(s.text.strip() for s in segments)
     return {"text": text}
 

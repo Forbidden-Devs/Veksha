@@ -9,17 +9,21 @@
  */
 import { storageGet, storageSet } from "./platform";
 
-export const THEMES = ["dusk", "hazel", "lavender", "midnight"] as const;
+export const THEMES = ["light", "dark"] as const;
 export type ThemeName = (typeof THEMES)[number];
 
 export const THEME_STORAGE_KEY = "vk_theme";
-const DEFAULT_THEME: ThemeName = "dusk";
+const DEFAULT_THEME: ThemeName = "light";
 
 export async function getTheme(): Promise<ThemeName> {
   try {
     const st = await storageGet([THEME_STORAGE_KEY]);
     const name = st[THEME_STORAGE_KEY] as string | undefined;
-    return THEMES.includes(name as ThemeName) ? (name as ThemeName) : DEFAULT_THEME;
+    if (THEMES.includes(name as ThemeName)) return name as ThemeName;
+    // Migrate the four experimental palettes to the unified light/dark pair.
+    if (name === "dusk" || name === "hazel" || name === "midnight") return "dark";
+    if (name === "lavender") return "light";
+    return DEFAULT_THEME;
   } catch {
     return DEFAULT_THEME;
   }

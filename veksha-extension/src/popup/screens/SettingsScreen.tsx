@@ -27,7 +27,7 @@ export function SettingsScreen() {
   const t = useT();
 
   const [displayName, setDisplayName] = useState("");
-  const [theme, setThemeState] = useState<ThemeName>("dusk");
+  const [theme, setThemeState] = useState<ThemeName>("light");
   const [account, setAccount] = useState<api.AccountData | null>(null);
   const [linking, setLinking] = useState(false);
   const [linkError, setLinkError] = useState<string | null>(null);

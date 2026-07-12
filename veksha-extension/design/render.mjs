@@ -24,19 +24,19 @@ export function render(svg, width, file) {
 }
 
 // ---------------------------------------------------------------------------
-// LOGO — rounded-square gradient tile + white squirrel silhouette
+// LOGO — warm forest tile + ivory squirrel silhouette
 // ---------------------------------------------------------------------------
 
 export function logoSvg() {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
   <defs>
     <linearGradient id="bg" x1="0" y1="1" x2="1" y2="0">
-      <stop offset="0" stop-color="#ac96ef"/>
-      <stop offset="1" stop-color="#fbc0ea"/>
+      <stop offset="0" stop-color="#a95124"/>
+      <stop offset="1" stop-color="#c66a34"/>
     </linearGradient>
   </defs>
   <rect width="1024" height="1024" rx="232" fill="url(#bg)"/>
-  <g fill="#ffffff">
+  <g fill="#fffaf1">
     <!-- tail: big plume rising behind, curling forward at the top -->
     <path d="M 505 798
       C 700 815, 818 700, 828 545
@@ -179,7 +179,7 @@ render(mascotSvg(0.25), 489, "mascot_25.png");
 render(mascotSvg(0.75), 489, "mascot_75.png");
 
 // ---------------------------------------------------------------------------
-// BACKGROUND PATTERN — light lavender sheet of doodles (squirrels, acorns,
+// BACKGROUND PATTERN — warm paper sheet of forest doodles (squirrels, acorns,
 // oak leaves, nuts…), 1024x1536 like the old bunny back.png.
 // ---------------------------------------------------------------------------
 
@@ -215,7 +215,7 @@ export function patternSvg() {
   }
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1536">
   <defs>
-    <g id="squirrel" fill="none" stroke="#b3a6e4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <g id="squirrel" fill="none" stroke="#9d7658" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
       <!-- head -->
       <circle cx="-13" cy="-9" r="7.5"/>
       <!-- ear -->
@@ -226,55 +226,55 @@ export function patternSvg() {
       <path d="M -12 6 C -9 8, -9 11, -12 13"/>
       <!-- tail: rises behind, curls forward -->
       <path d="M 7 19 C 19 16, 25 5, 21 -7 C 18 -16, 8 -19, 4 -13 C 1 -8, 5 -3, 10 -5"/>
-      <circle cx="-15" cy="-10" r="1.6" fill="#b3a6e4" stroke="none"/>
+      <circle cx="-15" cy="-10" r="1.6" fill="#9d7658" stroke="none"/>
     </g>
-    <g id="acorn" fill="none" stroke="#b3a6e4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <g id="acorn" fill="none" stroke="#9d7658" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
       <path d="M -12 -4 Q 0 -12 12 -4 Q 13 2 0 1 Q -13 2 -12 -4 Z"/>
       <path d="M -9 1 C -9 10, -4 16, 0 18 C 4 16, 9 10, 9 1"/>
       <path d="M 0 -9 C 0 -13, 2 -16, 5 -18"/>
     </g>
-    <g id="leaf" fill="none" stroke="#b3a6e4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <g id="leaf" fill="none" stroke="#66806c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
       <path d="M 0 -18 C 8 -14, 12 -8, 10 -2 C 14 0, 14 6, 9 8 C 11 12, 8 17, 2 16 L 0 18 L -2 16 C -8 17, -11 12, -9 8 C -14 6, -14 0, -10 -2 C -12 -8, -8 -14, 0 -18 Z"/>
       <path d="M 0 -12 L 0 16"/>
     </g>
-    <g id="nut" fill="none" stroke="#b3a6e4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <g id="nut" fill="none" stroke="#9d7658" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
       <path d="M -10 2 C -10 -6, -5 -12, 0 -14 C 5 -12, 10 -6, 10 2 C 10 9, 5 14, 0 14 C -5 14, -10 9, -10 2 Z"/>
       <path d="M -8 -6 Q 0 -10 8 -6"/>
     </g>
-    <g id="tree" fill="none" stroke="#b3a6e4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <g id="tree" fill="none" stroke="#66806c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
       <path d="M 0 -20 C 10 -20, 16 -12, 14 -4 C 20 2, 16 12, 8 12 L -8 12 C -16 12, -20 2, -14 -4 C -16 -12, -10 -20, 0 -20 Z"/>
       <path d="M 0 12 L 0 22 M -6 22 L 6 22"/>
     </g>
-    <g id="heart" fill="none" stroke="#b3a6e4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <g id="heart" fill="none" stroke="#b66b45" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
       <path d="M 0 12 C -14 2, -14 -10, -6 -12 C -2 -13, 0 -10, 0 -7 C 0 -10, 2 -13, 6 -12 C 14 -10, 14 2, 0 12 Z"/>
     </g>
-    <g id="sparkle" fill="none" stroke="#b3a6e4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <g id="sparkle" fill="none" stroke="#b66b45" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
       <path d="M 0 -12 C 1.8 -4 4 -1.8 12 0 C 4 1.8 1.8 4 0 12 C -1.8 4 -4 1.8 -12 0 C -4 -1.8 -1.8 -4 0 -12 Z"/>
     </g>
-    <g id="cloud" fill="none" stroke="#b3a6e4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <g id="cloud" fill="none" stroke="#9d7658" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
       <path d="M -14 8 C -20 8, -20 -2, -12 -2 C -12 -10, 0 -12, 3 -5 C 10 -8, 17 -2, 14 4 C 18 8, 12 12, 8 8 Z"/>
     </g>
-    <g id="envelope" fill="none" stroke="#b3a6e4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <g id="envelope" fill="none" stroke="#9d7658" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
       <rect x="-16" y="-11" width="32" height="22" rx="3"/>
       <path d="M -14 -8 L 0 3 L 14 -8"/>
     </g>
-    <g id="mug" fill="none" stroke="#b3a6e4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <g id="mug" fill="none" stroke="#b66b45" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
       <path d="M -12 -8 L -12 8 C -12 12, -8 14, -4 14 L 4 14 C 8 14, 12 12, 12 8 L 12 -8 Z"/>
       <path d="M 12 -4 C 18 -4, 18 6, 12 6"/>
       <path d="M -4 -14 C -4 -18, 0 -18, 0 -14 M 4 -14 C 4 -18, 8 -18, 8 -14" stroke-width="2.4"/>
     </g>
-    <g id="mushroom" fill="none" stroke="#b3a6e4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <g id="mushroom" fill="none" stroke="#9d7658" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
       <path d="M -16 0 C -16 -10, -8 -16, 0 -16 C 8 -16, 16 -10, 16 0 Z"/>
       <path d="M -6 0 L -5 10 C -5 14, 5 14, 5 10 L 6 0"/>
-      <circle cx="-6" cy="-8" r="1.6" fill="#b3a6e4" stroke="none"/>
-      <circle cx="4" cy="-6" r="1.6" fill="#b3a6e4" stroke="none"/>
+      <circle cx="-6" cy="-8" r="1.6" fill="#9d7658" stroke="none"/>
+      <circle cx="4" cy="-6" r="1.6" fill="#9d7658" stroke="none"/>
     </g>
-    <g id="book" fill="none" stroke="#b3a6e4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <g id="book" fill="none" stroke="#66806c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
       <path d="M 0 -10 C -5 -14, -12 -14, -16 -12 L -16 10 C -12 8, -5 8, 0 12 C 5 8, 12 8, 16 10 L 16 -12 C 12 -14, 5 -14, 0 -10 Z"/>
       <path d="M 0 -10 L 0 12"/>
     </g>
   </defs>
-  <rect width="1024" height="1536" fill="#e6e0f6"/>
+  <rect width="1024" height="1536" fill="#f4efe5"/>
   <g opacity="0.5">
     ${uses}
   </g>

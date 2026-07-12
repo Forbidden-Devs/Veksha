@@ -596,11 +596,6 @@ body,
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--m-accent) 40%, transparent);
 }
 
-.theme-swatch-dusk     { background: linear-gradient(135deg, #14121a 38%, #d4408d 38% 69%, #7a5cd0 69%); }
-.theme-swatch-hazel    { background: linear-gradient(135deg, #191411 38%, #d98e3b 38% 69%, #b25b4a 69%); }
-.theme-swatch-lavender { background: linear-gradient(135deg, #f2eefb 38%, #c04a94 38% 69%, #7a5cd0 69%); }
-.theme-swatch-midnight { background: linear-gradient(135deg, #0f1419 38%, #2fa8c9 38% 69%, #4a6bd8 69%); }
-
 /* ---------------------------------------------------------------------------
    Post-registration tour: repaint the pastel scenes with theme tokens
    --------------------------------------------------------------------------- */
@@ -647,3 +642,243 @@ body,
 }
 
 input[type="range"] { accent-color: var(--m-accent); }
+
+/* ---------------------------------------------------------------------------
+   Veksha forest system — one identity, two accessible appearances
+   --------------------------------------------------------------------------- */
+
+:root,
+:root[data-veksha-theme="light"] {
+  color-scheme: light;
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 22px;
+  --m-bg: #f6f2e9;
+  --m-surface: #fffdf8;
+  --m-surface-2: #ebe5d8;
+  --m-fg: #25291f;
+  --m-dim: #686b5f;
+  --m-accent: #a95124;
+  --m-accent-hover: #8e411c;
+  --m-accent-2: #3f6954;
+  --m-accent-soft: #f1d4b7;
+  --m-on-accent: #fffaf1;
+  --m-border: #d8d1c2;
+  --m-input-bg: #fffdf8;
+  --m-input-fg: #25291f;
+  --m-input-border: #cfc6b5;
+  --m-tile-shadow: 0 10px 24px rgba(77, 57, 35, 0.13);
+  --m-elevated-shadow: 0 18px 48px rgba(77, 57, 35, 0.16);
+  --av-error: #9f332d;
+  --av-ok: #2f6a48;
+}
+
+:root[data-veksha-theme="dark"] {
+  color-scheme: dark;
+  --m-bg: #171a16;
+  --m-surface: #222720;
+  --m-surface-2: #30372d;
+  --m-fg: #f5f0e5;
+  --m-dim: #b1b4a8;
+  --m-accent: #e07b42;
+  --m-accent-hover: #ee8d55;
+  --m-accent-2: #5b8a70;
+  --m-accent-soft: #4d3827;
+  --m-on-accent: #22140c;
+  --m-border: #464d42;
+  --m-input-bg: #292e27;
+  --m-input-fg: #f5f0e5;
+  --m-input-border: #4d5549;
+  --m-tile-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+  --m-elevated-shadow: 0 20px 52px rgba(0, 0, 0, 0.38);
+  --av-error: #ef8a80;
+  --av-ok: #82c99e;
+}
+
+body,
+.app {
+  background:
+    radial-gradient(circle at 88% -8%, color-mix(in srgb, var(--m-accent) 11%, transparent) 0 16%, transparent 38%),
+    var(--m-bg) !important;
+  font-family: Inter, "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+.app { clip-path: inset(0 round var(--r-lg)); }
+.shell-main { width: 100%; min-width: 0; }
+
+.shell-topbar {
+  min-height: 74px;
+  padding: 18px 22px 8px;
+}
+
+.shell-page-title {
+  font-size: 27px !important;
+  font-weight: 760 !important;
+  letter-spacing: -0.04em;
+  text-transform: none;
+}
+
+.shell-brand-mark {
+  width: 42px;
+  height: 42px;
+  margin-left: auto;
+  flex: none;
+  border-radius: 15px !important;
+  background: var(--m-surface) url("/icons/icon48.png") center / 34px no-repeat !important;
+  border: 1px solid var(--m-border);
+  box-shadow: var(--m-tile-shadow);
+}
+
+.screen-home { padding: 12px 22px 20px; gap: 16px; }
+.m-tiles { grid-auto-rows: 112px; gap: 10px; }
+
+.m-tile {
+  padding: 13px 15px;
+  border: 1px solid color-mix(in srgb, var(--m-accent) 75%, #0000);
+  background:
+    radial-gradient(circle at 88% 12%, rgba(255,255,255,.16), transparent 30%),
+    var(--m-accent);
+  box-shadow: var(--m-tile-shadow);
+  transition: transform .16s ease, box-shadow .16s ease, background-color .16s ease;
+}
+
+.m-tile:nth-child(2),
+.m-tile:nth-child(4),
+.m-tile-alt {
+  background:
+    radial-gradient(circle at 88% 12%, rgba(255,255,255,.13), transparent 30%),
+    var(--m-accent-2);
+  border-color: color-mix(in srgb, var(--m-accent-2) 75%, #0000);
+  color: #fffdf6;
+}
+
+:root[data-veksha-theme="dark"] .m-tile:nth-child(2),
+:root[data-veksha-theme="dark"] .m-tile:nth-child(4),
+:root[data-veksha-theme="dark"] .m-tile-alt { color: #f8fff9; }
+
+.m-tile:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--m-elevated-shadow);
+}
+.m-tile:active { transform: translateY(0) scale(.98); }
+
+.m-tile-icon {
+  width: 38px;
+  height: 38px;
+  margin: auto;
+  padding: 7px;
+  border-radius: 13px;
+  background: rgba(255,255,255,.17);
+}
+.m-tile-icon svg { fill: none; stroke: currentColor; stroke-width: 1.65; stroke-linecap: round; stroke-linejoin: round; }
+
+.m-tile-label {
+  left: 13px;
+  bottom: 10px;
+  max-width: calc(100% - 26px);
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: .01em;
+  text-transform: none;
+}
+.m-tile-badge {
+  top: 10px;
+  right: 11px;
+  min-width: 25px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: rgba(0,0,0,.14);
+  text-align: center;
+  font-size: 11px;
+}
+
+.m-tile-ghost {
+  background: color-mix(in srgb, var(--m-surface) 80%, transparent) !important;
+  border: 1px dashed var(--m-border);
+  box-shadow: none;
+}
+
+.m-ask {
+  padding: 7px;
+  gap: 7px;
+  border: 1px solid var(--m-border);
+  border-radius: 18px;
+  background: var(--m-surface);
+  box-shadow: var(--m-tile-shadow);
+}
+.m-ask-input { padding: 9px 10px; border: 0; background: transparent; }
+.m-ask-input:focus { background: transparent; }
+.m-ask .mic-btn, .m-ask-send {
+  width: 42px;
+  min-height: 42px;
+  border: 0;
+  border-radius: 13px;
+  background: var(--m-surface-2);
+}
+.m-ask-send { background: var(--m-accent); color: var(--m-on-accent); }
+
+.m-back { border: 1px solid var(--m-border); background: var(--m-surface); color: var(--m-fg); }
+.btn, .btn-gradient, .shell-btn-primary { text-transform: none; border-radius: var(--r-md) !important; }
+.btn:hover, .send-btn:hover { background: var(--m-accent-hover) !important; }
+
+.word-row, .word-list-item, .topic-row, .stat-card, .debug-info-block,
+.onboarding-card, .imm-modal, .imm-card, .settings-account-status,
+.settings-level, .settings-toggle {
+  border: 1px solid var(--m-border) !important;
+  border-radius: var(--r-md) !important;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--m-fg) 6%, transparent);
+}
+
+.text-input, .textarea-input, .select-input,
+.chat-input textarea, .chat-input input, .training-answer textarea {
+  border-width: 1px !important;
+  border-radius: var(--r-md) !important;
+}
+
+.theme-swatches { gap: 10px; }
+.theme-swatch {
+  width: 66px;
+  height: 38px;
+  border-radius: 12px !important;
+  position: relative;
+}
+.theme-swatch::after {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: white;
+  font-size: 15px;
+}
+.theme-swatch-light { background: linear-gradient(135deg, #f6f2e9 0 48%, #a95124 48% 72%, #3f6954 72%); }
+.theme-swatch-dark { background: linear-gradient(135deg, #171a16 0 48%, #e07b42 48% 72%, #5b8a70 72%); }
+.theme-swatch-light::after { content: "☀"; color: #25291f; }
+.theme-swatch-dark::after { content: "☾"; }
+
+@media (max-width: 560px) {
+  .m-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 104px; }
+  .m-tile-wide { grid-column: span 2; }
+  .shell-topbar { min-height: 66px; padding-inline: 16px; }
+  .screen-home { padding-inline: 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}
+
+/* Tutorial/demo follows the same forest system instead of the legacy pink-blue skin. */
+.tut-window, .tut-main { background: var(--m-bg) !important; color: var(--m-fg) !important; }
+.tut-header, .tut-footer { background: var(--m-surface) !important; border-color: var(--m-border) !important; }
+.tut-stage {
+  background:
+    radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--m-accent) 18%, transparent), transparent 36%),
+    radial-gradient(circle at 82% 88%, color-mix(in srgb, var(--m-accent-2) 16%, transparent), transparent 38%),
+    var(--m-surface-2) !important;
+}
+.tut-title, .tut-header-title, .tut-hero-name { color: var(--m-fg) !important; }
+.tut-body { color: var(--m-dim) !important; }
+.tut-dot { background: var(--m-border) !important; }
+.tut-dot-active { background: var(--m-accent) !important; }
+.tut-shot { border-color: var(--m-border) !important; box-shadow: var(--m-elevated-shadow) !important; }
+.tut-phone, .tut-win-frame { border-color: var(--m-border) !important; box-shadow: var(--m-elevated-shadow) !important; }
+.tut-u { text-decoration-color: var(--m-accent) !important; }

@@ -180,13 +180,19 @@ export function useMicRecorder(
           if (!audio.size) { deliverText(""); return; }
           const form = new FormData();
           form.append("file", audio, meta.filename);
-          const language = langRef.current;
-          if (language) form.append("language", language);
+          const language = langRef.current?.trim().toLowerCase().split(/[-_]/, 1)[0] ?? "";
+          if (language && language !== "auto") form.append("language", language);
           const token = await getAuthToken();
+          const headers: Record<string, string> = {};
+          if (token) headers.Authorization = `Bearer ${token}`;
+          // Keep the multipart field for the API contract and duplicate the
+          // hint in a header so proxies/alternate STT deployments cannot drop
+          // it unnoticed.
+          if (language && language !== "auto") headers["X-Veksha-STT-Language"] = language;
           const res = await fetch(`${CONFIG.BACKEND_URL}/api/stt`, {
             method: "POST",
             body: form,
-            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+            headers,
           });
           if (!res.ok) throw new Error(`STT HTTP ${res.status}`);
           const json = (await res.json()) as { text?: string };

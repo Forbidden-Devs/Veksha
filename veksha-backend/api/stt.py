@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 
 import aiohttp
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, File, Form, Header, HTTPException, UploadFile
 from pydantic import BaseModel
 
 from auth import CurrentUser
@@ -33,6 +33,7 @@ async def api_stt(
     _username: CurrentUser,
     file: UploadFile = File(...),
     language: str = Form(""),
+    language_header: str = Header("", alias="X-Veksha-STT-Language"),
 ) -> STTResponse:
     if not OPENAI_API_KEY:
         raise HTTPException(status_code=503, detail="OPENAI_API_KEY is not configured.")
@@ -43,6 +44,9 @@ async def api_stt(
     if len(audio) > _MAX_AUDIO_BYTES:
         raise HTTPException(status_code=413, detail="Audio file is too large.")
 
+    language_hint = (language or language_header).strip().lower().split("-", 1)[0].split("_", 1)[0]
+    log.info("[stt] received language hint=%r", language_hint or None)
+
     models = [OPENAI_STT_MODEL]
     if OPENAI_STT_FALLBACK_MODEL and OPENAI_STT_FALLBACK_MODEL not in models:
         models.append(OPENAI_STT_FALLBACK_MODEL)
@@ -52,7 +56,7 @@ async def api_stt(
     async with aiohttp.ClientSession() as session:
         for index, model in enumerate(models):
             try:
-                data = await _transcribe(session, headers, audio, file, language, model)
+                data = await _transcribe(session, headers, audio, file, language_hint, model)
                 return STTResponse(text=(data.get("text") or "").strip())
             except _STTModelUnavailable as exc:
                 if index + 1 >= len(models):

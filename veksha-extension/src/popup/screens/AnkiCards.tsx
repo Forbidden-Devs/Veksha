@@ -5,6 +5,46 @@ import { useT } from "../../shared/i18n";
 import { useMicRecorder } from "../../shared/useMicRecorder";
 import type { WordEntry } from "../../shared/types";
 
+type Card = { word: WordEntry; reverse: boolean };
+
+const SCRIPT_BY_LANGUAGE: Partial<Record<string, RegExp>> = {
+  ru: /\p{Script=Cyrillic}/u,
+  uk: /\p{Script=Cyrillic}/u,
+  ar: /\p{Script=Arabic}/u,
+  he: /\p{Script=Hebrew}/u,
+  el: /\p{Script=Greek}/u,
+  ka: /\p{Script=Georgian}/u,
+  hi: /\p{Script=Devanagari}/u,
+  ja: /[\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}]/u,
+  zh: /\p{Script=Han}/u,
+  ko: /\p{Script=Hangul}/u,
+  th: /\p{Script=Thai}/u,
+};
+
+function baseLanguage(code: string): string {
+  return code.toLowerCase().split(/[-_]/, 1)[0];
+}
+
+/**
+ * The answer is normally the opposite side of the card. When the stored word
+ * and translation have ended up on the opposite sides, distinctive writing
+ * systems let us recover the intended direction from the visible prompt.
+ */
+export function getCardAnswerLanguage(card: Card | undefined, nativeLang: string, targetLang: string): string {
+  if (!card) return targetLang;
+
+  const defaultAnswer = card.reverse ? targetLang : nativeLang;
+  const front = (card.reverse ? card.word.translation : card.word.name).trim();
+  const nativeScript = SCRIPT_BY_LANGUAGE[baseLanguage(nativeLang)];
+  const targetScript = SCRIPT_BY_LANGUAGE[baseLanguage(targetLang)];
+  const looksNative = nativeScript?.test(front) ?? false;
+  const looksTarget = targetScript?.test(front) ?? false;
+
+  if (looksNative && !looksTarget) return targetLang;
+  if (looksTarget && !looksNative) return nativeLang;
+  return defaultAnswer;
+}
+
 export function AnkiCards({ username, words, nativeLang, targetLang, autoStartVoice, onClose }: {
   username: string;
   words: WordEntry[];
@@ -22,7 +62,7 @@ export function AnkiCards({ username, words, nativeLang, targetLang, autoStartVo
   const [answer, setAnswer] = useState("");
   const [revealed, setRevealed] = useState(false);
   const card = cards[index];
-  const answerLang = card?.reverse ? targetLang : nativeLang;
+  const answerLang = getCardAnswerLanguage(card, nativeLang, targetLang);
   const mic = useMicRecorder((text) => setAnswer(text), answerLang, "dictionary_cards");
 
   useEffect(() => {

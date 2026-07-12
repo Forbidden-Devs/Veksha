@@ -439,6 +439,7 @@ export default function App() {
               </button>
             )}
             <div className="shell-page-title">{meta.title}</div>
+            {screen === "home" && <div className="shell-brand-mark" aria-hidden="true" />}
             {screen === "home" && __DEV_BUILD__ && (
               <>
                 <div className="shell-topbar-spacer" />
