@@ -180,5 +180,7 @@
   "stats_anki_reviews": "Korttitarkistukset",
   "stats_training_reviews": "Harjoitusvastaukset",
   "settings_voice_input": "Puheentulo",
-  "settings_voice_input_desc": "Ota mikrofonitoiminnot käyttöön tälle tilille."
+  "settings_voice_input_desc": "Ota mikrofonitoiminnot käyttöön tälle tilille.",
+  "settings_dual_subtitles": "Kaksinkertaiset tekstitykset",
+  "settings_dual_subtitles_desc": "Näytä käännetyt tekstitykset alkuperäisten YouTube-tekstitysten yläpuolella."
 }

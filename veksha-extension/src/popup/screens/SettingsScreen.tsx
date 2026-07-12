@@ -41,6 +41,9 @@ export function SettingsScreen() {
   const [reminderLevel, setReminderLevel] = useState(2);
   const [overseer, setOverseer] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [savedVoiceEnabled, setSavedVoiceEnabled] = useState(true);
+  const [dualSubsEnabled, setDualSubsEnabled] = useState(false);
+  const [savedDualSubsEnabled, setSavedDualSubsEnabled] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [loadingSettings, setLoadingSettings] = useState(true);
@@ -51,9 +54,23 @@ export function SettingsScreen() {
 
   useEffect(() => { getTheme().then(setThemeState); }, []);
 
-  async function pickTheme(name: ThemeName) {
+  useEffect(() => {
+    if (!isExtension) return;
+    storageGet([CONFIG.STORAGE_KEY_DUAL_SUBS_FEATURE, CONFIG.STORAGE_KEY_DUAL_SUBS]).then((stored) => {
+      const feature = stored[CONFIG.STORAGE_KEY_DUAL_SUBS_FEATURE];
+      const enabled = feature === undefined
+        ? Boolean(stored[CONFIG.STORAGE_KEY_DUAL_SUBS])
+        : Boolean(feature);
+      setDualSubsEnabled(enabled);
+      setSavedDualSubsEnabled(enabled);
+      if (feature === undefined && enabled) {
+        storageSet({ [CONFIG.STORAGE_KEY_DUAL_SUBS_FEATURE]: true });
+      }
+    }).catch(() => {});
+  }, []);
+
+  function pickTheme(name: ThemeName) {
     setThemeState(name);
-    await setTheme(name);
   }
 
   useEffect(() => {
@@ -136,7 +153,7 @@ export function SettingsScreen() {
       setReminderLevel(s.reminder_level ?? 2);
       setOverseer(s.overseer ?? false);
       setVoiceEnabled(s.voice_enabled ?? true);
-      storageSet({ [`vk_voice_enabled_${username}`]: s.voice_enabled ?? true });
+      setSavedVoiceEnabled(s.voice_enabled ?? true);
       setSettingsLoaded(true);
     }).catch((err) => {
       if (!alive) return;
@@ -173,7 +190,25 @@ export function SettingsScreen() {
         overseer,
         voiceEnabled,
       });
-      storageSet({ [CONFIG.STORAGE_KEY_NATIVE_LANG]: nativeLang });
+
+      const localSettings: Record<string, unknown> = {
+        [CONFIG.STORAGE_KEY_NATIVE_LANG]: nativeLang,
+        [`vk_voice_enabled_${username}`]: voiceEnabled,
+      };
+      if (isExtension && !isOnboarding) {
+        localSettings[CONFIG.STORAGE_KEY_DUAL_SUBS_FEATURE] = dualSubsEnabled;
+        if (dualSubsEnabled && !savedDualSubsEnabled) {
+          localSettings[CONFIG.STORAGE_KEY_DUAL_SUBS] = true;
+        }
+      }
+      await storageSet(localSettings);
+      await setTheme(theme);
+      if (isExtension && voiceEnabled && !savedVoiceEnabled) {
+        await chrome.storage.local.set({ vk_voice_permission_state: "unknown" });
+      }
+
+      setSavedVoiceEnabled(voiceEnabled);
+      setSavedDualSubsEnabled(dualSubsEnabled);
       setLangPair(targetLang, nativeLang);
       await switchLanguage(nativeLang);
       navigateTo("home");
@@ -199,10 +234,10 @@ export function SettingsScreen() {
 
   function handleVoiceEnabled(enabled: boolean) {
     setVoiceEnabled(enabled);
-    storageSet({ [`vk_voice_enabled_${username}`]: enabled });
-    if (enabled && isExtension) {
-      chrome.storage.local.set({ vk_voice_permission_state: "unknown" }).catch(() => {});
-    }
+  }
+
+  function handleDualSubsEnabled(enabled: boolean) {
+    setDualSubsEnabled(enabled);
   }
 
   function btnLabel() {
@@ -378,6 +413,21 @@ export function SettingsScreen() {
           <input type="checkbox" checked={voiceEnabled} onChange={(e) => handleVoiceEnabled(e.target.checked)} />
           <span className="settings-toggle-slider" aria-hidden="true" />
         </label>
+
+        {isExtension && !isOnboarding && (
+          <label className="settings-toggle">
+            <span className="settings-toggle-copy">
+              <span className="settings-toggle-title">{t.settings_dual_subtitles}</span>
+              <span className="settings-toggle-desc">{t.settings_dual_subtitles_desc}</span>
+            </span>
+            <input
+              type="checkbox"
+              checked={dualSubsEnabled}
+              onChange={(event) => handleDualSubsEnabled(event.target.checked)}
+            />
+            <span className="settings-toggle-slider" aria-hidden="true" />
+          </label>
+        )}
 
         {error && <p className="onboarding-error">{error}</p>}
 

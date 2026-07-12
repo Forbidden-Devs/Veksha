@@ -184,5 +184,7 @@
   "stats_anki_reviews": "Перегляди карток",
   "stats_training_reviews": "Відповіді під час тренування",
   "settings_voice_input": "Голосове введення",
-  "settings_voice_input_desc": "Увімкніть функції мікрофона для цього облікового запису."
+  "settings_voice_input_desc": "Увімкніть функції мікрофона для цього облікового запису.",
+  "settings_dual_subtitles": "Подвійні субтитри",
+  "settings_dual_subtitles_desc": "Увімкнути переклад субтитрів і кнопку керування ним на YouTube."
 }

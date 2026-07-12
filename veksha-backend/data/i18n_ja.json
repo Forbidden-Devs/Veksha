@@ -303,5 +303,7 @@
   "stats_anki_reviews": "カードレビュー",
   "stats_training_reviews": "トレーニング回答",
   "settings_voice_input": "音声入力",
-  "settings_voice_input_desc": "このアカウントでマイク機能を有効にします。"
+  "settings_voice_input_desc": "このアカウントでマイク機能を有効にします。",
+  "settings_dual_subtitles": "二重字幕",
+  "settings_dual_subtitles_desc": "YouTubeの元の字幕の上に翻訳字幕を表示します。"
 }

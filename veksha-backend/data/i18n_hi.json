@@ -179,5 +179,7 @@
   "stats_anki_reviews": "कार्ड समीक्षा",
   "stats_training_reviews": "प्रशिक्षण उत्तर",
   "settings_voice_input": "वॉइस इनपुट",
-  "settings_voice_input_desc": "इस खाते के लिए माइक्रोफ़ोन सुविधाएँ सक्षम करें."
+  "settings_voice_input_desc": "इस खाते के लिए माइक्रोफ़ोन सुविधाएँ सक्षम करें.",
+  "settings_dual_subtitles": "दोहरी उपशीर्षक",
+  "settings_dual_subtitles_desc": "मूल YouTube कैप्शन के ऊपर अनुवादित उपशीर्षक दिखाएँ।"
 }

@@ -179,5 +179,7 @@
   "stats_anki_reviews": "Ανασκοπήσεις καρτών",
   "stats_training_reviews": "Απαντήσεις εκπαίδευσης",
   "settings_voice_input": "Είσοδος φωνής",
-  "settings_voice_input_desc": "Ενεργοποιήστε τις λειτουργίες μικροφώνου για αυτόν τον λογαριασμό."
+  "settings_voice_input_desc": "Ενεργοποιήστε τις λειτουργίες μικροφώνου για αυτόν τον λογαριασμό.",
+  "settings_dual_subtitles": "Διπλοί υπότιτλοι",
+  "settings_dual_subtitles_desc": "Εμφάνιση των μεταφρασμένων υπότιτλων πάνω από τους αρχικούς υπότιτλους του YouTube."
 }

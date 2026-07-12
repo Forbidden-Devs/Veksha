@@ -179,5 +179,7 @@
   "stats_anki_reviews": "Ôn thẻ",
   "stats_training_reviews": "Câu trả lời luyện tập",
   "settings_voice_input": "Nhập giọng nói",
-  "settings_voice_input_desc": "Bật tính năng microphone cho tài khoản này."
+  "settings_voice_input_desc": "Bật tính năng microphone cho tài khoản này.",
+  "settings_dual_subtitles": "Phụ đề kép",
+  "settings_dual_subtitles_desc": "Hiển thị phụ đề đã dịch phía trên phụ đề gốc của YouTube."
 }

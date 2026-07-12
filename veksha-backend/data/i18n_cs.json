@@ -181,5 +181,7 @@
   "stats_anki_reviews": "Kontroly karet",
   "stats_training_reviews": "Odpovědi v tréninku",
   "settings_voice_input": "Hlasové zadávání",
-  "settings_voice_input_desc": "Povolte funkce mikrofonu pro tento účet."
+  "settings_voice_input_desc": "Povolte funkce mikrofonu pro tento účet.",
+  "settings_dual_subtitles": "Dvojité titulky",
+  "settings_dual_subtitles_desc": "Zobrazit přeložené titulky nad původními titulky YouTube."
 }

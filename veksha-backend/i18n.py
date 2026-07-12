@@ -73,6 +73,8 @@ UI_STRINGS: dict[str, str] = {
     "settings_target_lang": "Active learning language",
     "settings_voice_input": "Voice input",
     "settings_voice_input_desc": "Enable microphone features for this account.",
+    "settings_dual_subtitles": "Dual subtitles",
+    "settings_dual_subtitles_desc": "Enable translated subtitles and their playback control on YouTube.",
     "settings_level": "My level",
     "settings_level_placeholder": "Select your level...",
     "settings_goals": "Your goals",

@@ -309,5 +309,7 @@
   "stats_anki_reviews": "Kartenwiederholungen",
   "stats_training_reviews": "Trainingsantworten",
   "settings_voice_input": "Spracheingabe",
-  "settings_voice_input_desc": "Mikrofonfunktionen für dieses Konto aktivieren."
+  "settings_voice_input_desc": "Mikrofonfunktionen für dieses Konto aktivieren.",
+  "settings_dual_subtitles": "Doppelte Untertitel",
+  "settings_dual_subtitles_desc": "Übersetzte Untertitel über den ursprünglichen YouTube-Untertiteln anzeigen."
 }

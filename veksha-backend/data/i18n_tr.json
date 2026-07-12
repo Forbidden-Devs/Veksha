@@ -178,5 +178,7 @@
   "stats_anki_reviews": "Kart incelemeleri",
   "stats_training_reviews": "Eğitim yanıtları",
   "settings_voice_input": "Ses girişi",
-  "settings_voice_input_desc": "Bu hesap için mikrofon özelliklerini etkinleştirin."
+  "settings_voice_input_desc": "Bu hesap için mikrofon özelliklerini etkinleştirin.",
+  "settings_dual_subtitles": "Çift altyazı",
+  "settings_dual_subtitles_desc": "Çevrilmiş altyazıları YouTube'un orijinal altyazılarının üstünde göster."
 }

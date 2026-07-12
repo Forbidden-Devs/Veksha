@@ -300,5 +300,7 @@
   "stats_anki_reviews": "مراجعات البطاقات",
   "stats_training_reviews": "إجابات التدريب",
   "settings_voice_input": "الإدخال الصوتي",
-  "settings_voice_input_desc": "فعّل ميزات الميكروفون لهذا الحساب."
+  "settings_voice_input_desc": "فعّل ميزات الميكروفون لهذا الحساب.",
+  "settings_dual_subtitles": "ترجمات مزدوجة",
+  "settings_dual_subtitles_desc": "عرض الترجمات المترجمة فوق تسميات YouTube الأصلية."
 }

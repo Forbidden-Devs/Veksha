@@ -181,5 +181,7 @@
   "stats_anki_reviews": "Tinjauan kartu",
   "stats_training_reviews": "Jawaban latihan",
   "settings_voice_input": "Input suara",
-  "settings_voice_input_desc": "Aktifkan fitur mikrofon untuk akun ini."
+  "settings_voice_input_desc": "Aktifkan fitur mikrofon untuk akun ini.",
+  "settings_dual_subtitles": "Subtitel ganda",
+  "settings_dual_subtitles_desc": "Tampilkan subtitel terjemahan di atas teks caption YouTube asli."
 }

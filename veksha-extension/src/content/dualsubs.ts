@@ -4,16 +4,16 @@
  * Renders a translated copy of the current caption line right above the
  * original subtitles. Hovering a word in the original highlights the aligned
  * word(s) of the translation (alignment comes from the backend, see
- * /api/subtitles/translate). Toggled by a small chip next to the row;
- * the choice persists in chrome.storage.local.
+ * /api/subtitles/translate). Settings enable the feature; while enabled, a
+ * small chip next to the row can show or hide translations during playback.
  *
  * youtube.ts drives this module: it calls sync() whenever the caption line
  * may have changed (mutation observer + periodic tick) and passes the current
  * word spans so token indices always match the interactive captions.
  */
 import { subtitleTranslate, type SubtitleTranslation } from "../shared/api";
+import { CONFIG } from "../shared/config";
 
-const STORAGE_KEY = "veksha_dualsubs_on";
 const DEBOUNCE_MS = 250;
 
 export interface DualSubsDeps {
@@ -27,6 +27,7 @@ export interface DualSubsDeps {
 }
 
 let deps: DualSubsDeps;
+let featureEnabled = false;
 let enabled = false;
 let rowEl: HTMLElement | null = null;
 let toggleEl: HTMLElement | null = null;
@@ -41,11 +42,53 @@ const lineCache = new Map<string, SubtitleTranslation>();
 
 export function initDualSubs(d: DualSubsDeps): void {
   deps = d;
-  chrome.storage.local.get([STORAGE_KEY], (res) => {
-    enabled = Boolean(res[STORAGE_KEY]);
+  chrome.storage.local.get([CONFIG.STORAGE_KEY_DUAL_SUBS_FEATURE, CONFIG.STORAGE_KEY_DUAL_SUBS], (res) => {
+    const storedFeature = res[CONFIG.STORAGE_KEY_DUAL_SUBS_FEATURE];
+    const legacyEnabled = Boolean(res[CONFIG.STORAGE_KEY_DUAL_SUBS]);
+    setFeatureEnabled(storedFeature === undefined ? legacyEnabled : Boolean(storedFeature));
+    setEnabled(legacyEnabled);
+    if (storedFeature === undefined && legacyEnabled) {
+      chrome.storage.local.set({ [CONFIG.STORAGE_KEY_DUAL_SUBS_FEATURE]: true });
+    }
+  });
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area !== "local") return;
+    if (changes[CONFIG.STORAGE_KEY_DUAL_SUBS_FEATURE]) {
+      setFeatureEnabled(Boolean(changes[CONFIG.STORAGE_KEY_DUAL_SUBS_FEATURE].newValue));
+    }
+    if (changes[CONFIG.STORAGE_KEY_DUAL_SUBS]) {
+      setEnabled(Boolean(changes[CONFIG.STORAGE_KEY_DUAL_SUBS].newValue));
+    }
   });
   document.addEventListener("mouseover", onMouseOver, true);
   document.addEventListener("mouseout", onMouseOut, true);
+}
+
+function setFeatureEnabled(next: boolean): void {
+  if (featureEnabled === next) return;
+  featureEnabled = next;
+  currentLine = "";
+  currentResult = null;
+  if (!featureEnabled) {
+    window.clearTimeout(debounceTimer);
+    hideRow();
+    clearHighlights();
+    toggleEl?.remove();
+    toggleEl = null;
+  }
+}
+
+function setEnabled(next: boolean): void {
+  if (enabled === next) return;
+  enabled = next;
+  currentLine = "";
+  currentResult = null;
+  if (!enabled) {
+    window.clearTimeout(debounceTimer);
+    hideRow();
+    clearHighlights();
+  }
+  syncToggleFace();
 }
 
 // ---------------------------------------------------------------------------
@@ -55,6 +98,10 @@ export function initDualSubs(d: DualSubsDeps): void {
 /** Keep the row in sync with the current caption words. Cheap when nothing
  *  changed; debounces the backend call while the line is still rolling in. */
 export function sync(wordSpans: HTMLElement[], captionRect: DOMRect | null): void {
+  if (!featureEnabled) {
+    hideRow();
+    return;
+  }
   ensureToggle(captionRect);
   if (!enabled) {
     hideRow();
@@ -193,7 +240,7 @@ function clearHighlights(): void {
 }
 
 // ---------------------------------------------------------------------------
-// Toggle chip
+// Per-video toggle chip (available only when the feature is enabled in Settings)
 // ---------------------------------------------------------------------------
 
 function ensureToggle(captionRect: DOMRect | null): void {
@@ -206,9 +253,9 @@ function ensureToggle(captionRect: DOMRect | null): void {
     toggleEl.addEventListener("mousedown", (e) => e.stopPropagation());
     toggleEl.addEventListener("click", (e) => {
       e.stopPropagation();
-      enabled = !enabled;
-      chrome.storage.local.set({ [STORAGE_KEY]: enabled });
-      syncToggleFace();
+      const next = !enabled;
+      setEnabled(next);
+      chrome.storage.local.set({ [CONFIG.STORAGE_KEY_DUAL_SUBS]: next });
       if (!enabled) {
         hideRow();
         clearHighlights();

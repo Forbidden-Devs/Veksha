@@ -182,5 +182,7 @@
   "stats_anki_reviews": "Revisioni delle carte",
   "stats_training_reviews": "Risposte di allenamento",
   "settings_voice_input": "Input vocale",
-  "settings_voice_input_desc": "Abilita le funzioni microfono per questo account."
+  "settings_voice_input_desc": "Abilita le funzioni microfono per questo account.",
+  "settings_dual_subtitles": "Sottotitoli doppi",
+  "settings_dual_subtitles_desc": "Mostra i sottotitoli tradotti sopra i sottotitoli originali di YouTube."
 }

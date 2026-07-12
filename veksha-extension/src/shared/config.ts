@@ -6,6 +6,8 @@ export const CONFIG = {
   GOOGLE_CLIENT_ID: "213004589034-fgni2g4c9fmh10bn9quq9de5qn8h8kjc.apps.googleusercontent.com" as string,
   STORAGE_KEY_USERNAME: "veksha_username",
   STORAGE_KEY_TOKEN: "veksha_token",
+  STORAGE_KEY_DUAL_SUBS_FEATURE: "veksha_dualsubs_feature_enabled",
+  STORAGE_KEY_DUAL_SUBS: "veksha_dualsubs_on",
   STORAGE_KEY_LANG_PAIR: "veksha_lang_pair",
   STORAGE_KEY_NATIVE_LANG: "veksha_native_lang",
   STORAGE_KEY_IMMERSION: "veksha_immersion_on",

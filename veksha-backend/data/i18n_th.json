@@ -179,5 +179,7 @@
   "stats_anki_reviews": "การทบทวนการ์ด",
   "stats_training_reviews": "คำตอบการฝึก",
   "settings_voice_input": "การป้อนเสียง",
-  "settings_voice_input_desc": "เปิดใช้งานฟีเจอร์ไมโครโฟนสำหรับบัญชีนี้"
+  "settings_voice_input_desc": "เปิดใช้งานฟีเจอร์ไมโครโฟนสำหรับบัญชีนี้",
+  "settings_dual_subtitles": "คำบรรยายสองภาษา",
+  "settings_dual_subtitles_desc": "แสดงคำบรรยายที่แปลแล้วเหนือคำบรรยาย YouTube ต้นฉบับ"
 }

@@ -69,6 +69,8 @@ export interface Strings {
   settings_persistent_desc: string;
   settings_voice_input: string;
   settings_voice_input_desc: string;
+  settings_dual_subtitles: string;
+  settings_dual_subtitles_desc: string;
   settings_account: string;
   settings_google_link: string;
   settings_google_linked: string;
@@ -365,6 +367,8 @@ export const EN: Strings = {
   settings_persistent_desc: "Hard-to-dismiss reminders: the close button runs away — finish a quick training or catch it to clear them.",
   settings_voice_input: "Voice input",
   settings_voice_input_desc: "Enable microphone features for this account.",
+  settings_dual_subtitles: "Dual subtitles",
+  settings_dual_subtitles_desc: "Enable translated subtitles and their playback control on YouTube.",
   settings_account: "Account",
   settings_google_link: "Link Google account",
   settings_google_linked: "Google account linked",

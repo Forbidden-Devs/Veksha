@@ -303,5 +303,7 @@
   "stats_anki_reviews": "Revisiones de tarjetas",
   "stats_training_reviews": "Respuestas de entrenamiento",
   "settings_voice_input": "Entrada de voz",
-  "settings_voice_input_desc": "Activa las funciones del micrófono para esta cuenta."
+  "settings_voice_input_desc": "Activa las funciones del micrófono para esta cuenta.",
+  "settings_dual_subtitles": "Subtítulos duales",
+  "settings_dual_subtitles_desc": "Muestra subtítulos traducidos encima de los subtítulos originales de YouTube."
 }

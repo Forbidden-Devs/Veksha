@@ -311,5 +311,7 @@
   "stats_anki_reviews": "Kaartbeoordelingen",
   "stats_training_reviews": "Trainingsantwoorden",
   "settings_voice_input": "Spraakinvoer",
-  "settings_voice_input_desc": "Schakel microfoonfuncties in voor dit account."
+  "settings_voice_input_desc": "Schakel microfoonfuncties in voor dit account.",
+  "settings_dual_subtitles": "Dubbele ondertiteling",
+  "settings_dual_subtitles_desc": "Toon vertaalde ondertiteling boven de originele YouTube-ondertitels."
 }

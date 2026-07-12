@@ -189,5 +189,7 @@
   "stats_anki_reviews": "ბარათების მიმოხილვები",
   "stats_training_reviews": "ვარჯიშის პასუხები",
   "settings_voice_input": "ხმის შეყვანა",
-  "settings_voice_input_desc": "ამ ანგარიშისთვის მიკროფონის ფუნქციების ჩართვა."
+  "settings_voice_input_desc": "ამ ანგარიშისთვის მიკროფონის ფუნქციების ჩართვა.",
+  "settings_dual_subtitles": "ორმაგი სუბტიტრები",
+  "settings_dual_subtitles_desc": "აჩვენე თარგმნილი სუბტიტრები ორიგინალი YouTube წარწერების ზემოთ."
 }

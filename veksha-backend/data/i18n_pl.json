@@ -306,5 +306,7 @@
   "stats_anki_reviews": "Powtórki kart",
   "stats_training_reviews": "Odpowiedzi z treningu",
   "settings_voice_input": "Wprowadzanie głosowe",
-  "settings_voice_input_desc": "Włącz funkcje mikrofonu dla tego konta."
+  "settings_voice_input_desc": "Włącz funkcje mikrofonu dla tego konta.",
+  "settings_dual_subtitles": "Podwójne napisy",
+  "settings_dual_subtitles_desc": "Wyświetlaj przetłumaczone napisy nad oryginalnymi napisami YouTube."
 }
