@@ -36,7 +36,7 @@ const Icons = {
 };
 
 export function HomeScreen() {
-  const { username, navigateTo, openTraining, targetLang, nativeLang, setLangPair, sendToChat } = useApp();
+  const { username, navigateTo, openTraining, requirePremiumFeature, targetLang, nativeLang, setLangPair, sendToChat } = useApp();
   const t = useT();
   const [counts, setCounts] = useState<{ words: number; due: number } | null>(null);
   const [ask, setAsk] = useState("");
@@ -83,6 +83,7 @@ export function HomeScreen() {
 
   async function toggleGrammarLens() {
     const next = !grammarLensOn;
+    if (next && !(await requirePremiumFeature("grammar_lens", t.grammar_lens_title))) return;
     setGrammarLensOn(next);
     if (next) setImmersionOn(false);
     await storageSet({
@@ -97,6 +98,14 @@ export function HomeScreen() {
       }
     } catch {
       // The saved preference is applied on the next regular page.
+    }
+  }
+
+  async function openImmersion() {
+    // Always let a user reach the screen to turn off a stale enabled setting;
+    // only entering the paid feature from the off state requires Premium.
+    if (immersionOn || await requirePremiumFeature("immersion", t.nav_immersion)) {
+      navigateTo("immersion");
     }
   }
 
@@ -150,7 +159,7 @@ export function HomeScreen() {
         {isExtension ? (
           <button
             className={`m-tile m-feature-tile ${immersionOn ? "is-on" : "is-off"}`}
-            onClick={() => navigateTo("immersion")}
+            onClick={openImmersion}
           >
             <span className="m-tile-icon">{Icons.immersion}</span>
             <span className="m-tile-label">{t.nav_immersion}</span>

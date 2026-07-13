@@ -111,6 +111,8 @@ UI_STRINGS: dict[str, str] = {
     "settings_sub_connect": "Subscribe via Telegram",
     "settings_sub_manage": "Manage in Telegram",
     "settings_sub_err": "Could not open the subscription bot. Try again later.",
+    "premium_required_title": "Premium required",
+    "premium_required_desc": "{feature} requires an active Premium subscription.",
     "settings_account": "Account",
     "settings_google_link": "Link Google account",
     "settings_google_linked": "Google account linked",

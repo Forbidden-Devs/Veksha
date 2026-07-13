@@ -6,8 +6,8 @@
   "{{chrome}}.permissions": ["storage", "activeTab", "alarms", "notifications", "tabs", "offscreen", "scripting", "contextMenus", "identity"],
   "{{firefox}}.permissions": ["storage", "activeTab", "alarms", "notifications", "tabs", "scripting", "contextMenus", "identity"],
   "host_permissions": [
-    "https://veksha-production.up.railway.app/*",
-    "wss://veksha-production.up.railway.app/*",
+    "https://veksha-backend-production.up.railway.app/*",
+    "wss://veksha-backend-production.up.railway.app/*",
     "http://127.0.0.1:8000/*",
     "ws://127.0.0.1:8000/*",
     "<all_urls>"

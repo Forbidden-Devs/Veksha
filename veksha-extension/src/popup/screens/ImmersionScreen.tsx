@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { CONFIG } from "../../shared/config";
 import { useT } from "../../shared/i18n";
 import { storageGet, storageSet } from "../../shared/platform";
+import { useApp } from "../App";
 
 export function ImmersionScreen() {
   const t = useT();
+  const { requirePremiumFeature } = useApp();
   const [enabled, setEnabled] = useState(false);
 
   useEffect(() => {
@@ -15,6 +17,7 @@ export function ImmersionScreen() {
 
   async function toggle() {
     const next = !enabled;
+    if (next && !(await requirePremiumFeature("immersion", t.nav_immersion))) return;
     setEnabled(next);
     await storageSet({
       [CONFIG.STORAGE_KEY_IMMERSION]: next,

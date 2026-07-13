@@ -22,7 +22,7 @@ function detectNativeLang(): string {
 }
 
 export function SettingsScreen() {
-  const { username, settingsMode, navigateTo, setLangPair, signOut, targetLang: appTargetLang, nativeLang: appNativeLang } = useApp();
+  const { username, settingsMode, navigateTo, requirePremiumFeature, setLangPair, signOut, targetLang: appTargetLang, nativeLang: appNativeLang } = useApp();
   const { switchLanguage, translating } = useI18n();
   const t = useT();
 
@@ -284,7 +284,8 @@ export function SettingsScreen() {
     setError(null);
   }
 
-  function handleDualSubsEnabled(enabled: boolean) {
+  async function handleDualSubsEnabled(enabled: boolean) {
+    if (enabled && !(await requirePremiumFeature("dual_subtitles", t.settings_dual_subtitles))) return;
     setDualSubsEnabled(enabled);
   }
 

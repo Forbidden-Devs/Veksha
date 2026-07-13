@@ -61,6 +61,7 @@ async function sendToActiveTab(message: Record<string, unknown>): Promise<"ok" |
 // ---------------------------------------------------------------------------
 
 type ReminderOverlay = "reminder" | null;
+type PremiumFeature = "grammar_lens" | "immersion" | "dual_subtitles";
 
 interface AppCtx {
   username: string;
@@ -73,6 +74,7 @@ interface AppCtx {
   openTraining: () => void;
   openLessonPicker: () => void;
   openLesson: (topic: string) => void;
+  requirePremiumFeature: (feature: PremiumFeature, featureName: string) => Promise<boolean>;
   targetLang: string;
   nativeLang: string;
   setLangPair: (targetLang: string, nativeLang: string) => void;
@@ -111,6 +113,10 @@ export default function App() {
   const [settingsMode, setSettingsMode] = useState<SettingsMode>("onboarding");
   const [reminderOpen, setReminderOpen] = useState<ReminderOverlay>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [billing, setBilling] = useState<api.BillingStatus | null>(null);
+  const [premiumPrompt, setPremiumPrompt] = useState<{ featureName: string } | null>(null);
+  const [premiumOpening, setPremiumOpening] = useState(false);
+  const [premiumError, setPremiumError] = useState<string | null>(null);
   // Help bubble — pops up on the chat screen, dismissed by any click outside it.
   const [helpVisible, setHelpVisible] = useState(true);
   const helpRef = useRef<HTMLDivElement>(null);
@@ -120,6 +126,11 @@ export default function App() {
     const timer = setTimeout(() => setToastMsg(null), 3500);
     return () => clearTimeout(timer);
   }, [toastMsg]);
+
+  useEffect(() => {
+    if (!username) return;
+    api.getBillingStatus().then(setBilling).catch(() => setBilling(null));
+  }, [username]);
 
   const detected = (navigator.languages?.[0] ?? navigator.language ?? "en").slice(0, 2).toLowerCase();
   const [targetLang, setTargetLang] = useState("en");
@@ -295,6 +306,40 @@ export default function App() {
     setScreen(s);
   }, []);
 
+  const requirePremiumFeature = useCallback(async (
+    feature: PremiumFeature,
+    featureName: string,
+  ): Promise<boolean> => {
+    let current = billing;
+    if (!current) {
+      try {
+        current = await api.getBillingStatus();
+        setBilling(current);
+      } catch {
+        // Let the server remain the source of truth when status is temporarily
+        // unavailable instead of locking a paid user out on a network error.
+        return true;
+      }
+    }
+    if (current.features.includes(feature)) return true;
+    setPremiumError(null);
+    setPremiumPrompt({ featureName });
+    return false;
+  }, [billing]);
+
+  async function handlePremiumSubscribe() {
+    setPremiumOpening(true);
+    setPremiumError(null);
+    try {
+      const { url } = await api.createTelegramBillingLink();
+      window.open(url, "_blank", "noopener");
+    } catch {
+      setPremiumError(t.settings_sub_err);
+    } finally {
+      setPremiumOpening(false);
+    }
+  }
+
   const openReminder = useCallback(() => setReminderOpen("reminder"), []);
   const closeReminder = useCallback(() => setReminderOpen(null), []);
 
@@ -384,6 +429,7 @@ export default function App() {
     openTraining,
     openLessonPicker,
     openLesson,
+    requirePremiumFeature,
     targetLang,
     nativeLang,
     setLangPair,
@@ -481,6 +527,26 @@ export default function App() {
             topicName={webOverlay.topic}
             onClose={() => setWebOverlay(null)}
           />
+        )}
+
+        {premiumPrompt && (
+          <div className="imm-modal-backdrop">
+            <div className="imm-modal premium-modal" role="dialog" aria-modal="true" aria-labelledby="premium-required-title">
+              <div className="imm-modal-icon premium-modal-icon" aria-hidden="true">★</div>
+              <h3 id="premium-required-title">{t.premium_required_title}</h3>
+              <p className="imm-modal-sub">
+                {t.premium_required_desc.replace("{feature}", premiumPrompt.featureName)}
+              </p>
+              <p className="premium-modal-features">{t.settings_sub_desc}</p>
+              <div className="premium-modal-actions">
+                <button className="btn btn-gradient" disabled={premiumOpening} onClick={handlePremiumSubscribe}>
+                  {t.settings_sub_connect}
+                </button>
+                <button className="btn" onClick={() => setPremiumPrompt(null)}>{t.imm_modal_ok}</button>
+              </div>
+              {premiumError && <p className="onboarding-error">{premiumError}</p>}
+            </div>
+          </div>
         )}
 
         {toastMsg && <div className="toast">{toastMsg}</div>}

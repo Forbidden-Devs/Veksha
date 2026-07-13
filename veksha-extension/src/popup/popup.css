@@ -3907,6 +3907,20 @@ html, body, #root {
 .imm-modal h3 { font-size: 19px; font-weight: 800; margin: 0 0 8px; }
 .imm-modal-sub { font-size: 13.5px; color: var(--av-muted); line-height: 1.55; margin: 0 0 16px; }
 
+.premium-modal-icon { font-size: 28px; }
+
+.premium-modal-features {
+  margin: -4px 0 18px;
+  color: var(--av-muted);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.premium-modal-actions {
+  display: grid;
+  gap: 8px;
+}
+
 .imm-card {
   display: flex;
   align-items: flex-start;
