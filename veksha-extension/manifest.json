@@ -7,15 +7,21 @@
   "{{firefox}}.permissions": ["storage", "activeTab", "alarms", "notifications", "tabs", "scripting", "contextMenus", "identity"],
   "host_permissions": [
     "https://veksha-backend-production.up.railway.app/*",
-    "wss://veksha-backend-production.up.railway.app/*",
-    "http://127.0.0.1:8000/*",
-    "ws://127.0.0.1:8000/*",
     "<all_urls>"
   ],
   "{{firefox}}.browser_specific_settings": {
     "gecko": {
       "id": "veksha@veksha.app",
-      "strict_min_version": "115.0"
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": [
+          "personallyIdentifyingInfo",
+          "authenticationInfo",
+          "personalCommunications",
+          "browsingActivity",
+          "websiteContent"
+        ]
+      }
     }
   },
   "{{chrome}}.background": {

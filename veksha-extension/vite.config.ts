@@ -32,6 +32,19 @@ export default defineConfig({
     webExtension({
       manifest: "manifest.json",
       browser,
+      // Store packages must never request access to the local development
+      // backend. Add those origins only for watch-mode builds.
+      transformManifest: (manifest) => ({
+        ...manifest,
+        ...(process.env.DEV_BUILD === "1"
+          ? {
+              host_permissions: [
+                ...(manifest.host_permissions ?? []),
+                "http://127.0.0.1:8000/*",
+              ],
+            }
+          : {}),
+      }),
       // The offscreen document is Chrome-only; Firefox runs capture in the
       // background event page (see src/shared/capture.ts).
       additionalInputs: [

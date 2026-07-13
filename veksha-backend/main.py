@@ -27,6 +27,7 @@ from api import ci_meter
 from api import debug, lesson, message, settings, training
 from api import i18n as api_i18n
 from api import immersion
+from api import privacy
 from api import grammar_lens
 from api import subtitles as api_subtitles
 from api import translate
@@ -82,6 +83,7 @@ app.include_router(ci_meter.router)
 app.include_router(grammar_lens.router)
 app.include_router(vocab_frequency.router)
 app.include_router(api_subtitles.router)
+app.include_router(privacy.router)
 if DEBUG_API:
     app.include_router(debug.router)
     log.warning("Debug API is enabled (/api/debug/*) — do not use in production.")

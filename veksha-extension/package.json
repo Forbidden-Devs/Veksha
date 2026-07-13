@@ -15,7 +15,8 @@
     "build:chrome": "vite build",
     "prebuild:firefox": "npm run sync-assets",
     "build:firefox": "node scripts/build.mjs firefox",
-    "build": "npm run build:chrome && npm run build:firefox"
+    "build": "npm run build:chrome && npm run build:firefox",
+    "release": "node scripts/package-release.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",

@@ -13,6 +13,7 @@ npm install
 npm run build            # both targets → dist/chrome + dist/firefox
 npm run build:chrome     # Chrome only
 npm run build:firefox    # Firefox only
+npm run release          # both store ZIPs + AMO source ZIP → artifacts/
 npm run dev              # watch mode, launches Brave with the extension loaded
 npm run dev:zen          # watch mode, launches Zen (Firefox build)
 npm run dev:firefox      # watch mode, launches stock Firefox
@@ -35,6 +36,12 @@ add-on signed by AMO; the `browser_specific_settings.gecko.id` is set in
 Backend URL is configured in `src/shared/config.ts` (`BACKEND_URL`).
 `scripts/sync-assets.mjs` copies tesseract/langdata assets into `public/`
 before the build (`npm run sync-assets`).
+
+`npm run release` removes the previous `artifacts/` directory, performs clean
+production builds, validates the generated manifests, excludes localhost
+permissions and source maps, and creates Chrome, Firefox, and Firefox reviewer
+source archives. See `AMO_SOURCE_README.md` for the exact reproducible build
+instructions included with the AMO source upload.
 
 ## Browser differences
 
