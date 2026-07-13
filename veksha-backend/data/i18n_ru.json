@@ -303,5 +303,14 @@
   "settings_signout_confirm": "Выйти? Без привязанного аккаунта Google вы не сможете снова войти в этот профиль.",
   "content_dualsubs": "Двойные субтитры",
   "home_ask_placeholder": "Спросите или введите что угодно…",
-  "settings_theme": "Тема"
+  "settings_theme": "Тема",
+  "ci_meter_on": "CI-метр включён",
+  "ci_meter_off": "CI-метр",
+  "ci_meter_loading": "Проверяем читаемость…",
+  "ci_meter_refine": "Улучшить с AI",
+  "ci_meter_badge_known": "{pct}% знакомо · {cefr}",
+  "ci_meter_verdict_ideal": "Отличный контент i+1 для вас — в основном знакомый, с хорошей порцией новых слов.",
+  "ci_meter_verdict_too_easy": "Вы это уже хорошо знаете — полезно для практики беглости, но нового словарного запаса мало.",
+  "ci_meter_verdict_too_hard": "Сейчас это может быть слишком сложно — скорее всего, придётся часто искать слова.",
+  "ci_meter_verdict_close": "Почти ваш уровень."
 }

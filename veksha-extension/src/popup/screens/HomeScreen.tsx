@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import * as api from "../../shared/api";
+import { CONFIG } from "../../shared/config";
 import { useT } from "../../shared/i18n";
 import { LANGUAGES } from "../../shared/languages";
-import { isExtension } from "../../shared/platform";
+import { isExtension, storageGet, storageSet } from "../../shared/platform";
 import type { SettingsData } from "../../shared/types";
 import { useApp } from "../App";
 
@@ -20,6 +21,7 @@ const Icons = {
   topics: <svg viewBox="0 0 24 24"><path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>,
   training: <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="m15 9 5-5M16 4h4v4"/></svg>,
   immersion: <svg viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/><circle cx="12" cy="12" r="3.5"/></svg>,
+  ciMeter: <svg viewBox="0 0 24 24"><path d="M4 18a8 8 0 0 1 16 0"/><path d="M12 18l4.5-6"/><circle cx="12" cy="18" r="1.2"/></svg>,
   stats: <svg viewBox="0 0 24 24"><path d="M5 20V10h4v10M10 20V4h4v16M15 20v-7h4v7M3 20h18"/></svg>,
   settings: <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6 1.7 1.7 0 0 0 10 3v-.2h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z"/></svg>,
   language: <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.2 2.5 3.3 5.5 3.3 9S14.2 18.5 12 21c-2.2-2.5-3.3-5.5-3.3-9S9.8 5.5 12 3Z"/></svg>,
@@ -37,12 +39,34 @@ export function HomeScreen() {
   const [counts, setCounts] = useState<{ words: number; due: number } | null>(null);
   const [ask, setAsk] = useState("");
   const [settings, setSettings] = useState<SettingsData | null>(null);
+  const [ciMeterOn, setCiMeterOn] = useState(false);
 
   useEffect(() => {
     Promise.all([api.getKbSummary(username), api.getReminders(username)])
       .then(([kb, rem]) => setCounts({ words: kb.learning_count + kb.known_count, due: rem.due_words }))
       .catch(() => {});
   }, [username]);
+
+  useEffect(() => {
+    storageGet([CONFIG.STORAGE_KEY_CI_METER]).then((result) => {
+      setCiMeterOn(Boolean(result[CONFIG.STORAGE_KEY_CI_METER]));
+    });
+  }, []);
+
+  async function toggleCiMeter() {
+    const next = !ciMeterOn;
+    setCiMeterOn(next);
+    await storageSet({ [CONFIG.STORAGE_KEY_CI_METER]: next });
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tab?.id) {
+        await chrome.tabs.sendMessage(tab.id, { type: "VEKSHA_TOGGLE_CI_METER", enabled: next });
+      }
+    } catch {
+      // Restricted pages cannot receive content-script messages; the saved
+      // preference will still be applied on the next regular page.
+    }
+  }
 
   useEffect(() => { api.getSettings(username).then(setSettings).catch(() => {}); }, [username, targetLang]);
 
@@ -97,6 +121,16 @@ export function HomeScreen() {
             <span className="m-tile-label">{t.nav_immersion}</span>
           </button>
         ) : <div className="m-tile m-tile-ghost" aria-hidden="true" />}
+        {isExtension && (
+          <button
+            className={`m-tile${ciMeterOn ? " m-tile-alt" : ""}`}
+            onClick={toggleCiMeter}
+            aria-pressed={ciMeterOn}
+          >
+            <span className="m-tile-icon">{Icons.ciMeter}</span>
+            <span className="m-tile-label">{ciMeterOn ? t.ci_meter_on : t.ci_meter_off}</span>
+          </button>
+        )}
 
         <button className="m-tile m-tile-wide m-tile-stats" onClick={() => navigateTo("statistics")}>
           <span className="m-tile-icon">{Icons.stats}</span>

@@ -10,6 +10,7 @@ Organized by domain:
                     review_block_content, generate_lesson_question, check_lesson_answer
   llm.selection  — translate_selection, explain_selection
   llm.immersion  — analyze_block
+  llm.ci_meter   — classify_difficulty
   llm._base      — _call, helpers (private)
 """
 from llm.pipeline import (
@@ -36,6 +37,7 @@ from llm.selection import (
     explain_selection,
 )
 from llm.immersion import analyze_block
+from llm.ci_meter import classify_difficulty
 
 __all__ = [
     "input_processor",
@@ -54,4 +56,5 @@ __all__ = [
     "translate_selection",
     "explain_selection",
     "analyze_block",
+    "classify_difficulty",
 ]

@@ -22,6 +22,7 @@ from fastapi.responses import JSONResponse
 
 import i18n
 from api import auth as api_auth
+from api import ci_meter
 from api import debug, lesson, message, settings, training
 from api import i18n as api_i18n
 from api import immersion
@@ -73,6 +74,7 @@ app.include_router(training.router)
 app.include_router(lesson.router)
 app.include_router(api_i18n.router)
 app.include_router(immersion.router)
+app.include_router(ci_meter.router)
 app.include_router(api_subtitles.router)
 if DEBUG_API:
     app.include_router(debug.router)

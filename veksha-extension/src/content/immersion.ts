@@ -14,19 +14,11 @@
  * Disabling restores every original sentence.
  */
 import { analyzeImmersion, type ImmersionSentence } from "../shared/api";
+import { isVisible, SKIP_CLOSEST, SKIP_TAGS } from "./page-text";
 
 export interface ImmersionDeps {
   getUsername: () => Promise<string | null>;
 }
-
-const SKIP_TAGS = new Set([
-  "SCRIPT", "STYLE", "NOSCRIPT", "TEXTAREA", "INPUT", "SELECT", "OPTION",
-  "CODE", "PRE", "KBD", "SAMP", "BUTTON", "SVG", "CANVAS", "MATH", "TITLE",
-]);
-
-// Our own injected UI — never translate inside it.
-const SKIP_CLOSEST =
-  ".veksha-popup, .veksha-icon, .veksha-aggressive-reminder, .av-yt-layer, .av-imm, [data-av-skip]";
 
 const MIN_CHARS = 40;       // ignore short labels/menus
 const BATCH = 24;           // text nodes sent per request
@@ -78,17 +70,6 @@ function scheduleScan(): void {
 // Scanning
 // ---------------------------------------------------------------------------
 
-function isVisible(el: Element): boolean {
-  const rect = el.getBoundingClientRect();
-  if (rect.width === 0 && rect.height === 0) return false;
-  return (
-    rect.bottom > -VIEWPORT_MARGIN &&
-    rect.top < window.innerHeight + VIEWPORT_MARGIN &&
-    rect.right > 0 &&
-    rect.left < window.innerWidth
-  );
-}
-
 function isTranslatable(text: string): boolean {
   const trimmed = text.trim();
   if (trimmed.length < MIN_CHARS) return false;
@@ -108,7 +89,7 @@ function collectNodes(limit: number): Text[] {
       if (parent.isContentEditable) return NodeFilter.FILTER_REJECT;
       if (parent.closest(SKIP_CLOSEST)) return NodeFilter.FILTER_REJECT;
       if (!isTranslatable(text.data)) return NodeFilter.FILTER_REJECT;
-      if (!isVisible(parent)) return NodeFilter.FILTER_REJECT;
+      if (!isVisible(parent, VIEWPORT_MARGIN)) return NodeFilter.FILTER_REJECT;
       return NodeFilter.FILTER_ACCEPT;
     },
   });

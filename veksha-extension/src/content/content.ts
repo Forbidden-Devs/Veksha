@@ -5,6 +5,7 @@ import { canSpeak, speakText } from "../shared/speech";
 import { showTrainingOverlay, showLessonOverlay, showTopicPickerOverlay, showTutorialOverlay } from "./overlay";
 import { initYouTubeStudy, YT_STUDY_GUARD_SELECTOR } from "./youtube";
 import { initImmersion, setImmersionEnabled } from "./immersion";
+import { initCiMeter, setCiMeterEnabled } from "./cimeter";
 
 let icon: HTMLElement | null = null;
 let popup: HTMLElement | null = null;
@@ -747,6 +748,8 @@ chrome.runtime.onMessage.addListener((msg: Record<string, unknown>) => {
     showLessonOverlay(msg.username, msg.topic);
   } else if (msg.type === "VEKSHA_TOGGLE_IMMERSION") {
     setImmersionEnabled(Boolean(msg.enabled));
+  } else if (msg.type === "VEKSHA_TOGGLE_CI_METER") {
+    setCiMeterEnabled(Boolean(msg.enabled));
   } else if (msg.type === "VEKSHA_TRANSLATE_SELECTION" && typeof msg.text === "string") {
     openPopup((msg.text as string).trim(), new DOMRect(lastMouse.x, lastMouse.y, 0, 0), { fixed: true });
   } else if (msg.type === "VEKSHA_OCR_DONE" && typeof msg.requestId === "string") {
@@ -779,6 +782,7 @@ if (/(^|\.)youtube\.com$/.test(location.hostname)) {
 // ---------------------------------------------------------------------------
 
 initImmersion({ getUsername });
+initCiMeter({ getUsername, t });
 // Overlay theming: mirror the app palette (see shared/theme.ts). The token
 // sets live in content.css keyed by this attribute; live-updates on change.
 chrome.storage.local.get(["vk_theme"], (res) => {
@@ -792,6 +796,10 @@ chrome.storage.onChanged.addListener((changes, area) => {
 
 chrome.storage.local.get([CONFIG.STORAGE_KEY_IMMERSION], (res) => {
   if (res[CONFIG.STORAGE_KEY_IMMERSION]) setImmersionEnabled(true);
+});
+
+chrome.storage.local.get([CONFIG.STORAGE_KEY_CI_METER], (res) => {
+  if (res[CONFIG.STORAGE_KEY_CI_METER]) setCiMeterEnabled(true);
 });
 
 // ---------------------------------------------------------------------------

@@ -47,6 +47,15 @@ export interface Strings {
   immersion_on: string;
   immersion_off: string;
   immersion_hint: string;
+  ci_meter_on: string;
+  ci_meter_off: string;
+  ci_meter_loading: string;
+  ci_meter_refine: string;
+  ci_meter_badge_known: string;
+  ci_meter_verdict_ideal: string;
+  ci_meter_verdict_too_easy: string;
+  ci_meter_verdict_too_hard: string;
+  ci_meter_verdict_close: string;
   // Settings
   settings_title: string;
   settings_intro: string;
@@ -336,6 +345,15 @@ export const EN: Strings = {
   immersion_on: "Immersion on",
   immersion_off: "Immerse page",
   immersion_hint: "Sprinkle level-appropriate sentences in your target language right into the pages you read.",
+  ci_meter_on: "CI meter on",
+  ci_meter_off: "CI meter",
+  ci_meter_loading: "Checking readability…",
+  ci_meter_refine: "Refine with AI",
+  ci_meter_badge_known: "{pct}% known · {cefr}",
+  ci_meter_verdict_ideal: "Great i+1 content for you — mostly familiar with a healthy stretch of new words.",
+  ci_meter_verdict_too_easy: "You know this well already — good for fluency practice, but little new vocabulary.",
+  ci_meter_verdict_too_hard: "This may be too difficult right now — expect to look up a lot of words.",
+  ci_meter_verdict_close: "Close to your level.",
   settings_title: "Settings",
   settings_intro: "Tell us your languages and level so we can pick the right words and difficulty for you.",
   settings_theme: "Theme",

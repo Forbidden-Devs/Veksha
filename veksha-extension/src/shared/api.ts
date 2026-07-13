@@ -259,6 +259,19 @@ export function analyzeImmersion(
   return _post("/api/immersion/analyze", { blocks }, 45_000);
 }
 
+export interface CiMeterResult {
+  known_pct: number;
+  cefr: string;
+  user_level: string;
+  verdict: "ideal" | "too_easy" | "too_hard" | "close";
+  source: "local" | "llm";
+  confidence: "low" | "high";
+}
+
+export function analyzeCiMeter(text: string, refine = false): Promise<CiMeterResult> {
+  return _post("/api/ci_meter/analyze", { text, refine }, 20_000);
+}
+
 export interface SubtitleAlignmentGroup {
   src: number[];
   dst: number[];

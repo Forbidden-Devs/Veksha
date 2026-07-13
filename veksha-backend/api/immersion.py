@@ -18,21 +18,12 @@ from pydantic import BaseModel, Field
 
 import llm
 from auth import CurrentUser
+from cefr import LEVEL_TO_CEFR as _LEVEL_TO_CEFR
 from storage import get_storage
 
 log = logging.getLogger(__name__)
 
 router = APIRouter()
-
-# Map the stored level to a CEFR anchor for the i+1 filter. Slash grades resolve
-# to their upper band; legacy values are kept so existing users keep working.
-_LEVEL_TO_CEFR: dict[str, str] = {
-    "a1": "A1", "a1_a2": "A2", "a2": "A2", "a2_b1": "B1", "b1": "B1",
-    "b1_b2": "B2", "b2": "B2", "b2_c1": "C1", "c1": "C1", "c1_c2": "C2", "c2": "C2",
-    # legacy
-    "beginner": "A1", "elementary": "A2", "intermediate": "B1",
-    "upper_intermediate": "B2", "advanced": "C1",
-}
 
 # Don't bother the LLM with tiny fragments (labels, single words).
 _MIN_BLOCK_CHARS = 30
