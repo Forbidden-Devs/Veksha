@@ -26,6 +26,7 @@ const Icons = {
   settings: <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6 1.7 1.7 0 0 0 10 3v-.2h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z"/></svg>,
   language: <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.2 2.5 3.3 5.5 3.3 9S14.2 18.5 12 21c-2.2-2.5-3.3-5.5-3.3-9S9.8 5.5 12 3Z"/></svg>,
   grammar: <svg viewBox="0 0 24 24"><path d="M8 4H5v16h3M16 4h3v16h-3M10 8h4M10 12h4M10 16h4"/></svg>,
+  myWords: <svg viewBox="0 0 24 24"><path d="M4 19V6a2 2 0 0 1 2-2h11l3 3v12a1 1 0 0 1-1 1H6a2 2 0 0 1-2-2Z"/><path d="M8 9h8M8 13h5"/></svg>,
   send: (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M22 2L11 13" />
@@ -43,6 +44,7 @@ export function HomeScreen() {
   const [ciMeterOn, setCiMeterOn] = useState(false);
   const [grammarLensOn, setGrammarLensOn] = useState(false);
   const [immersionOn, setImmersionOn] = useState(false);
+  const [vocabFreqOn, setVocabFreqOn] = useState(false);
 
   useEffect(() => {
     Promise.all([api.getKbSummary(username), api.getReminders(username)])
@@ -55,10 +57,12 @@ export function HomeScreen() {
       CONFIG.STORAGE_KEY_CI_METER,
       CONFIG.STORAGE_KEY_GRAMMAR_LENS,
       CONFIG.STORAGE_KEY_IMMERSION,
+      CONFIG.STORAGE_KEY_VOCAB_FREQ,
     ]).then((result) => {
       setCiMeterOn(Boolean(result[CONFIG.STORAGE_KEY_CI_METER]));
       setGrammarLensOn(Boolean(result[CONFIG.STORAGE_KEY_GRAMMAR_LENS]));
       setImmersionOn(Boolean(result[CONFIG.STORAGE_KEY_IMMERSION]));
+      setVocabFreqOn(Boolean(result[CONFIG.STORAGE_KEY_VOCAB_FREQ]));
     });
   }, []);
 
@@ -177,6 +181,19 @@ export function HomeScreen() {
             <span className="m-feature-state">
               <i aria-hidden="true" />
               {grammarLensOn ? t.feature_enabled : t.feature_disabled}
+            </span>
+          </button>
+        )}
+        {isExtension && (
+          <button
+            className={`m-tile m-feature-tile ${vocabFreqOn ? "is-on" : "is-off"}`}
+            onClick={() => navigateTo("myWords")}
+          >
+            <span className="m-tile-icon">{Icons.myWords}</span>
+            <span className="m-tile-label">{t.my_words_title}</span>
+            <span className="m-feature-state">
+              <i aria-hidden="true" />
+              {vocabFreqOn ? t.feature_enabled : t.feature_disabled}
             </span>
           </button>
         )}

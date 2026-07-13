@@ -69,6 +69,14 @@ export interface Strings {
   grammar_role_place: string;
   grammar_role_time: string;
   grammar_role_modifier: string;
+  my_words_title: string;
+  my_words_intro: string;
+  my_words_on: string;
+  my_words_off: string;
+  my_words_empty: string;
+  my_words_known: string;
+  my_words_unknown: string;
+  my_words_seen_on: string;
   // Settings
   settings_title: string;
   settings_intro: string;
@@ -383,6 +391,14 @@ export const EN: Strings = {
   grammar_role_place: "Place",
   grammar_role_time: "Time",
   grammar_role_modifier: "Modifier",
+  my_words_title: "My words",
+  my_words_intro: "A personal frequency list built from the words you actually encounter while browsing, tagged by site — not a generic top-1000 list.",
+  my_words_on: "Tracking on",
+  my_words_off: "Track my browsing",
+  my_words_empty: "No words tracked yet. Turn tracking on and browse a few pages in your target language.",
+  my_words_known: "Known",
+  my_words_unknown: "Not yet known",
+  my_words_seen_on: "{n}× · mostly on {domain}",
   settings_title: "Settings",
   settings_intro: "Tell us your languages and level so we can pick the right words and difficulty for you.",
   settings_theme: "Theme",

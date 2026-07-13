@@ -117,6 +117,23 @@ def _conn() -> sqlite3.Connection:
                    FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
                )"""
         )
+        # Personal frequency list ("real browsing" vocab): one row per
+        # (word, domain) the user has encountered with tracking enabled,
+        # incremented on every page visit that contains the word.
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS word_freq (
+                   username  TEXT NOT NULL,
+                   language  TEXT NOT NULL,
+                   word      TEXT NOT NULL,
+                   domain    TEXT NOT NULL,
+                   count     INTEGER NOT NULL DEFAULT 0,
+                   last_seen REAL NOT NULL,
+                   PRIMARY KEY (username, language, word, domain)
+               )"""
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS ix_word_freq_user_lang ON word_freq (username, language)"
+        )
         conn.commit()
         _local.conn = conn
     return conn
@@ -197,11 +214,12 @@ def identity_for_user(username: str, provider: str) -> Optional[dict]:
 
 
 def delete_user_data(username: str) -> None:
-    """Wipe KB, chat history and review log (keeps the account/token)."""
+    """Wipe KB, chat history, review log and word frequency (keeps the account/token)."""
     with _conn() as c:
         c.execute("DELETE FROM kb WHERE username=?", (username,))
         c.execute("DELETE FROM chat_history WHERE username=?", (username,))
         c.execute("DELETE FROM review_log WHERE username=?", (username,))
+        c.execute("DELETE FROM word_freq WHERE username=?", (username,))
 
 
 def settings_get(username: str) -> Optional[dict]:
@@ -251,7 +269,10 @@ def settings_set(username: str, settings: Any) -> None:
 def purge_all_users() -> None:
     """Destructively remove every account and all account-owned data."""
     with _conn() as c:
-        for table in ("identities", "review_log", "chat_history", "kb", "user_languages", "user_settings", "users"):
+        for table in (
+            "identities", "review_log", "word_freq", "chat_history",
+            "kb", "user_languages", "user_settings", "users",
+        ):
             c.execute(f"DELETE FROM {table}")
 
 
@@ -338,6 +359,52 @@ def review_log_counts(username: str) -> dict[str, int]:
 def review_log_delete_user(username: str) -> None:
     with _conn() as c:
         c.execute("DELETE FROM review_log WHERE username=?", (username,))
+
+
+# ---------------------------------------------------------------------------
+# Word frequency ("real browsing" personal vocab list)
+# ---------------------------------------------------------------------------
+
+def word_freq_bump_many(
+    username: str, language: str, counts: dict[str, int], domain: str, ts: float
+) -> None:
+    if not counts:
+        return
+    with _conn() as c:
+        c.executemany(
+            """INSERT INTO word_freq (username, language, word, domain, count, last_seen)
+               VALUES (?,?,?,?,?,?)
+               ON CONFLICT (username, language, word, domain)
+               DO UPDATE SET count = count + excluded.count, last_seen = excluded.last_seen""",
+            [(username, language, word, domain, n, ts) for word, n in counts.items()],
+        )
+
+
+def word_freq_top(username: str, language: str, limit: int) -> list[dict]:
+    """Top words by total occurrences, each with its per-domain breakdown."""
+    totals = _conn().execute(
+        """SELECT word, SUM(count) AS total FROM word_freq
+           WHERE username=? AND language=? GROUP BY word ORDER BY total DESC LIMIT ?""",
+        (username, language, max(1, min(int(limit), 500))),
+    ).fetchall()
+    if not totals:
+        return []
+
+    words = [word for word, _ in totals]
+    placeholders = ",".join("?" for _ in words)
+    domain_rows = _conn().execute(
+        f"""SELECT word, domain, count FROM word_freq
+            WHERE username=? AND language=? AND word IN ({placeholders})""",
+        (username, language, *words),
+    ).fetchall()
+    domains_by_word: dict[str, dict[str, int]] = {}
+    for word, domain, count in domain_rows:
+        domains_by_word.setdefault(word, {})[domain] = count
+
+    return [
+        {"word": word, "count": total, "domains": domains_by_word.get(word, {})}
+        for word, total in totals
+    ]
 
 
 def history_get(username: str) -> list[dict]:

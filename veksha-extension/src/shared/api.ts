@@ -286,6 +286,21 @@ export function analyzeGrammarLens(
   return _post("/api/grammar-lens/analyze", { blocks }, 45_000);
 }
 
+export interface VocabFrequencyEntry {
+  word: string;
+  count: number;
+  domains: Record<string, number>;
+  known: boolean;
+}
+
+export function trackVocabFrequency(text: string, domain: string): Promise<{ tracked: number }> {
+  return _post("/api/vocab_frequency/track", { text, domain }, 15_000);
+}
+
+export function getVocabFrequencyTop(limit = 100): Promise<{ words: VocabFrequencyEntry[] }> {
+  return _get("/api/vocab_frequency/top", { limit: String(limit) });
+}
+
 export interface SubtitleAlignmentGroup {
   src: number[];
   dst: number[];

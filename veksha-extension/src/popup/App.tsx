@@ -14,6 +14,7 @@ import { ImmersionScreen } from "./screens/ImmersionScreen";
 import { DebugScreen } from "./screens/DebugScreen";
 import { DictionaryScreen } from "./screens/DictionaryScreen";
 import { LevelSetupScreen } from "./screens/LevelSetupScreen";
+import { MyWordsScreen } from "./screens/MyWordsScreen";
 import { NativeLangScreen } from "./screens/NativeLangScreen";
 import { OnboardingScreen } from "./screens/OnboardingScreen";
 import { SettingsScreen } from "./screens/SettingsScreen";
@@ -438,6 +439,7 @@ export default function App() {
             {screen === "topics" && <TopicsScreen />}
             {screen === "dictionary" && <DictionaryScreen />}
             {screen === "immersion" && <ImmersionScreen />}
+            {screen === "myWords" && <MyWordsScreen />}
             {screen === "settings" && <SettingsScreen />}
             {screen === "statistics" && <StatisticsScreen />}
             {screen === "debug" && __DEV_BUILD__ && <DebugScreen />}

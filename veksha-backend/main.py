@@ -29,6 +29,7 @@ from api import immersion
 from api import grammar_lens
 from api import subtitles as api_subtitles
 from api import translate
+from api import vocab_frequency
 from config import CORS_ALLOW_ORIGINS, DEBUG_API, HOST, LOG_LEVEL, PORT, RELOAD
 
 logging.basicConfig(
@@ -77,6 +78,7 @@ app.include_router(api_i18n.router)
 app.include_router(immersion.router)
 app.include_router(ci_meter.router)
 app.include_router(grammar_lens.router)
+app.include_router(vocab_frequency.router)
 app.include_router(api_subtitles.router)
 if DEBUG_API:
     app.include_router(debug.router)

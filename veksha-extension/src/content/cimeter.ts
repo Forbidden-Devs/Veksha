@@ -8,7 +8,7 @@
  * committing to it.
  */
 import { analyzeCiMeter, type CiMeterResult } from "../shared/api";
-import { isVisible, SKIP_CLOSEST, SKIP_TAGS } from "./page-text";
+import { sampleText } from "./page-text";
 
 export interface CiMeterDeps {
   getUsername: () => Promise<string | null>;
@@ -16,7 +16,6 @@ export interface CiMeterDeps {
 }
 
 const SAMPLE_CHAR_BUDGET = 6000;
-const MIN_CHARS = 40;
 
 let deps: CiMeterDeps;
 let enabled = false;
@@ -42,41 +41,6 @@ export function setCiMeterEnabled(on: boolean): void {
     lastResult = null;
     lastText = "";
   }
-}
-
-// ---------------------------------------------------------------------------
-// Sampling
-// ---------------------------------------------------------------------------
-
-function isReadable(text: string): boolean {
-  const trimmed = text.trim();
-  if (trimmed.length < MIN_CHARS) return false;
-  if (!/\p{L}/u.test(trimmed)) return false;
-  return /\s/.test(trimmed);
-}
-
-function sampleText(budget: number): string {
-  const parts: string[] = [];
-  let total = 0;
-  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
-    acceptNode(node: Node): number {
-      const text = node as Text;
-      const parent = text.parentElement;
-      if (!parent) return NodeFilter.FILTER_REJECT;
-      if (SKIP_TAGS.has(parent.tagName)) return NodeFilter.FILTER_REJECT;
-      if (parent.isContentEditable) return NodeFilter.FILTER_REJECT;
-      if (parent.closest(SKIP_CLOSEST)) return NodeFilter.FILTER_REJECT;
-      if (!isReadable(text.data)) return NodeFilter.FILTER_REJECT;
-      if (!isVisible(parent)) return NodeFilter.FILTER_REJECT;
-      return NodeFilter.FILTER_ACCEPT;
-    },
-  });
-  while (total < budget && walker.nextNode()) {
-    const text = (walker.currentNode as Text).data.trim();
-    parts.push(text);
-    total += text.length;
-  }
-  return parts.join("\n");
 }
 
 // ---------------------------------------------------------------------------
