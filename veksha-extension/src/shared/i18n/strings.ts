@@ -62,6 +62,9 @@ export interface Strings {
   settings_theme: string;
   settings_display_name: string;
   settings_native_lang: string;
+  settings_learning_languages: string;
+  settings_add_language: string;
+  settings_remove_language: string;
   settings_target_lang: string;
   settings_level: string;
   settings_level_placeholder: string;
@@ -359,6 +362,9 @@ export const EN: Strings = {
   settings_theme: "Theme",
   settings_display_name: "Your name",
   settings_native_lang: "Your language",
+  settings_learning_languages: "Languages you study",
+  settings_add_language: "Add a language",
+  settings_remove_language: "Remove language",
   settings_target_lang: "Active learning language",
   settings_level: "My level",
   settings_level_placeholder: "Select your level...",

@@ -172,5 +172,8 @@
   "stats_anki_reviews": "การทบทวนการ์ด",
   "stats_training_reviews": "คำตอบการฝึก",
   "settings_dual_subtitles": "คำบรรยายสองภาษา",
-  "settings_dual_subtitles_desc": "แสดงคำบรรยายที่แปลแล้วเหนือคำบรรยาย YouTube ต้นฉบับ"
+  "settings_dual_subtitles_desc": "แสดงคำบรรยายที่แปลแล้วเหนือคำบรรยาย YouTube ต้นฉบับ",
+  "settings_learning_languages": "ภาษาที่คุณกำลังเรียน",
+  "settings_add_language": "เพิ่มภาษา",
+  "settings_remove_language": "ลบภาษา"
 }

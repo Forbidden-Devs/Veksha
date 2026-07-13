@@ -296,5 +296,8 @@
   "stats_anki_reviews": "カードレビュー",
   "stats_training_reviews": "トレーニング回答",
   "settings_dual_subtitles": "二重字幕",
-  "settings_dual_subtitles_desc": "YouTubeの元の字幕の上に翻訳字幕を表示します。"
+  "settings_dual_subtitles_desc": "YouTubeの元の字幕の上に翻訳字幕を表示します。",
+  "settings_learning_languages": "学習中の言語",
+  "settings_add_language": "言語を追加",
+  "settings_remove_language": "言語を削除"
 }

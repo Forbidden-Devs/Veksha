@@ -174,5 +174,8 @@
   "stats_anki_reviews": "Tinjauan kartu",
   "stats_training_reviews": "Jawaban latihan",
   "settings_dual_subtitles": "Subtitel ganda",
-  "settings_dual_subtitles_desc": "Tampilkan subtitel terjemahan di atas teks caption YouTube asli."
+  "settings_dual_subtitles_desc": "Tampilkan subtitel terjemahan di atas teks caption YouTube asli.",
+  "settings_learning_languages": "Bahasa yang Anda pelajari",
+  "settings_add_language": "Tambahkan bahasa",
+  "settings_remove_language": "Hapus bahasa"
 }

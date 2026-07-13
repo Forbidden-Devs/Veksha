@@ -299,5 +299,8 @@
   "stats_anki_reviews": "Powtórki kart",
   "stats_training_reviews": "Odpowiedzi z treningu",
   "settings_dual_subtitles": "Podwójne napisy",
-  "settings_dual_subtitles_desc": "Wyświetlaj przetłumaczone napisy nad oryginalnymi napisami YouTube."
+  "settings_dual_subtitles_desc": "Wyświetlaj przetłumaczone napisy nad oryginalnymi napisami YouTube.",
+  "settings_learning_languages": "Języki, których się uczysz",
+  "settings_add_language": "Dodaj język",
+  "settings_remove_language": "Usuń język"
 }

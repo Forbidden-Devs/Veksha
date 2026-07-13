@@ -182,5 +182,8 @@
   "stats_anki_reviews": "ბარათების მიმოხილვები",
   "stats_training_reviews": "ვარჯიშის პასუხები",
   "settings_dual_subtitles": "ორმაგი სუბტიტრები",
-  "settings_dual_subtitles_desc": "აჩვენე თარგმნილი სუბტიტრები ორიგინალი YouTube წარწერების ზემოთ."
+  "settings_dual_subtitles_desc": "აჩვენე თარგმნილი სუბტიტრები ორიგინალი YouTube წარწერების ზემოთ.",
+  "settings_learning_languages": "სასწავლი ენები",
+  "settings_add_language": "ენის დამატება",
+  "settings_remove_language": "ენის წაშლა"
 }

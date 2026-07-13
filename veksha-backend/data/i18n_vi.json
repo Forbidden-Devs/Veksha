@@ -172,5 +172,8 @@
   "stats_anki_reviews": "Ôn thẻ",
   "stats_training_reviews": "Câu trả lời luyện tập",
   "settings_dual_subtitles": "Phụ đề kép",
-  "settings_dual_subtitles_desc": "Hiển thị phụ đề đã dịch phía trên phụ đề gốc của YouTube."
+  "settings_dual_subtitles_desc": "Hiển thị phụ đề đã dịch phía trên phụ đề gốc của YouTube.",
+  "settings_learning_languages": "Ngôn ngữ bạn học",
+  "settings_add_language": "Thêm ngôn ngữ",
+  "settings_remove_language": "Xóa ngôn ngữ"
 }

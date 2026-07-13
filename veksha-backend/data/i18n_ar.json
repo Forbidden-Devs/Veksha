@@ -293,5 +293,8 @@
   "stats_anki_reviews": "مراجعات البطاقات",
   "stats_training_reviews": "إجابات التدريب",
   "settings_dual_subtitles": "ترجمات مزدوجة",
-  "settings_dual_subtitles_desc": "عرض الترجمات المترجمة فوق تسميات YouTube الأصلية."
+  "settings_dual_subtitles_desc": "عرض الترجمات المترجمة فوق تسميات YouTube الأصلية.",
+  "settings_learning_languages": "اللغات التي تدرسها",
+  "settings_add_language": "إضافة لغة",
+  "settings_remove_language": "إزالة اللغة"
 }

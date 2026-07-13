@@ -300,5 +300,8 @@
   "stats_anki_reviews": "Révisions de cartes",
   "stats_training_reviews": "Réponses d’entraînement",
   "settings_dual_subtitles": "Sous-titres doubles",
-  "settings_dual_subtitles_desc": "Afficher les sous-titres traduits au-dessus des sous-titres YouTube d’origine."
+  "settings_dual_subtitles_desc": "Afficher les sous-titres traduits au-dessus des sous-titres YouTube d’origine.",
+  "settings_learning_languages": "Langues que vous étudiez",
+  "settings_add_language": "Ajouter une langue",
+  "settings_remove_language": "Supprimer la langue"
 }

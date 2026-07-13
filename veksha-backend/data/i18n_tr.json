@@ -171,5 +171,8 @@
   "stats_anki_reviews": "Kart incelemeleri",
   "stats_training_reviews": "Eğitim yanıtları",
   "settings_dual_subtitles": "Çift altyazı",
-  "settings_dual_subtitles_desc": "Çevrilmiş altyazıları YouTube'un orijinal altyazılarının üstünde göster."
+  "settings_dual_subtitles_desc": "Çevrilmiş altyazıları YouTube'un orijinal altyazılarının üstünde göster.",
+  "settings_learning_languages": "Çalıştığınız diller",
+  "settings_add_language": "Dil ekle",
+  "settings_remove_language": "Dili kaldır"
 }

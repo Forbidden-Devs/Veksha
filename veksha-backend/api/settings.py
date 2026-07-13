@@ -182,6 +182,8 @@ async def api_post_settings(req: SettingsRequest, username: CurrentUser) -> Sett
         "goals": req.goals,
         "prompt": req.general_prompt,
     })
+    for lang in target_langs:
+        language_settings.setdefault(lang, {"level": "", "goals": "", "prompt": ""})
     storage.settings = UserSettings(
         display_name=display_name,
         native_lang=req.native_lang,

@@ -302,5 +302,8 @@
   "stats_anki_reviews": "Kartenwiederholungen",
   "stats_training_reviews": "Trainingsantworten",
   "settings_dual_subtitles": "Doppelte Untertitel",
-  "settings_dual_subtitles_desc": "Übersetzte Untertitel über den ursprünglichen YouTube-Untertiteln anzeigen."
+  "settings_dual_subtitles_desc": "Übersetzte Untertitel über den ursprünglichen YouTube-Untertiteln anzeigen.",
+  "settings_learning_languages": "Sprachen, die du lernst",
+  "settings_add_language": "Sprache hinzufügen",
+  "settings_remove_language": "Sprache entfernen"
 }

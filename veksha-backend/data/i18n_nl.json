@@ -304,5 +304,8 @@
   "stats_anki_reviews": "Kaartbeoordelingen",
   "stats_training_reviews": "Trainingsantwoorden",
   "settings_dual_subtitles": "Dubbele ondertiteling",
-  "settings_dual_subtitles_desc": "Toon vertaalde ondertiteling boven de originele YouTube-ondertitels."
+  "settings_dual_subtitles_desc": "Toon vertaalde ondertiteling boven de originele YouTube-ondertitels.",
+  "settings_learning_languages": "Talen die je leert",
+  "settings_add_language": "Taal toevoegen",
+  "settings_remove_language": "Taal verwijderen"
 }

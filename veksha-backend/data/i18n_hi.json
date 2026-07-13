@@ -172,5 +172,8 @@
   "stats_anki_reviews": "कार्ड समीक्षा",
   "stats_training_reviews": "प्रशिक्षण उत्तर",
   "settings_dual_subtitles": "दोहरी उपशीर्षक",
-  "settings_dual_subtitles_desc": "मूल YouTube कैप्शन के ऊपर अनुवादित उपशीर्षक दिखाएँ।"
+  "settings_dual_subtitles_desc": "मूल YouTube कैप्शन के ऊपर अनुवादित उपशीर्षक दिखाएँ।",
+  "settings_learning_languages": "आप जिन भाषाओं का अध्ययन करते हैं",
+  "settings_add_language": "भाषा जोड़ें",
+  "settings_remove_language": "भाषा हटाएँ"
 }

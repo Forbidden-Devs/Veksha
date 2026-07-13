@@ -222,6 +222,45 @@ export function SettingsScreen() {
     setPrompt(next.prompt);
   }
 
+  function handleAddTargetLang(nextLang: string) {
+    if (!nextLang || nextLang === nativeLang || targetLangs.includes(nextLang)) return;
+    const updated = {
+      ...languageSettings,
+      [targetLang]: { level, goals, prompt },
+      [nextLang]: { level: "", goals: "", prompt: "" },
+    };
+    setLanguageSettings(updated);
+    setTargetLangs((current) => [...current, nextLang]);
+    setTargetLang(nextLang);
+    setLevel("");
+    setGoals("");
+    setPrompt("");
+    setError(null);
+  }
+
+  function handleRemoveTargetLang(lang: string) {
+    if (targetLangs.length <= 1) return;
+
+    const remaining = targetLangs.filter((code) => code !== lang);
+    const updated = {
+      ...languageSettings,
+      [targetLang]: { level, goals, prompt },
+    };
+    delete updated[lang];
+    setTargetLangs(remaining);
+    setLanguageSettings(updated);
+
+    if (lang === targetLang) {
+      const nextLang = remaining[0];
+      const next = updated[nextLang] ?? { level: "", goals: "", prompt: "" };
+      setTargetLang(nextLang);
+      setLevel(next.level);
+      setGoals(next.goals);
+      setPrompt(next.prompt);
+    }
+    setError(null);
+  }
+
   function handleDualSubsEnabled(enabled: boolean) {
     setDualSubsEnabled(enabled);
   }
@@ -290,10 +329,50 @@ export function SettingsScreen() {
           value={nativeLang}
           onChange={(e) => setNativeLang(e.target.value)}
         >
-          {LANG_OPTIONS.map((l) => (
+          {LANG_OPTIONS.filter((l) => l.code === nativeLang || !targetLangs.includes(l.code)).map((l) => (
             <option key={l.code} value={l.code}>{l.name}</option>
           ))}
         </select>
+
+        {!isOnboarding && (
+          <>
+            <label className="field-label">{t.settings_learning_languages}</label>
+            <div className="settings-language-list">
+              {targetLangs.map((code) => {
+                const language = LANG_OPTIONS.find((item) => item.code === code);
+                return (
+                  <div className={`settings-language-item${code === targetLang ? " is-active" : ""}`} key={code}>
+                    <button type="button" className="settings-language-select" onClick={() => handleTargetLangChange(code)}>
+                      <span className="settings-language-code">{code.toUpperCase()}</span>
+                      <span>{language?.name ?? code}</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="settings-language-remove"
+                      aria-label={`${t.settings_remove_language}: ${language?.name ?? code}`}
+                      title={t.settings_remove_language}
+                      disabled={targetLangs.length <= 1}
+                      onClick={() => handleRemoveTargetLang(code)}
+                    >
+                      <span aria-hidden="true">×</span>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+            <select
+              className="select-input settings-language-add"
+              value=""
+              aria-label={t.settings_add_language}
+              onChange={(e) => handleAddTargetLang(e.target.value)}
+            >
+              <option value="">＋ {t.settings_add_language}</option>
+              {LANG_OPTIONS.filter((l) => l.code !== nativeLang && !targetLangs.includes(l.code)).map((l) => (
+                <option key={l.code} value={l.code}>{l.name}</option>
+              ))}
+            </select>
+          </>
+        )}
 
         <label className="field-label" htmlFor="settings-target-lang">{t.settings_target_lang}</label>
         <select

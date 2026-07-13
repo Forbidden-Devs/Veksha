@@ -175,5 +175,8 @@
   "stats_anki_reviews": "Revisioni delle carte",
   "stats_training_reviews": "Risposte di allenamento",
   "settings_dual_subtitles": "Sottotitoli doppi",
-  "settings_dual_subtitles_desc": "Mostra i sottotitoli tradotti sopra i sottotitoli originali di YouTube."
+  "settings_dual_subtitles_desc": "Mostra i sottotitoli tradotti sopra i sottotitoli originali di YouTube.",
+  "settings_learning_languages": "Lingue che studi",
+  "settings_add_language": "Aggiungi una lingua",
+  "settings_remove_language": "Rimuovi lingua"
 }

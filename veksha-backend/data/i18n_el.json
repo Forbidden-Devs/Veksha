@@ -172,5 +172,8 @@
   "stats_anki_reviews": "Ανασκοπήσεις καρτών",
   "stats_training_reviews": "Απαντήσεις εκπαίδευσης",
   "settings_dual_subtitles": "Διπλοί υπότιτλοι",
-  "settings_dual_subtitles_desc": "Εμφάνιση των μεταφρασμένων υπότιτλων πάνω από τους αρχικούς υπότιτλους του YouTube."
+  "settings_dual_subtitles_desc": "Εμφάνιση των μεταφρασμένων υπότιτλων πάνω από τους αρχικούς υπότιτλους του YouTube.",
+  "settings_learning_languages": "Γλώσσες που μελετάτε",
+  "settings_add_language": "Προσθήκη γλώσσας",
+  "settings_remove_language": "Αφαίρεση γλώσσας"
 }
