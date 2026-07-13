@@ -160,6 +160,8 @@
   "edit_kb_word_known_not_found": "Không tìm thấy từ \"{value}\" để đánh dấu là đã học.",
   "__same_as_en__": [
     "debug_backend",
+    "grammar_lens_off",
+    "grammar_lens_title",
     "menu_title"
   ],
   "dictionary_title": "Từ điển",
@@ -175,5 +177,18 @@
   "settings_dual_subtitles_desc": "Hiển thị phụ đề đã dịch phía trên phụ đề gốc của YouTube.",
   "settings_learning_languages": "Ngôn ngữ bạn học",
   "settings_add_language": "Thêm ngôn ngữ",
-  "settings_remove_language": "Xóa ngôn ngữ"
+  "settings_remove_language": "Xóa ngôn ngữ",
+  "grammar_lens_title": "Grammar Lens",
+  "grammar_lens_on": "Bật Grammar Lens",
+  "grammar_lens_off": "Grammar Lens",
+  "grammar_lens_loading": "Đang phân tích văn bản hiển thị…",
+  "grammar_lens_disable": "Tắt Grammar Lens",
+  "grammar_role_subject": "Chủ ngữ",
+  "grammar_role_verb": "Động từ",
+  "grammar_role_object": "Tân ngữ",
+  "grammar_role_place": "Địa điểm",
+  "grammar_role_time": "Thời gian",
+  "grammar_role_modifier": "Bổ ngữ",
+  "feature_enabled": "Bật",
+  "feature_disabled": "Tắt"
 }

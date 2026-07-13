@@ -232,6 +232,57 @@ body,
   font-weight: 600;
 }
 
+.m-feature-tile {
+  transition: transform .16s ease, box-shadow .16s ease, filter .16s ease;
+}
+
+.m-feature-state {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: rgba(20, 17, 29, .22);
+  color: rgba(255, 255, 255, .82);
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: .035em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.m-feature-state i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .55);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, .1);
+}
+
+.m-feature-tile.is-on {
+  box-shadow:
+    inset 0 0 0 3px rgba(94, 240, 166, .85),
+    var(--m-elevated-shadow);
+}
+
+.m-feature-tile.is-on .m-feature-state {
+  background: #16754b;
+  color: #fff;
+}
+
+.m-feature-tile.is-on .m-feature-state i {
+  background: #73ffb5;
+  box-shadow: 0 0 7px rgba(115, 255, 181, .9);
+}
+
+.m-feature-tile.is-off .m-tile-icon {
+  opacity: .62;
+  filter: saturate(.45);
+}
+
 /* wide live tile */
 .m-tile-wide {
   grid-column: span 2;

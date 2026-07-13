@@ -162,6 +162,7 @@
     "chat_mode_training",
     "debug_backend",
     "debug_title",
+    "grammar_role_verb",
     "level_setup_optional",
     "menu_debug",
     "menu_training",
@@ -305,5 +306,18 @@
   "settings_dual_subtitles_desc": "Übersetzte Untertitel über den ursprünglichen YouTube-Untertiteln anzeigen.",
   "settings_learning_languages": "Sprachen, die du lernst",
   "settings_add_language": "Sprache hinzufügen",
-  "settings_remove_language": "Sprache entfernen"
+  "settings_remove_language": "Sprache entfernen",
+  "grammar_lens_title": "Grammatik-Lupe",
+  "grammar_lens_on": "Grammatik-Lupe an",
+  "grammar_lens_off": "Grammatik-Lupe",
+  "grammar_lens_loading": "Sichtbaren Text wird analysiert…",
+  "grammar_lens_disable": "Grammatik-Lupe ausschalten",
+  "grammar_role_subject": "Subjekt",
+  "grammar_role_verb": "Verb",
+  "grammar_role_object": "Objekt",
+  "grammar_role_place": "Ort",
+  "grammar_role_time": "Zeit",
+  "grammar_role_modifier": "Attribut",
+  "feature_enabled": "Ein",
+  "feature_disabled": "Aus"
 }

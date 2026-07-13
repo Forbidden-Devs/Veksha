@@ -307,5 +307,18 @@
   "settings_dual_subtitles_desc": "Toon vertaalde ondertiteling boven de originele YouTube-ondertitels.",
   "settings_learning_languages": "Talen die je leert",
   "settings_add_language": "Taal toevoegen",
-  "settings_remove_language": "Taal verwijderen"
+  "settings_remove_language": "Taal verwijderen",
+  "grammar_lens_title": "Grammatica Lens",
+  "grammar_lens_on": "Grammatica Lens aan",
+  "grammar_lens_off": "Grammatica Lens",
+  "grammar_lens_loading": "Zichtbare tekst analyseren…",
+  "grammar_lens_disable": "Grammatica Lens uitzetten",
+  "grammar_role_subject": "Onderwerp",
+  "grammar_role_verb": "Werkwoord",
+  "grammar_role_object": "Voorwerp",
+  "grammar_role_place": "Plaats",
+  "grammar_role_time": "Tijd",
+  "grammar_role_modifier": "Bepaling",
+  "feature_enabled": "Aan",
+  "feature_disabled": "Uit"
 }

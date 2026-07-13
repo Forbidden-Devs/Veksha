@@ -161,6 +161,8 @@
   "__same_as_en__": [
     "debug_backend",
     "debug_title",
+    "grammar_lens_off",
+    "grammar_lens_title",
     "menu_debug",
     "menu_title"
   ],
@@ -177,5 +179,18 @@
   "settings_dual_subtitles_desc": "Tampilkan subtitel terjemahan di atas teks caption YouTube asli.",
   "settings_learning_languages": "Bahasa yang Anda pelajari",
   "settings_add_language": "Tambahkan bahasa",
-  "settings_remove_language": "Hapus bahasa"
+  "settings_remove_language": "Hapus bahasa",
+  "grammar_lens_title": "Grammar Lens",
+  "grammar_lens_on": "Grammar Lens aktif",
+  "grammar_lens_off": "Grammar Lens",
+  "grammar_lens_loading": "Menganalisis teks yang terlihat…",
+  "grammar_lens_disable": "Matikan Grammar Lens",
+  "grammar_role_subject": "Subjek",
+  "grammar_role_verb": "Kata kerja",
+  "grammar_role_object": "Objek",
+  "grammar_role_place": "Tempat",
+  "grammar_role_time": "Waktu",
+  "grammar_role_modifier": "Keterangan",
+  "feature_enabled": "Aktif",
+  "feature_disabled": "Nonaktif"
 }

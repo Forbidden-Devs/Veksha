@@ -296,5 +296,18 @@
   "settings_dual_subtitles_desc": "عرض الترجمات المترجمة فوق تسميات YouTube الأصلية.",
   "settings_learning_languages": "اللغات التي تدرسها",
   "settings_add_language": "إضافة لغة",
-  "settings_remove_language": "إزالة اللغة"
+  "settings_remove_language": "إزالة اللغة",
+  "grammar_lens_title": "عدسة القواعد",
+  "grammar_lens_on": "عدسة القواعد مفعّلة",
+  "grammar_lens_off": "عدسة القواعد",
+  "grammar_lens_loading": "جارٍ تحليل النص الظاهر…",
+  "grammar_lens_disable": "إيقاف عدسة القواعد",
+  "grammar_role_subject": "المبتدأ",
+  "grammar_role_verb": "الفعل",
+  "grammar_role_object": "المفعول به",
+  "grammar_role_place": "المكان",
+  "grammar_role_time": "الزمان",
+  "grammar_role_modifier": "المعدّل",
+  "feature_enabled": "تشغيل",
+  "feature_disabled": "إيقاف"
 }

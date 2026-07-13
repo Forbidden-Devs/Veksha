@@ -64,6 +64,17 @@ UI_STRINGS: dict[str, str] = {
     "immersion_on": "Immersion on",
     "immersion_off": "Immerse page",
     "immersion_hint": "Sprinkle level-appropriate sentences in your target language right into the pages you read.",
+    "grammar_lens_title": "Grammar Lens",
+    "grammar_lens_on": "Grammar Lens on",
+    "grammar_lens_off": "Grammar Lens",
+    "grammar_lens_loading": "Analyzing visible text…",
+    "grammar_lens_disable": "Turn off Grammar Lens",
+    "grammar_role_subject": "Subject",
+    "grammar_role_verb": "Verb",
+    "grammar_role_object": "Object",
+    "grammar_role_place": "Place",
+    "grammar_role_time": "Time",
+    "grammar_role_modifier": "Modifier",
     # Settings
     "settings_title": "Settings",
     "settings_intro": "Tell us your languages and level so we can pick the right words and difficulty for you.",
@@ -136,6 +147,8 @@ UI_STRINGS: dict[str, str] = {
     "reminder_dismiss": "Dismiss reminder",
     # Common
     "app_loading": "Loading...",
+    "feature_enabled": "On",
+    "feature_disabled": "Off",
     # Native language picker (step 1 of onboarding)
     "native_lang_title": "What's your language?",
     "native_lang_subtitle": "We'll show translations and the interface in your language",

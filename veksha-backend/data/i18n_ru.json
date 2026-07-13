@@ -18,6 +18,17 @@
   "chat_placeholder": "Напишите сообщение...",
   "chat_mode_training": "Тренировка",
   "chat_mode_lesson": "Урок",
+  "grammar_lens_title": "Grammar Lens",
+  "grammar_lens_on": "Grammar Lens включен",
+  "grammar_lens_off": "Grammar Lens",
+  "grammar_lens_loading": "Анализируем видимый текст…",
+  "grammar_lens_disable": "Выключить Grammar Lens",
+  "grammar_role_subject": "Подлежащее",
+  "grammar_role_verb": "Глагол",
+  "grammar_role_object": "Дополнение",
+  "grammar_role_place": "Место",
+  "grammar_role_time": "Время",
+  "grammar_role_modifier": "Определение",
   "settings_title": "Настройки",
   "settings_intro": "Расскажите о ваших языках и уровне, чтобы мы подбирали для вас подходящие слова и сложность.",
   "settings_native_lang": "Ваш язык",
@@ -62,6 +73,8 @@
   "reminder_start": "Начать тренировку",
   "reminder_dismiss": "Скрыть напоминание",
   "app_loading": "Загрузка...",
+  "feature_enabled": "Вкл",
+  "feature_disabled": "Выкл",
   "native_lang_title": "Какой у вас язык?",
   "native_lang_subtitle": "Мы покажем переводы и интерфейс на вашем языке",
   "target_lang_title": "Что вы хотите изучать?",
@@ -315,5 +328,9 @@
   "ci_meter_verdict_ideal": "Отличный контент i+1 для вас — в основном знакомый, с хорошей порцией новых слов.",
   "ci_meter_verdict_too_easy": "Вы это уже хорошо знаете — полезно для практики беглости, но нового словарного запаса мало.",
   "ci_meter_verdict_too_hard": "Сейчас это может быть слишком сложно — скорее всего, придётся часто искать слова.",
-  "ci_meter_verdict_close": "Почти ваш уровень."
+  "ci_meter_verdict_close": "Почти ваш уровень.",
+  "__same_as_en__": [
+    "grammar_lens_off",
+    "grammar_lens_title"
+  ]
 }

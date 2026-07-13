@@ -25,6 +25,7 @@ const Icons = {
   stats: <svg viewBox="0 0 24 24"><path d="M5 20V10h4v10M10 20V4h4v16M15 20v-7h4v7M3 20h18"/></svg>,
   settings: <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6 1.7 1.7 0 0 0 10 3v-.2h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z"/></svg>,
   language: <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.2 2.5 3.3 5.5 3.3 9S14.2 18.5 12 21c-2.2-2.5-3.3-5.5-3.3-9S9.8 5.5 12 3Z"/></svg>,
+  grammar: <svg viewBox="0 0 24 24"><path d="M8 4H5v16h3M16 4h3v16h-3M10 8h4M10 12h4M10 16h4"/></svg>,
   send: (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M22 2L11 13" />
@@ -40,6 +41,8 @@ export function HomeScreen() {
   const [ask, setAsk] = useState("");
   const [settings, setSettings] = useState<SettingsData | null>(null);
   const [ciMeterOn, setCiMeterOn] = useState(false);
+  const [grammarLensOn, setGrammarLensOn] = useState(false);
+  const [immersionOn, setImmersionOn] = useState(false);
 
   useEffect(() => {
     Promise.all([api.getKbSummary(username), api.getReminders(username)])
@@ -48,8 +51,14 @@ export function HomeScreen() {
   }, [username]);
 
   useEffect(() => {
-    storageGet([CONFIG.STORAGE_KEY_CI_METER]).then((result) => {
+    storageGet([
+      CONFIG.STORAGE_KEY_CI_METER,
+      CONFIG.STORAGE_KEY_GRAMMAR_LENS,
+      CONFIG.STORAGE_KEY_IMMERSION,
+    ]).then((result) => {
       setCiMeterOn(Boolean(result[CONFIG.STORAGE_KEY_CI_METER]));
+      setGrammarLensOn(Boolean(result[CONFIG.STORAGE_KEY_GRAMMAR_LENS]));
+      setImmersionOn(Boolean(result[CONFIG.STORAGE_KEY_IMMERSION]));
     });
   }, []);
 
@@ -65,6 +74,25 @@ export function HomeScreen() {
     } catch {
       // Restricted pages cannot receive content-script messages; the saved
       // preference will still be applied on the next regular page.
+    }
+  }
+
+  async function toggleGrammarLens() {
+    const next = !grammarLensOn;
+    setGrammarLensOn(next);
+    if (next) setImmersionOn(false);
+    await storageSet({
+      [CONFIG.STORAGE_KEY_GRAMMAR_LENS]: next,
+      ...(next ? { [CONFIG.STORAGE_KEY_IMMERSION]: false } : {}),
+    });
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tab?.id) {
+        if (next) await chrome.tabs.sendMessage(tab.id, { type: "VEKSHA_TOGGLE_IMMERSION", enabled: false });
+        await chrome.tabs.sendMessage(tab.id, { type: "VEKSHA_TOGGLE_GRAMMAR_LENS", enabled: next });
+      }
+    } catch {
+      // The saved preference is applied on the next regular page.
     }
   }
 
@@ -116,9 +144,16 @@ export function HomeScreen() {
           <span className="m-tile-label">{t.nav_training}</span>
         </button>
         {isExtension ? (
-          <button className="m-tile" onClick={() => navigateTo("immersion")}>
+          <button
+            className={`m-tile m-feature-tile ${immersionOn ? "is-on" : "is-off"}`}
+            onClick={() => navigateTo("immersion")}
+          >
             <span className="m-tile-icon">{Icons.immersion}</span>
             <span className="m-tile-label">{t.nav_immersion}</span>
+            <span className="m-feature-state">
+              <i aria-hidden="true" />
+              {immersionOn ? t.feature_enabled : t.feature_disabled}
+            </span>
           </button>
         ) : <div className="m-tile m-tile-ghost" aria-hidden="true" />}
         {isExtension && (
@@ -129,6 +164,20 @@ export function HomeScreen() {
           >
             <span className="m-tile-icon">{Icons.ciMeter}</span>
             <span className="m-tile-label">{ciMeterOn ? t.ci_meter_on : t.ci_meter_off}</span>
+          </button>
+        )}
+        {isExtension && (
+          <button
+            className={`m-tile m-feature-tile ${grammarLensOn ? "is-on" : "is-off"}`}
+            onClick={toggleGrammarLens}
+            aria-pressed={grammarLensOn}
+          >
+            <span className="m-tile-icon">{Icons.grammar}</span>
+            <span className="m-tile-label">{t.grammar_lens_title}</span>
+            <span className="m-feature-state">
+              <i aria-hidden="true" />
+              {grammarLensOn ? t.feature_enabled : t.feature_disabled}
+            </span>
           </button>
         )}
 

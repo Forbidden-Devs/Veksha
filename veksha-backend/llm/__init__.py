@@ -11,6 +11,7 @@ Organized by domain:
   llm.selection  — translate_selection, explain_selection
   llm.immersion  — analyze_block
   llm.ci_meter   — classify_difficulty
+  llm.grammar_lens — analyze_grammar_block
   llm._base      — _call, helpers (private)
 """
 from llm.pipeline import (
@@ -38,6 +39,7 @@ from llm.selection import (
 )
 from llm.immersion import analyze_block
 from llm.ci_meter import classify_difficulty
+from llm.grammar_lens import analyze_grammar_block
 
 __all__ = [
     "input_processor",
@@ -57,4 +59,5 @@ __all__ = [
     "explain_selection",
     "analyze_block",
     "classify_difficulty",
+    "analyze_grammar_block",
 ]

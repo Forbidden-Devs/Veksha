@@ -176,5 +176,18 @@
   "settings_dual_subtitles_desc": "Näytä käännetyt tekstitykset alkuperäisten YouTube-tekstitysten yläpuolella.",
   "settings_learning_languages": "Opiskelemasi kielet",
   "settings_add_language": "Lisää kieli",
-  "settings_remove_language": "Poista kieli"
+  "settings_remove_language": "Poista kieli",
+  "grammar_lens_title": "Kielioppi-Linssi",
+  "grammar_lens_on": "Kielioppi-Linssi päällä",
+  "grammar_lens_off": "Kielioppi-Linssi",
+  "grammar_lens_loading": "Analysoidaan näkyvää tekstiä…",
+  "grammar_lens_disable": "Sammuta Kielioppi-Linssi",
+  "grammar_role_subject": "Subjekti",
+  "grammar_role_verb": "Verbi",
+  "grammar_role_object": "Objekti",
+  "grammar_role_place": "Paikka",
+  "grammar_role_time": "Aika",
+  "grammar_role_modifier": "Määrite",
+  "feature_enabled": "Päällä",
+  "feature_disabled": "Pois"
 }

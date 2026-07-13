@@ -161,6 +161,8 @@
   "__same_as_en__": [
     "debug_backend",
     "debug_title",
+    "grammar_lens_off",
+    "grammar_lens_title",
     "menu_debug",
     "menu_title",
     "settings_account"
@@ -178,5 +180,18 @@
   "settings_dual_subtitles_desc": "Mostra i sottotitoli tradotti sopra i sottotitoli originali di YouTube.",
   "settings_learning_languages": "Lingue che studi",
   "settings_add_language": "Aggiungi una lingua",
-  "settings_remove_language": "Rimuovi lingua"
+  "settings_remove_language": "Rimuovi lingua",
+  "grammar_lens_title": "Grammar Lens",
+  "grammar_lens_on": "Grammar Lens attivo",
+  "grammar_lens_off": "Grammar Lens",
+  "grammar_lens_loading": "Analisi del testo visibile…",
+  "grammar_lens_disable": "Disattiva Grammar Lens",
+  "grammar_role_subject": "Soggetto",
+  "grammar_role_verb": "Verbo",
+  "grammar_role_object": "Oggetto",
+  "grammar_role_place": "Luogo",
+  "grammar_role_time": "Tempo",
+  "grammar_role_modifier": "Modificatore",
+  "feature_enabled": "Attivo",
+  "feature_disabled": "Disattivo"
 }

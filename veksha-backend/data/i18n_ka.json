@@ -185,5 +185,18 @@
   "settings_dual_subtitles_desc": "აჩვენე თარგმნილი სუბტიტრები ორიგინალი YouTube წარწერების ზემოთ.",
   "settings_learning_languages": "სასწავლი ენები",
   "settings_add_language": "ენის დამატება",
-  "settings_remove_language": "ენის წაშლა"
+  "settings_remove_language": "ენის წაშლა",
+  "grammar_lens_title": "გრამატიკის ლინზა",
+  "grammar_lens_on": "გრამატიკის ლინზა ჩართულია",
+  "grammar_lens_off": "გრამატიკის ლინზა",
+  "grammar_lens_loading": "ხილული ტექსტის ანალიზი…",
+  "grammar_lens_disable": "გრამატიკის ლინზის გამორთვა",
+  "grammar_role_subject": "ქვემდებარე",
+  "grammar_role_verb": "ზმნა",
+  "grammar_role_object": "ობიექტი",
+  "grammar_role_place": "ადგილი",
+  "grammar_role_time": "დრო",
+  "grammar_role_modifier": "მოდიფიკატორი",
+  "feature_enabled": "ჩართული",
+  "feature_disabled": "გამორთული"
 }

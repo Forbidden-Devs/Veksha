@@ -177,5 +177,18 @@
   "settings_dual_subtitles_desc": "Zobrazit přeložené titulky nad původními titulky YouTube.",
   "settings_learning_languages": "Jazyky, které studujete",
   "settings_add_language": "Přidat jazyk",
-  "settings_remove_language": "Odebrat jazyk"
+  "settings_remove_language": "Odebrat jazyk",
+  "grammar_lens_title": "Gramatická čočka",
+  "grammar_lens_on": "Gramatická čočka zapnutá",
+  "grammar_lens_off": "Gramatická čočka",
+  "grammar_lens_loading": "Analyzuje viditelný text…",
+  "grammar_lens_disable": "Vypnout Gramatickou čočku",
+  "grammar_role_subject": "Podmět",
+  "grammar_role_verb": "Sloveso",
+  "grammar_role_object": "Předmět",
+  "grammar_role_place": "Místo",
+  "grammar_role_time": "Čas",
+  "grammar_role_modifier": "Příslovečné určení",
+  "feature_enabled": "Zapnuto",
+  "feature_disabled": "Vypnuto"
 }

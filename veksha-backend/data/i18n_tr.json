@@ -174,5 +174,18 @@
   "settings_dual_subtitles_desc": "Çevrilmiş altyazıları YouTube'un orijinal altyazılarının üstünde göster.",
   "settings_learning_languages": "Çalıştığınız diller",
   "settings_add_language": "Dil ekle",
-  "settings_remove_language": "Dili kaldır"
+  "settings_remove_language": "Dili kaldır",
+  "grammar_lens_title": "Dilbilgisi Lens'i",
+  "grammar_lens_on": "Dilbilgisi Lens'i açık",
+  "grammar_lens_off": "Dilbilgisi Lens'i",
+  "grammar_lens_loading": "Görünen metin analiz ediliyor…",
+  "grammar_lens_disable": "Dilbilgisi Lens'i kapat",
+  "grammar_role_subject": "Özne",
+  "grammar_role_verb": "Fiil",
+  "grammar_role_object": "Nesne",
+  "grammar_role_place": "Yer",
+  "grammar_role_time": "Zaman",
+  "grammar_role_modifier": "Belirteç",
+  "feature_enabled": "Açık",
+  "feature_disabled": "Kapalı"
 }

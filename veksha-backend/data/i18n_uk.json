@@ -180,5 +180,18 @@
   "settings_dual_subtitles_desc": "Увімкнути переклад субтитрів і кнопку керування ним на YouTube.",
   "settings_learning_languages": "Мови, які ви вивчаєте",
   "settings_add_language": "Додати мову",
-  "settings_remove_language": "Видалити мову"
+  "settings_remove_language": "Видалити мову",
+  "grammar_lens_title": "Граматична лінза",
+  "grammar_lens_on": "Граматична лінза увімкнена",
+  "grammar_lens_off": "Граматична лінза",
+  "grammar_lens_loading": "Аналізуємо видимий текст…",
+  "grammar_lens_disable": "Вимкнути Граматичну лінзу",
+  "grammar_role_subject": "Підмет",
+  "grammar_role_verb": "Дієслово",
+  "grammar_role_object": "Додаток",
+  "grammar_role_place": "Місце",
+  "grammar_role_time": "Час",
+  "grammar_role_modifier": "Означення",
+  "feature_enabled": "Увімкнено",
+  "feature_disabled": "Вимкнено"
 }

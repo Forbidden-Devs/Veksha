@@ -175,5 +175,18 @@
   "settings_dual_subtitles_desc": "मूल YouTube कैप्शन के ऊपर अनुवादित उपशीर्षक दिखाएँ।",
   "settings_learning_languages": "आप जिन भाषाओं का अध्ययन करते हैं",
   "settings_add_language": "भाषा जोड़ें",
-  "settings_remove_language": "भाषा हटाएँ"
+  "settings_remove_language": "भाषा हटाएँ",
+  "grammar_lens_title": "व्याकरण लेंस",
+  "grammar_lens_on": "व्याकरण लेंस चालू",
+  "grammar_lens_off": "व्याकरण लेंस",
+  "grammar_lens_loading": "दिख रहे पाठ का विश्लेषण किया जा रहा है…",
+  "grammar_lens_disable": "व्याकरण लेंस बंद करें",
+  "grammar_role_subject": "कर्ता",
+  "grammar_role_verb": "क्रिया",
+  "grammar_role_object": "कर्म",
+  "grammar_role_place": "स्थान",
+  "grammar_role_time": "समय",
+  "grammar_role_modifier": "विशेषक",
+  "feature_enabled": "चालू",
+  "feature_disabled": "बंद"
 }

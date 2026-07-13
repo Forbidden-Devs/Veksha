@@ -8,6 +8,8 @@
 export interface Strings {
   // Common
   app_loading: string;
+  feature_enabled: string;
+  feature_disabled: string;
   // Native language picker (step 1 of onboarding)
   native_lang_title: string;
   native_lang_subtitle: string;
@@ -56,6 +58,17 @@ export interface Strings {
   ci_meter_verdict_too_easy: string;
   ci_meter_verdict_too_hard: string;
   ci_meter_verdict_close: string;
+  grammar_lens_title: string;
+  grammar_lens_on: string;
+  grammar_lens_off: string;
+  grammar_lens_loading: string;
+  grammar_lens_disable: string;
+  grammar_role_subject: string;
+  grammar_role_verb: string;
+  grammar_role_object: string;
+  grammar_role_place: string;
+  grammar_role_time: string;
+  grammar_role_modifier: string;
   // Settings
   settings_title: string;
   settings_intro: string;
@@ -314,6 +327,8 @@ export interface Strings {
 
 export const EN: Strings = {
   app_loading: "Loading...",
+  feature_enabled: "On",
+  feature_disabled: "Off",
   native_lang_title: "What's your language?",
   native_lang_subtitle: "We'll show translations and the interface in your language",
   target_lang_title: "What do you want to learn?",
@@ -357,6 +372,17 @@ export const EN: Strings = {
   ci_meter_verdict_too_easy: "You know this well already — good for fluency practice, but little new vocabulary.",
   ci_meter_verdict_too_hard: "This may be too difficult right now — expect to look up a lot of words.",
   ci_meter_verdict_close: "Close to your level.",
+  grammar_lens_title: "Grammar Lens",
+  grammar_lens_on: "Grammar Lens on",
+  grammar_lens_off: "Grammar Lens",
+  grammar_lens_loading: "Analyzing visible text…",
+  grammar_lens_disable: "Turn off Grammar Lens",
+  grammar_role_subject: "Subject",
+  grammar_role_verb: "Verb",
+  grammar_role_object: "Object",
+  grammar_role_place: "Place",
+  grammar_role_time: "Time",
+  grammar_role_modifier: "Modifier",
   settings_title: "Settings",
   settings_intro: "Tell us your languages and level so we can pick the right words and difficulty for you.",
   settings_theme: "Theme",

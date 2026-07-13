@@ -303,5 +303,18 @@
   "settings_dual_subtitles_desc": "Afficher les sous-titres traduits au-dessus des sous-titres YouTube d’origine.",
   "settings_learning_languages": "Langues que vous étudiez",
   "settings_add_language": "Ajouter une langue",
-  "settings_remove_language": "Supprimer la langue"
+  "settings_remove_language": "Supprimer la langue",
+  "grammar_lens_title": "Lentille de grammaire",
+  "grammar_lens_on": "Lentille de grammaire activée",
+  "grammar_lens_off": "Lentille de grammaire",
+  "grammar_lens_loading": "Analyse du texte visible…",
+  "grammar_lens_disable": "Désactiver Lentille de grammaire",
+  "grammar_role_subject": "Sujet",
+  "grammar_role_verb": "Verbe",
+  "grammar_role_object": "Objet",
+  "grammar_role_place": "Lieu",
+  "grammar_role_time": "Temps",
+  "grammar_role_modifier": "Modificateur",
+  "feature_enabled": "Activé",
+  "feature_disabled": "Désactivé"
 }

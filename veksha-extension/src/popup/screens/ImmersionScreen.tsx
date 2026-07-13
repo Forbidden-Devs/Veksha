@@ -16,10 +16,14 @@ export function ImmersionScreen() {
   async function toggle() {
     const next = !enabled;
     setEnabled(next);
-    await storageSet({ [CONFIG.STORAGE_KEY_IMMERSION]: next });
+    await storageSet({
+      [CONFIG.STORAGE_KEY_IMMERSION]: next,
+      ...(next ? { [CONFIG.STORAGE_KEY_GRAMMAR_LENS]: false } : {}),
+    });
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       if (tab?.id) {
+        if (next) await chrome.tabs.sendMessage(tab.id, { type: "VEKSHA_TOGGLE_GRAMMAR_LENS", enabled: false });
         await chrome.tabs.sendMessage(tab.id, { type: "VEKSHA_TOGGLE_IMMERSION", enabled: next });
       }
     } catch {

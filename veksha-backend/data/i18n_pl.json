@@ -302,5 +302,18 @@
   "settings_dual_subtitles_desc": "Wyświetlaj przetłumaczone napisy nad oryginalnymi napisami YouTube.",
   "settings_learning_languages": "Języki, których się uczysz",
   "settings_add_language": "Dodaj język",
-  "settings_remove_language": "Usuń język"
+  "settings_remove_language": "Usuń język",
+  "grammar_lens_title": "Soczewka gramatyczna",
+  "grammar_lens_on": "Soczewka gramatyczna włączona",
+  "grammar_lens_off": "Soczewka gramatyczna",
+  "grammar_lens_loading": "Analizowanie widocznego tekstu…",
+  "grammar_lens_disable": "Wyłącz Soczewkę gramatyczną",
+  "grammar_role_subject": "Podmiot",
+  "grammar_role_verb": "Orzeczenie",
+  "grammar_role_object": "Dopełnienie",
+  "grammar_role_place": "Miejsce",
+  "grammar_role_time": "Czas",
+  "grammar_role_modifier": "Określenie",
+  "feature_enabled": "Włączone",
+  "feature_disabled": "Wyłączone"
 }

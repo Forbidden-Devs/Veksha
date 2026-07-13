@@ -159,6 +159,8 @@
   "edit_kb_topic_not_found": "ไม่พบหัวข้อ \"{value}\"",
   "edit_kb_word_known_not_found": "ไม่พบคำ \"{value}\" เพื่อทำเครื่องหมายว่าเรียนรู้แล้ว",
   "__same_as_en__": [
+    "grammar_lens_off",
+    "grammar_lens_title",
     "menu_debug",
     "menu_settings"
   ],
@@ -175,5 +177,18 @@
   "settings_dual_subtitles_desc": "แสดงคำบรรยายที่แปลแล้วเหนือคำบรรยาย YouTube ต้นฉบับ",
   "settings_learning_languages": "ภาษาที่คุณกำลังเรียน",
   "settings_add_language": "เพิ่มภาษา",
-  "settings_remove_language": "ลบภาษา"
+  "settings_remove_language": "ลบภาษา",
+  "grammar_lens_title": "Grammar Lens",
+  "grammar_lens_on": "เปิด Grammar Lens",
+  "grammar_lens_off": "Grammar Lens",
+  "grammar_lens_loading": "กำลังวิเคราะห์ข้อความที่มองเห็น…",
+  "grammar_lens_disable": "ปิด Grammar Lens",
+  "grammar_role_subject": "ประธาน",
+  "grammar_role_verb": "กริยา",
+  "grammar_role_object": "กรรม",
+  "grammar_role_place": "สถานที่",
+  "grammar_role_time": "เวลา",
+  "grammar_role_modifier": "ส่วนขยาย",
+  "feature_enabled": "เปิด",
+  "feature_disabled": "ปิด"
 }

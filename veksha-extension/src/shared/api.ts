@@ -272,6 +272,20 @@ export function analyzeCiMeter(text: string, refine = false): Promise<CiMeterRes
   return _post("/api/ci_meter/analyze", { text, refine }, 20_000);
 }
 
+export type GrammarRole = "subject" | "verb" | "object" | "place" | "time" | "modifier";
+
+export interface GrammarSegment {
+  text: string;
+  role: GrammarRole;
+  explanation: string;
+}
+
+export function analyzeGrammarLens(
+  blocks: string[]
+): Promise<{ blocks: { segments: GrammarSegment[] }[] }> {
+  return _post("/api/grammar-lens/analyze", { blocks }, 45_000);
+}
+
 export interface SubtitleAlignmentGroup {
   src: number[];
   dst: number[];

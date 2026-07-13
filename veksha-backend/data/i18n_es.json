@@ -159,7 +159,9 @@
   "edit_kb_topic_not_found": "No se pudo encontrar el tema \"{value}\".",
   "edit_kb_word_known_not_found": "No se pudo encontrar la palabra \"{value}\" para marcarla como aprendida.",
   "__same_as_en__": [
-    "debug_backend"
+    "debug_backend",
+    "grammar_lens_off",
+    "grammar_lens_title"
   ],
   "onboarding_name_placeholder": "Tu nombre",
   "settings_persistent": "Recordatorios persistentes",
@@ -299,5 +301,18 @@
   "settings_dual_subtitles_desc": "Muestra subtítulos traducidos encima de los subtítulos originales de YouTube.",
   "settings_learning_languages": "Idiomas que estudias",
   "settings_add_language": "Añadir un idioma",
-  "settings_remove_language": "Eliminar idioma"
+  "settings_remove_language": "Eliminar idioma",
+  "grammar_lens_title": "Grammar Lens",
+  "grammar_lens_on": "Grammar Lens activado",
+  "grammar_lens_off": "Grammar Lens",
+  "grammar_lens_loading": "Analizando el texto visible…",
+  "grammar_lens_disable": "Desactivar Grammar Lens",
+  "grammar_role_subject": "Sujeto",
+  "grammar_role_verb": "Verbo",
+  "grammar_role_object": "Objeto",
+  "grammar_role_place": "Lugar",
+  "grammar_role_time": "Tiempo",
+  "grammar_role_modifier": "Modificador",
+  "feature_enabled": "Activado",
+  "feature_disabled": "Desactivado"
 }

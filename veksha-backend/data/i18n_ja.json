@@ -159,6 +159,8 @@
   "edit_kb_topic_not_found": "「{value}」というトピックが見つかりませんでした。",
   "edit_kb_word_known_not_found": "学習済みにする「{value}」という単語が見つかりませんでした。",
   "__same_as_en__": [
+    "grammar_lens_off",
+    "grammar_lens_title",
     "settings_overseer"
   ],
   "onboarding_name_placeholder": "お名前",
@@ -299,5 +301,18 @@
   "settings_dual_subtitles_desc": "YouTubeの元の字幕の上に翻訳字幕を表示します。",
   "settings_learning_languages": "学習中の言語",
   "settings_add_language": "言語を追加",
-  "settings_remove_language": "言語を削除"
+  "settings_remove_language": "言語を削除",
+  "grammar_lens_title": "Grammar Lens",
+  "grammar_lens_on": "Grammar Lens オン",
+  "grammar_lens_off": "Grammar Lens",
+  "grammar_lens_loading": "表示中のテキストを解析中…",
+  "grammar_lens_disable": "Grammar Lens をオフにする",
+  "grammar_role_subject": "主語",
+  "grammar_role_verb": "動詞",
+  "grammar_role_object": "目的語",
+  "grammar_role_place": "場所",
+  "grammar_role_time": "時",
+  "grammar_role_modifier": "修飾語",
+  "feature_enabled": "オン",
+  "feature_disabled": "オフ"
 }

@@ -13,7 +13,7 @@ export const SKIP_TAGS = new Set([
 
 // Our own injected UI — never read text inside it.
 export const SKIP_CLOSEST =
-  ".veksha-popup, .veksha-icon, .veksha-aggressive-reminder, .av-yt-layer, .av-imm, [data-av-skip]";
+  ".veksha-popup, .veksha-icon, .veksha-aggressive-reminder, .av-yt-layer, .av-imm, .av-grammar, [data-av-skip]";
 
 export function isVisible(el: Element, margin = 0): boolean {
   const rect = el.getBoundingClientRect();

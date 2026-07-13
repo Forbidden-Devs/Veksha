@@ -175,5 +175,18 @@
   "settings_dual_subtitles_desc": "Εμφάνιση των μεταφρασμένων υπότιτλων πάνω από τους αρχικούς υπότιτλους του YouTube.",
   "settings_learning_languages": "Γλώσσες που μελετάτε",
   "settings_add_language": "Προσθήκη γλώσσας",
-  "settings_remove_language": "Αφαίρεση γλώσσας"
+  "settings_remove_language": "Αφαίρεση γλώσσας",
+  "grammar_lens_title": "Φακός Γραμματικής",
+  "grammar_lens_on": "Ο Φακός Γραμματικής είναι ενεργός",
+  "grammar_lens_off": "Φακός Γραμματικής",
+  "grammar_lens_loading": "Ανάλυση ορατού κειμένου…",
+  "grammar_lens_disable": "Απενεργοποίηση Φακού Γραμματικής",
+  "grammar_role_subject": "Υποκείμενο",
+  "grammar_role_verb": "Ρήμα",
+  "grammar_role_object": "Αντικείμενο",
+  "grammar_role_place": "Τόπος",
+  "grammar_role_time": "Χρόνος",
+  "grammar_role_modifier": "Προσδιορισμός",
+  "feature_enabled": "Ενεργό",
+  "feature_disabled": "Ανενεργό"
 }
