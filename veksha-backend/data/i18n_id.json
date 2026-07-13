@@ -205,5 +205,12 @@
   "sentence_mining_collocations": "Kolokasi umum",
   "sentence_mining_regenerate": "Buat ulang",
   "sentence_mining_error": "Tidak dapat membuat kartu AI.",
-  "sentence_mining_level_up": "naik level"
+  "sentence_mining_level_up": "naik level",
+  "settings_subscription": "Langganan",
+  "settings_sub_free": "Paket gratis",
+  "settings_sub_premium": "Premium — aktif hingga",
+  "settings_sub_desc": "Premium membuka Grammar Lens, page immersion, dan subtitle ganda.",
+  "settings_sub_connect": "Berlangganan via Telegram",
+  "settings_sub_manage": "Kelola di Telegram",
+  "settings_sub_err": "Tidak dapat membuka bot langganan. Coba lagi nanti."
 }

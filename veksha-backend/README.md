@@ -43,6 +43,19 @@ All user data (accounts, KBs, chat history) lives in SQLite at
 `data/veksha.db` (WAL mode). The KB is stored as one JSON document per user;
 normalizing into tables is deferred to the FSRS rework.
 
+## Subscriptions (Telegram Stars)
+
+Premium features (Grammar Lens, page immersion, dual subtitles — see
+`entitlements.py`) require an active subscription; gated endpoints return
+HTTP 402 with `detail.code = "subscription_required"`. Payments are collected
+by the companion bot (`veksha-tgbot/`) in Telegram Stars and reported to
+`POST /api/billing/telegram/webhook` (header `X-Veksha-Bot-Secret`,
+idempotent by `telegram_payment_charge_id`). Accounts are bound to Telegram
+via a single-use deep-link code from `POST /api/billing/telegram/link`.
+Configure `TELEGRAM_BOT_USERNAME` and `TELEGRAM_BOT_WEBHOOK_SECRET`; both
+empty disables billing (the link endpoint returns 503, everyone stays on the
+free tier).
+
 ## Module map
 
 ```
@@ -59,6 +72,7 @@ selection.py          selection translate → KB update
 training.py           word-training sessions (task generation, answer check)
 lesson.py             topic lessons: block generation/review, mastery
 i18n.py               UI/server strings + LLM-translated catalogues
+entitlements.py       subscription tiers, plans, feature gating (require_feature)
 llm/                  all OpenAI calls (pipeline, training, lesson,
                       selection, immersion, _base)
 db_cache.py           SQLite cache for reusable LLM outputs
@@ -81,8 +95,10 @@ api/                  routers (one file per domain)
 | `GET /api/training/init`, `POST /api/training/validate`, `WS /api/training/ws` | word training |
 | `GET /api/training/review_log` | recent FSRS reviews (`?word=`, `?limit=`) |
 | `GET/POST /api/lesson-topics`, `WS /api/lesson/ws` | topic lessons |
-| `POST /api/immersion/analyze` | comprehensible-input page immersion |
-| `POST /api/subtitles/translate` | dual-subtitle line translation with word alignment |
+| `POST /api/immersion/analyze` | comprehensible-input page immersion (premium) |
+| `POST /api/subtitles/translate` | dual-subtitle line translation with word alignment (premium) |
+| `GET /api/billing/status`, `POST /api/billing/telegram/link` | subscription status / bot deep link |
+| `GET /api/billing/plans`, `POST /api/billing/telegram/webhook` | companion-bot API (shared secret) |
 | `GET /api/i18n/{lang}`, `POST /api/i18n/translate` | UI string catalogues |
 | `POST /api/debug/*` | development helpers (reset, simulate, advance-day) |
 

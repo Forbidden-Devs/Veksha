@@ -7,6 +7,10 @@ import path from "node:path";
 // files outside the project root.
 export default defineConfig({
   plugins: [react()],
+  define: {
+    // The web app never ships debug tooling; the extension sets this per build.
+    __DEV_BUILD__: JSON.stringify(false),
+  },
   server: {
     fs: { allow: [path.resolve(__dirname, "..")] },
   },

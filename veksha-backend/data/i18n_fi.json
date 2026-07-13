@@ -201,5 +201,12 @@
   "sentence_mining_collocations": "Yleiset kollokaatiot",
   "sentence_mining_regenerate": "Luo uudelleen",
   "sentence_mining_error": "AI-kortin luonti epäonnistui.",
-  "sentence_mining_level_up": "nouse tasolle"
+  "sentence_mining_level_up": "nouse tasolle",
+  "settings_subscription": "Tilaus",
+  "settings_sub_free": "Ilmainen suunnitelma",
+  "settings_sub_premium": "Premium — voimassa asti",
+  "settings_sub_desc": "Premium avaa Grammar Lensin, sivujen immersiivisen tilan ja kaksinkertaiset tekstitykset.",
+  "settings_sub_connect": "Tilaa Telegramin kautta",
+  "settings_sub_manage": "Hallitse Telegramissa",
+  "settings_sub_err": "Tilausbotin avaaminen epäonnistui. Yritä myöhemmin uudelleen."
 }

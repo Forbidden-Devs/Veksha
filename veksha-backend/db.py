@@ -147,6 +147,49 @@ def _conn() -> sqlite3.Connection:
         conn.execute(
             "CREATE INDEX IF NOT EXISTS ix_word_freq_user_lang ON word_freq (username, language)"
         )
+        # Paid subscription state. One row per user; `tier` is a plan family
+        # from entitlements.py, `expires_at` a unix timestamp — an expired row
+        # simply means the free tier again (rows are never deleted).
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS subscriptions (
+                   username   TEXT PRIMARY KEY,
+                   tier       TEXT NOT NULL,
+                   expires_at REAL NOT NULL,
+                   updated    REAL NOT NULL,
+                   FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
+               )"""
+        )
+        # Telegram accounts linked for billing: payments arriving from this
+        # telegram_user_id credit the linked Veksha account.
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS telegram_links (
+                   telegram_user_id INTEGER PRIMARY KEY,
+                   username         TEXT NOT NULL,
+                   created          REAL NOT NULL
+               )"""
+        )
+        # Short-lived single-use codes carried in the bot deep link
+        # (t.me/<bot>?start=<code>) to prove account ownership.
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS telegram_link_codes (
+                   code     TEXT PRIMARY KEY,
+                   username TEXT NOT NULL,
+                   created  REAL NOT NULL
+               )"""
+        )
+        # Ledger of Telegram Stars payments; the UNIQUE charge id makes the
+        # payment webhook idempotent (Telegram/bot may deliver twice).
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS star_payments (
+                   id                         INTEGER PRIMARY KEY AUTOINCREMENT,
+                   telegram_payment_charge_id TEXT UNIQUE NOT NULL,
+                   telegram_user_id           INTEGER NOT NULL,
+                   username                   TEXT NOT NULL,
+                   plan_id                    TEXT NOT NULL,
+                   stars_amount               INTEGER NOT NULL,
+                   ts                         REAL NOT NULL
+               )"""
+        )
         conn.commit()
         _local.conn = conn
     return conn
@@ -288,7 +331,9 @@ def purge_all_users() -> None:
     with _conn() as c:
         for table in (
             "identities", "review_log", "word_freq", "chat_history",
-            "kb", "user_languages", "user_settings", "users",
+            "kb", "user_languages", "user_settings",
+            "subscriptions", "telegram_links", "telegram_link_codes",
+            "star_payments", "users",
         ):
             c.execute(f"DELETE FROM {table}")
 
@@ -422,6 +467,111 @@ def word_freq_top(username: str, language: str, limit: int) -> list[dict]:
         {"word": word, "count": total, "domains": domains_by_word.get(word, {})}
         for word, total in totals
     ]
+
+
+# ---------------------------------------------------------------------------
+# Subscriptions / Telegram billing
+# ---------------------------------------------------------------------------
+
+def subscription_get(username: str) -> Optional[dict]:
+    row = _conn().execute(
+        "SELECT tier, expires_at FROM subscriptions WHERE username=?", (username,)
+    ).fetchone()
+    return {"tier": row[0], "expires_at": row[1]} if row else None
+
+
+def subscription_extend(username: str, tier: str, days: float) -> float:
+    """Grant `tier` for `days` more days and return the new expiry.
+
+    An active subscription of the same tier is extended from its current
+    expiry; anything else (no row, expired, different tier) starts from now.
+    """
+    now = time.time()
+    current = subscription_get(username)
+    base = now
+    if current and current["tier"] == tier and current["expires_at"] > now:
+        base = current["expires_at"]
+    expires_at = base + days * 86400.0
+    with _conn() as c:
+        c.execute(
+            "INSERT OR REPLACE INTO subscriptions (username, tier, expires_at, updated) "
+            "VALUES (?,?,?,?)",
+            (username, tier, expires_at, now),
+        )
+    return expires_at
+
+
+def telegram_link_code_create(username: str, code: str) -> None:
+    with _conn() as c:
+        # One outstanding code per user: a fresh request invalidates the old link.
+        c.execute("DELETE FROM telegram_link_codes WHERE username=?", (username,))
+        c.execute(
+            "INSERT INTO telegram_link_codes (code, username, created) VALUES (?,?,?)",
+            (code, username, time.time()),
+        )
+
+
+def telegram_link_code_consume(code: str, max_age_seconds: float) -> Optional[str]:
+    """Redeem a link code: returns its username and deletes it, or None if
+    the code is unknown or older than `max_age_seconds`."""
+    with _conn() as c:
+        row = c.execute(
+            "SELECT username, created FROM telegram_link_codes WHERE code=?", (code,)
+        ).fetchone()
+        if row is None:
+            return None
+        c.execute("DELETE FROM telegram_link_codes WHERE code=?", (code,))
+        if time.time() - row[1] > max_age_seconds:
+            return None
+        return row[0]
+
+
+def telegram_link_set(telegram_user_id: int, username: str) -> None:
+    """Bind a Telegram account to a user (rebinding overwrites)."""
+    with _conn() as c:
+        c.execute(
+            "INSERT OR REPLACE INTO telegram_links (telegram_user_id, username, created) "
+            "VALUES (?,?,?)",
+            (telegram_user_id, username, time.time()),
+        )
+
+
+def telegram_link_owner(telegram_user_id: int) -> Optional[str]:
+    row = _conn().execute(
+        "SELECT username FROM telegram_links WHERE telegram_user_id=?",
+        (telegram_user_id,),
+    ).fetchone()
+    return row[0] if row else None
+
+
+def telegram_linked_user_ids(username: str) -> list[int]:
+    rows = _conn().execute(
+        "SELECT telegram_user_id FROM telegram_links WHERE username=?", (username,)
+    ).fetchall()
+    return [row[0] for row in rows]
+
+
+def star_payment_record(
+    charge_id: str,
+    telegram_user_id: int,
+    username: str,
+    plan_id: str,
+    stars_amount: int,
+) -> bool:
+    """Insert a payment; False when this charge id was already recorded
+    (duplicate webhook delivery — the caller must not re-apply it)."""
+    try:
+        with _conn() as c:
+            c.execute(
+                """INSERT INTO star_payments
+                   (telegram_payment_charge_id, telegram_user_id, username,
+                    plan_id, stars_amount, ts)
+                   VALUES (?,?,?,?,?,?)""",
+                (charge_id, telegram_user_id, username, plan_id, stars_amount, time.time()),
+            )
+        return True
+    except sqlite3.IntegrityError:
+        return False
 
 
 def history_get(username: str) -> list[dict]:

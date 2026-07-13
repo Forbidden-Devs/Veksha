@@ -342,5 +342,12 @@
   "pdf_patch_dismiss": "Clique para fechar",
   "debug_regen_name": "Regerar tradução",
   "debug_regen_desc": "Traduz novamente toda a interface para o seu idioma a partir das strings de origem atuais. Use após mudanças no texto da interface.",
-  "debug_regen_done": "Interface retraduzida para {lang}."
+  "debug_regen_done": "Interface retraduzida para {lang}.",
+  "settings_subscription": "Assinatura",
+  "settings_sub_free": "Plano gratuito",
+  "settings_sub_premium": "Premium — ativo até",
+  "settings_sub_desc": "O Premium desbloqueia Grammar Lens, imersão na página e legendas duplas.",
+  "settings_sub_connect": "Assinar via Telegram",
+  "settings_sub_manage": "Gerenciar no Telegram",
+  "settings_sub_err": "Não foi possível abrir o bot de assinatura. Tente novamente mais tarde."
 }

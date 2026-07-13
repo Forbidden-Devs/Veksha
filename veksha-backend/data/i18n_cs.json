@@ -202,5 +202,12 @@
   "sentence_mining_collocations": "Časté kolokace",
   "sentence_mining_regenerate": "Vygenerovat znovu",
   "sentence_mining_error": "AI kartičku se nepodařilo vytvořit.",
-  "sentence_mining_level_up": "zvýšit úroveň"
+  "sentence_mining_level_up": "zvýšit úroveň",
+  "settings_subscription": "Předplatné",
+  "settings_sub_free": "Bezplatný tarif",
+  "settings_sub_premium": "Premium — aktivní do",
+  "settings_sub_desc": "Premium odemkne Grammar Lens, ponoření do stránky a dvojité titulky.",
+  "settings_sub_connect": "Předplatit přes Telegram",
+  "settings_sub_manage": "Spravovat v Telegramu",
+  "settings_sub_err": "Nepodařilo se otevřít předplatitelského bota. Zkuste to prosím později."
 }

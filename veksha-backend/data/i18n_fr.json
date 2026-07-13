@@ -328,5 +328,12 @@
   "sentence_mining_collocations": "Collocations fréquentes",
   "sentence_mining_regenerate": "Régénérer",
   "sentence_mining_error": "Impossible de créer la carte AI.",
-  "sentence_mining_level_up": "monter de niveau"
+  "sentence_mining_level_up": "monter de niveau",
+  "settings_subscription": "Abonnement",
+  "settings_sub_free": "Formule gratuite",
+  "settings_sub_premium": "Premium — actif jusqu’au",
+  "settings_sub_desc": "Premium débloque Grammar Lens, l’immersion de page et les sous-titres doubles.",
+  "settings_sub_connect": "S’abonner via Telegram",
+  "settings_sub_manage": "Gérer dans Telegram",
+  "settings_sub_err": "Impossible d’ouvrir le bot d’abonnement. Réessayez plus tard."
 }

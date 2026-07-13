@@ -202,5 +202,12 @@
   "sentence_mining_collocations": "คำที่ใช้ร่วมกันบ่อย",
   "sentence_mining_regenerate": "สร้างใหม่",
   "sentence_mining_error": "ไม่สามารถสร้างการ์ด AI ได้",
-  "sentence_mining_level_up": "เลเวลอัป"
+  "sentence_mining_level_up": "เลเวลอัป",
+  "settings_subscription": "การสมัครสมาชิก",
+  "settings_sub_free": "แผนฟรี",
+  "settings_sub_premium": "พรีเมียม — ใช้งานได้จนถึง",
+  "settings_sub_desc": "พรีเมียมปลดล็อก Grammar Lens, page immersion และคำบรรยายสองภาษา",
+  "settings_sub_connect": "สมัครผ่าน Telegram",
+  "settings_sub_manage": "จัดการใน Telegram",
+  "settings_sub_err": "ไม่สามารถเปิดบอทสมัครสมาชิกได้ โปรดลองอีกครั้งภายหลัง"
 }

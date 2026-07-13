@@ -326,5 +326,12 @@
   "sentence_mining_collocations": "よく使うコロケーション",
   "sentence_mining_regenerate": "再生成",
   "sentence_mining_error": "AIカードを作成できませんでした。",
-  "sentence_mining_level_up": "レベルアップ"
+  "sentence_mining_level_up": "レベルアップ",
+  "settings_subscription": "サブスクリプション",
+  "settings_sub_free": "無料プラン",
+  "settings_sub_premium": "プレミアム — 有効期限",
+  "settings_sub_desc": "プレミアムでGrammar Lens、ページ没入、2重字幕が使えます。",
+  "settings_sub_connect": "Telegramで購読",
+  "settings_sub_manage": "Telegramで管理",
+  "settings_sub_err": "サブスクリプションボットを開けませんでした。後でもう一度お試しください。"
 }

@@ -200,5 +200,12 @@
   "sentence_mining_collocations": "Συχνές φράσεις",
   "sentence_mining_regenerate": "Ανανέωση",
   "sentence_mining_error": "Δεν ήταν δυνατή η δημιουργία της κάρτας AI.",
-  "sentence_mining_level_up": "ανέβασμα επιπέδου"
+  "sentence_mining_level_up": "ανέβασμα επιπέδου",
+  "settings_subscription": "Συνδρομή",
+  "settings_sub_free": "Δωρεάν πρόγραμμα",
+  "settings_sub_premium": "Premium — ενεργό έως",
+  "settings_sub_desc": "Το Premium ξεκλειδώνει το Grammar Lens, την εμβύθιση σελίδας και τους διπλούς υπότιτλους.",
+  "settings_sub_connect": "Εγγραφή μέσω Telegram",
+  "settings_sub_manage": "Διαχείριση στο Telegram",
+  "settings_sub_err": "Δεν ήταν δυνατό να ανοίξει το bot συνδρομής. Δοκιμάστε ξανά αργότερα."
 }

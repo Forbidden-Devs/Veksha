@@ -327,5 +327,12 @@
   "sentence_mining_collocations": "Częste kolokacje",
   "sentence_mining_regenerate": "Wygeneruj ponownie",
   "sentence_mining_error": "Nie udało się utworzyć karty AI.",
-  "sentence_mining_level_up": "awansuj poziom"
+  "sentence_mining_level_up": "awansuj poziom",
+  "settings_subscription": "Subskrypcja",
+  "settings_sub_free": "Darmowy plan",
+  "settings_sub_premium": "Premium — aktywne do",
+  "settings_sub_desc": "Premium odblokowuje Grammar Lens, zanurzenie strony i podwójne napisy.",
+  "settings_sub_connect": "Subskrybuj przez Telegram",
+  "settings_sub_manage": "Zarządzaj w Telegramie",
+  "settings_sub_err": "Nie udało się otworzyć bota subskrypcji. Spróbuj ponownie później."
 }

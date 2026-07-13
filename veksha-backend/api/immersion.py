@@ -13,12 +13,13 @@ from __future__ import annotations
 import asyncio
 import logging
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 
 import llm
 from auth import CurrentUser
 from cefr import LEVEL_TO_CEFR as _LEVEL_TO_CEFR
+from entitlements import require_feature
 from storage import get_storage
 
 log = logging.getLogger(__name__)
@@ -49,7 +50,11 @@ class ImmersionResponse(BaseModel):
     blocks: list[ImmersionBlock]
 
 
-@router.post("/api/immersion/analyze", response_model=ImmersionResponse)
+@router.post(
+    "/api/immersion/analyze",
+    response_model=ImmersionResponse,
+    dependencies=[Depends(require_feature("immersion"))],
+)
 async def api_immersion_analyze(req: ImmersionRequest, username: CurrentUser) -> ImmersionResponse:
     storage = get_storage(username)
     s = storage.settings

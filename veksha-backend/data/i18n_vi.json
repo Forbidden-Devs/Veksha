@@ -202,5 +202,12 @@
   "sentence_mining_collocations": "Các cụm từ thường gặp",
   "sentence_mining_regenerate": "Tạo lại",
   "sentence_mining_error": "Không thể tạo thẻ AI.",
-  "sentence_mining_level_up": "lên trình độ"
+  "sentence_mining_level_up": "lên trình độ",
+  "settings_subscription": "Gói đăng ký",
+  "settings_sub_free": "Gói miễn phí",
+  "settings_sub_premium": "Premium — còn hiệu lực đến",
+  "settings_sub_desc": "Premium mở khóa Grammar Lens, chế độ đắm chìm trang và phụ đề đôi.",
+  "settings_sub_connect": "Đăng ký qua Telegram",
+  "settings_sub_manage": "Quản lý trong Telegram",
+  "settings_sub_err": "Không thể mở bot đăng ký. Vui lòng thử lại sau."
 }

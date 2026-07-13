@@ -22,6 +22,17 @@ OPENAI_SMART_MODEL = os.getenv("OPENAI_SMART_MODEL", "gpt-4.1")   # smarter mode
 # (audience check). Empty = Google sign-in disabled (503 from the endpoint).
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
 
+# Telegram billing companion bot (veksha-tgbot/). The bot authenticates its
+# webhook calls to /api/billing/telegram/webhook with this shared secret;
+# empty = Telegram billing disabled (503 from the billing link endpoint).
+TELEGRAM_BOT_USERNAME = os.getenv("TELEGRAM_BOT_USERNAME", "")     # without @
+TELEGRAM_BOT_WEBHOOK_SECRET = os.getenv("TELEGRAM_BOT_WEBHOOK_SECRET", "")
+
+# How long a Telegram deep-link code (t.me/<bot>?start=<code>) stays valid.
+TELEGRAM_LINK_CODE_TTL_SECONDS = int(
+    os.getenv("TELEGRAM_LINK_CODE_TTL_SECONDS", str(15 * 60))
+)
+
 # Optional Redis cache for one- and two-word translations.
 # Leave REDIS_URL empty to run without caching.
 REDIS_URL = os.getenv("REDIS_URL", "")

@@ -210,5 +210,12 @@
   "sentence_mining_collocations": "ხშირი კოლოკაციები",
   "sentence_mining_regenerate": "თავიდან შექმნა",
   "sentence_mining_error": "AI ბარათის შექმნა ვერ მოხერხდა.",
-  "sentence_mining_level_up": "დონის აწევა"
+  "sentence_mining_level_up": "დონის აწევა",
+  "settings_subscription": "გამოწერა",
+  "settings_sub_free": "უფასო გეგმა",
+  "settings_sub_premium": "პრემიუმი — აქტიურია სანამ",
+  "settings_sub_desc": "პრემიუმი ხსნის Grammar Lens-ს, გვერდის იმერსიას და ორმაგ სუბტიტრებს.",
+  "settings_sub_connect": "გამოწერა Telegram-ის მეშვეობით",
+  "settings_sub_manage": "მართვა Telegram-ში",
+  "settings_sub_err": "გამოწერის ბოტის გახსნა ვერ მოხერხდა. სცადეთ მოგვიანებით."
 }

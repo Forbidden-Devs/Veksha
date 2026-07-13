@@ -31,6 +31,9 @@ export function SettingsScreen() {
   const [account, setAccount] = useState<api.AccountData | null>(null);
   const [linking, setLinking] = useState(false);
   const [linkError, setLinkError] = useState<string | null>(null);
+  const [billing, setBilling] = useState<api.BillingStatus | null>(null);
+  const [tgOpening, setTgOpening] = useState(false);
+  const [tgError, setTgError] = useState<string | null>(null);
   const [level, setLevel] = useState("");
   const [goals, setGoals] = useState("");
   const [prompt, setPrompt] = useState("");
@@ -76,6 +79,7 @@ export function SettingsScreen() {
   useEffect(() => {
     if (isOnboarding) return;
     api.getAccount().then(setAccount).catch(() => {});
+    api.getBillingStatus().then(setBilling).catch(() => {});
     // Show the outcome of a link flow that finished after the popup closed.
     storageGet([GOOGLE_LINK_RESULT_KEY]).then((res) => {
       const r = res[GOOGLE_LINK_RESULT_KEY] as GoogleLinkResult | undefined;
@@ -111,6 +115,19 @@ export function SettingsScreen() {
       // will be shown on the next open.
     } finally {
       setLinking(false);
+    }
+  }
+
+  async function handleTelegramSubscribe() {
+    setTgOpening(true);
+    setTgError(null);
+    try {
+      const { url } = await api.createTelegramBillingLink();
+      window.open(url, "_blank", "noopener");
+    } catch {
+      setTgError(t.settings_sub_err);
+    } finally {
+      setTgOpening(false);
     }
   }
 
@@ -519,6 +536,24 @@ export function SettingsScreen() {
         )}
 
         {error && <p className="onboarding-error">{error}</p>}
+
+        {!isOnboarding && (
+          <div className="settings-account">
+            <label className="field-label">{t.settings_subscription}</label>
+            <p className="settings-account-status">
+              {billing?.tier === "premium" && billing.expires_at
+                ? `⭐ ${t.settings_sub_premium} ${new Date(billing.expires_at * 1000).toLocaleDateString()}`
+                : t.settings_sub_free}
+            </p>
+            {billing?.tier !== "premium" && (
+              <span className="settings-toggle-desc">{t.settings_sub_desc}</span>
+            )}
+            <button className="btn" disabled={tgOpening} onClick={handleTelegramSubscribe}>
+              {billing?.tier === "premium" ? t.settings_sub_manage : t.settings_sub_connect}
+            </button>
+            {tgError && <p className="onboarding-error">{tgError}</p>}
+          </div>
+        )}
 
         {!isOnboarding && (
           <div className="settings-account">

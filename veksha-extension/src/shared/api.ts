@@ -207,6 +207,27 @@ export function googleLink(idToken: string): Promise<{ ok: boolean; email: strin
 }
 
 // ---------------------------------------------------------------------------
+// Billing (Telegram Stars subscriptions)
+// ---------------------------------------------------------------------------
+
+export interface BillingStatus {
+  tier: "free" | "premium";
+  expires_at: number | null; // unix seconds; null on the free tier
+  features: string[];        // premium feature flags active for this user
+  telegram_linked: boolean;
+}
+
+export function getBillingStatus(): Promise<BillingStatus> {
+  return _get("/api/billing/status");
+}
+
+/** Create a one-time deep link into the companion bot
+ *  (t.me/<bot>?start=<code>) that binds this account to a Telegram user. */
+export function createTelegramBillingLink(): Promise<{ code: string; url: string }> {
+  return _post("/api/billing/telegram/link", {});
+}
+
+// ---------------------------------------------------------------------------
 // API calls (user derived from the bearer token server-side)
 // ---------------------------------------------------------------------------
 

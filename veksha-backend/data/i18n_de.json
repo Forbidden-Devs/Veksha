@@ -348,5 +348,12 @@
   "my_words_empty": "Noch keine Wörter erfasst. Schalte das Tracking ein und besuche ein paar Seiten in deiner Zielsprache.",
   "my_words_known": "Bekannt",
   "my_words_unknown": "Noch nicht bekannt",
-  "my_words_seen_on": "{n}× · meist auf {domain}"
+  "my_words_seen_on": "{n}× · meist auf {domain}",
+  "settings_subscription": "Abo",
+  "settings_sub_free": "Kostenloser Plan",
+  "settings_sub_premium": "Premium — aktiv bis",
+  "settings_sub_desc": "Premium schaltet Grammar Lens, Seitenimmersion und doppelte Untertitel frei.",
+  "settings_sub_connect": "Per Telegram abonnieren",
+  "settings_sub_manage": "In Telegram verwalten",
+  "settings_sub_err": "Der Abo-Bot konnte nicht geöffnet werden. Bitte später erneut versuchen."
 }

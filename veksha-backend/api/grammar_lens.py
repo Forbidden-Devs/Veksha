@@ -3,11 +3,12 @@ from __future__ import annotations
 
 import asyncio
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 
 import llm
 from auth import CurrentUser
+from entitlements import require_feature
 from storage import get_storage
 
 router = APIRouter()
@@ -36,7 +37,11 @@ class GrammarLensResponse(BaseModel):
     blocks: list[GrammarBlock]
 
 
-@router.post("/api/grammar-lens/analyze", response_model=GrammarLensResponse)
+@router.post(
+    "/api/grammar-lens/analyze",
+    response_model=GrammarLensResponse,
+    dependencies=[Depends(require_feature("grammar_lens"))],
+)
 async def api_grammar_lens_analyze(
     req: GrammarLensRequest,
     username: CurrentUser,

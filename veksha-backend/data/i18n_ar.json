@@ -321,5 +321,12 @@
   "sentence_mining_collocations": "التراكيب الشائعة",
   "sentence_mining_regenerate": "إعادة إنشاء",
   "sentence_mining_error": "تعذّر إنشاء بطاقة AI.",
-  "sentence_mining_level_up": "ارتقِ بالمستوى"
+  "sentence_mining_level_up": "ارتقِ بالمستوى",
+  "settings_subscription": "الاشتراك",
+  "settings_sub_free": "الخطة المجانية",
+  "settings_sub_premium": "الخطة المميزة — فعّالة حتى",
+  "settings_sub_desc": "تُفعّل الخطة المميزة Grammar Lens، والانغماس في الصفحة، والترجمات الثنائية.",
+  "settings_sub_connect": "اشترك عبر Telegram",
+  "settings_sub_manage": "إدارة في Telegram",
+  "settings_sub_err": "تعذّر فتح بوت الاشتراك. حاول مرة أخرى لاحقًا."
 }

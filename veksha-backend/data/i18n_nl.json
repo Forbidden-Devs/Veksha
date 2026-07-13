@@ -332,5 +332,12 @@
   "sentence_mining_collocations": "Veelvoorkomende collocaties",
   "sentence_mining_regenerate": "Opnieuw genereren",
   "sentence_mining_error": "Kon de AI-kaart niet maken.",
-  "sentence_mining_level_up": "niveau omhoog"
+  "sentence_mining_level_up": "niveau omhoog",
+  "settings_subscription": "Abonnement",
+  "settings_sub_free": "Gratis abonnement",
+  "settings_sub_premium": "Premium — actief tot",
+  "settings_sub_desc": "Premium ontgrendelt Grammar Lens, pagina-immersie en dubbele ondertitels.",
+  "settings_sub_connect": "Abonneren via Telegram",
+  "settings_sub_manage": "Beheren in Telegram",
+  "settings_sub_err": "Kon de abonnementsbot niet openen. Probeer het later opnieuw."
 }

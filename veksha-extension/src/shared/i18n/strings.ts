@@ -106,6 +106,13 @@ export interface Strings {
   settings_persistent_desc: string;
   settings_dual_subtitles: string;
   settings_dual_subtitles_desc: string;
+  settings_subscription: string;
+  settings_sub_free: string;
+  settings_sub_premium: string;
+  settings_sub_desc: string;
+  settings_sub_connect: string;
+  settings_sub_manage: string;
+  settings_sub_err: string;
   settings_account: string;
   settings_google_link: string;
   settings_google_linked: string;
@@ -439,6 +446,13 @@ export const EN: Strings = {
   settings_persistent_desc: "Hard-to-dismiss reminders: the close button runs away — finish a quick training or catch it to clear them.",
   settings_dual_subtitles: "Dual subtitles",
   settings_dual_subtitles_desc: "Enable translated subtitles and their playback control on YouTube.",
+  settings_subscription: "Subscription",
+  settings_sub_free: "Free plan",
+  settings_sub_premium: "Premium — active until",
+  settings_sub_desc: "Premium unlocks Grammar Lens, page immersion and dual subtitles.",
+  settings_sub_connect: "Subscribe via Telegram",
+  settings_sub_manage: "Manage in Telegram",
+  settings_sub_err: "Could not open the subscription bot. Try again later.",
   settings_account: "Account",
   settings_google_link: "Link Google account",
   settings_google_linked: "Google account linked",

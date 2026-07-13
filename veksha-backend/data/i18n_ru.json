@@ -348,5 +348,12 @@
   "my_words_empty": "Пока нет отслеживаемых слов. Включите отслеживание и просмотрите несколько страниц на целевом языке.",
   "my_words_known": "Известно",
   "my_words_unknown": "Пока не известно",
-  "my_words_seen_on": "{n}× · чаще всего на {domain}"
+  "my_words_seen_on": "{n}× · чаще всего на {domain}",
+  "settings_subscription": "Подписка",
+  "settings_sub_free": "Бесплатный план",
+  "settings_sub_premium": "Премиум — активен до",
+  "settings_sub_desc": "Премиум открывает Grammar Lens, погружение на странице и двойные субтитры.",
+  "settings_sub_connect": "Оформить через Telegram",
+  "settings_sub_manage": "Управлять в Telegram",
+  "settings_sub_err": "Не удалось открыть бот подписки. Попробуйте позже."
 }

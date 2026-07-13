@@ -205,5 +205,12 @@
   "sentence_mining_collocations": "Часті словосполучення",
   "sentence_mining_regenerate": "Перегенерувати",
   "sentence_mining_error": "Не вдалося створити картку AI.",
-  "sentence_mining_level_up": "підвищити рівень"
+  "sentence_mining_level_up": "підвищити рівень",
+  "settings_subscription": "Підписка",
+  "settings_sub_free": "Безкоштовний план",
+  "settings_sub_premium": "Преміум — активний до",
+  "settings_sub_desc": "Преміум відкриває Grammar Lens, занурення в сторінку та подвійні субтитри.",
+  "settings_sub_connect": "Підписатися через Telegram",
+  "settings_sub_manage": "Керувати в Telegram",
+  "settings_sub_err": "Не вдалося відкрити бот підписки. Спробуйте пізніше."
 }

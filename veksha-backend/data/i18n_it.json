@@ -205,5 +205,12 @@
   "sentence_mining_collocations": "Collocazioni frequenti",
   "sentence_mining_regenerate": "Rigenera",
   "sentence_mining_error": "Impossibile creare la scheda AI.",
-  "sentence_mining_level_up": "salire di livello"
+  "sentence_mining_level_up": "salire di livello",
+  "settings_subscription": "Abbonamento",
+  "settings_sub_free": "Piano gratuito",
+  "settings_sub_premium": "Premium — attivo fino al",
+  "settings_sub_desc": "Premium sblocca Grammar Lens, immersione nella pagina e sottotitoli duali.",
+  "settings_sub_connect": "Abbonati via Telegram",
+  "settings_sub_manage": "Gestisci su Telegram",
+  "settings_sub_err": "Impossibile aprire il bot dell'abbonamento. Riprova più tardi."
 }

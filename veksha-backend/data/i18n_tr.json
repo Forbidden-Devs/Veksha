@@ -199,5 +199,12 @@
   "sentence_mining_collocations": "Sık kullanılan kullanımlar",
   "sentence_mining_regenerate": "Yeniden oluştur",
   "sentence_mining_error": "AI kartı oluşturulamadı.",
-  "sentence_mining_level_up": "seviye atla"
+  "sentence_mining_level_up": "seviye atla",
+  "settings_subscription": "Abonelik",
+  "settings_sub_free": "Ücretsiz plan",
+  "settings_sub_premium": "Premium — geçerli olduğu tarih",
+  "settings_sub_desc": "Premium, Grammar Lens, sayfa sürükleyiciliği ve çift altyazıyı açar.",
+  "settings_sub_connect": "Telegram üzerinden abone ol",
+  "settings_sub_manage": "Telegram'da yönet",
+  "settings_sub_err": "Abonelik botu açılamadı. Lütfen daha sonra tekrar deneyin."
 }

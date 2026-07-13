@@ -18,6 +18,9 @@ veksha-extension/  Chrome + Firefox extension (MV3, React + TypeScript,
 veksha-web/        The same study app (chat / training / lessons / stats)
                     as a standalone PWA-installable web page; reuses the
                     extension popup source via shared/platform.ts.
+veksha-tgbot/      Telegram companion bot: sells subscriptions in Telegram
+                    Stars and reports payments to the backend via webhook
+                    (see veksha-backend/entitlements.py for tiers/plans).
 ```
 
 ## Quick start

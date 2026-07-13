@@ -11,10 +11,11 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from auth import CurrentUser
+from entitlements import require_feature
 from llm.subtitles import translate_subtitle_line
 
 log = logging.getLogger(__name__)
@@ -42,7 +43,11 @@ class SubtitleTranslateResponse(BaseModel):
     detected_source_lang: str | None = None
 
 
-@router.post("/api/subtitles/translate", response_model=SubtitleTranslateResponse)
+@router.post(
+    "/api/subtitles/translate",
+    response_model=SubtitleTranslateResponse,
+    dependencies=[Depends(require_feature("dual_subtitles"))],
+)
 async def api_subtitles_translate(
     req: SubtitleTranslateRequest, username: CurrentUser,
 ) -> SubtitleTranslateResponse:

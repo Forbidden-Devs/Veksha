@@ -22,6 +22,7 @@ from fastapi.responses import JSONResponse
 
 import i18n
 from api import auth as api_auth
+from api import billing
 from api import ci_meter
 from api import debug, lesson, message, settings, training
 from api import i18n as api_i18n
@@ -69,6 +70,7 @@ async def _unhandled(request: Request, exc: Exception):
 
 
 app.include_router(api_auth.router)
+app.include_router(billing.router)
 app.include_router(message.router)
 app.include_router(translate.router)
 app.include_router(settings.router)

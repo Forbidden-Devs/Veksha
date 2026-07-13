@@ -200,5 +200,12 @@
   "sentence_mining_collocations": "अक्सर आने वाले संयोजन",
   "sentence_mining_regenerate": "फिर से बनाएं",
   "sentence_mining_error": "AI कार्ड नहीं बनाया जा सका।",
-  "sentence_mining_level_up": "एक स्तर ऊपर"
+  "sentence_mining_level_up": "एक स्तर ऊपर",
+  "settings_subscription": "सब्सक्रिप्शन",
+  "settings_sub_free": "मुफ़्त प्लान",
+  "settings_sub_premium": "प्रीमियम — सक्रिय है",
+  "settings_sub_desc": "प्रीमियम से Grammar Lens, पेज इमर्शन और डुअल सबटाइटल्स अनलॉक होते हैं।",
+  "settings_sub_connect": "Telegram के जरिए सब्सक्राइब करें",
+  "settings_sub_manage": "Telegram में मैनेज करें",
+  "settings_sub_err": "सब्सक्रिप्शन बॉट नहीं खुल सका। कृपया बाद में फिर कोशिश करें।"
 }
