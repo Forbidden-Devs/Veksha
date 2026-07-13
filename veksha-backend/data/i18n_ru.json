@@ -18,9 +18,9 @@
   "chat_placeholder": "Напишите сообщение...",
   "chat_mode_training": "Тренировка",
   "chat_mode_lesson": "Урок",
-  "grammar_lens_title": "Grammar Lens",
+  "grammar_lens_title": "Грамматический объектив",
   "grammar_lens_on": "Grammar Lens включен",
-  "grammar_lens_off": "Grammar Lens",
+  "grammar_lens_off": "Грамматический объектив",
   "grammar_lens_loading": "Анализируем видимый текст…",
   "grammar_lens_disable": "Выключить Grammar Lens",
   "grammar_role_subject": "Подлежащее",
@@ -341,10 +341,6 @@
   "ci_meter_verdict_too_easy": "Вы это уже хорошо знаете — полезно для практики беглости, но нового словарного запаса мало.",
   "ci_meter_verdict_too_hard": "Сейчас это может быть слишком сложно — скорее всего, придётся часто искать слова.",
   "ci_meter_verdict_close": "Почти ваш уровень.",
-  "__same_as_en__": [
-    "grammar_lens_off",
-    "grammar_lens_title"
-  ],
   "my_words_title": "Мои слова",
   "my_words_intro": "Персональный список частотности, составленный из слов, которые вы действительно встречаете при просмотре сайтов, с пометкой по сайту — а не общий список топ-1000.",
   "my_words_on": "Отслеживание включено",

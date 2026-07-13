@@ -331,5 +331,22 @@
   "sentence_mining_collocations": "Häufige Kollokationen",
   "sentence_mining_regenerate": "Neu erstellen",
   "sentence_mining_error": "Die AI-Karte konnte nicht erstellt werden.",
-  "sentence_mining_level_up": "eine Stufe höher"
+  "sentence_mining_level_up": "eine Stufe höher",
+  "ci_meter_on": "CI-Meter an",
+  "ci_meter_off": "CI-Meter",
+  "ci_meter_loading": "Lesbarkeit wird geprüft…",
+  "ci_meter_refine": "Mit KI verfeinern",
+  "ci_meter_badge_known": "{pct}% bekannt · {cefr}",
+  "ci_meter_verdict_ideal": "Tolle i+1-Inhalte für dich — größtenteils vertraut, mit einem guten Anteil neuer Wörter.",
+  "ci_meter_verdict_too_easy": "Das kennst du schon gut — gut fürs Training der Flüssigkeit, aber mit wenig neuem Wortschatz.",
+  "ci_meter_verdict_too_hard": "Das könnte im Moment zu schwierig sein — du wirst wahrscheinlich viele Wörter nachschlagen müssen.",
+  "ci_meter_verdict_close": "Nahe an deinem Niveau.",
+  "my_words_title": "Meine Wörter",
+  "my_words_intro": "Eine persönliche Häufigkeitsliste, erstellt aus den Wörtern, auf die du beim Surfen wirklich stößt, nach Website getaggt — keine generische Top-1000-Liste.",
+  "my_words_on": "Tracking an",
+  "my_words_off": "Mein Surfen tracken",
+  "my_words_empty": "Noch keine Wörter erfasst. Schalte das Tracking ein und besuche ein paar Seiten in deiner Zielsprache.",
+  "my_words_known": "Bekannt",
+  "my_words_unknown": "Noch nicht bekannt",
+  "my_words_seen_on": "{n}× · meist auf {domain}"
 }
