@@ -71,8 +71,6 @@ UI_STRINGS: dict[str, str] = {
     "settings_display_name": "Your name",
     "settings_native_lang": "Your language",
     "settings_target_lang": "Active learning language",
-    "settings_voice_input": "Voice input",
-    "settings_voice_input_desc": "Enable microphone features for this account.",
     "settings_dual_subtitles": "Dual subtitles",
     "settings_dual_subtitles_desc": "Enable translated subtitles and their playback control on YouTube.",
     "settings_level": "My level",
@@ -158,14 +156,6 @@ UI_STRINGS: dict[str, str] = {
     "training_err_connect": "Could not connect to server.",
     "training_err_lost": "Connection lost.",
     "training_err_server": "Server error",
-    # Mic button
-    "mic_stop": "Stop recording",
-    "mic_recognizing": "Recognizing...",
-    "mic_voice_input": "Voice input",
-    "mic_err_none": "Nothing recognized — try again",
-    "mic_err_service": "STT service unavailable",
-    "mic_err_denied": "Microphone access denied",
-    "mic_err_generic": "Microphone error",
     # Lesson window
     "lesson_preparing": "Preparing material...",
     "lesson_loading_question": "Loading question...",

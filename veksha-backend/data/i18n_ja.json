@@ -101,13 +101,6 @@
   "training_err_connect": "サーバーに接続できませんでした。",
   "training_err_lost": "接続が切れました。",
   "training_err_server": "サーバーエラー",
-  "mic_stop": "録音を停止",
-  "mic_recognizing": "認識中...",
-  "mic_voice_input": "音声入力",
-  "mic_err_none": "認識できませんでした — もう一度お試しください",
-  "mic_err_service": "STTサービスを利用できません",
-  "mic_err_denied": "マイクへのアクセスが拒否されました",
-  "mic_err_generic": "マイクエラー",
   "lesson_preparing": "教材を準備中...",
   "lesson_loading_question": "問題を読み込み中...",
   "lesson_done": "セッション完了 — {n}問完了！",
@@ -302,8 +295,6 @@
   "dictionary_good": "よくできました",
   "stats_anki_reviews": "カードレビュー",
   "stats_training_reviews": "トレーニング回答",
-  "settings_voice_input": "音声入力",
-  "settings_voice_input_desc": "このアカウントでマイク機能を有効にします。",
   "settings_dual_subtitles": "二重字幕",
   "settings_dual_subtitles_desc": "YouTubeの元の字幕の上に翻訳字幕を表示します。"
 }

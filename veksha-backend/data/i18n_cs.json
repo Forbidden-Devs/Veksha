@@ -101,13 +101,6 @@
   "training_err_connect": "Nepodařilo se připojit k serveru.",
   "training_err_lost": "Spojení bylo ztraceno.",
   "training_err_server": "Chyba serveru",
-  "mic_stop": "Zastavit nahrávání",
-  "mic_recognizing": "Rozpoznávání...",
-  "mic_voice_input": "Hlasový vstup",
-  "mic_err_none": "Nic nebylo rozpoznáno — zkuste to znovu",
-  "mic_err_service": "Služba STT není dostupná",
-  "mic_err_denied": "Přístup k mikrofonu byl odepřen",
-  "mic_err_generic": "Chyba mikrofonu",
   "lesson_preparing": "Příprava materiálu...",
   "lesson_loading_question": "Načítání otázky...",
   "lesson_done": "Relace dokončena — {n} otázka(y) hotové!",
@@ -180,8 +173,6 @@
   "dictionary_good": "Dobře",
   "stats_anki_reviews": "Kontroly karet",
   "stats_training_reviews": "Odpovědi v tréninku",
-  "settings_voice_input": "Hlasové zadávání",
-  "settings_voice_input_desc": "Povolte funkce mikrofonu pro tento účet.",
   "settings_dual_subtitles": "Dvojité titulky",
   "settings_dual_subtitles_desc": "Zobrazit přeložené titulky nad původními titulky YouTube."
 }

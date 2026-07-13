@@ -22,7 +22,7 @@ from fastapi.responses import JSONResponse
 
 import i18n
 from api import auth as api_auth
-from api import debug, lesson, message, settings, stt, training
+from api import debug, lesson, message, settings, training
 from api import i18n as api_i18n
 from api import immersion
 from api import subtitles as api_subtitles
@@ -70,7 +70,6 @@ app.include_router(message.router)
 app.include_router(translate.router)
 app.include_router(settings.router)
 app.include_router(training.router)
-app.include_router(stt.router)
 app.include_router(lesson.router)
 app.include_router(api_i18n.router)
 app.include_router(immersion.router)

@@ -38,18 +38,14 @@ before the build (`npm run sync-assets`).
 
 ## Browser differences
 
-- Chrome's MV3 background is a service worker with no DOM, so mic capture and
-  OCR run in an offscreen document (`src/offscreen/`). Firefox has no
-  `offscreen` API, but its background is an event page with DOM access — it
-  runs the same capture controller (`src/shared/capture.ts`) directly. The
-  split is decided at build time via the `__BROWSER__` constant.
-- Firefox may not record `audio/webm`; `src/shared/audio.ts` negotiates the
-  container (webm/ogg) and the backend forwards whatever it gets to STT.
+- Chrome's MV3 background is a service worker with no DOM, so OCR runs in an
+  offscreen document (`src/offscreen/`). Firefox has no `offscreen` API, but
+  its background is an event page with DOM access — it runs the same capture
+  controller (`src/shared/capture.ts`) directly. The split is decided at
+  build time via the `__BROWSER__` constant.
 - Firefox MV3 treats `<all_urls>` host permission as opt-in: users must grant
   site access in the extension's Permissions settings (or per-site via the
   toolbar icon) before content scripts run everywhere.
-- Firefox may prompt for microphone permission on every use unless the user
-  ticks "Remember this decision" in the permission popup.
 - Local dev against a plain-HTTP backend: Firefox blocks `ws://` from
   extension pages as mixed content even for 127.0.0.1
   (NS_ERROR_CONTENT_BLOCKED in the training/lesson windows). `npm run
@@ -62,8 +58,8 @@ before the build (`npm run sync-assets`).
 
 ```
 src/background/    background (Chrome: service worker, Firefox: event page):
-                   reminder alarms, context menu, OCR and voice-capture
-                   routing, first-review nudge
+                   reminder alarms, context menu, OCR routing,
+                   first-review nudge
 src/content/       selection translate popup, immersion mode, YouTube
                    subtitles integration, in-page reminder overlay
 src/popup/         popup app: chat (assistant/translator), topics, training
@@ -71,9 +67,8 @@ src/popup/         popup app: chat (assistant/translator), topics, training
 src/training/      standalone training page (full tab)
 src/lesson/        standalone lesson page (full tab)
 src/offscreen/     offscreen document (Chrome only): hosts shared/capture
-src/permission/    microphone-permission helper window
 src/shared/        api client, config, types, i18n, speech helpers,
-                   capture controller (OCR via tesseract.js, mic recording)
+                   capture controller (OCR via tesseract.js)
 design/            brand-art generator (render.mjs): squirrel logo/icons,
                    mascot GIF frames, popup background pattern
 ```

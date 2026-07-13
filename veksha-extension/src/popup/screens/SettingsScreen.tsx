@@ -40,8 +40,6 @@ export function SettingsScreen() {
   const [languageSettings, setLanguageSettings] = useState<Record<string, { level: string; goals: string; prompt: string }>>({});
   const [reminderLevel, setReminderLevel] = useState(2);
   const [overseer, setOverseer] = useState(false);
-  const [voiceEnabled, setVoiceEnabled] = useState(true);
-  const [savedVoiceEnabled, setSavedVoiceEnabled] = useState(true);
   const [dualSubsEnabled, setDualSubsEnabled] = useState(false);
   const [savedDualSubsEnabled, setSavedDualSubsEnabled] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -152,8 +150,6 @@ export function SettingsScreen() {
       setLanguageSettings(s.language_settings ?? {});
       setReminderLevel(s.reminder_level ?? 2);
       setOverseer(s.overseer ?? false);
-      setVoiceEnabled(s.voice_enabled ?? true);
-      setSavedVoiceEnabled(s.voice_enabled ?? true);
       setSettingsLoaded(true);
     }).catch((err) => {
       if (!alive) return;
@@ -188,12 +184,10 @@ export function SettingsScreen() {
         languageSettings: updatedLanguageSettings,
         reminderLevel,
         overseer,
-        voiceEnabled,
       });
 
       const localSettings: Record<string, unknown> = {
         [CONFIG.STORAGE_KEY_NATIVE_LANG]: nativeLang,
-        [`vk_voice_enabled_${username}`]: voiceEnabled,
       };
       if (isExtension && !isOnboarding) {
         localSettings[CONFIG.STORAGE_KEY_DUAL_SUBS_FEATURE] = dualSubsEnabled;
@@ -203,11 +197,7 @@ export function SettingsScreen() {
       }
       await storageSet(localSettings);
       await setTheme(theme);
-      if (isExtension && voiceEnabled && !savedVoiceEnabled) {
-        await chrome.storage.local.set({ vk_voice_permission_state: "unknown" });
-      }
 
-      setSavedVoiceEnabled(voiceEnabled);
       setSavedDualSubsEnabled(dualSubsEnabled);
       setLangPair(targetLang, nativeLang);
       await switchLanguage(nativeLang);
@@ -230,10 +220,6 @@ export function SettingsScreen() {
     setLevel(next.level);
     setGoals(next.goals);
     setPrompt(next.prompt);
-  }
-
-  function handleVoiceEnabled(enabled: boolean) {
-    setVoiceEnabled(enabled);
   }
 
   function handleDualSubsEnabled(enabled: boolean) {
@@ -402,15 +388,6 @@ export function SettingsScreen() {
             disabled={reminderLevel < 2}
             onChange={(e) => setOverseer(e.target.checked)}
           />
-          <span className="settings-toggle-slider" aria-hidden="true" />
-        </label>
-
-        <label className="settings-toggle">
-          <span className="settings-toggle-copy">
-            <span className="settings-toggle-title">{t.settings_voice_input}</span>
-            <span className="settings-toggle-desc">{t.settings_voice_input_desc}</span>
-          </span>
-          <input type="checkbox" checked={voiceEnabled} onChange={(e) => handleVoiceEnabled(e.target.checked)} />
           <span className="settings-toggle-slider" aria-hidden="true" />
         </label>
 

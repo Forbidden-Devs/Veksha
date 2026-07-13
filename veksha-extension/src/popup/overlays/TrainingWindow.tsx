@@ -3,8 +3,6 @@ import * as api from "../../shared/api";
 import { CONFIG } from "../../shared/config";
 import { useT } from "../../shared/i18n";
 import { createSessionSocket, type SessionSocket } from "../../shared/wsProxy";
-import { MicButton } from "../../shared/MicButton";
-import { useMicRecorder } from "../../shared/useMicRecorder";
 import type { TrainingOutcome, TrainingTask } from "../../shared/types";
 
 type Phase = "loading" | "asking" | "checking" | "feedback" | "done" | "empty" | "error";
@@ -46,26 +44,8 @@ export function TrainingWindow({ username, onClose }: { username: string; onClos
   const doneRef = useRef(0);
   const answerRef = useRef<HTMLTextAreaElement>(null);
 
-  const [langs, setLangs] = useState<{ native: string; target: string }>({ native: "en", target: "en" });
-
-  // The expected answer language depends on the task type, so we hint the STT
-  // accordingly (Whisper mis-detects short, single-word answers otherwise):
-  //   translation         → answer in the user's native language
-  //   reverse_translation → answer in the target language (the word itself)
-  //   synonym / example   → answer in the target language
-  const recLang = !currentTask
-    ? langs.target
-    : currentTask.task_type === "translation"
-    ? langs.native
-    : langs.target;
-
-  const mic = useMicRecorder((text) => { if (text) setAnswer(prev => (prev ? prev + " " : "") + text); }, recLang);
-
   useEffect(() => {
     init();
-    api.getSettings(username)
-      .then(s => setLangs({ native: s.native_lang || "en", target: s.target_lang || "en" }))
-      .catch(() => {});
     return () => { wsRef.current?.close(); };
   }, []);
 
@@ -291,21 +271,9 @@ export function TrainingWindow({ username, onClose }: { username: string; onClos
                     isFeedback ? handleNext() : submitAnswer();
                   }
                 }}
-                disabled={!isAsking || mic.state === "transcribing"}
+                disabled={!isAsking}
               />
-              <MicButton
-                state={mic.state}
-                volume={mic.volume}
-                onClick={mic.toggle}
-                disabled={!isAsking || mic.disabled}
-              />
-              {mic.state === "transcribing" && (
-                <div className="stt-overlay"><span className="stt-overlay-dot" /></div>
-              )}
             </div>
-            {mic.errorMsg && (
-              <div className="stt-error-tip">{mic.errorMsg}</div>
-            )}
 
             <button
               className="btn btn-gradient btn-block"

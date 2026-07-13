@@ -71,13 +71,6 @@
   "training_err_connect": "Не вдалося підключитися до сервера.",
   "training_err_lost": "З’єднання втрачено.",
   "training_err_server": "Помилка сервера",
-  "mic_stop": "Зупинити запис",
-  "mic_recognizing": "Розпізнавання...",
-  "mic_voice_input": "Голосове введення",
-  "mic_err_none": "Нічого не розпізнано — спробуйте ще раз",
-  "mic_err_service": "Сервіс STT недоступний",
-  "mic_err_denied": "Доступ до мікрофона заборонено",
-  "mic_err_generic": "Помилка мікрофона",
   "lesson_preparing": "Підготовка матеріалу...",
   "lesson_loading_question": "Завантаження запитання...",
   "lesson_done": "Сеанс завершено — виконано {n} запитання(ь)!",
@@ -183,8 +176,6 @@
   "dictionary_good": "Добре",
   "stats_anki_reviews": "Перегляди карток",
   "stats_training_reviews": "Відповіді під час тренування",
-  "settings_voice_input": "Голосове введення",
-  "settings_voice_input_desc": "Увімкніть функції мікрофона для цього облікового запису.",
   "settings_dual_subtitles": "Подвійні субтитри",
   "settings_dual_subtitles_desc": "Увімкнути переклад субтитрів і кнопку керування ним на YouTube."
 }

@@ -101,13 +101,6 @@
   "training_err_connect": "Yhteys palvelimeen epäonnistui.",
   "training_err_lost": "Yhteys katosi.",
   "training_err_server": "Palvelinvirhe",
-  "mic_stop": "Lopeta tallennus",
-  "mic_recognizing": "Tunnistetaan...",
-  "mic_voice_input": "Puheentulo",
-  "mic_err_none": "Mitään ei tunnistettu — yritä uudelleen",
-  "mic_err_service": "STT-palvelu ei ole käytettävissä",
-  "mic_err_denied": "Mikrofonin käyttö estetty",
-  "mic_err_generic": "Mikrofonivirhe",
   "lesson_preparing": "Valmistellaan materiaalia...",
   "lesson_loading_question": "Ladataan kysymystä...",
   "lesson_done": "Istunto valmis — {n} kysymystä tehty!",
@@ -179,8 +172,6 @@
   "dictionary_good": "Hyvä",
   "stats_anki_reviews": "Korttitarkistukset",
   "stats_training_reviews": "Harjoitusvastaukset",
-  "settings_voice_input": "Puheentulo",
-  "settings_voice_input_desc": "Ota mikrofonitoiminnot käyttöön tälle tilille.",
   "settings_dual_subtitles": "Kaksinkertaiset tekstitykset",
   "settings_dual_subtitles_desc": "Näytä käännetyt tekstitykset alkuperäisten YouTube-tekstitysten yläpuolella."
 }

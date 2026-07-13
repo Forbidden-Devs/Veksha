@@ -308,7 +308,6 @@ export function saveSettings(
     languageSettings?: Record<string, { level: string; goals: string; prompt: string }>;
     reminderLevel?: number;
     overseer?: boolean;
-    voiceEnabled?: boolean;
   }
 ): Promise<SettingsData> {
   const body: Record<string, unknown> = {
@@ -323,7 +322,6 @@ export function saveSettings(
   };
   if (opts.englishLevel) body.english_level = opts.englishLevel;
   if (opts.displayName?.trim()) body.display_name = opts.displayName.trim();
-  if (opts.voiceEnabled !== undefined) body.voice_enabled = opts.voiceEnabled;
   return _post("/api/settings", body);
 }
 

@@ -101,13 +101,6 @@
   "training_err_connect": "सर्वर से कनेक्ट नहीं हो सका।",
   "training_err_lost": "कनेक्शन टूट गया।",
   "training_err_server": "सर्वर त्रुटि",
-  "mic_stop": "रिकॉर्डिंग रोकें",
-  "mic_recognizing": "पहचाना जा रहा है...",
-  "mic_voice_input": "आवाज़ इनपुट",
-  "mic_err_none": "कुछ भी नहीं पहचाना गया — फिर से कोशिश करें",
-  "mic_err_service": "STT सेवा उपलब्ध नहीं है",
-  "mic_err_denied": "माइक्रोफ़ोन की पहुँच अस्वीकृत",
-  "mic_err_generic": "माइक्रोफ़ोन त्रुटि",
   "lesson_preparing": "सामग्री तैयार की जा रही है...",
   "lesson_loading_question": "प्रश्न लोड हो रहा है...",
   "lesson_done": "सत्र पूरा — {n} प्रश्न पूरे हुए!",
@@ -178,8 +171,6 @@
   "dictionary_good": "अच्छा",
   "stats_anki_reviews": "कार्ड समीक्षा",
   "stats_training_reviews": "प्रशिक्षण उत्तर",
-  "settings_voice_input": "वॉइस इनपुट",
-  "settings_voice_input_desc": "इस खाते के लिए माइक्रोफ़ोन सुविधाएँ सक्षम करें.",
   "settings_dual_subtitles": "दोहरी उपशीर्षक",
   "settings_dual_subtitles_desc": "मूल YouTube कैप्शन के ऊपर अनुवादित उपशीर्षक दिखाएँ।"
 }

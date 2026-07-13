@@ -7,22 +7,14 @@ import { useApp } from "../App";
 import { AnkiCards } from "./AnkiCards";
 
 export function DictionaryScreen() {
-  const { username, targetLang, nativeLang, takeVoiceResume } = useApp();
+  const { username, targetLang } = useApp();
   const t = useT();
   const [words, setWords] = useState<WordEntry[] | null>(null);
   const [cardsOpen, setCardsOpen] = useState(false);
-  const [resumeVoice, setResumeVoice] = useState(false);
 
   useEffect(() => {
     api.getKbWords(username).then((result) => setWords(result.words)).catch(() => setWords([]));
   }, [username, targetLang]);
-
-  useEffect(() => {
-    if (takeVoiceResume() === "dictionary_cards") {
-      setCardsOpen(true);
-      setResumeVoice(true);
-    }
-  }, []);
 
   function remove(word: string) {
     setWords((current) => current?.filter((entry) => entry.name !== word) ?? current);
@@ -48,7 +40,7 @@ export function DictionaryScreen() {
   }
 
   if (cardsOpen && words) {
-    return <section className="screen screen-statistics dictionary-screen"><AnkiCards username={username} words={words} nativeLang={nativeLang} targetLang={targetLang} autoStartVoice={resumeVoice} onClose={() => setCardsOpen(false)} /></section>;
+    return <section className="screen screen-statistics dictionary-screen"><AnkiCards username={username} words={words} onClose={() => setCardsOpen(false)} /></section>;
   }
 
   return (

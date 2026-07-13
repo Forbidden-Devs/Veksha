@@ -81,7 +81,6 @@ interface AppCtx {
   sendToChat: (text: string) => void;
   /** ChatScreen picks up a pending home-screen message (once). */
   takePendingChat: () => string | null;
-  takeVoiceResume: () => string | null;
 }
 
 const AppContext = createContext<AppCtx | null>(null);
@@ -131,7 +130,6 @@ export default function App() {
   const [showTour, setShowTour] = useState(false);
   // Message typed on the home screen, delivered to ChatScreen on mount.
   const pendingChatRef = useRef<string | null>(null);
-  const voiceResumeRef = useRef<string | null>(null);
   const [pendingNativeLang, setPendingNativeLang] = useState(detected);
   const [pendingUsername, setPendingUsername] = useState("");
   const [pendingDisplayName, setPendingDisplayName] = useState("");
@@ -145,7 +143,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    storageGet([CONFIG.STORAGE_KEY_USERNAME, CONFIG.STORAGE_KEY_TOKEN, "vk_voice_resume"]).then(
+    storageGet([CONFIG.STORAGE_KEY_USERNAME, CONFIG.STORAGE_KEY_TOKEN]).then(
       async (result: Record<string, unknown>) => {
         const stored = result[CONFIG.STORAGE_KEY_USERNAME] as string | undefined;
         const token = result[CONFIG.STORAGE_KEY_TOKEN] as string | undefined;
@@ -153,14 +151,6 @@ export default function App() {
           api.setAuthToken(token);
           setUsername(stored);
           await routeAfterUsername(stored);
-          const resumeTarget = result.vk_voice_resume as string | undefined;
-          if (resumeTarget) {
-            voiceResumeRef.current = resumeTarget;
-            await storageRemove(["vk_voice_resume"]);
-            if (resumeTarget === "dictionary_cards") setScreen("dictionary");
-            else if (resumeTarget === "chat") setScreen("chat");
-            else setScreen("home");
-          }
         } else {
           setUsername(null); // show onboarding flow (also covers pre-auth installs)
         }
@@ -171,7 +161,6 @@ export default function App() {
   async function routeAfterUsername(name: string) {
     try {
       const settings = await api.getSettings(name);
-      storageSet({ [`vk_voice_enabled_${name}`]: settings.voice_enabled ?? true });
       if (settings.native_lang) {
         setNativeLang(settings.native_lang);
         switchLanguage(settings.native_lang).catch(() => {});
@@ -406,11 +395,6 @@ export default function App() {
       const text = pendingChatRef.current;
       pendingChatRef.current = null;
       return text;
-    },
-    takeVoiceResume: () => {
-      const target = voiceResumeRef.current;
-      voiceResumeRef.current = null;
-      return target;
     },
   };
 

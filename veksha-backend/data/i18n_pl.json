@@ -101,13 +101,6 @@
   "training_err_connect": "Nie udało się połączyć z serwerem.",
   "training_err_lost": "Połączenie zostało utracone.",
   "training_err_server": "Błąd serwera",
-  "mic_stop": "Zatrzymaj nagrywanie",
-  "mic_recognizing": "Rozpoznawanie...",
-  "mic_voice_input": "Wprowadzanie głosowe",
-  "mic_err_none": "Nic nie rozpoznano — spróbuj ponownie",
-  "mic_err_service": "Usługa STT jest niedostępna",
-  "mic_err_denied": "Dostęp do mikrofonu został odmówiony",
-  "mic_err_generic": "Błąd mikrofonu",
   "lesson_preparing": "Przygotowywanie materiału...",
   "lesson_loading_question": "Ładowanie pytania...",
   "lesson_done": "Sesja zakończona — ukończono {n} pytanie(a)!",
@@ -305,8 +298,6 @@
   "dictionary_good": "Dobrze",
   "stats_anki_reviews": "Powtórki kart",
   "stats_training_reviews": "Odpowiedzi z treningu",
-  "settings_voice_input": "Wprowadzanie głosowe",
-  "settings_voice_input_desc": "Włącz funkcje mikrofonu dla tego konta.",
   "settings_dual_subtitles": "Podwójne napisy",
   "settings_dual_subtitles_desc": "Wyświetlaj przetłumaczone napisy nad oryginalnymi napisami YouTube."
 }

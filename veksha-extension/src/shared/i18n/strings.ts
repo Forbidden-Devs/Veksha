@@ -67,8 +67,6 @@ export interface Strings {
   settings_reminder_level_3: string;
   settings_persistent: string;
   settings_persistent_desc: string;
-  settings_voice_input: string;
-  settings_voice_input_desc: string;
   settings_dual_subtitles: string;
   settings_dual_subtitles_desc: string;
   settings_account: string;
@@ -134,14 +132,6 @@ export interface Strings {
   training_err_connect: string;
   training_err_lost: string;
   training_err_server: string;
-  // Mic button
-  mic_stop: string;
-  mic_recognizing: string;
-  mic_voice_input: string;
-  mic_err_none: string;
-  mic_err_service: string;
-  mic_err_denied: string;
-  mic_err_generic: string;
   // Lesson window
   lesson_preparing: string;
   lesson_loading_question: string;
@@ -365,8 +355,6 @@ export const EN: Strings = {
   settings_reminder_level_3: "Blur + frequent",
   settings_persistent: "Persistent reminders",
   settings_persistent_desc: "Hard-to-dismiss reminders: the close button runs away — finish a quick training or catch it to clear them.",
-  settings_voice_input: "Voice input",
-  settings_voice_input_desc: "Enable microphone features for this account.",
   settings_dual_subtitles: "Dual subtitles",
   settings_dual_subtitles_desc: "Enable translated subtitles and their playback control on YouTube.",
   settings_account: "Account",
@@ -429,13 +417,6 @@ export const EN: Strings = {
   training_err_connect: "Could not connect to server.",
   training_err_lost: "Connection lost.",
   training_err_server: "Server error",
-  mic_stop: "Stop recording",
-  mic_recognizing: "Recognizing...",
-  mic_voice_input: "Voice input",
-  mic_err_none: "Nothing recognized — try again",
-  mic_err_service: "STT service unavailable",
-  mic_err_denied: "Microphone access denied",
-  mic_err_generic: "Microphone error",
   lesson_preparing: "Preparing material...",
   lesson_loading_question: "Loading question...",
   lesson_done: "Session complete — {n} question(s) done!",

@@ -2,8 +2,6 @@ import { useEffect, useState } from "react";
 import * as api from "../../shared/api";
 import { useT } from "../../shared/i18n";
 import { LANGUAGES } from "../../shared/languages";
-import { MicButton } from "../../shared/MicButton";
-import { useMicRecorder } from "../../shared/useMicRecorder";
 import { isExtension } from "../../shared/platform";
 import type { SettingsData } from "../../shared/types";
 import { useApp } from "../App";
@@ -14,7 +12,7 @@ import { useApp } from "../App";
  * Layout (mirrors the paper sketch):
  *   [assistant] [topics] [training] [immersion]
  *   [   words collected (wide, live)  ] [stats] [settings]
- *   [ ask-or-type input                       ] [mic|send]
+ *   [ ask-or-type input                       ] [send]
  */
 
 const Icons = {
@@ -34,23 +32,11 @@ const Icons = {
 };
 
 export function HomeScreen() {
-  const { username, navigateTo, openTraining, targetLang, nativeLang, setLangPair, sendToChat, takeVoiceResume } = useApp();
+  const { username, navigateTo, openTraining, targetLang, nativeLang, setLangPair, sendToChat } = useApp();
   const t = useT();
   const [counts, setCounts] = useState<{ words: number; due: number } | null>(null);
   const [ask, setAsk] = useState("");
   const [settings, setSettings] = useState<SettingsData | null>(null);
-
-  const mic = useMicRecorder((text) => {
-    if (text) setAsk((prev) => (prev ? prev + " " : "") + text);
-  }, targetLang, "home");
-
-  useEffect(() => {
-    if (takeVoiceResume() !== "home") return;
-    const timer = window.setTimeout(() => mic.toggle(), 500);
-    return () => window.clearTimeout(timer);
-    // Resume is a one-shot value captured when the popup is recreated.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   useEffect(() => {
     Promise.all([api.getKbSummary(username), api.getReminders(username)])
@@ -137,12 +123,10 @@ export function HomeScreen() {
           onChange={(e) => setAsk(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && submitAsk()}
         />
-        <MicButton state={mic.state} volume={mic.volume} onClick={mic.toggle} disabled={mic.disabled} />
         <button className="m-ask-send" onClick={submitAsk} aria-label={t.chat_placeholder}>
           {Icons.send}
         </button>
       </div>
-      {mic.errorMsg && <div className="chat-stt-error">{mic.errorMsg}</div>}
     </section>
   );
 }

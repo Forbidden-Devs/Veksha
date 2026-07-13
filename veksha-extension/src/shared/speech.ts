@@ -6,13 +6,6 @@ const LANGUAGE_LOCALES: Record<string, string> = {
   el: "el-GR", ka: "ka-GE", vi: "vi-VN", th: "th-TH", id: "id-ID",
 };
 
-// Map a short language code (or pass-through BCP-47) to a locale for the
-// browser's built-in SpeechRecognition. Falls back to the browser UI language.
-export function getRecognitionLocale(languageCode?: string): string {
-  if (languageCode) return LANGUAGE_LOCALES[languageCode] ?? languageCode;
-  return (typeof navigator !== "undefined" && navigator.language) || "en-US";
-}
-
 export function canSpeak(): boolean {
   return typeof window !== "undefined"
     && "speechSynthesis" in window

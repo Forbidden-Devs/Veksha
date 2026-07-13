@@ -101,13 +101,6 @@
   "training_err_connect": "Không thể kết nối đến máy chủ.",
   "training_err_lost": "Mất kết nối.",
   "training_err_server": "Lỗi máy chủ",
-  "mic_stop": "Dừng ghi âm",
-  "mic_recognizing": "Đang nhận diện...",
-  "mic_voice_input": "Nhập giọng nói",
-  "mic_err_none": "Không nhận diện được gì — thử lại",
-  "mic_err_service": "Dịch vụ STT không khả dụng",
-  "mic_err_denied": "Đã từ chối quyền truy cập micro",
-  "mic_err_generic": "Lỗi micro",
   "lesson_preparing": "Đang chuẩn bị tài liệu...",
   "lesson_loading_question": "Đang tải câu hỏi...",
   "lesson_done": "Hoàn tất phiên — đã xong {n} câu hỏi!",
@@ -178,8 +171,6 @@
   "dictionary_good": "Tốt",
   "stats_anki_reviews": "Ôn thẻ",
   "stats_training_reviews": "Câu trả lời luyện tập",
-  "settings_voice_input": "Nhập giọng nói",
-  "settings_voice_input_desc": "Bật tính năng microphone cho tài khoản này.",
   "settings_dual_subtitles": "Phụ đề kép",
   "settings_dual_subtitles_desc": "Hiển thị phụ đề đã dịch phía trên phụ đề gốc của YouTube."
 }

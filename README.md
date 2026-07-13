@@ -10,7 +10,7 @@ usage patterns, and interview-style topics.
 ```
 veksha-backend/    FastAPI backend: SQLite storage (users, KB), token auth,
                     spaced repetition, LLM calls (OpenAI), training/lesson
-                    WebSocket sessions, translation, immersion, STT proxy.
+                    WebSocket sessions, translation, immersion.
 veksha-extension/  Chrome + Firefox extension (MV3, React + TypeScript,
                     Vite) — the capture surface: selection-translate popup,
                     immersion mode, YouTube subtitles, OCR capture,
@@ -18,7 +18,6 @@ veksha-extension/  Chrome + Firefox extension (MV3, React + TypeScript,
 veksha-web/        The same study app (chat / training / lessons / stats)
                     as a standalone PWA-installable web page; reuses the
                     extension popup source via shared/platform.ts.
-stt_service.py      Optional local Whisper STT service (dev only).
 ```
 
 ## Quick start

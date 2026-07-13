@@ -279,7 +279,6 @@ body,
 .m-ask-input:focus { border-color: var(--m-accent); background: var(--m-surface-2); }
 .m-ask-input::placeholder { color: var(--m-dim); text-transform: lowercase; }
 
-.m-ask .mic-btn,
 .m-ask-send {
   width: 44px;
   flex: none;
@@ -294,7 +293,7 @@ body,
 }
 
 .m-ask-send svg { width: 18px; height: 18px; }
-.m-ask-send:hover, .m-ask .mic-btn:hover { border-color: var(--m-accent); }
+.m-ask-send:hover { border-color: var(--m-accent); }
 
 /* ---------------------------------------------------------------------------
    Re-skin of existing components (surfaces, buttons, inputs, chat)
@@ -479,13 +478,6 @@ body,
 .app ::-webkit-scrollbar-track { background: transparent; }
 
 /* --- fixes after the first visual pass ------------------------------------ */
-
-/* MicButton is absolutely positioned for the chat textarea corner; in the
-   home ask-bar it is a regular flex cell. */
-.m-ask .mic-btn {
-  position: static !important;
-  height: auto !important;
-}
 
 /* Headings drawn with gradient text-fill in the pastel theme become plain
    white — the gradient is invisible on the dark canvas. */
@@ -808,7 +800,7 @@ body,
 }
 .m-ask-input { padding: 9px 10px; border: 0; background: transparent; }
 .m-ask-input:focus { background: transparent; }
-.m-ask .mic-btn, .m-ask-send {
+.m-ask-send {
   width: 42px;
   min-height: 42px;
   border: 0;

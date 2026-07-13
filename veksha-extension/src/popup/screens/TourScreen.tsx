@@ -367,7 +367,6 @@ function TrainScene({ t }: { t: Strings }) {
           <div className="tour-qctx">{t.tour_q_ctx}</div>
           <div className="tour-qir">
             <div className="tour-qi"><span>{typed}</span><span className="tour-qcur" /></div>
-            <div className="tour-qmic">🎤</div>
           </div>
           <div className={`tour-qfb${fb ? " show" : ""}`}>{t.tour_q_fb}</div>
         </div>

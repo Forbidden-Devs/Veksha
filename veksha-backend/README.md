@@ -2,7 +2,7 @@
 
 HTTP + WebSocket API for the Veksha extension: vocabulary knowledge base
 with spaced repetition, LLM-backed translation/explanation, word-training and
-topic-lesson sessions, page immersion, and speech-to-text proxying.
+topic-lesson sessions, and page immersion.
 
 ## Running
 
@@ -83,7 +83,6 @@ api/                  routers (one file per domain)
 | `GET/POST /api/lesson-topics`, `WS /api/lesson/ws` | topic lessons |
 | `POST /api/immersion/analyze` | comprehensible-input page immersion |
 | `POST /api/subtitles/translate` | dual-subtitle line translation with word alignment |
-| `POST /api/stt` | microphone speech-to-text (OpenAI proxy) |
 | `GET /api/i18n/{lang}`, `POST /api/i18n/translate` | UI string catalogues |
 | `POST /api/debug/*` | development helpers (reset, simulate, advance-day) |
 

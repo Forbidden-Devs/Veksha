@@ -39,7 +39,6 @@ class SettingsRequest(BaseModel):
     language_settings: dict[str, dict[str, str]] | None = None
     reminder_level: int = Field(2, ge=1, le=3)
     overseer: bool = False
-    voice_enabled: bool | None = None
 
 
 class SettingsResponse(BaseModel):
@@ -53,7 +52,6 @@ class SettingsResponse(BaseModel):
     language_settings: dict[str, dict[str, str]] = Field(default_factory=dict)
     reminder_level: int = 2
     overseer: bool = False
-    voice_enabled: bool = True
     is_onboarded: bool = False
 
 
@@ -137,7 +135,6 @@ def _settings_response(storage: UserStorage) -> SettingsResponse:
         language_settings=language_settings,
         reminder_level=s.reminder_level,
         overseer=s.overseer,
-        voice_enabled=s.voice_enabled,
         is_onboarded=s.is_onboarded(),
     )
 
@@ -192,7 +189,6 @@ async def api_post_settings(req: SettingsRequest, username: CurrentUser) -> Sett
         language_settings=language_settings,
         reminder_level=req.reminder_level,
         overseer=req.overseer,
-        voice_enabled=req.voice_enabled if req.voice_enabled is not None else storage.settings.voice_enabled,
     )
     storage.save()
     log.info(

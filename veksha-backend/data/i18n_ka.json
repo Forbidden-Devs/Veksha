@@ -101,13 +101,6 @@
   "training_err_connect": "სერვერთან დაკავშირება ვერ მოხერხდა.",
   "training_err_lost": "კავშირი დაიკარგა.",
   "training_err_server": "სერვერის შეცდომა",
-  "mic_stop": "ჩაწერის შეჩერება",
-  "mic_recognizing": "ამოცნობა...",
-  "mic_voice_input": "ხმოვანი შეყვანა",
-  "mic_err_none": "ვერაფერი ამოიცნო — სცადეთ თავიდან",
-  "mic_err_service": "STT სერვისი მიუწვდომელია",
-  "mic_err_denied": "მიკროფონზე წვდომა უარყოფილია",
-  "mic_err_generic": "მიკროფონის შეცდომა",
   "lesson_preparing": "მასალის მომზადება...",
   "lesson_loading_question": "კითხვის ჩატვირთვა...",
   "lesson_done": "სესია დასრულდა — დასრულდა {n} კითხვა!",
@@ -188,8 +181,6 @@
   "dictionary_good": "კარგი",
   "stats_anki_reviews": "ბარათების მიმოხილვები",
   "stats_training_reviews": "ვარჯიშის პასუხები",
-  "settings_voice_input": "ხმის შეყვანა",
-  "settings_voice_input_desc": "ამ ანგარიშისთვის მიკროფონის ფუნქციების ჩართვა.",
   "settings_dual_subtitles": "ორმაგი სუბტიტრები",
   "settings_dual_subtitles_desc": "აჩვენე თარგმნილი სუბტიტრები ორიგინალი YouTube წარწერების ზემოთ."
 }

@@ -17,8 +17,6 @@ DATA_DIR: str = os.getenv(
 # OpenAI models
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.4-mini")          # fast model for classification / short replies
 OPENAI_SMART_MODEL = os.getenv("OPENAI_SMART_MODEL", "gpt-4.1")   # smarter model for content generation
-OPENAI_STT_MODEL = os.getenv("OPENAI_STT_MODEL", "gpt-4o-mini-transcribe")  # low-cost speech-to-text
-OPENAI_STT_FALLBACK_MODEL = os.getenv("OPENAI_STT_FALLBACK_MODEL", "whisper-1")
 
 # Google OAuth: the client ID whose ID tokens /api/auth/google accepts
 # (audience check). Empty = Google sign-in disabled (503 from the endpoint).

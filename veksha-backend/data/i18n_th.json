@@ -101,13 +101,6 @@
   "training_err_connect": "ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้",
   "training_err_lost": "การเชื่อมต่อขาดหาย",
   "training_err_server": "ข้อผิดพลาดของเซิร์ฟเวอร์",
-  "mic_stop": "หยุดบันทึกเสียง",
-  "mic_recognizing": "กำลังรู้จำ...",
-  "mic_voice_input": "ป้อนด้วยเสียง",
-  "mic_err_none": "ไม่พบสิ่งที่รู้จำ — ลองอีกครั้ง",
-  "mic_err_service": "บริการ STT ใช้งานไม่ได้",
-  "mic_err_denied": "ไม่ได้รับอนุญาตให้ใช้ไมโครโฟน",
-  "mic_err_generic": "ข้อผิดพลาดของไมโครโฟน",
   "lesson_preparing": "กำลังเตรียมเนื้อหา...",
   "lesson_loading_question": "กำลังโหลดคำถาม...",
   "lesson_done": "เซสชันเสร็จแล้ว — ทำ {n} ข้อแล้ว!",
@@ -178,8 +171,6 @@
   "dictionary_good": "ดี",
   "stats_anki_reviews": "การทบทวนการ์ด",
   "stats_training_reviews": "คำตอบการฝึก",
-  "settings_voice_input": "การป้อนเสียง",
-  "settings_voice_input_desc": "เปิดใช้งานฟีเจอร์ไมโครโฟนสำหรับบัญชีนี้",
   "settings_dual_subtitles": "คำบรรยายสองภาษา",
   "settings_dual_subtitles_desc": "แสดงคำบรรยายที่แปลแล้วเหนือคำบรรยาย YouTube ต้นฉบับ"
 }

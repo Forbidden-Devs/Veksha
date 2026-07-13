@@ -101,13 +101,6 @@
   "training_err_connect": "Kan geen verbinding maken met de server.",
   "training_err_lost": "Verbinding verbroken.",
   "training_err_server": "Serverfout",
-  "mic_stop": "Opname stoppen",
-  "mic_recognizing": "Herkennen...",
-  "mic_voice_input": "Spraakinput",
-  "mic_err_none": "Niets herkend — probeer opnieuw",
-  "mic_err_service": "STT-service niet beschikbaar",
-  "mic_err_denied": "Microfoontoegang geweigerd",
-  "mic_err_generic": "Microfoonfout",
   "lesson_preparing": "Materiaal voorbereiden...",
   "lesson_loading_question": "Vraag laden...",
   "lesson_done": "Sessie voltooid — {n} vraag/vragen gedaan!",
@@ -310,8 +303,6 @@
   "dictionary_good": "Goed",
   "stats_anki_reviews": "Kaartbeoordelingen",
   "stats_training_reviews": "Trainingsantwoorden",
-  "settings_voice_input": "Spraakinvoer",
-  "settings_voice_input_desc": "Schakel microfoonfuncties in voor dit account.",
   "settings_dual_subtitles": "Dubbele ondertiteling",
   "settings_dual_subtitles_desc": "Toon vertaalde ondertiteling boven de originele YouTube-ondertitels."
 }

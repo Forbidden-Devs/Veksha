@@ -32,8 +32,6 @@ The backend URL comes from `veksha-extension/src/shared/config.ts`
   caches, UI flags).
 - Trainings/lessons: the extension popup injects them into the active tab;
   on the web they render as in-app overlays (see `webOverlay` in `App.tsx`).
-- Microphone: the extension records via the offscreen document; the web
-  records locally with `MediaRecorder` and posts to `/api/stt`.
 - Immersion toggle is hidden on the web (it requires a content script).
 - Tutorial screenshots fall back to placeholders (images are not bundled).
 

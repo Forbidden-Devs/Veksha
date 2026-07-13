@@ -101,13 +101,6 @@
   "training_err_connect": "Sunucuya bağlanılamadı.",
   "training_err_lost": "Bağlantı kesildi.",
   "training_err_server": "Sunucu hatası",
-  "mic_stop": "Kaydı durdur",
-  "mic_recognizing": "Tanınıyor...",
-  "mic_voice_input": "Ses girişi",
-  "mic_err_none": "Hiçbir şey algılanmadı — tekrar deneyin",
-  "mic_err_service": "STT hizmeti kullanılamıyor",
-  "mic_err_denied": "Mikrofon erişimi reddedildi",
-  "mic_err_generic": "Mikrofon hatası",
   "lesson_preparing": "Materyal hazırlanıyor...",
   "lesson_loading_question": "Soru yükleniyor...",
   "lesson_done": "Oturum tamamlandı — {n} soru tamamlandı!",
@@ -177,8 +170,6 @@
   "dictionary_good": "İyi",
   "stats_anki_reviews": "Kart incelemeleri",
   "stats_training_reviews": "Eğitim yanıtları",
-  "settings_voice_input": "Ses girişi",
-  "settings_voice_input_desc": "Bu hesap için mikrofon özelliklerini etkinleştirin.",
   "settings_dual_subtitles": "Çift altyazı",
   "settings_dual_subtitles_desc": "Çevrilmiş altyazıları YouTube'un orijinal altyazılarının üstünde göster."
 }

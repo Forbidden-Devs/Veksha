@@ -139,7 +139,6 @@ class UserSettings:
     reminder_level: int = 2
     # Separate flag: the in-page close button runs away ("overseer" mode).
     overseer: bool = False
-    voice_enabled: bool = True
 
     @property
     def target_langs(self) -> list[str]:

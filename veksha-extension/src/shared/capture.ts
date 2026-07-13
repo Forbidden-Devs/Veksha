@@ -1,5 +1,5 @@
 /**
- * capture.ts — microphone recording + OCR, shared between browser targets.
+ * capture.ts — OCR, shared between browser targets.
  *
  * Chrome MV3 backgrounds are service workers with no DOM, so this runs inside
  * the offscreen document (src/offscreen) and talks to the background via
@@ -7,26 +7,14 @@
  * event page with full DOM access — there the background imports this module
  * and calls it directly. `emit` abstracts the reply channel for both cases.
  */
-import { CONFIG } from "./config";
-import { audioUploadMeta, pickAudioMime } from "./audio";
 import { createWorker, type Worker as TessWorker } from "tesseract.js";
-
-const FRAME_MS = 50;
 
 // OCR languages bundled under public/tesseract/lang (Latin + Cyrillic starter).
 const OCR_LANGS = "eng+rus+spa";
 
 export type CaptureEmit = (message: Record<string, unknown>) => void;
 
-export interface VoiceStartOptions {
-  requestId: string;
-  language?: string;
-  token?: string;
-}
-
 export interface CaptureController {
-  startVoice(opts: VoiceStartOptions): Promise<void>;
-  stopVoice(): Promise<void>;
   handleOcrRegion(msg: Record<string, unknown>): Promise<void>;
 }
 
@@ -56,10 +44,6 @@ function borderColor(ctx: CanvasRenderingContext2D, w: number, h: number): strin
 }
 
 interface OcrLine { text: string; bbox: { x: number; y: number; w: number; h: number }; }
-
-function isPermissionError(err: unknown): boolean {
-  return err instanceof DOMException && (err.name === "NotAllowedError" || err.name === "SecurityError");
-}
 
 export function createCaptureController(emit: CaptureEmit): CaptureController {
   let ocrWorker: TessWorker | null = null;
@@ -158,174 +142,5 @@ export function createCaptureController(emit: CaptureEmit): CaptureController {
     }
   }
 
-  let requestId: string | null = null;
-  let mediaRecorder: MediaRecorder | null = null;
-  let audioCtx: AudioContext | null = null;
-  let stream: MediaStream | null = null;
-  let frameTimer: ReturnType<typeof setInterval> | null = null;
-  let chunks: Blob[] = [];
-  let isRecording = false;
-  let currentLanguage = "";
-  let currentToken = "";
-  let voiceStartedAt = 0;
-  let speechDetected = false;
-  let lastSpeechAt = 0;
-  let voiceGeneration = 0;
-
-  async function startVoice(opts: VoiceStartOptions) {
-    if (isRecording) await stopVoice();
-    const generation = ++voiceGeneration;
-    requestId = opts.requestId;
-    currentLanguage = opts.language ?? "";
-    currentToken = opts.token ?? "";
-
-    try {
-      const acquiredStream = await navigator.mediaDevices.getUserMedia({
-        audio: { sampleRate: 16000, channelCount: 1, echoCancellation: true },
-      });
-      // stopVoice may have been called while the permission/device request was
-      // pending. Never let that stale request start an orphaned recording.
-      if (generation !== voiceGeneration || requestId !== opts.requestId) {
-        acquiredStream.getTracks().forEach(track => track.stop());
-        return;
-      }
-      stream = acquiredStream;
-
-      audioCtx = new AudioContext();
-      const analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 2048;
-      audioCtx.createMediaStreamSource(stream).connect(analyser);
-
-      const mimeType = pickAudioMime();
-      mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
-      chunks = [];
-      mediaRecorder.ondataavailable = event => {
-        if (event.data.size > 0) chunks.push(event.data);
-      };
-      mediaRecorder.onerror = event => {
-        console.error("[voice/capture] recorder error:", event);
-        void stopVoice("recorder-error");
-      };
-      // A single final dataavailable event produces a self-contained WebM/Ogg
-      // file. The volume meter does not need MediaRecorder timeslices.
-      mediaRecorder.start();
-      isRecording = true;
-      voiceStartedAt = Date.now();
-      speechDetected = false;
-      lastSpeechAt = voiceStartedAt;
-
-      const data = new Float32Array(analyser.fftSize);
-      frameTimer = setInterval(() => {
-        if (!isRecording || !requestId) return;
-        analyser.getFloatTimeDomainData(data);
-        let sum = 0;
-        for (let i = 0; i < data.length; i++) sum += data[i] * data[i];
-        const rms = Math.sqrt(sum / data.length);
-        emit({ type: "VOICE_CAPTURE_VOLUME", requestId, volume: Math.min(1, rms * 8) });
-        const now = Date.now();
-        if (rms >= 0.012) {
-          speechDetected = true;
-          lastSpeechAt = now;
-        }
-        if ((speechDetected && now - lastSpeechAt >= 1200) || now - voiceStartedAt >= 12000) {
-          void stopVoice();
-        }
-      }, FRAME_MS);
-    } catch (err) {
-      if (generation !== voiceGeneration) return;
-      console.error("[voice/capture] getUserMedia error:", err);
-      cleanup();
-      emit({
-        type: "VOICE_CAPTURE_ERROR",
-        requestId: opts.requestId,
-        code: isPermissionError(err) ? "permission-denied" : "capture-failed",
-        error: err instanceof Error ? err.name : String(err),
-      });
-    }
-  }
-
-  async function stopVoice(errorCode?: string) {
-    ++voiceGeneration;
-    if (!isRecording) {
-      cleanup();
-      return;
-    }
-    isRecording = false;
-    if (frameTimer) {
-      clearInterval(frameTimer);
-      frameTimer = null;
-    }
-
-    const currentRequestId = requestId;
-    const language = currentLanguage;
-    const token = currentToken;
-    const recorder = mediaRecorder;
-    if (!currentRequestId || !recorder || recorder.state === "inactive") {
-      cleanup();
-      if (currentRequestId) emit({ type: "VOICE_CAPTURE_DONE", requestId: currentRequestId, text: "" });
-      return;
-    }
-
-    if (errorCode) {
-      cleanup();
-      emit({ type: "VOICE_CAPTURE_ERROR", requestId: currentRequestId, code: errorCode });
-      return;
-    }
-
-    const recordedMime = recorder.mimeType;
-    const finalChunks = await new Promise<Blob[]>(resolve => {
-      const extra: Blob[] = [];
-      recorder.ondataavailable = event => {
-        if (event.data.size > 0) extra.push(event.data);
-      };
-      recorder.onstop = () => resolve([...chunks, ...extra]);
-      recorder.stop();
-    });
-
-    cleanup();
-
-    try {
-      const meta = audioUploadMeta(recordedMime);
-      const audio = new Blob(finalChunks, { type: meta.type });
-      if (!audio.size) {
-        emit({ type: "VOICE_CAPTURE_DONE", requestId: currentRequestId, text: "" });
-        return;
-      }
-
-      const form = new FormData();
-      form.append("file", audio, meta.filename);
-      if (language) form.append("language", language);
-      const res = await fetch(`${CONFIG.BACKEND_URL}/api/stt`, {
-        method: "POST",
-        body: form,
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      });
-      if (!res.ok) {
-        const body = await res.text().catch(() => "");
-        throw new Error(`STT HTTP ${res.status}: ${body.slice(0, 240)}`);
-      }
-      const json = await res.json() as { text?: string };
-      emit({ type: "VOICE_CAPTURE_DONE", requestId: currentRequestId, text: json.text?.trim() ?? "" });
-    } catch (err) {
-      console.error("[voice/capture] STT error:", err);
-      emit({ type: "VOICE_CAPTURE_ERROR", requestId: currentRequestId, code: "stt-failed", error: String(err) });
-    }
-  }
-
-  function cleanup() {
-    stream?.getTracks().forEach(track => track.stop());
-    audioCtx?.close().catch(() => {});
-    if (frameTimer) clearInterval(frameTimer);
-    stream = null;
-    audioCtx = null;
-    mediaRecorder = null;
-    frameTimer = null;
-    chunks = [];
-    isRecording = false;
-    requestId = null;
-    currentLanguage = "";
-    currentToken = "";
-  }
-
-  return { startVoice, stopVoice, handleOcrRegion };
+  return { handleOcrRegion };
 }

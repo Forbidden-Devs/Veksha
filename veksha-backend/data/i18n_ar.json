@@ -101,13 +101,6 @@
   "training_err_connect": "تعذّر الاتصال بالخادم.",
   "training_err_lost": "فُقد الاتصال.",
   "training_err_server": "خطأ في الخادم",
-  "mic_stop": "إيقاف التسجيل",
-  "mic_recognizing": "جارٍ التعرف...",
-  "mic_voice_input": "إدخال صوتي",
-  "mic_err_none": "لم يتم التعرف على شيء — حاول مرة أخرى",
-  "mic_err_service": "خدمة STT غير متاحة",
-  "mic_err_denied": "تم رفض الوصول إلى الميكروفون",
-  "mic_err_generic": "خطأ في الميكروفون",
   "lesson_preparing": "جارٍ إعداد المواد...",
   "lesson_loading_question": "جارٍ تحميل السؤال...",
   "lesson_done": "اكتملت الجلسة — تم إنجاز {n} سؤال(أسئلة)!",
@@ -299,8 +292,6 @@
   "dictionary_good": "جيد",
   "stats_anki_reviews": "مراجعات البطاقات",
   "stats_training_reviews": "إجابات التدريب",
-  "settings_voice_input": "الإدخال الصوتي",
-  "settings_voice_input_desc": "فعّل ميزات الميكروفون لهذا الحساب.",
   "settings_dual_subtitles": "ترجمات مزدوجة",
   "settings_dual_subtitles_desc": "عرض الترجمات المترجمة فوق تسميات YouTube الأصلية."
 }

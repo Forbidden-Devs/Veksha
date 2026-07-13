@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useT } from "../../shared/i18n";
-import { MicButton } from "../../shared/MicButton";
 import { assetUrl } from "../../shared/platform";
 
 /**
@@ -84,7 +83,6 @@ function PhoneChat({ active, bubbles }: { active: "assistant" | "translator"; bu
         <form className="chat-input-row" onSubmit={(e) => e.preventDefault()}>
           <div className="chat-input-area">
             <textarea className="chat-input" rows={1} placeholder={t.chat_placeholder} readOnly />
-            <MicButton state="idle" volume={0} onClick={() => {}} disabled />
           </div>
           <button type="button" className="send-btn">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M3 11.5L20.5 3 13 20.5l-2.2-7.3L3 11.5z" /></svg>
@@ -118,7 +116,6 @@ function TrainingReplica() {
           <div className="training-feedback feedback-correct">Correct! A pleasant discovery made by chance. ✓</div>
           <div className="training-answer-area">
             <textarea className="textarea-input training-window-answer" rows={2} placeholder={t.training_placeholder} readOnly />
-            <MicButton state="idle" volume={0} onClick={() => {}} disabled />
           </div>
           <button className="btn btn-gradient btn-block" type="button">{t.training_next}</button>
         </div>
@@ -189,7 +186,6 @@ function LessonReplica() {
           <p className="lesson-question">How would you say “I have lived here for 5 years”?</p>
           <div className="training-answer-area">
             <textarea className="textarea-input training-window-answer" rows={2} placeholder={t.training_placeholder} readOnly />
-            <MicButton state="idle" volume={0} onClick={() => {}} disabled />
           </div>
           <button className="btn btn-gradient btn-block" type="button">{t.training_check}</button>
         </div>

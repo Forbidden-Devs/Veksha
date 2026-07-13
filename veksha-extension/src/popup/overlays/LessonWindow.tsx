@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import * as api from "../../shared/api";
 import { CONFIG } from "../../shared/config";
-import { MicButton } from "../../shared/MicButton";
-import { useMicRecorder } from "../../shared/useMicRecorder";
 import { useT } from "../../shared/i18n";
 import { createSessionSocket, type SessionSocket } from "../../shared/wsProxy";
 import type { BlockContent, ContentSection, LessonBlock, TrainingOutcome } from "../../shared/types";
@@ -89,11 +87,7 @@ export function LessonWindow({
   const overscrollRef = useRef(0);
   const overscrollResetTimer = useRef(0);
 
-  const [recLang, setRecLang] = useState<string | undefined>(undefined);
-  const mic = useMicRecorder((text) => { if (text) setAnswer(prev => (prev ? prev + " " : "") + text); }, recLang);
-
   useEffect(() => {
-    api.getSettings(username).then(s => setRecLang(s.target_lang)).catch(() => {});
     let cancelled = false;
 
     (async () => {
@@ -422,21 +416,9 @@ export function LessonWindow({
                         isFeedback ? handleNext() : submitAnswer();
                       }
                     }}
-                    disabled={!isAsking || mic.state === "transcribing"}
+                    disabled={!isAsking}
                   />
-                  <MicButton
-                    state={mic.state}
-                    volume={mic.volume}
-                    onClick={mic.toggle}
-                    disabled={!isAsking || mic.disabled}
-                  />
-                  {mic.state === "transcribing" && (
-                    <div className="stt-overlay"><span className="stt-overlay-dot" /></div>
-                  )}
                 </div>
-                {mic.errorMsg && (
-                  <div className="stt-error-tip">{mic.errorMsg}</div>
-                )}
 
                 <button
                   className="btn btn-gradient btn-block"

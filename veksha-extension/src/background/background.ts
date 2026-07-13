@@ -47,39 +47,13 @@ chrome.runtime.onConnect.addListener((port) => {
 
 const NOTIFICATION_ID = "veksha-reminder";
 const OFFSCREEN_DOCUMENT_PATH = "src/offscreen/offscreen.html";
-const PERMISSION_PAGE_PATH = "src/permission/permission.html";
 const LAST_REMINDER_AT_KEY = "veksha-last-reminder-at";
 // Level 1-2: at most once per 12h. Level 3 ("frequent"): at most once per hour.
 const NORMAL_REMINDER_INTERVAL_MS = 12 * 60 * 60 * 1000;
 const FREQUENT_REMINDER_INTERVAL_MS = 60 * 60 * 1000;
 
-type VoiceRequest = {
-  requestId: string;
-  language?: string;
-  tabId?: number;
-  permissionTried: boolean;
-  resumeTarget?: string;
-};
-
-let activeVoiceRequest: VoiceRequest | null = null;
-let pendingVoiceResumeTarget: string | undefined;
-// Once the dedicated permission page has completed, never open it again for
-// an automatically resumed request. If capture still fails, report the error
-// to the UI instead of trapping the user in a permission-window loop.
-type VoicePermissionState = "unknown" | "granted" | "denied";
-let voicePermissionState: VoicePermissionState = "unknown";
-chrome.storage.local.get(["vk_voice_permission_state"]).then((result) => {
-  const stored = result.vk_voice_permission_state;
-  if (stored === "granted" || stored === "denied") voicePermissionState = stored;
-}).catch(() => {});
-chrome.storage.onChanged.addListener((changes, area) => {
-  if (area !== "local" || !changes.vk_voice_permission_state) return;
-  const next = changes.vk_voice_permission_state.newValue;
-  voicePermissionState = next === "granted" || next === "denied" ? next : "unknown";
-});
-
-// Chrome backgrounds are service workers and must delegate getUserMedia/OCR to
-// an offscreen document. Firefox has no offscreen API, but its MV3 background
+// Chrome backgrounds are service workers and must delegate OCR to an
+// offscreen document. Firefox has no offscreen API, but its MV3 background
 // is an event page with DOM access — run the capture controller right here.
 // Build-time constant: on Chrome the whole direct-capture path (including the
 // tesseract.js import below) is tree-shaken out of the service worker.
@@ -93,7 +67,6 @@ function getLocalCapture(): Promise<CaptureController> {
     localCapturePromise = import("../shared/capture").then((m) =>
       m.createCaptureController((msg) => {
         if (msg.type === "OCR_RESULT" || msg.type === "OCR_ERROR") relayOcrResult(msg);
-        else handleVoiceCaptureEvent(msg);
       }),
     );
   }
@@ -284,55 +257,6 @@ chrome.notifications.onClicked.addListener((notificationId) => {
 });
 
 chrome.runtime.onMessage.addListener((msg: Record<string, unknown>, _sender, sendResponse) => {
-  if (msg.type === "VOICE_PERMISSION_REQUEST") {
-    pendingVoiceResumeTarget = typeof msg.resumeTarget === "string" ? msg.resumeTarget : undefined;
-    openVoicePermissionPage()
-      .then(() => sendResponse({ ok: true }))
-      .catch((err) => sendResponse({ ok: false, error: String(err) }));
-    return true;
-  }
-
-  if (msg.type === "VOICE_CAPTURE_START") {
-    const requestId = String(msg.requestId || "");
-    if (!requestId) {
-      sendResponse({ ok: false, error: "missing-request-id" });
-      return false;
-    }
-    activeVoiceRequest = {
-      requestId,
-      language: typeof msg.language === "string" ? msg.language : undefined,
-      tabId: _sender.tab?.id,
-      permissionTried: voicePermissionState !== "unknown",
-      resumeTarget: typeof msg.resumeTarget === "string" ? msg.resumeTarget : undefined,
-    };
-    startVoiceCapture(activeVoiceRequest)
-      .then(() => sendResponse({ ok: true }))
-      .catch((err) => {
-        relayVoiceMessage({ type: "VOICE_CAPTURE_ERROR", requestId, code: "capture-failed", error: String(err) });
-        if (activeVoiceRequest?.requestId === requestId) activeVoiceRequest = null;
-        sendResponse({ ok: false, error: String(err) });
-      });
-    return true;
-  }
-
-  if (msg.type === "VOICE_CAPTURE_STOP") {
-    const requestId = String(msg.requestId || "");
-    if (activeVoiceRequest && requestId && activeVoiceRequest.requestId !== requestId) {
-      sendResponse({ ok: false, error: "stale-request" });
-      return false;
-    }
-    stopVoiceCapture()
-      .then(() => sendResponse({ ok: true }))
-      .catch((err) => sendResponse({ ok: false, error: String(err) }));
-    return true;
-  }
-
-  if (msg.target === "background" && typeof msg.type === "string" && msg.type.startsWith("VOICE_CAPTURE_")) {
-    handleVoiceCaptureEvent(msg);
-    sendResponse({ ok: true });
-    return false;
-  }
-
   if (msg.type === "VEKSHA_GOOGLE_SIGNIN") {
     // The whole OAuth flow runs here (not in the popup): the popup dies when
     // the auth window takes focus, the background survives. Credentials are
@@ -436,33 +360,6 @@ chrome.runtime.onMessage.addListener((msg: Record<string, unknown>, _sender, sen
     return false;
   }
 
-  if (msg.type === "VOICE_PERMISSION_GRANTED") {
-    // Focusing the permission window closes the extension popup and destroys
-    // its capture listener. Reopen a fresh popup instead of resuming a stale
-    // request that nobody can stop or receive.
-    const resumeTarget = activeVoiceRequest?.resumeTarget ?? pendingVoiceResumeTarget;
-    voicePermissionState = "granted";
-    chrome.storage.local.set({ vk_voice_permission_state: "granted" }).catch(() => {});
-    activeVoiceRequest = null;
-    pendingVoiceResumeTarget = undefined;
-    const reopen = () => setTimeout(() => chrome.action?.openPopup?.().catch(() => {}), 250);
-    if (resumeTarget) chrome.storage.local.set({ vk_voice_resume: resumeTarget }).then(reopen).catch(reopen);
-    else reopen();
-    sendResponse({ ok: true });
-    return false;
-  }
-
-  if (msg.type === "VOICE_PERMISSION_DENIED") {
-    voicePermissionState = "denied";
-    chrome.storage.local.set({ vk_voice_permission_state: "denied" }).catch(() => {});
-    const requestId = activeVoiceRequest?.requestId;
-    if (requestId) relayVoiceMessage({ type: "VOICE_CAPTURE_ERROR", requestId, code: "permission-denied" });
-    activeVoiceRequest = null;
-    pendingVoiceResumeTarget = undefined;
-    sendResponse({ ok: true });
-    return false;
-  }
-
   if (msg.type === "DEBUG_SHOW_REMINDER") {
     const result = msg.reminder as { due_words: number; due_word_names?: string[]; due_topic: string | null; should_remind: boolean };
     // Debug button: always fire the reminder so the user can test notifications,
@@ -484,34 +381,6 @@ chrome.runtime.onMessage.addListener((msg: Record<string, unknown>, _sender, sen
   return false;
 });
 
-async function startVoiceCapture(request: VoiceRequest) {
-  const stored = await chrome.storage.local.get([CONFIG.STORAGE_KEY_TOKEN]);
-  const token = String(stored[CONFIG.STORAGE_KEY_TOKEN] || "");
-  if (!token) throw new Error("Missing bearer token in extension storage.");
-  if (!supportsOffscreen) {
-    const capture = await getLocalCapture();
-    await capture.startVoice({ requestId: request.requestId, language: request.language, token });
-    return;
-  }
-  await ensureOffscreenDocument();
-  await chrome.runtime.sendMessage({
-    target: "offscreen",
-    type: "VOICE_CAPTURE_START",
-    requestId: request.requestId,
-    language: request.language,
-    token,
-  });
-}
-
-async function stopVoiceCapture() {
-  if (!supportsOffscreen) {
-    const capture = await getLocalCapture();
-    await capture.stopVoice();
-    return;
-  }
-  await chrome.runtime.sendMessage({ target: "offscreen", type: "VOICE_CAPTURE_STOP" }).catch(() => {});
-}
-
 async function ensureOffscreenDocument() {
   const offscreen = chrome.offscreen;
   if (!offscreen) throw new Error("chrome.offscreen is unavailable");
@@ -523,39 +392,16 @@ async function ensureOffscreenDocument() {
   });
   if (contexts.length > 0) return;
 
-  // Voice and OCR can request the shared offscreen host at the same time.
-  // Chrome allows only one document, so concurrent createDocument calls must
-  // share one promise.
+  // Chrome allows only one offscreen document, so concurrent createDocument
+  // calls must share one promise.
   if (!creatingOffscreen) {
     creatingOffscreen = offscreen.createDocument({
       url: OFFSCREEN_DOCUMENT_PATH,
-      reasons: [chrome.offscreen.Reason.USER_MEDIA],
-      justification: "Record short microphone clips for Veksha voice answers.",
+      reasons: [chrome.offscreen.Reason.DOM_PARSER],
+      justification: "Run OCR on captured screenshots for Veksha translations.",
     }).finally(() => { creatingOffscreen = null; });
   }
   await creatingOffscreen;
-}
-
-function handleVoiceCaptureEvent(msg: Record<string, unknown>) {
-  const requestId = String(msg.requestId || "");
-  if (!activeVoiceRequest || activeVoiceRequest.requestId !== requestId) return;
-
-  if (msg.type === "VOICE_CAPTURE_ERROR" && msg.code === "permission-denied" && !activeVoiceRequest.permissionTried) {
-    activeVoiceRequest.permissionTried = true;
-    void openVoicePermissionPage().catch(() => {});
-    return;
-  }
-
-  if (msg.type === "VOICE_CAPTURE_ERROR" && msg.code === "permission-denied") {
-    voicePermissionState = "denied";
-    chrome.storage.local.set({ vk_voice_permission_state: "denied" }).catch(() => {});
-  }
-
-  relayVoiceMessage(msg);
-
-  if (msg.type === "VOICE_CAPTURE_DONE" || msg.type === "VOICE_CAPTURE_ERROR") {
-    activeVoiceRequest = null;
-  }
 }
 
 async function shouldShowReminderNow(level: number): Promise<boolean> {
@@ -569,24 +415,3 @@ async function shouldShowReminderNow(level: number): Promise<boolean> {
   return true;
 }
 
-function relayVoiceMessage(msg: Record<string, unknown>) {
-  chrome.runtime.sendMessage(msg).catch(() => {});
-  const tabId = activeVoiceRequest?.tabId;
-  if (tabId !== undefined) chrome.tabs.sendMessage(tabId, msg).catch(() => {});
-}
-
-async function openVoicePermissionPage(): Promise<void> {
-  await chrome.windows.create({
-    url: chrome.runtime.getURL(PERMISSION_PAGE_PATH),
-    type: "popup",
-    width: 420,
-    height: 320,
-    focused: true,
-  }).catch((err) => {
-    const requestId = activeVoiceRequest?.requestId;
-    if (requestId) relayVoiceMessage({ type: "VOICE_CAPTURE_ERROR", requestId, code: "permission-denied", error: String(err) });
-    activeVoiceRequest = null;
-    pendingVoiceResumeTarget = undefined;
-    throw err;
-  });
-}

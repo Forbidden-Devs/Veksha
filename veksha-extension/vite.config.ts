@@ -36,7 +36,6 @@ export default defineConfig({
       // background event page (see src/shared/capture.ts).
       additionalInputs: [
         ...(browser === "chrome" ? ["src/offscreen/offscreen.html"] : []),
-        "src/permission/permission.html",
       ],
       watchFilePaths: ["manifest.json"],
       webExtConfig: {

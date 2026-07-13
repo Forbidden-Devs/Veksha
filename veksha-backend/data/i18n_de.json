@@ -101,13 +101,6 @@
   "training_err_connect": "Verbindung zum Server konnte nicht hergestellt werden.",
   "training_err_lost": "Verbindung verloren.",
   "training_err_server": "Serverfehler",
-  "mic_stop": "Aufnahme stoppen",
-  "mic_recognizing": "Erkennung läuft...",
-  "mic_voice_input": "Spracheingabe",
-  "mic_err_none": "Nichts erkannt — bitte erneut versuchen",
-  "mic_err_service": "STT-Dienst nicht verfügbar",
-  "mic_err_denied": "Mikrofonzugriff verweigert",
-  "mic_err_generic": "Mikrofonfehler",
   "lesson_preparing": "Material wird vorbereitet...",
   "lesson_loading_question": "Frage wird geladen...",
   "lesson_done": "Sitzung abgeschlossen — {n} Frage(n) erledigt!",
@@ -308,8 +301,6 @@
   "dictionary_good": "Gut",
   "stats_anki_reviews": "Kartenwiederholungen",
   "stats_training_reviews": "Trainingsantworten",
-  "settings_voice_input": "Spracheingabe",
-  "settings_voice_input_desc": "Mikrofonfunktionen für dieses Konto aktivieren.",
   "settings_dual_subtitles": "Doppelte Untertitel",
   "settings_dual_subtitles_desc": "Übersetzte Untertitel über den ursprünglichen YouTube-Untertiteln anzeigen."
 }

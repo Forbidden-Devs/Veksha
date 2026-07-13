@@ -35,7 +35,6 @@ export interface SettingsData {
   language_settings?: Record<string, LanguageSettings>;
   reminder_level: number;
   overseer: boolean;
-  voice_enabled: boolean;
   is_onboarded: boolean;
 }
 

@@ -101,13 +101,6 @@
   "training_err_connect": "Tidak dapat terhubung ke server.",
   "training_err_lost": "Koneksi terputus.",
   "training_err_server": "Kesalahan server",
-  "mic_stop": "Hentikan perekaman",
-  "mic_recognizing": "Mengenali...",
-  "mic_voice_input": "Input suara",
-  "mic_err_none": "Tidak ada yang dikenali — coba lagi",
-  "mic_err_service": "Layanan STT tidak tersedia",
-  "mic_err_denied": "Akses mikrofon ditolak",
-  "mic_err_generic": "Kesalahan mikrofon",
   "lesson_preparing": "Menyiapkan materi...",
   "lesson_loading_question": "Memuat pertanyaan...",
   "lesson_done": "Sesi selesai — {n} pertanyaan selesai!",
@@ -180,8 +173,6 @@
   "dictionary_good": "Baik",
   "stats_anki_reviews": "Tinjauan kartu",
   "stats_training_reviews": "Jawaban latihan",
-  "settings_voice_input": "Input suara",
-  "settings_voice_input_desc": "Aktifkan fitur mikrofon untuk akun ini.",
   "settings_dual_subtitles": "Subtitel ganda",
   "settings_dual_subtitles_desc": "Tampilkan subtitel terjemahan di atas teks caption YouTube asli."
 }

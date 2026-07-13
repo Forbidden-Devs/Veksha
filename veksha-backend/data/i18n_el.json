@@ -101,13 +101,6 @@
   "training_err_connect": "Δεν ήταν δυνατή η σύνδεση με τον διακομιστή.",
   "training_err_lost": "Η σύνδεση χάθηκε.",
   "training_err_server": "Σφάλμα διακομιστή",
-  "mic_stop": "Διακοπή εγγραφής",
-  "mic_recognizing": "Αναγνώριση...",
-  "mic_voice_input": "Είσοδος φωνής",
-  "mic_err_none": "Δεν αναγνωρίστηκε τίποτα — δοκιμάστε ξανά",
-  "mic_err_service": "Η υπηρεσία STT δεν είναι διαθέσιμη",
-  "mic_err_denied": "Η πρόσβαση στο μικρόφωνο απορρίφθηκε",
-  "mic_err_generic": "Σφάλμα μικροφώνου",
   "lesson_preparing": "Προετοιμασία υλικού...",
   "lesson_loading_question": "Φόρτωση ερώτησης...",
   "lesson_done": "Η συνεδρία ολοκληρώθηκε — ολοκληρώθηκαν {n} ερώτηση(ες)!",
@@ -178,8 +171,6 @@
   "dictionary_good": "Καλά",
   "stats_anki_reviews": "Ανασκοπήσεις καρτών",
   "stats_training_reviews": "Απαντήσεις εκπαίδευσης",
-  "settings_voice_input": "Είσοδος φωνής",
-  "settings_voice_input_desc": "Ενεργοποιήστε τις λειτουργίες μικροφώνου για αυτόν τον λογαριασμό.",
   "settings_dual_subtitles": "Διπλοί υπότιτλοι",
   "settings_dual_subtitles_desc": "Εμφάνιση των μεταφρασμένων υπότιτλων πάνω από τους αρχικούς υπότιτλους του YouTube."
 }
