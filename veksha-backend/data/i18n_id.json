@@ -164,7 +164,8 @@
     "grammar_lens_off",
     "grammar_lens_title",
     "menu_debug",
-    "menu_title"
+    "menu_title",
+    "sentence_mining_mnemonic"
   ],
   "dictionary_title": "Kamus",
   "dictionary_cards": "Kartu latihan",
@@ -192,5 +193,17 @@
   "grammar_role_time": "Waktu",
   "grammar_role_modifier": "Keterangan",
   "feature_enabled": "Aktif",
-  "feature_disabled": "Nonaktif"
+  "feature_disabled": "Nonaktif",
+  "settings_mining_title": "Kartu Sentence Mining",
+  "settings_mining_desc": "Pilih berapa contoh AI yang dibuat saat Anda membuka kata yang tersimpan.",
+  "settings_mining_current": "Di level saya saat ini",
+  "settings_mining_higher": "Satu level lebih tinggi",
+  "sentence_mining_title": "Kartu AI Sentence Mining",
+  "sentence_mining_loading": "Membuat contoh, mnemonic, dan kolokasi…",
+  "sentence_mining_examples": "Contoh",
+  "sentence_mining_mnemonic": "Mnemonic",
+  "sentence_mining_collocations": "Kolokasi umum",
+  "sentence_mining_regenerate": "Buat ulang",
+  "sentence_mining_error": "Tidak dapat membuat kartu AI.",
+  "sentence_mining_level_up": "naik level"
 }

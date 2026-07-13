@@ -35,6 +35,8 @@ export interface SettingsData {
   language_settings?: Record<string, LanguageSettings>;
   reminder_level: number;
   overseer: boolean;
+  mining_same_level_examples: number;
+  mining_higher_level_examples: number;
   is_onboarded: boolean;
 }
 
@@ -116,6 +118,26 @@ export interface WordEntry {
   counter: number;
   known: boolean;
   next_review: number;
+  sentence_mining?: SentenceMiningCard | null;
+}
+
+export interface SentenceMiningExample {
+  sentence: string;
+  translation: string;
+  level: string;
+  is_higher: boolean;
+}
+
+export interface SentenceMiningCollocation {
+  text: string;
+  translation: string;
+}
+
+export interface SentenceMiningCard {
+  examples: SentenceMiningExample[];
+  mnemonic: string;
+  collocations: SentenceMiningCollocation[];
+  config: Record<string, string | number>;
 }
 
 export interface LessonTopicSummary {

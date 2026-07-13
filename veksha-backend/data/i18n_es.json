@@ -314,5 +314,17 @@
   "grammar_role_time": "Tiempo",
   "grammar_role_modifier": "Modificador",
   "feature_enabled": "Activado",
-  "feature_disabled": "Desactivado"
+  "feature_disabled": "Desactivado",
+  "settings_mining_title": "Tarjetas de mining de oraciones",
+  "settings_mining_desc": "Elige cuántos ejemplos de AI generar al abrir una palabra guardada.",
+  "settings_mining_current": "A mi nivel actual",
+  "settings_mining_higher": "Un nivel más alto",
+  "sentence_mining_title": "Tarjeta de AI Sentence Mining",
+  "sentence_mining_loading": "Creando ejemplos, mnemotecnia y colocaciones…",
+  "sentence_mining_examples": "Ejemplos",
+  "sentence_mining_mnemonic": "Mnemotecnia",
+  "sentence_mining_collocations": "Colocaciones frecuentes",
+  "sentence_mining_regenerate": "Regenerar",
+  "sentence_mining_error": "No se pudo crear la tarjeta de AI.",
+  "sentence_mining_level_up": "subir de nivel"
 }

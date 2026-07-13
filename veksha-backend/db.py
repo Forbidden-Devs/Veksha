@@ -102,9 +102,22 @@ def _conn() -> sqlite3.Connection:
                    active_target_lang TEXT NOT NULL DEFAULT '',
                    reminder_level     INTEGER NOT NULL DEFAULT 2,
                    overseer           INTEGER NOT NULL DEFAULT 0,
+                   mining_same_level  INTEGER NOT NULL DEFAULT 2,
+                   mining_higher_level INTEGER NOT NULL DEFAULT 1,
                    FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
                )"""
         )
+        settings_columns = {
+            row[1] for row in conn.execute("PRAGMA table_info(user_settings)").fetchall()
+        }
+        if "mining_same_level" not in settings_columns:
+            conn.execute(
+                "ALTER TABLE user_settings ADD COLUMN mining_same_level INTEGER NOT NULL DEFAULT 2"
+            )
+        if "mining_higher_level" not in settings_columns:
+            conn.execute(
+                "ALTER TABLE user_settings ADD COLUMN mining_higher_level INTEGER NOT NULL DEFAULT 1"
+            )
         conn.execute(
             """CREATE TABLE IF NOT EXISTS user_languages (
                    username TEXT NOT NULL,
@@ -224,7 +237,8 @@ def delete_user_data(username: str) -> None:
 
 def settings_get(username: str) -> Optional[dict]:
     row = _conn().execute(
-        "SELECT display_name, native_lang, active_target_lang, reminder_level, overseer "
+        "SELECT display_name, native_lang, active_target_lang, reminder_level, overseer, "
+        "mining_same_level, mining_higher_level "
         "FROM user_settings WHERE username=?", (username,),
     ).fetchone()
     if row is None:
@@ -239,6 +253,8 @@ def settings_get(username: str) -> Optional[dict]:
         "target_lang": row[2],
         "reminder_level": row[3],
         "overseer": bool(row[4]),
+        "mining_same_level_examples": row[5],
+        "mining_higher_level_examples": row[6],
         "language_settings": {
             lang: {"level": level, "goals": goals, "prompt": prompt}
             for lang, level, goals, prompt in languages
@@ -250,10 +266,11 @@ def settings_set(username: str, settings: Any) -> None:
     with _conn() as c:
         c.execute(
             "INSERT OR REPLACE INTO user_settings "
-            "(username, display_name, native_lang, active_target_lang, reminder_level, overseer) "
-            "VALUES (?,?,?,?,?,?)",
+            "(username, display_name, native_lang, active_target_lang, reminder_level, overseer, "
+            "mining_same_level, mining_higher_level) VALUES (?,?,?,?,?,?,?,?)",
             (username, settings.display_name, settings.native_lang, settings.target_lang,
-             settings.reminder_level, int(settings.overseer)),
+             settings.reminder_level, int(settings.overseer),
+             settings.mining_same_level_examples, settings.mining_higher_level_examples),
         )
         c.execute("DELETE FROM user_languages WHERE username=?", (username,))
         c.executemany(

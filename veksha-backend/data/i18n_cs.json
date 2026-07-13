@@ -190,5 +190,17 @@
   "grammar_role_time": "Čas",
   "grammar_role_modifier": "Příslovečné určení",
   "feature_enabled": "Zapnuto",
-  "feature_disabled": "Vypnuto"
+  "feature_disabled": "Vypnuto",
+  "settings_mining_title": "Kartičky pro Sentence Mining",
+  "settings_mining_desc": "Vyberte, kolik AI příkladů se má vytvořit, když otevřete uložené slovo.",
+  "settings_mining_current": "Na mé současné úrovni",
+  "settings_mining_higher": "O jednu úroveň výš",
+  "sentence_mining_title": "AI kartička pro Sentence Mining",
+  "sentence_mining_loading": "Vytváří se příklady, mnemotechnika a kolokace…",
+  "sentence_mining_examples": "Příklady",
+  "sentence_mining_mnemonic": "Mnemotechnika",
+  "sentence_mining_collocations": "Časté kolokace",
+  "sentence_mining_regenerate": "Vygenerovat znovu",
+  "sentence_mining_error": "AI kartičku se nepodařilo vytvořit.",
+  "sentence_mining_level_up": "zvýšit úroveň"
 }

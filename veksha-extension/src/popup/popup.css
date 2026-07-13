@@ -3981,3 +3981,126 @@ html, body, #root {
 }
 
 .imm-known-btn:hover { color: var(--av-muted); }
+
+/* Sentence Mining cards inside the saved-word list. */
+.dictionary-word-card {
+  display: block;
+  padding: 0;
+  overflow: hidden;
+}
+
+.dictionary-word-card.is-open {
+  border-color: color-mix(in srgb, var(--av-accent) 45%, var(--av-border));
+}
+
+.dictionary-word-card .dictionary-word { padding: 9px 10px; }
+
+.sentence-mining-card {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border-top: 1px solid var(--av-border);
+  background: color-mix(in srgb, var(--av-accent-soft) 52%, var(--av-surface));
+  color: var(--av-ink);
+  font-size: 12px;
+}
+
+.sentence-mining-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sentence-mining-header > strong { font-size: 13px; }
+
+.sentence-mining-header button {
+  border: 0;
+  background: transparent;
+  color: var(--av-accent);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sentence-mining-card section { display: grid; gap: 6px; }
+.sentence-mining-card h4, .sentence-mining-card p { margin: 0; }
+
+.sentence-mining-card h4 {
+  color: var(--av-muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.sentence-mining-examples { display: grid; gap: 7px; }
+
+.sentence-mining-example {
+  display: grid;
+  gap: 3px;
+  padding: 9px 10px;
+  border: 1px solid var(--av-border);
+  border-radius: 10px;
+  background: var(--av-surface);
+}
+
+.sentence-mining-example > span:last-child { color: var(--av-muted); }
+
+.sentence-mining-level, .sentence-mining-up {
+  display: inline-flex;
+  padding: 2px 5px;
+  border-radius: 5px;
+  background: var(--av-accent-soft);
+  color: var(--av-accent);
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.sentence-mining-up {
+  margin-left: 5px;
+  background: rgba(35, 158, 92, .13);
+  color: #19804a;
+}
+
+.sentence-mining-mnemonic p {
+  padding: 9px 10px;
+  border-radius: 10px;
+  background: rgba(224, 151, 30, .12);
+  line-height: 1.45;
+}
+
+.sentence-mining-collocations { display: flex; flex-wrap: wrap; gap: 5px; }
+
+.sentence-mining-collocations > span {
+  padding: 5px 8px;
+  border: 1px solid var(--av-border);
+  border-radius: 8px;
+  background: var(--av-surface);
+}
+
+.sentence-mining-loading { color: var(--av-muted); line-height: 1.4; }
+
+/* Sentence Mining generation defaults in account settings. */
+.settings-mining {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 7px 10px;
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid var(--av-border);
+  border-radius: 12px;
+  background: var(--av-surface);
+}
+
+.settings-mining > .settings-toggle-title,
+.settings-mining > .settings-toggle-desc { grid-column: 1 / -1; }
+.settings-mining label { display: contents; }
+
+.settings-mining label > span {
+  align-self: center;
+  color: var(--av-ink);
+  font-size: 11px;
+}
+
+.settings-mining .select-input { width: 72px; padding: 6px 9px; }

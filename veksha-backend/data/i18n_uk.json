@@ -193,5 +193,17 @@
   "grammar_role_time": "Час",
   "grammar_role_modifier": "Означення",
   "feature_enabled": "Увімкнено",
-  "feature_disabled": "Вимкнено"
+  "feature_disabled": "Вимкнено",
+  "settings_mining_title": "Картки Sentence Mining",
+  "settings_mining_desc": "Оберіть, скільки прикладів AI створювати, коли відкриваєте збережене слово.",
+  "settings_mining_current": "На моєму поточному рівні",
+  "settings_mining_higher": "На один рівень вище",
+  "sentence_mining_title": "Картка AI Sentence Mining",
+  "sentence_mining_loading": "Створюємо приклади, мнемоніку та словосполучення…",
+  "sentence_mining_examples": "Приклади",
+  "sentence_mining_mnemonic": "Мнемоніка",
+  "sentence_mining_collocations": "Часті словосполучення",
+  "sentence_mining_regenerate": "Перегенерувати",
+  "sentence_mining_error": "Не вдалося створити картку AI.",
+  "sentence_mining_level_up": "підвищити рівень"
 }

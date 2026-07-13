@@ -188,5 +188,17 @@
   "grammar_role_time": "Χρόνος",
   "grammar_role_modifier": "Προσδιορισμός",
   "feature_enabled": "Ενεργό",
-  "feature_disabled": "Ανενεργό"
+  "feature_disabled": "Ανενεργό",
+  "settings_mining_title": "Κάρτες Sentence Mining",
+  "settings_mining_desc": "Επιλέξτε πόσα παραδείγματα AI θα δημιουργούνται όταν ανοίγετε μια αποθηκευμένη λέξη.",
+  "settings_mining_current": "Στο τωρινό μου επίπεδο",
+  "settings_mining_higher": "Ένα επίπεδο πιο πάνω",
+  "sentence_mining_title": "Κάρτα AI Sentence Mining",
+  "sentence_mining_loading": "Δημιουργία παραδειγμάτων, μνημονικού και συχνών συνδυασμών…",
+  "sentence_mining_examples": "Παραδείγματα",
+  "sentence_mining_mnemonic": "Μνημονικό",
+  "sentence_mining_collocations": "Συχνές φράσεις",
+  "sentence_mining_regenerate": "Ανανέωση",
+  "sentence_mining_error": "Δεν ήταν δυνατή η δημιουργία της κάρτας AI.",
+  "sentence_mining_level_up": "ανέβασμα επιπέδου"
 }

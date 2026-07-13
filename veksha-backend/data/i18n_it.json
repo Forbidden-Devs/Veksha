@@ -193,5 +193,17 @@
   "grammar_role_time": "Tempo",
   "grammar_role_modifier": "Modificatore",
   "feature_enabled": "Attivo",
-  "feature_disabled": "Disattivo"
+  "feature_disabled": "Disattivo",
+  "settings_mining_title": "Schede Sentence Mining",
+  "settings_mining_desc": "Scegli quanti esempi AI generare quando apri una parola salvata.",
+  "settings_mining_current": "Al mio livello attuale",
+  "settings_mining_higher": "Un livello più alto",
+  "sentence_mining_title": "Scheda AI Sentence Mining",
+  "sentence_mining_loading": "Creazione di esempi, mnemonico e collocazioni…",
+  "sentence_mining_examples": "Esempi",
+  "sentence_mining_mnemonic": "Mnemonico",
+  "sentence_mining_collocations": "Collocazioni frequenti",
+  "sentence_mining_regenerate": "Rigenera",
+  "sentence_mining_error": "Impossibile creare la scheda AI.",
+  "sentence_mining_level_up": "salire di livello"
 }

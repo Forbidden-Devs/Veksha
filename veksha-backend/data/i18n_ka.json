@@ -198,5 +198,17 @@
   "grammar_role_time": "დრო",
   "grammar_role_modifier": "მოდიფიკატორი",
   "feature_enabled": "ჩართული",
-  "feature_disabled": "გამორთული"
+  "feature_disabled": "გამორთული",
+  "settings_mining_title": "წინადადებების მოპოვების ბარათები",
+  "settings_mining_desc": "აირჩიეთ რამდენი AI მაგალითი შეიქმნას, როცა შენახულ სიტყვას გახსნით.",
+  "settings_mining_current": "ჩემს მიმდინარე დონეზე",
+  "settings_mining_higher": "ერთი დონით ზემოთ",
+  "sentence_mining_title": "AI წინადადებების მოპოვების ბარათი",
+  "sentence_mining_loading": "მაგალითების, მნემონიკის და კოლოკაციების შექმნა…",
+  "sentence_mining_examples": "მაგალითები",
+  "sentence_mining_mnemonic": "მნემონიკა",
+  "sentence_mining_collocations": "ხშირი კოლოკაციები",
+  "sentence_mining_regenerate": "თავიდან შექმნა",
+  "sentence_mining_error": "AI ბარათის შექმნა ვერ მოხერხდა.",
+  "sentence_mining_level_up": "დონის აწევა"
 }

@@ -188,5 +188,17 @@
   "grammar_role_time": "समय",
   "grammar_role_modifier": "विशेषक",
   "feature_enabled": "चालू",
-  "feature_disabled": "बंद"
+  "feature_disabled": "बंद",
+  "settings_mining_title": "Sentence Mining कार्ड",
+  "settings_mining_desc": "जब आप कोई सहेजा हुआ शब्द खोलें, तो कितने AI उदाहरण बनाने हैं, चुनें।",
+  "settings_mining_current": "मेरे मौजूदा स्तर पर",
+  "settings_mining_higher": "एक स्तर ऊपर",
+  "sentence_mining_title": "AI Sentence Mining कार्ड",
+  "sentence_mining_loading": "उदाहरण, स्मरण-सूचक और सामान्य संयोजन बनाए जा रहे हैं…",
+  "sentence_mining_examples": "उदाहरण",
+  "sentence_mining_mnemonic": "स्मरण-सूचक",
+  "sentence_mining_collocations": "अक्सर आने वाले संयोजन",
+  "sentence_mining_regenerate": "फिर से बनाएं",
+  "sentence_mining_error": "AI कार्ड नहीं बनाया जा सका।",
+  "sentence_mining_level_up": "एक स्तर ऊपर"
 }

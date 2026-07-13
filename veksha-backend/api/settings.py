@@ -20,6 +20,7 @@ import llm
 import db
 from auth import CurrentUser
 from config import REMINDER_MIN_WORDS, REVIEW_WINDOW_HOURS, SCHEDULER_INTERVAL_MINUTES
+from cefr import BANDS, band_index, level_to_cefr
 from models import VALID_ENGLISH_LEVELS, Patch, UserSettings
 from storage import UserStorage, get_storage
 
@@ -39,6 +40,8 @@ class SettingsRequest(BaseModel):
     language_settings: dict[str, dict[str, str]] | None = None
     reminder_level: int = Field(2, ge=1, le=3)
     overseer: bool = False
+    mining_same_level_examples: int | None = Field(None, ge=1, le=5)
+    mining_higher_level_examples: int | None = Field(None, ge=0, le=3)
 
 
 class SettingsResponse(BaseModel):
@@ -52,6 +55,8 @@ class SettingsResponse(BaseModel):
     language_settings: dict[str, dict[str, str]] = Field(default_factory=dict)
     reminder_level: int = 2
     overseer: bool = False
+    mining_same_level_examples: int = 2
+    mining_higher_level_examples: int = 1
     is_onboarded: bool = False
 
 
@@ -71,6 +76,25 @@ class KBSummaryResponse(BaseModel):
     training_reviews: int
 
 
+class MiningExampleResponse(BaseModel):
+    sentence: str
+    translation: str = ""
+    level: str
+    is_higher: bool = False
+
+
+class MiningCollocationResponse(BaseModel):
+    text: str
+    translation: str = ""
+
+
+class SentenceMiningResponse(BaseModel):
+    examples: list[MiningExampleResponse] = Field(default_factory=list)
+    mnemonic: str = ""
+    collocations: list[MiningCollocationResponse] = Field(default_factory=list)
+    config: dict[str, str | int] = Field(default_factory=dict)
+
+
 class WordEntryResponse(BaseModel):
     name: str
     context: str
@@ -79,6 +103,7 @@ class WordEntryResponse(BaseModel):
     counter: int
     known: bool
     next_review: float
+    sentence_mining: SentenceMiningResponse | None = None
 
 
 class KBWordsResponse(BaseModel):
@@ -88,6 +113,11 @@ class KBWordsResponse(BaseModel):
 class WordReviewRequest(BaseModel):
     word: str
     rating: str
+
+
+class SentenceMiningRequest(BaseModel):
+    word: str = Field(..., min_length=1, max_length=200)
+    force: bool = False
 
 
 def _topic_needing_review(storage: UserStorage) -> str | None:
@@ -135,6 +165,8 @@ def _settings_response(storage: UserStorage) -> SettingsResponse:
         language_settings=language_settings,
         reminder_level=s.reminder_level,
         overseer=s.overseer,
+        mining_same_level_examples=s.mining_same_level_examples,
+        mining_higher_level_examples=s.mining_higher_level_examples,
         is_onboarded=s.is_onboarded(),
     )
 
@@ -191,6 +223,16 @@ async def api_post_settings(req: SettingsRequest, username: CurrentUser) -> Sett
         language_settings=language_settings,
         reminder_level=req.reminder_level,
         overseer=req.overseer,
+        mining_same_level_examples=(
+            req.mining_same_level_examples
+            if req.mining_same_level_examples is not None
+            else storage.settings.mining_same_level_examples
+        ),
+        mining_higher_level_examples=(
+            req.mining_higher_level_examples
+            if req.mining_higher_level_examples is not None
+            else storage.settings.mining_higher_level_examples
+        ),
     )
     storage.save()
     log.info(
@@ -282,6 +324,54 @@ async def api_kb_word_details(word: str, username: CurrentUser) -> WordEntryResp
         counter=entry.counter,
         known=bool(entry.known),
         next_review=entry.next_review,
+        sentence_mining=SentenceMiningResponse(**entry.sentence_mining) if entry.sentence_mining else None,
+    )
+
+
+@router.post("/api/kb_word_mine", response_model=WordEntryResponse)
+async def api_mine_kb_word(req: SentenceMiningRequest, username: CurrentUser) -> WordEntryResponse:
+    storage = get_storage(username)
+    entry = storage.find_word(req.word)
+    if entry is None:
+        raise HTTPException(status_code=404, detail="Word not found.")
+
+    level = level_to_cefr(storage.settings.english_level)
+    higher_level = BANDS[min(band_index(level) + 1, len(BANDS) - 1)]
+    same_count = storage.settings.mining_same_level_examples
+    higher_count = storage.settings.mining_higher_level_examples
+    config: dict[str, str | int] = {
+        "level": level,
+        "higher_level": higher_level,
+        "same_count": same_count,
+        "higher_count": higher_count,
+    }
+
+    if req.force or not entry.sentence_mining or entry.sentence_mining.get("config") != config:
+        card = await llm.generate_sentence_mining(
+            word=entry.name,
+            translation=entry.translation,
+            context=entry.context,
+            target_lang=storage.settings.target_lang,
+            native_lang=storage.settings.native_lang,
+            level=level,
+            higher_level=higher_level,
+            same_count=same_count,
+            higher_count=higher_count,
+        )
+        if not card.get("examples"):
+            raise HTTPException(status_code=503, detail="Could not generate Sentence Mining card.")
+        entry.sentence_mining = {**card, "config": config}
+        storage.save()
+
+    return WordEntryResponse(
+        name=entry.name,
+        context=entry.context,
+        translation=entry.translation,
+        transcription=entry.transcription,
+        counter=entry.counter,
+        known=bool(entry.known),
+        next_review=entry.next_review,
+        sentence_mining=SentenceMiningResponse(**entry.sentence_mining),
     )
 
 

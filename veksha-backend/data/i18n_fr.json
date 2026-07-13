@@ -316,5 +316,17 @@
   "grammar_role_time": "Temps",
   "grammar_role_modifier": "Modificateur",
   "feature_enabled": "Activé",
-  "feature_disabled": "Désactivé"
+  "feature_disabled": "Désactivé",
+  "settings_mining_title": "Cartes de Sentence Mining",
+  "settings_mining_desc": "Choisissez combien d’exemples AI générer lorsque vous ouvrez un mot enregistré.",
+  "settings_mining_current": "À mon niveau actuel",
+  "settings_mining_higher": "Un niveau au-dessus",
+  "sentence_mining_title": "Carte de Sentence Mining AI",
+  "sentence_mining_loading": "Création des exemples, de la mnémotechnique et des collocations…",
+  "sentence_mining_examples": "Exemples",
+  "sentence_mining_mnemonic": "Mnémotechnique",
+  "sentence_mining_collocations": "Collocations fréquentes",
+  "sentence_mining_regenerate": "Régénérer",
+  "sentence_mining_error": "Impossible de créer la carte AI.",
+  "sentence_mining_level_up": "monter de niveau"
 }

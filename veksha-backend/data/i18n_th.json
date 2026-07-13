@@ -190,5 +190,17 @@
   "grammar_role_time": "เวลา",
   "grammar_role_modifier": "ส่วนขยาย",
   "feature_enabled": "เปิด",
-  "feature_disabled": "ปิด"
+  "feature_disabled": "ปิด",
+  "settings_mining_title": "การ์ด Sentence Mining",
+  "settings_mining_desc": "เลือกจำนวนตัวอย่างจาก AI ที่จะสร้างเมื่อคุณเปิดคำที่บันทึกไว้",
+  "settings_mining_current": "ตามระดับปัจจุบันของฉัน",
+  "settings_mining_higher": "สูงขึ้นหนึ่งระดับ",
+  "sentence_mining_title": "การ์ด Sentence Mining จาก AI",
+  "sentence_mining_loading": "กำลังสร้างตัวอย่าง มโนภาพช่วยจำ และคำที่ใช้ร่วมกันบ่อย…",
+  "sentence_mining_examples": "ตัวอย่าง",
+  "sentence_mining_mnemonic": "มโนภาพช่วยจำ",
+  "sentence_mining_collocations": "คำที่ใช้ร่วมกันบ่อย",
+  "sentence_mining_regenerate": "สร้างใหม่",
+  "sentence_mining_error": "ไม่สามารถสร้างการ์ด AI ได้",
+  "sentence_mining_level_up": "เลเวลอัป"
 }

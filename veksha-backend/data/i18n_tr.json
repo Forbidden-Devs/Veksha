@@ -187,5 +187,17 @@
   "grammar_role_time": "Zaman",
   "grammar_role_modifier": "Belirteç",
   "feature_enabled": "Açık",
-  "feature_disabled": "Kapalı"
+  "feature_disabled": "Kapalı",
+  "settings_mining_title": "Cümle madenciliği kartları",
+  "settings_mining_desc": "Kayıtlı bir kelimeyi açtığınızda kaç AI örneği oluşturulacağını seçin.",
+  "settings_mining_current": "Mevcut seviyemde",
+  "settings_mining_higher": "Bir seviye üstte",
+  "sentence_mining_title": "AI Cümle Madenciliği kartı",
+  "sentence_mining_loading": "Örnekler, mnemonik ve yaygın kullanımlar oluşturuluyor…",
+  "sentence_mining_examples": "Örnekler",
+  "sentence_mining_mnemonic": "Mnemonik",
+  "sentence_mining_collocations": "Sık kullanılan kullanımlar",
+  "sentence_mining_regenerate": "Yeniden oluştur",
+  "sentence_mining_error": "AI kartı oluşturulamadı.",
+  "sentence_mining_level_up": "seviye atla"
 }

@@ -190,5 +190,17 @@
   "grammar_role_time": "Thời gian",
   "grammar_role_modifier": "Bổ ngữ",
   "feature_enabled": "Bật",
-  "feature_disabled": "Tắt"
+  "feature_disabled": "Tắt",
+  "settings_mining_title": "Thẻ khai thác câu",
+  "settings_mining_desc": "Chọn số ví dụ AI để tạo khi bạn mở một từ đã lưu.",
+  "settings_mining_current": "Ở trình độ hiện tại của tôi",
+  "settings_mining_higher": "Cao hơn một trình độ",
+  "sentence_mining_title": "Thẻ khai thác câu AI",
+  "sentence_mining_loading": "Đang tạo ví dụ, mẹo ghi nhớ và các cụm từ thường gặp…",
+  "sentence_mining_examples": "Ví dụ",
+  "sentence_mining_mnemonic": "Mẹo ghi nhớ",
+  "sentence_mining_collocations": "Các cụm từ thường gặp",
+  "sentence_mining_regenerate": "Tạo lại",
+  "sentence_mining_error": "Không thể tạo thẻ AI.",
+  "sentence_mining_level_up": "lên trình độ"
 }

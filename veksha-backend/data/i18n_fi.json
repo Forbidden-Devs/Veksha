@@ -189,5 +189,17 @@
   "grammar_role_time": "Aika",
   "grammar_role_modifier": "Määrite",
   "feature_enabled": "Päällä",
-  "feature_disabled": "Pois"
+  "feature_disabled": "Pois",
+  "settings_mining_title": "Lausepoiminta-kortit",
+  "settings_mining_desc": "Valitse, kuinka monta AI-esimerkkiä luodaan, kun avaat tallennetun sanan.",
+  "settings_mining_current": "Nykyisellä tasollani",
+  "settings_mining_higher": "Yksi taso korkeammalle",
+  "sentence_mining_title": "AI-lausepoiminta-kortti",
+  "sentence_mining_loading": "Luodaan esimerkkejä, muistisääntö ja kollokaatioita…",
+  "sentence_mining_examples": "Esimerkit",
+  "sentence_mining_mnemonic": "Muistisääntö",
+  "sentence_mining_collocations": "Yleiset kollokaatiot",
+  "sentence_mining_regenerate": "Luo uudelleen",
+  "sentence_mining_error": "AI-kortin luonti epäonnistui.",
+  "sentence_mining_level_up": "nouse tasolle"
 }

@@ -309,5 +309,17 @@
   "grammar_role_time": "الزمان",
   "grammar_role_modifier": "المعدّل",
   "feature_enabled": "تشغيل",
-  "feature_disabled": "إيقاف"
+  "feature_disabled": "إيقاف",
+  "settings_mining_title": "بطاقات تعدين الجمل",
+  "settings_mining_desc": "اختر عدد أمثلة AI التي تريد إنشاءها عند فتح كلمة محفوظة.",
+  "settings_mining_current": "عند مستواي الحالي",
+  "settings_mining_higher": "مستوى أعلى واحد",
+  "sentence_mining_title": "بطاقة تعدين جمل AI",
+  "sentence_mining_loading": "جارٍ إنشاء الأمثلة، والتذكير، والتراكيب الشائعة…",
+  "sentence_mining_examples": "أمثلة",
+  "sentence_mining_mnemonic": "تذكير",
+  "sentence_mining_collocations": "التراكيب الشائعة",
+  "sentence_mining_regenerate": "إعادة إنشاء",
+  "sentence_mining_error": "تعذّر إنشاء بطاقة AI.",
+  "sentence_mining_level_up": "ارتقِ بالمستوى"
 }

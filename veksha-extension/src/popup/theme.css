@@ -462,6 +462,17 @@ body,
   border: none !important;
 }
 
+.dictionary-word-card.is-open {
+  border-color: color-mix(in srgb, var(--m-accent) 58%, var(--m-border)) !important;
+}
+
+.sentence-mining-card,
+.settings-mining {
+  background: var(--m-surface-2) !important;
+  color: var(--m-fg) !important;
+  border-color: var(--m-border) !important;
+}
+
 .word-list-name,
 .word-list-primary,
 .dictionary-details,

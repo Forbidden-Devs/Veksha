@@ -350,6 +350,8 @@ export function saveSettings(
     languageSettings?: Record<string, { level: string; goals: string; prompt: string }>;
     reminderLevel?: number;
     overseer?: boolean;
+    miningSameLevelExamples?: number;
+    miningHigherLevelExamples?: number;
   }
 ): Promise<SettingsData> {
   const body: Record<string, unknown> = {
@@ -364,6 +366,12 @@ export function saveSettings(
   };
   if (opts.englishLevel) body.english_level = opts.englishLevel;
   if (opts.displayName?.trim()) body.display_name = opts.displayName.trim();
+  if (opts.miningSameLevelExamples !== undefined) {
+    body.mining_same_level_examples = opts.miningSameLevelExamples;
+  }
+  if (opts.miningHigherLevelExamples !== undefined) {
+    body.mining_higher_level_examples = opts.miningHigherLevelExamples;
+  }
   return _post("/api/settings", body);
 }
 
@@ -393,6 +401,10 @@ export function getKbWords(username: string): Promise<{ words: WordEntry[] }> {
 
 export function getKbWordDetails(username: string, word: string): Promise<WordEntry> {
   return _get(`/api/kb_word_details?word=${encodeURIComponent(word)}`);
+}
+
+export function mineKbWord(username: string, word: string, force = false): Promise<WordEntry> {
+  return _post("/api/kb_word_mine", { word, force }, 45_000);
 }
 
 export function reviewKbWord(username: string, word: string, rating: "again" | "good"): Promise<{ ok: boolean; next_review: number }> {

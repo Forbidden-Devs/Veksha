@@ -40,6 +40,8 @@ export function SettingsScreen() {
   const [languageSettings, setLanguageSettings] = useState<Record<string, { level: string; goals: string; prompt: string }>>({});
   const [reminderLevel, setReminderLevel] = useState(2);
   const [overseer, setOverseer] = useState(false);
+  const [miningSameLevelExamples, setMiningSameLevelExamples] = useState(2);
+  const [miningHigherLevelExamples, setMiningHigherLevelExamples] = useState(1);
   const [dualSubsEnabled, setDualSubsEnabled] = useState(false);
   const [savedDualSubsEnabled, setSavedDualSubsEnabled] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -150,6 +152,8 @@ export function SettingsScreen() {
       setLanguageSettings(s.language_settings ?? {});
       setReminderLevel(s.reminder_level ?? 2);
       setOverseer(s.overseer ?? false);
+      setMiningSameLevelExamples(s.mining_same_level_examples ?? 2);
+      setMiningHigherLevelExamples(s.mining_higher_level_examples ?? 1);
       setSettingsLoaded(true);
     }).catch((err) => {
       if (!alive) return;
@@ -184,6 +188,8 @@ export function SettingsScreen() {
         languageSettings: updatedLanguageSettings,
         reminderLevel,
         overseer,
+        miningSameLevelExamples,
+        miningHigherLevelExamples,
       });
 
       const localSettings: Record<string, unknown> = {
@@ -418,6 +424,33 @@ export function SettingsScreen() {
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
         />
+
+        {!isOnboarding && (
+          <div className="settings-mining">
+            <span className="settings-toggle-title">{t.settings_mining_title}</span>
+            <span className="settings-toggle-desc">{t.settings_mining_desc}</span>
+            <label>
+              <span>{t.settings_mining_current}</span>
+              <select
+                className="select-input"
+                value={miningSameLevelExamples}
+                onChange={(event) => setMiningSameLevelExamples(Number(event.target.value))}
+              >
+                {[1, 2, 3, 4, 5].map((count) => <option key={count} value={count}>{count}</option>)}
+              </select>
+            </label>
+            <label>
+              <span>{t.settings_mining_higher}</span>
+              <select
+                className="select-input"
+                value={miningHigherLevelExamples}
+                onChange={(event) => setMiningHigherLevelExamples(Number(event.target.value))}
+              >
+                {[0, 1, 2, 3].map((count) => <option key={count} value={count}>{count}</option>)}
+              </select>
+            </label>
+          </div>
+        )}
 
         <div className="settings-level">
           <span className="settings-toggle-title">{t.settings_reminder_level}</span>

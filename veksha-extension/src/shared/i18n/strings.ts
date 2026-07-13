@@ -93,6 +93,10 @@ export interface Strings {
   settings_goals_placeholder: string;
   settings_prompt_label: string;
   settings_prompt_placeholder: string;
+  settings_mining_title: string;
+  settings_mining_desc: string;
+  settings_mining_current: string;
+  settings_mining_higher: string;
   settings_reminder_level: string;
   settings_reminder_level_desc: string;
   settings_reminder_level_1: string;
@@ -139,6 +143,14 @@ export interface Strings {
   dictionary_show_answer: string;
   dictionary_again: string;
   dictionary_good: string;
+  sentence_mining_title: string;
+  sentence_mining_loading: string;
+  sentence_mining_examples: string;
+  sentence_mining_mnemonic: string;
+  sentence_mining_collocations: string;
+  sentence_mining_regenerate: string;
+  sentence_mining_error: string;
+  sentence_mining_level_up: string;
   stats_review_today: string;
   stats_review_in_days: string;
   stats_review_overdue: string;
@@ -414,6 +426,10 @@ export const EN: Strings = {
   settings_goals_placeholder: "e.g. Improve speaking, expand vocabulary, business English...",
   settings_prompt_label: "General prompt for AI",
   settings_prompt_placeholder: "e.g. Be supportive, correct my mistakes, explain grammar simply...",
+  settings_mining_title: "Sentence Mining cards",
+  settings_mining_desc: "Choose how many AI examples to generate when you open a saved word.",
+  settings_mining_current: "At my current level",
+  settings_mining_higher: "One level higher",
   settings_reminder_level: "Reminder intensity",
   settings_reminder_level_desc: "How insistently Veksha reminds you to train.",
   settings_reminder_level_1: "Just a notification",
@@ -458,6 +474,14 @@ export const EN: Strings = {
   dictionary_show_answer: "Show answer",
   dictionary_again: "Again",
   dictionary_good: "Good",
+  sentence_mining_title: "AI Sentence Mining card",
+  sentence_mining_loading: "Creating examples, mnemonic and collocations…",
+  sentence_mining_examples: "Examples",
+  sentence_mining_mnemonic: "Mnemonic",
+  sentence_mining_collocations: "Frequent collocations",
+  sentence_mining_regenerate: "Regenerate",
+  sentence_mining_error: "Could not create the AI card.",
+  sentence_mining_level_up: "level up",
   stats_review_today: "review today",
   stats_review_in_days: "review in {n}d",
   stats_review_overdue: "review overdue",

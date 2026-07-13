@@ -320,5 +320,17 @@
   "grammar_role_time": "Tijd",
   "grammar_role_modifier": "Bepaling",
   "feature_enabled": "Aan",
-  "feature_disabled": "Uit"
+  "feature_disabled": "Uit",
+  "settings_mining_title": "Zinmining-kaarten",
+  "settings_mining_desc": "Kies hoeveel AI-voorbeelden je wilt genereren wanneer je een opgeslagen woord opent.",
+  "settings_mining_current": "Op mijn huidige niveau",
+  "settings_mining_higher": "Eén niveau hoger",
+  "sentence_mining_title": "AI-zinminingkaart",
+  "sentence_mining_loading": "Voorbeelden, ezelsbrug en collocaties worden gemaakt…",
+  "sentence_mining_examples": "Voorbeelden",
+  "sentence_mining_mnemonic": "Ezelsbrug",
+  "sentence_mining_collocations": "Veelvoorkomende collocaties",
+  "sentence_mining_regenerate": "Opnieuw genereren",
+  "sentence_mining_error": "Kon de AI-kaart niet maken.",
+  "sentence_mining_level_up": "niveau omhoog"
 }

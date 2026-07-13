@@ -319,5 +319,17 @@
   "grammar_role_time": "Zeit",
   "grammar_role_modifier": "Attribut",
   "feature_enabled": "Ein",
-  "feature_disabled": "Aus"
+  "feature_disabled": "Aus",
+  "settings_mining_title": "Sentence-Mining-Karten",
+  "settings_mining_desc": "Wähle, wie viele AI-Beispiele erzeugt werden sollen, wenn du ein gespeichertes Wort öffnest.",
+  "settings_mining_current": "Auf meinem aktuellen Niveau",
+  "settings_mining_higher": "Eine Stufe höher",
+  "sentence_mining_title": "AI Sentence-Mining-Karte",
+  "sentence_mining_loading": "Beispiele, Eselsbrücke und Kollokationen werden erstellt…",
+  "sentence_mining_examples": "Beispiele",
+  "sentence_mining_mnemonic": "Eselsbrücke",
+  "sentence_mining_collocations": "Häufige Kollokationen",
+  "sentence_mining_regenerate": "Neu erstellen",
+  "sentence_mining_error": "Die AI-Karte konnte nicht erstellt werden.",
+  "sentence_mining_level_up": "eine Stufe höher"
 }

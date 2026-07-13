@@ -26,6 +26,7 @@ class Word:
     delayed: bool = False                  # delayed — priority +1 in next training session
     next_review: float = 0.0               # timestamp of next review
     extra_data: str = ""                   # translation/example shown on incorrect answer
+    sentence_mining: dict[str, Any] = field(default_factory=dict)
     # FSRS memory state (see fsrs.py); stability == 0.0 means "no state yet",
     # the first review initializes it. Existing pre-FSRS words migrate the
     # same way: their fixed-interval history is simply not counted.
@@ -50,6 +51,7 @@ class Word:
             delayed=d.get("delayed", False),
             next_review=d.get("next_review", 0.0),
             extra_data=d.get("extra_data", ""),
+            sentence_mining=d.get("sentence_mining", {}) or {},
             stability=d.get("stability", 0.0),
             difficulty=d.get("difficulty", 0.0),
             last_review=d.get("last_review", 0.0),
@@ -139,6 +141,8 @@ class UserSettings:
     reminder_level: int = 2
     # Separate flag: the in-page close button runs away ("overseer" mode).
     overseer: bool = False
+    mining_same_level_examples: int = 2
+    mining_higher_level_examples: int = 1
 
     @property
     def target_langs(self) -> list[str]:

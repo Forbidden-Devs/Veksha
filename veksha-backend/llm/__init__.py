@@ -40,6 +40,7 @@ from llm.selection import (
 from llm.immersion import analyze_block
 from llm.ci_meter import classify_difficulty
 from llm.grammar_lens import analyze_grammar_block
+from llm.sentence_mining import generate_sentence_mining
 
 __all__ = [
     "input_processor",
@@ -60,4 +61,5 @@ __all__ = [
     "analyze_block",
     "classify_difficulty",
     "analyze_grammar_block",
+    "generate_sentence_mining",
 ]
