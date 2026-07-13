@@ -109,6 +109,7 @@ export interface Strings {
   settings_subscription: string;
   settings_sub_free: string;
   settings_sub_premium: string;
+  settings_sub_premium_active: string;
   settings_sub_desc: string;
   settings_sub_connect: string;
   settings_sub_manage: string;
@@ -451,6 +452,7 @@ export const EN: Strings = {
   settings_subscription: "Subscription",
   settings_sub_free: "Free plan",
   settings_sub_premium: "Premium — active until",
+  settings_sub_premium_active: "Premium — active",
   settings_sub_desc: "Premium unlocks Grammar Lens, page immersion and dual subtitles.",
   settings_sub_connect: "Subscribe via Telegram",
   settings_sub_manage: "Manage in Telegram",

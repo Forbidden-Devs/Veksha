@@ -542,8 +542,10 @@ export function SettingsScreen() {
           <div className="settings-account">
             <label className="field-label">{t.settings_subscription}</label>
             <p className="settings-account-status">
-              {billing?.tier === "premium" && billing.expires_at
-                ? `⭐ ${t.settings_sub_premium} ${new Date(billing.expires_at * 1000).toLocaleDateString()}`
+              {billing?.tier === "premium"
+                ? billing.expires_at
+                  ? `⭐ ${t.settings_sub_premium} ${new Date(billing.expires_at * 1000).toLocaleDateString()}`
+                  : `⭐ ${t.settings_sub_premium_active}`
                 : t.settings_sub_free}
             </p>
             {billing?.tier !== "premium" && (

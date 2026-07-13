@@ -107,6 +107,7 @@ UI_STRINGS: dict[str, str] = {
     "settings_subscription": "Subscription",
     "settings_sub_free": "Free plan",
     "settings_sub_premium": "Premium — active until",
+    "settings_sub_premium_active": "Premium — active",
     "settings_sub_desc": "Premium unlocks Grammar Lens, page immersion and dual subtitles.",
     "settings_sub_connect": "Subscribe via Telegram",
     "settings_sub_manage": "Manage in Telegram",

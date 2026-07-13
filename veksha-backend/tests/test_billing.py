@@ -55,7 +55,7 @@ def test_webhook_rejects_bad_secret():
 def test_link_flow():
     username = _user("link")
     out = _link(username, 111)
-    assert out["linked"] is True and out["tier"] == "free"
+    assert out["linked"] is True and out["tier"] == "premium"
     assert db.telegram_link_owner(111) == username
 
     # A code is single-use.
@@ -127,38 +127,47 @@ def test_unknown_plan_is_400():
         assert e.status_code == 400
 
 
-def test_feature_gating_and_expiry():
+def test_feature_gating_expiry_and_global_override():
     username = _user("gate")
-    assert entitlements.has_feature(username, "grammar_lens") is False
-    assert entitlements.has_feature(username, "anything_ungated") is True
-
-    db.subscription_extend(username, entitlements.TIER_PREMIUM, 31)
-    assert entitlements.has_feature(username, "grammar_lens") is True
-    tier, expires_at = entitlements.subscription_of(username)
-    assert tier == "premium" and expires_at is not None
-
-    # Force-expire: back to free.
-    with db._conn() as c:
-        c.execute("UPDATE subscriptions SET expires_at=? WHERE username=?",
-                  (time.time() - 1, username))
-    assert entitlements.subscription_of(username) == ("free", None)
-    assert entitlements.has_feature(username, "grammar_lens") is False
-
-    # The gating dependency raises 402 with a machine-readable code.
-    check = entitlements.require_feature("grammar_lens")
     try:
-        asyncio.run(check(username))
-        assert False, "expected 402"
-    except HTTPException as e:
-        assert e.status_code == 402
-        assert e.detail["code"] == "subscription_required"
+        # Preserve coverage for the normal paid/free rules underneath the
+        # temporary launch override.
+        entitlements.GRANT_PREMIUM_TO_ALL = False
+        assert entitlements.has_feature(username, "grammar_lens") is False
+        assert entitlements.has_feature(username, "anything_ungated") is True
+
+        db.subscription_extend(username, entitlements.TIER_PREMIUM, 31)
+        assert entitlements.has_feature(username, "grammar_lens") is True
+        tier, expires_at = entitlements.subscription_of(username)
+        assert tier == "premium" and expires_at is not None
+
+        # Force-expire: back to free.
+        with db._conn() as c:
+            c.execute("UPDATE subscriptions SET expires_at=? WHERE username=?",
+                      (time.time() - 1, username))
+        assert entitlements.subscription_of(username) == ("free", None)
+        assert entitlements.has_feature(username, "grammar_lens") is False
+
+        # The gating dependency raises 402 with a machine-readable code.
+        check = entitlements.require_feature("grammar_lens")
+        try:
+            asyncio.run(check(username))
+            assert False, "expected 402"
+        except HTTPException as e:
+            assert e.status_code == 402
+            assert e.detail["code"] == "subscription_required"
+    finally:
+        entitlements.GRANT_PREMIUM_TO_ALL = True
+
+    assert entitlements.subscription_of(username) == ("premium", None)
+    assert entitlements.has_feature(username, "grammar_lens") is True
 
 
 def test_billing_status_endpoint():
     username = _user("status")
     out = asyncio.run(billing.api_billing_status(username))
-    assert (out.tier, out.expires_at, out.telegram_linked) == ("free", None, False)
-    assert out.features == []
+    assert (out.tier, out.expires_at, out.telegram_linked) == ("premium", None, False)
+    assert "grammar_lens" in out.features
 
     _link(username, 666)
     db.subscription_extend(username, entitlements.TIER_PREMIUM, 31)
