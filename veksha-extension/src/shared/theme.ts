@@ -20,9 +20,6 @@ export async function getTheme(): Promise<ThemeName> {
     const st = await storageGet([THEME_STORAGE_KEY]);
     const name = st[THEME_STORAGE_KEY] as string | undefined;
     if (THEMES.includes(name as ThemeName)) return name as ThemeName;
-    // Migrate the four experimental palettes to the unified light/dark pair.
-    if (name === "dusk" || name === "hazel" || name === "midnight") return "dark";
-    if (name === "lavender") return "light";
     return DEFAULT_THEME;
   } catch {
     return DEFAULT_THEME;

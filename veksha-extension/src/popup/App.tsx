@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import * as api from "../shared/api";
 import { CONFIG } from "../shared/config";
 import { useI18n } from "../shared/i18n";
-import { isExtension, storageGet, storageRemove, storageSet } from "../shared/platform";
+import { isExtension, sessionGet, sessionSet, storageGet, storageRemove, storageSet } from "../shared/platform";
 import type { Screen, SettingsMode } from "../shared/types";
 import { LessonWindow } from "./overlays/LessonWindow";
 import { ReminderCard } from "./overlays/ReminderCard";
@@ -104,6 +104,47 @@ export function useApp(): AppCtx {
 
 type ObStep = "native_lang" | "username" | "target_lang" | "level_setup";
 
+// ---------------------------------------------------------------------------
+// Resumable UI state — the browser closes the action popup on ANY focus loss
+// (a click outside, another window, waiting out a long translation), wiping
+// all React state. A session-scoped snapshot lets the next open resume on the
+// same screen / onboarding step instead of starting over.
+// ---------------------------------------------------------------------------
+
+const UI_STATE_KEY = "vk_ui_state";
+// Stale snapshots are ignored: resuming mid-onboarding seconds after an
+// accidental close is helpful; jumping to a day-old screen is confusing.
+const UI_STATE_TTL_MS = 15 * 60 * 1000;
+
+interface SavedObState {
+  step: ObStep;
+  nativeLang: string;
+  username: string;
+  displayName: string;
+  targetLangs: string[];
+  levelSetup: Record<string, { level: string; goals: string; prompt: string }>;
+  levelIndex: number;
+}
+
+interface SavedUiState {
+  ts: number;
+  screen: Screen;
+  settingsMode: SettingsMode;
+  /** Present only while the onboarding flow is active. */
+  ob?: SavedObState;
+}
+
+async function loadSavedUiState(): Promise<SavedUiState | null> {
+  try {
+    const stored = await sessionGet([UI_STATE_KEY]);
+    const state = stored[UI_STATE_KEY] as SavedUiState | undefined;
+    if (!state?.ts || Date.now() - state.ts > UI_STATE_TTL_MS) return null;
+    return state;
+  } catch {
+    return null;
+  }
+}
+
 export default function App() {
   const { t, switchLanguage } = useI18n();
 
@@ -155,22 +196,66 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    storageGet([CONFIG.STORAGE_KEY_USERNAME, CONFIG.STORAGE_KEY_TOKEN]).then(
-      async (result: Record<string, unknown>) => {
-        const stored = result[CONFIG.STORAGE_KEY_USERNAME] as string | undefined;
-        const token = result[CONFIG.STORAGE_KEY_TOKEN] as string | undefined;
-        if (stored && token) {
-          api.setAuthToken(token);
-          setUsername(stored);
-          await routeAfterUsername(stored);
-        } else {
-          setUsername(null); // show onboarding flow (also covers pre-auth installs)
-        }
+    Promise.all([
+      storageGet([CONFIG.STORAGE_KEY_USERNAME, CONFIG.STORAGE_KEY_TOKEN]),
+      loadSavedUiState(),
+    ]).then(async ([result, saved]) => {
+      const stored = result[CONFIG.STORAGE_KEY_USERNAME] as string | undefined;
+      const token = result[CONFIG.STORAGE_KEY_TOKEN] as string | undefined;
+      if (stored && token) api.setAuthToken(token);
+      // A popup killed mid-onboarding: resume the same step with the pending
+      // choices instead of restarting from scratch. Credentials may already
+      // exist (registration happens at the username step), so this must be
+      // checked before the signed-in route.
+      if (saved?.ob) {
+        const ob = saved.ob;
+        setPendingNativeLang(ob.nativeLang);
+        setNativeLang(ob.nativeLang);
+        setPendingUsername(ob.username);
+        setPendingDisplayName(ob.displayName);
+        setPendingTargetLangs(ob.targetLangs?.length ? ob.targetLangs : ["en"]);
+        setPendingLevelSetup(ob.levelSetup ?? {});
+        setPendingLevelIndex(ob.levelIndex ?? 0);
+        setObStep(ob.step);
+        setUsername(null);
+        return;
       }
-    );
+      if (stored && token) {
+        setUsername(stored);
+        await routeAfterUsername(stored, saved);
+      } else {
+        setUsername(null); // show onboarding flow (also covers pre-auth installs)
+      }
+    });
   }, []);
 
-  async function routeAfterUsername(name: string) {
+  // Snapshot the resumable UI state on every change. Skipped until the initial
+  // storage read resolves so the default "home" doesn't clobber a saved
+  // snapshot before it has been restored.
+  useEffect(() => {
+    if (username === undefined) return;
+    const state: SavedUiState = {
+      ts: Date.now(),
+      screen,
+      settingsMode,
+      ...(username === null
+        ? {
+            ob: {
+              step: obStep,
+              nativeLang: pendingNativeLang,
+              username: pendingUsername,
+              displayName: pendingDisplayName,
+              targetLangs: pendingTargetLangs,
+              levelSetup: pendingLevelSetup,
+              levelIndex: pendingLevelIndex,
+            },
+          }
+        : {}),
+    };
+    sessionSet({ [UI_STATE_KEY]: state });
+  }, [username, screen, settingsMode, obStep, pendingNativeLang, pendingUsername, pendingDisplayName, pendingTargetLangs, pendingLevelSetup, pendingLevelIndex]);
+
+  async function routeAfterUsername(name: string, saved?: SavedUiState | null) {
     try {
       const settings = await api.getSettings(name);
       if (settings.native_lang) {
@@ -181,6 +266,10 @@ export default function App() {
       if (!settings.is_onboarded) {
         setSettingsMode("onboarding");
         setScreen("settings");
+      } else if (saved) {
+        // Reopened shortly after a focus-loss close — resume where they were.
+        setSettingsMode(saved.settingsMode);
+        setScreen(saved.screen);
       } else {
         setScreen("home");
       }
@@ -226,6 +315,13 @@ export default function App() {
   async function signOut() {
     await storageRemove([CONFIG.STORAGE_KEY_USERNAME, CONFIG.STORAGE_KEY_TOKEN]);
     api.setAuthToken(null);
+    // Clear pending onboarding leftovers: a stale pendingUsername would make
+    // the username step skip registration for the signed-out account.
+    setPendingUsername("");
+    setPendingDisplayName("");
+    setPendingTargetLangs(["en"]);
+    setPendingLevelSetup({});
+    setPendingLevelIndex(0);
     setObStep("native_lang");
     setScreen("home");
     setUsername(null);

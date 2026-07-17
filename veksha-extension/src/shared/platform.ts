@@ -52,6 +52,33 @@ export async function storageSet(items: Record<string, unknown>): Promise<void> 
   }
 }
 
+/** Session-scoped storage for transient UI state: survives the popup being
+ *  closed (the browser kills the action popup on any focus loss), cleared
+ *  when the browser exits. Web build falls back to window.sessionStorage. */
+export async function sessionGet(keys: string[]): Promise<Record<string, unknown>> {
+  if (isExtension && chrome.storage.session) {
+    try { return await chrome.storage.session.get(keys); } catch { return {}; }
+  }
+  const out: Record<string, unknown> = {};
+  for (const k of keys) {
+    const raw = sessionStorage.getItem(LS_PREFIX + k);
+    if (raw !== null) {
+      try { out[k] = JSON.parse(raw); } catch { out[k] = raw; }
+    }
+  }
+  return out;
+}
+
+export async function sessionSet(items: Record<string, unknown>): Promise<void> {
+  if (isExtension && chrome.storage.session) {
+    try { await chrome.storage.session.set(items); } catch { /* ignore */ }
+    return;
+  }
+  for (const [k, v] of Object.entries(items)) {
+    sessionStorage.setItem(LS_PREFIX + k, JSON.stringify(v));
+  }
+}
+
 export async function storageRemove(keys: string[]): Promise<void> {
   if (isExtension) {
     await chrome.storage.local.remove(keys);

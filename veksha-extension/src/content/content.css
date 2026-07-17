@@ -1,65 +1,36 @@
 /**
  * content.css — styles for the floating icon and translation popup.
  *
- * Palette matches the main extension UI (chat popup): dark plum
- * for text/icon, soft pink-blue gradient for accent elements
- * ("More details" button), light lavender background for cards.
+ * Palette follows the app's forest identity (popup/theme.css): warm cream
+ * surfaces with rust-orange and pine-green accents, light and dark.
  */
-
-:root {
-  --av-ink: #3f4e70;
-  --av-muted: #6b7280;
-  --av-border: #eceef2;
-  --av-surface: #fbfbfd;
-  --av-accent: #d93d82;
-  --av-accent-soft: #fde8f1;
-  --av-gradient: linear-gradient(135deg, #f26ba6 0%, #4c9fe0 135%);
-  --av-error: #b3413a;
-}
-
 
 /* ---------------------------------------------------------------------- */
 /* Themes: content overlays follow the app palette (shared/theme.ts).      */
-/* The attribute is set on <html> by content.ts from storage (vk_theme).   */
+/* The attribute is set on <html> by content.ts from storage (vk_theme);   */
+/* light doubles as the no-attribute default.                              */
 /* ---------------------------------------------------------------------- */
 
-html[data-vk-theme="dusk"] {
-  --av-ink: #1fbf57;
-  --av-muted: rgba(242, 238, 251, 0.6);
-  --av-border: #3a3448;
-  --av-surface: #221e2c;
-  --av-accent: #d4408d;
-  --av-accent-soft: rgba(212, 64, 141, 0.18);
-  --av-gradient: linear-gradient(135deg, #d4408d 0%, #7a5cd0 135%);
-  --av-error: #e07b74;
+:root {
+  --av-ink: #25291f;
+  --av-muted: #686b5f;
+  --av-border: #d8d1c2;
+  --av-surface: #fffdf8;
+  --av-accent: #a95124;
+  --av-accent-soft: #f1d4b7;
+  --av-gradient: linear-gradient(135deg, #a95124 0%, #3f6954 135%);
+  --av-error: #9f332d;
 }
 
-html[data-vk-theme="hazel"] {
-  --av-ink: #f7efe6;
-  --av-muted: rgba(247, 239, 230, 0.6);
-  --av-border: #453931;
-  --av-surface: #2a221b;
-  --av-accent: #d98e3b;
-  --av-accent-soft: rgba(217, 142, 59, 0.18);
-  --av-gradient: linear-gradient(135deg, #d98e3b 0%, #b25b4a 135%);
-  --av-error: #e07b74;
-}
-
-html[data-vk-theme="lavender"] {
-  --av-accent: #c04a94;
-  --av-accent-soft: #f5e3ef;
-  --av-gradient: linear-gradient(135deg, #c04a94 0%, #7a5cd0 135%);
-}
-
-html[data-vk-theme="midnight"] {
-  --av-ink: #eef4f8;
-  --av-muted: rgba(238, 244, 248, 0.6);
-  --av-border: #2c3a48;
-  --av-surface: #1b242e;
-  --av-accent: #2fa8c9;
-  --av-accent-soft: rgba(47, 168, 201, 0.18);
-  --av-gradient: linear-gradient(135deg, #2fa8c9 0%, #4a6bd8 135%);
-  --av-error: #e07b74;
+html[data-vk-theme="dark"] {
+  --av-ink: #f5f0e5;
+  --av-muted: #b1b4a8;
+  --av-border: #464d42;
+  --av-surface: #222720;
+  --av-accent: #e07b42;
+  --av-accent-soft: #4d3827;
+  --av-gradient: linear-gradient(135deg, #e07b42 0%, #5b8a70 135%);
+  --av-error: #ef8a80;
 }
 
 /* ---------------------------------------------------------------------- */

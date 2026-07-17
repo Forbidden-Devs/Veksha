@@ -796,11 +796,11 @@ initVocabFreq({ getUsername });
 // Overlay theming: mirror the app palette (see shared/theme.ts). The token
 // sets live in content.css keyed by this attribute; live-updates on change.
 chrome.storage.local.get(["vk_theme"], (res) => {
-  document.documentElement.dataset.vkTheme = (res.vk_theme as string) || "dusk";
+  document.documentElement.dataset.vkTheme = (res.vk_theme as string) || "light";
 });
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === "local" && changes.vk_theme) {
-    document.documentElement.dataset.vkTheme = String(changes.vk_theme.newValue ?? "dusk");
+    document.documentElement.dataset.vkTheme = String(changes.vk_theme.newValue ?? "light");
   }
 });
 

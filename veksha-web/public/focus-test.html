@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+<body>
+  <div id="log"></div>
+  <input id="answer" placeholder="answer" />
+  <button id="reveal">Show answer</button>
+  <script>
+    const inputRef = { current: document.getElementById("answer") };
+    // — exact copy of the AnkiCards effect body —
+    const refocus = () => {
+      setTimeout(() => {
+        if (document.activeElement === document.body) inputRef.current?.focus();
+      }, 0);
+    };
+    const rescueTyping = (e) => {
+      if (e.metaKey || e.ctrlKey || e.altKey || e.key.length !== 1) return;
+      const el = inputRef.current;
+      if (!el || document.activeElement === el) return;
+      const target = e.target;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
+      el.focus();
+    };
+    document.addEventListener("focusout", refocus);
+    window.addEventListener("focus", refocus);
+    document.addEventListener("keydown", rescueTyping);
+    // — end copy —
+    inputRef.current.focus();
+    let clicks = 0;
+    document.getElementById("reveal").addEventListener("click", () => { clicks++; });
+    window.__state = () => ({
+      active: document.activeElement.id || document.activeElement.tagName,
+      value: inputRef.current.value,
+      clicks,
+    });
+  </script>
+</body>
+</html>

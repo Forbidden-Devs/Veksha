@@ -1,9 +1,8 @@
 /**
  * popup.css — main extension UI (chat + menu + onboarding).
  *
- * Palette: soft pink-lavender-blue (per user's design reference),
- * cards on a light background with large border radius, accent
- * buttons — gradient pink -> blue.
+ * Base layout and legacy palette; the current forest identity
+ * (light/dark token sets) is layered on top by theme.css.
  */
 
 :root {
@@ -1294,7 +1293,7 @@ html, body, #root {
 .word-list-name {
   font-size: 13px;
   font-weight: 600;
-  color: var(--av-text);
+  color: var(--av-ink);
   flex: 1;
   min-width: 0;
   white-space: nowrap;

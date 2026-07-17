@@ -183,12 +183,15 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   async function switchLanguage(next: string) {
     const seq = ++switchSeqRef.current;
     setTranslating(true);
+    // Persist the choice before the (possibly long) translation load: if the
+    // popup is closed mid-load, the next open resumes in the chosen language
+    // instead of forgetting it.
+    storageSet({ [CURRENT_LANG_KEY]: next || "en" });
     try {
       const strings = await loadOrGenerateTranslation(next);
       if (seq !== switchSeqRef.current) return; // superseded by a newer switch
       setT(strings);
       setLang(next || "en");
-      storageSet({ [CURRENT_LANG_KEY]: next || "en" });
     } finally {
       if (seq === switchSeqRef.current) setTranslating(false);
     }

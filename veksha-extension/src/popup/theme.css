@@ -6,86 +6,18 @@
  * strict flat-and-sharp look. Imported after popup.css by every entry
  * (popup, training/lesson pages, veksha-web).
  *
- * Palettes are swappable at runtime: shared/theme.ts sets
- * `data-veksha-theme` on <html>; each theme below only redefines tokens.
+ * Two palettes, swappable at runtime: shared/theme.ts sets
+ * `data-veksha-theme` on <html> to "light" or "dark"; the token sets live
+ * in the "Veksha forest system" section below (light doubles as the
+ * no-attribute default).
  */
 
 :root {
-  /* radii — one knob for how "tiley" the UI feels */
-  --r-sm: 8px;
-  --r-md: 12px;
-  --r-lg: 18px;
-
-  /* dusk (default): dark violet-magenta, the Metro prototype's palette */
-  --m-bg: #14121a;
-  --m-surface: #1f1c27;
-  --m-surface-2: #2b2735;
-  --m-fg: #ffffff;
-  --m-dim: rgba(255, 255, 255, 0.55);
-  --m-accent: #d4408d;
-  --m-accent-2: #7a5cd0;
-  --m-on-accent: #ffffff;
-  --m-border: rgba(255, 255, 255, 0.22);
-  --m-input-bg: #ffffff;
-  --m-input-fg: #171522;
-  --m-input-border: transparent;
-  --m-tile-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
   --av-bg: var(--m-bg);
   --av-surface: var(--m-surface);
   --av-ink: var(--m-fg);
   --av-muted: var(--m-dim);
   --av-border: var(--m-border);
-}
-
-/* hazel — warm nutty dark, the squirrel's autumn */
-:root[data-veksha-theme="hazel"] {
-  --m-bg: #191411;
-  --m-surface: #241d17;
-  --m-surface-2: #322820;
-  --m-fg: #f7efe6;
-  --m-dim: rgba(247, 239, 230, 0.55);
-  --m-accent: #d98e3b;
-  --m-accent-2: #b25b4a;
-  --m-on-accent: #241505;
-  --m-border: rgba(247, 239, 230, 0.22);
-  --m-input-bg: #fdf7ee;
-  --m-input-fg: #241d15;
-  --m-input-border: transparent;
-  --m-tile-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
-}
-
-/* lavender — light heir of the original pastel identity */
-:root[data-veksha-theme="lavender"] {
-  --m-bg: #f2eefb;
-  --m-surface: #ffffff;
-  --m-surface-2: #e9e2f7;
-  --m-fg: #392f55;
-  --m-dim: rgba(57, 47, 85, 0.55);
-  --m-accent: #c04a94;
-  --m-accent-2: #7a5cd0;
-  --m-on-accent: #ffffff;
-  --m-border: rgba(57, 47, 85, 0.2);
-  --m-input-bg: #ffffff;
-  --m-input-fg: #392f55;
-  --m-input-border: rgba(122, 92, 208, 0.35);
-  --m-tile-shadow: 0 8px 20px rgba(101, 78, 163, 0.22);
-}
-
-/* midnight — cool neutral blue with cyan accent */
-:root[data-veksha-theme="midnight"] {
-  --m-bg: #0f1419;
-  --m-surface: #182028;
-  --m-surface-2: #223040;
-  --m-fg: #eef4f8;
-  --m-dim: rgba(238, 244, 248, 0.55);
-  --m-accent: #2fa8c9;
-  --m-accent-2: #4a6bd8;
-  --m-on-accent: #06222c;
-  --m-border: rgba(238, 244, 248, 0.22);
-  --m-input-bg: #f4f8fb;
-  --m-input-fg: #14202a;
-  --m-input-border: transparent;
-  --m-tile-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
 }
 
 body,
@@ -350,7 +282,7 @@ body,
    Re-skin of existing components (surfaces, buttons, inputs, chat)
    --------------------------------------------------------------------------- */
 
-/* background sheet (was the lavender squirrel pattern) */
+/* background sheet */
 .chat-messages {
   background: var(--m-bg) !important;
 }
