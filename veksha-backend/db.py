@@ -190,6 +190,31 @@ def _conn() -> sqlite3.Connection:
                    ts                         REAL NOT NULL
                )"""
         )
+        # Manually-issued promo codes (e.g. testers, giveaways): redeeming one
+        # grants Premium for `days` via the same subscriptions table payment
+        # does. `redemptions` is a denormalized counter capped at
+        # `max_redemptions`, kept in sync with promo_redemptions under the
+        # same transaction.
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS promo_codes (
+                   code            TEXT PRIMARY KEY,
+                   days            REAL NOT NULL,
+                   max_redemptions INTEGER NOT NULL,
+                   redemptions     INTEGER NOT NULL DEFAULT 0,
+                   created         REAL NOT NULL,
+                   note            TEXT NOT NULL DEFAULT ''
+               )"""
+        )
+        # One row per (code, username): the primary key stops a user from
+        # redeeming the same code twice.
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS promo_redemptions (
+                   code        TEXT NOT NULL,
+                   username    TEXT NOT NULL,
+                   redeemed_at REAL NOT NULL,
+                   PRIMARY KEY (code, username)
+               )"""
+        )
         conn.commit()
         _local.conn = conn
     return conn
@@ -333,7 +358,7 @@ def purge_all_users() -> None:
             "identities", "review_log", "word_freq", "chat_history",
             "kb", "user_languages", "user_settings",
             "subscriptions", "telegram_links", "telegram_link_codes",
-            "star_payments", "users",
+            "star_payments", "promo_redemptions", "promo_codes", "users",
         ):
             c.execute(f"DELETE FROM {table}")
 
@@ -499,6 +524,64 @@ def subscription_extend(username: str, tier: str, days: float) -> float:
             (username, tier, expires_at, now),
         )
     return expires_at
+
+
+def promo_code_create(code: str, days: float, max_redemptions: int = 1, note: str = "") -> bool:
+    """Mint a promo code. Returns False if the code already exists."""
+    try:
+        with _conn() as c:
+            c.execute(
+                "INSERT INTO promo_codes (code, days, max_redemptions, redemptions, created, note) "
+                "VALUES (?,?,?,0,?,?)",
+                (code, days, max_redemptions, time.time(), note),
+            )
+        return True
+    except sqlite3.IntegrityError:
+        return False
+
+
+def promo_code_redeem(code: str, username: str) -> tuple[str, Optional[float]]:
+    """Atomically claim one use of `code` for `username`.
+
+    Returns (status, days): status is "ok", "invalid" (unknown code),
+    "exhausted" (all uses already claimed), or "already_redeemed" (this user
+    redeemed this code before). `days` is only set when status == "ok" — the
+    caller still has to grant it via subscription_extend.
+
+    The redemption count is claimed via a conditional UPDATE rather than a
+    read-then-write, so two concurrent redemptions of the same code can't
+    both slip through and push `redemptions` past `max_redemptions`.
+    """
+    with _conn() as c:
+        cur = c.execute(
+            "UPDATE promo_codes SET redemptions = redemptions + 1 "
+            "WHERE code=? AND redemptions < max_redemptions",
+            (code,),
+        )
+        if cur.rowcount == 0:
+            exists = c.execute("SELECT 1 FROM promo_codes WHERE code=?", (code,)).fetchone()
+            if not exists:
+                return "invalid", None
+            # An exhausted code the user themselves redeemed should read as
+            # "already redeemed", not "someone claimed it all".
+            mine = c.execute(
+                "SELECT 1 FROM promo_redemptions WHERE code=? AND username=?",
+                (code, username),
+            ).fetchone()
+            return ("already_redeemed" if mine else "exhausted"), None
+
+        try:
+            c.execute(
+                "INSERT INTO promo_redemptions (code, username, redeemed_at) VALUES (?,?,?)",
+                (code, username, time.time()),
+            )
+        except sqlite3.IntegrityError:
+            # Already redeemed by this user — release the slot we just claimed.
+            c.execute("UPDATE promo_codes SET redemptions = redemptions - 1 WHERE code=?", (code,))
+            return "already_redeemed", None
+
+        days = c.execute("SELECT days FROM promo_codes WHERE code=?", (code,)).fetchone()[0]
+    return "ok", days
 
 
 def telegram_link_code_create(username: str, code: str) -> None:

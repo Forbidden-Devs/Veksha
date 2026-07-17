@@ -335,5 +335,16 @@
   "settings_sub_desc": "Premium débloque Grammar Lens, l’immersion de page et les sous-titres doubles.",
   "settings_sub_connect": "S’abonner via Telegram",
   "settings_sub_manage": "Gérer dans Telegram",
-  "settings_sub_err": "Impossible d’ouvrir le bot d’abonnement. Réessayez plus tard."
+  "settings_sub_err": "Impossible d’ouvrir le bot d’abonnement. Réessayez plus tard.",
+  "settings_sub_premium_active": "Premium — actif",
+  "settings_promo_label": "Code promo",
+  "settings_promo_placeholder": "Entrez un code promo",
+  "settings_promo_submit": "Utiliser",
+  "settings_promo_success": "Code promo utilisé — Premium déverrouillé.",
+  "settings_promo_error_invalid": "Ce code promo n'existe pas.",
+  "settings_promo_error_exhausted": "Ce code promo a déjà été entièrement utilisé.",
+  "settings_promo_error_already_redeemed": "Vous avez déjà utilisé ce code promo.",
+  "settings_promo_error_generic": "Impossible d'utiliser le code promo. Réessayez plus tard.",
+  "premium_required_title": "Premium requis",
+  "premium_required_desc": "{feature} nécessite un abonnement Premium actif."
 }

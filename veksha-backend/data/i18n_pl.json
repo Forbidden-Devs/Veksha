@@ -334,5 +334,16 @@
   "settings_sub_desc": "Premium odblokowuje Grammar Lens, zanurzenie strony i podwójne napisy.",
   "settings_sub_connect": "Subskrybuj przez Telegram",
   "settings_sub_manage": "Zarządzaj w Telegramie",
-  "settings_sub_err": "Nie udało się otworzyć bota subskrypcji. Spróbuj ponownie później."
+  "settings_sub_err": "Nie udało się otworzyć bota subskrypcji. Spróbuj ponownie później.",
+  "settings_sub_premium_active": "Premium — aktywny",
+  "settings_promo_label": "Kod promocyjny",
+  "settings_promo_placeholder": "Wpisz kod promocyjny",
+  "settings_promo_submit": "Wykorzystaj",
+  "settings_promo_success": "Kod promocyjny wykorzystany — Premium odblokowane.",
+  "settings_promo_error_invalid": "Ten kod promocyjny nie istnieje.",
+  "settings_promo_error_exhausted": "Ten kod promocyjny został już w pełni wykorzystany.",
+  "settings_promo_error_already_redeemed": "Już wykorzystałeś(-aś) ten kod promocyjny.",
+  "settings_promo_error_generic": "Nie udało się wykorzystać kodu promocyjnego. Spróbuj ponownie później.",
+  "premium_required_title": "Wymagany Premium",
+  "premium_required_desc": "{feature} wymaga aktywnej subskrypcji Premium."
 }

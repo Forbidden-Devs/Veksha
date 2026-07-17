@@ -217,5 +217,16 @@
   "settings_sub_desc": "პრემიუმი ხსნის Grammar Lens-ს, გვერდის იმერსიას და ორმაგ სუბტიტრებს.",
   "settings_sub_connect": "გამოწერა Telegram-ის მეშვეობით",
   "settings_sub_manage": "მართვა Telegram-ში",
-  "settings_sub_err": "გამოწერის ბოტის გახსნა ვერ მოხერხდა. სცადეთ მოგვიანებით."
+  "settings_sub_err": "გამოწერის ბოტის გახსნა ვერ მოხერხდა. სცადეთ მოგვიანებით.",
+  "settings_sub_premium_active": "პრემიუმი — აქტიურია",
+  "settings_promo_label": "პრომო კოდი",
+  "settings_promo_placeholder": "შეიყვანეთ პრომო კოდი",
+  "settings_promo_submit": "გამოყენება",
+  "settings_promo_success": "პრომო კოდი გამოყენებულია — Premium განბლოკილია.",
+  "settings_promo_error_invalid": "ეს პრომო კოდი არ არსებობს.",
+  "settings_promo_error_exhausted": "ეს პრომო კოდი უკვე სრულად გამოყენებულია.",
+  "settings_promo_error_already_redeemed": "ამ პრომო კოდი უკვე გამოიყენეთ.",
+  "settings_promo_error_generic": "პრომო კოდის გამოყენება ვერ მოხერხდა. სცადეთ მოგვიანებით.",
+  "premium_required_title": "საჭიროა Premium",
+  "premium_required_desc": "{feature} მოითხოვს აქტიურ Premium გამოწერას."
 }

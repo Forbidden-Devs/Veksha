@@ -333,5 +333,16 @@
   "settings_sub_desc": "プレミアムでGrammar Lens、ページ没入、2重字幕が使えます。",
   "settings_sub_connect": "Telegramで購読",
   "settings_sub_manage": "Telegramで管理",
-  "settings_sub_err": "サブスクリプションボットを開けませんでした。後でもう一度お試しください。"
+  "settings_sub_err": "サブスクリプションボットを開けませんでした。後でもう一度お試しください。",
+  "settings_sub_premium_active": "Premium — 有効",
+  "settings_promo_label": "プロモコード",
+  "settings_promo_placeholder": "プロモコードを入力",
+  "settings_promo_submit": "適用",
+  "settings_promo_success": "プロモコードを適用しました — Premium が解放されました。",
+  "settings_promo_error_invalid": "このプロモコードは存在しません。",
+  "settings_promo_error_exhausted": "このプロモコードはすでにすべて使用されました。",
+  "settings_promo_error_already_redeemed": "このプロモコードはすでに適用済みです。",
+  "settings_promo_error_generic": "プロモコードを適用できませんでした。あとでもう一度お試しください。",
+  "premium_required_title": "Premium が必要です",
+  "premium_required_desc": "{feature} を使うには、Premium の有効なサブスクリプションが必要です。"
 }

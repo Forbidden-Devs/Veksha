@@ -207,5 +207,16 @@
   "settings_sub_desc": "प्रीमियम से Grammar Lens, पेज इमर्शन और डुअल सबटाइटल्स अनलॉक होते हैं।",
   "settings_sub_connect": "Telegram के जरिए सब्सक्राइब करें",
   "settings_sub_manage": "Telegram में मैनेज करें",
-  "settings_sub_err": "सब्सक्रिप्शन बॉट नहीं खुल सका। कृपया बाद में फिर कोशिश करें।"
+  "settings_sub_err": "सब्सक्रिप्शन बॉट नहीं खुल सका। कृपया बाद में फिर कोशिश करें।",
+  "settings_sub_premium_active": "प्रीमियम — सक्रिय",
+  "settings_promo_label": "प्रोमो कोड",
+  "settings_promo_placeholder": "प्रोमो कोड दर्ज करें",
+  "settings_promo_submit": "रिडीम करें",
+  "settings_promo_success": "प्रोमो कोड रिडीम हो गया — प्रीमियम अनलॉक हो गया।",
+  "settings_promo_error_invalid": "यह प्रोमो कोड मौजूद नहीं है।",
+  "settings_promo_error_exhausted": "इस प्रोमो कोड का पूरा उपयोग हो चुका है।",
+  "settings_promo_error_already_redeemed": "आपने यह प्रोमो कोड पहले ही रिडीम कर लिया है।",
+  "settings_promo_error_generic": "प्रोमो कोड रिडीम नहीं किया जा सका। बाद में फिर कोशिश करें।",
+  "premium_required_title": "प्रीमियम आवश्यक",
+  "premium_required_desc": "{feature} के लिए सक्रिय प्रीमियम सदस्यता चाहिए।"
 }

@@ -207,5 +207,16 @@
   "settings_sub_desc": "Το Premium ξεκλειδώνει το Grammar Lens, την εμβύθιση σελίδας και τους διπλούς υπότιτλους.",
   "settings_sub_connect": "Εγγραφή μέσω Telegram",
   "settings_sub_manage": "Διαχείριση στο Telegram",
-  "settings_sub_err": "Δεν ήταν δυνατό να ανοίξει το bot συνδρομής. Δοκιμάστε ξανά αργότερα."
+  "settings_sub_err": "Δεν ήταν δυνατό να ανοίξει το bot συνδρομής. Δοκιμάστε ξανά αργότερα.",
+  "settings_sub_premium_active": "Premium — ενεργό",
+  "settings_promo_label": "Κωδικός προσφοράς",
+  "settings_promo_placeholder": "Εισαγάγετε κωδικό προσφοράς",
+  "settings_promo_submit": "Εξαργύρωση",
+  "settings_promo_success": "Ο κωδικός προσφοράς εξαργυρώθηκε — το Premium ξεκλειδώθηκε.",
+  "settings_promo_error_invalid": "Αυτός ο κωδικός προσφοράς δεν υπάρχει.",
+  "settings_promo_error_exhausted": "Αυτός ο κωδικός προσφοράς έχει ήδη εξαργυρωθεί πλήρως.",
+  "settings_promo_error_already_redeemed": "Έχετε ήδη εξαργυρώσει αυτόν τον κωδικό προσφοράς.",
+  "settings_promo_error_generic": "Δεν ήταν δυνατή η εξαργύρωση του κωδικού προσφοράς. Δοκιμάστε ξανά αργότερα.",
+  "premium_required_title": "Απαιτείται Premium",
+  "premium_required_desc": "Το {feature} απαιτεί ενεργή συνδρομή Premium."
 }

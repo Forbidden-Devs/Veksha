@@ -4,6 +4,7 @@ api/billing.py — subscriptions and the Telegram Stars billing bridge.
 Client endpoints (Bearer):
   GET  /api/billing/status         → {tier, expires_at, features, telegram_linked}
   POST /api/billing/telegram/link  → {code, url}  (deep link into the bot)
+  POST /api/billing/promo/redeem   → {code} → grants Premium if the code is valid
 
 Companion-bot endpoints (X-Veksha-Bot-Secret header, no user token):
   GET  /api/billing/plans             → purchasable plans (entitlements.PLANS)
@@ -13,9 +14,15 @@ Companion-bot endpoints (X-Veksha-Bot-Secret header, no user token):
                              "plan_id", "stars_amount"}
         {"event": "status",  "telegram_user_id"}
 
+Admin endpoint (X-Veksha-Admin-Secret header, see config.ADMIN_API_SECRET):
+  POST /api/billing/promo/create  → mint a promo code for manual testing grants
+
 Money never touches this backend: the bot collects Telegram Stars and reports
 completed payments here. The webhook is idempotent — a payment is applied at
 most once per telegram_payment_charge_id (see db.star_payment_record).
+
+Accounts default to the free tier; a promo code is the only way to grant
+Premium outside of a real payment.
 """
 from __future__ import annotations
 
@@ -77,6 +84,35 @@ async def api_billing_telegram_link(username: CurrentUser) -> TelegramLinkRespon
         code=code,
         url=f"https://t.me/{config.TELEGRAM_BOT_USERNAME}?start={code}",
     )
+
+
+class PromoRedeemRequest(BaseModel):
+    code: str
+
+
+class PromoRedeemResponse(BaseModel):
+    ok: bool
+    tier: str
+    expires_at: Optional[float] = None
+    error: Optional[str] = None  # "invalid" | "exhausted" | "already_redeemed"
+
+
+@router.post("/api/billing/promo/redeem", response_model=PromoRedeemResponse)
+async def api_billing_promo_redeem(
+    req: PromoRedeemRequest, username: CurrentUser,
+) -> PromoRedeemResponse:
+    code = req.code.strip().upper()
+    if not code:
+        raise HTTPException(status_code=400, detail="Missing code.")
+
+    status, days = db.promo_code_redeem(code, username)
+    if status != "ok":
+        tier, _ = entitlements.subscription_of(username)
+        return PromoRedeemResponse(ok=False, tier=tier, error=status)
+
+    expires_at = db.subscription_extend(username, entitlements.TIER_PREMIUM, days)
+    log.info("[billing] promo code %r redeemed by %r: premium until %s", code, username, expires_at)
+    return PromoRedeemResponse(ok=True, tier=entitlements.TIER_PREMIUM, expires_at=expires_at)
 
 
 # ---------------------------------------------------------------------------
@@ -179,3 +215,43 @@ async def api_billing_telegram_webhook(
         return _bot_status(username)
 
     raise HTTPException(status_code=400, detail=f"Unknown event {req.event!r}.")
+
+
+# ---------------------------------------------------------------------------
+# Admin endpoint (promo code issuance)
+# ---------------------------------------------------------------------------
+
+async def admin_auth(x_veksha_admin_secret: Optional[str] = Header(None)) -> None:
+    if not config.ADMIN_API_SECRET:
+        raise HTTPException(status_code=503, detail="Admin API is not configured.")
+    if not secrets.compare_digest(x_veksha_admin_secret or "", config.ADMIN_API_SECRET):
+        raise HTTPException(status_code=401, detail="Invalid admin secret.")
+
+
+class PromoCreateRequest(BaseModel):
+    code: str
+    days: float
+    max_redemptions: int = 1
+    note: str = ""
+
+
+@router.post("/api/billing/promo/create")
+async def api_billing_promo_create(
+    req: PromoCreateRequest,
+    x_veksha_admin_secret: Optional[str] = Header(None),
+) -> dict:
+    await admin_auth(x_veksha_admin_secret)
+    code = req.code.strip().upper()
+    if not code:
+        raise HTTPException(status_code=400, detail="Missing code.")
+    if req.days <= 0:
+        raise HTTPException(status_code=400, detail="days must be positive.")
+    if req.max_redemptions < 1:
+        raise HTTPException(status_code=400, detail="max_redemptions must be >= 1.")
+
+    created = db.promo_code_create(code, req.days, req.max_redemptions, req.note)
+    if not created:
+        raise HTTPException(status_code=409, detail="Code already exists.")
+    log.info("[billing] promo code %r created: %s days, max %d redemptions",
+              code, req.days, req.max_redemptions)
+    return {"ok": True, "code": code, "days": req.days, "max_redemptions": req.max_redemptions}

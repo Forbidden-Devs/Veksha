@@ -355,5 +355,16 @@
   "settings_sub_desc": "Премиум открывает Grammar Lens, погружение на странице и двойные субтитры.",
   "settings_sub_connect": "Оформить через Telegram",
   "settings_sub_manage": "Управлять в Telegram",
-  "settings_sub_err": "Не удалось открыть бот подписки. Попробуйте позже."
+  "settings_sub_err": "Не удалось открыть бот подписки. Попробуйте позже.",
+  "settings_sub_premium_active": "Premium — активен",
+  "settings_promo_label": "Промокод",
+  "settings_promo_placeholder": "Введите промокод",
+  "settings_promo_submit": "Активировать",
+  "settings_promo_success": "Промокод активирован — Premium разблокирован.",
+  "settings_promo_error_invalid": "Такого промокода не существует.",
+  "settings_promo_error_exhausted": "Этот промокод уже полностью использован.",
+  "settings_promo_error_already_redeemed": "Вы уже активировали этот промокод.",
+  "settings_promo_error_generic": "Не удалось активировать промокод. Попробуйте позже.",
+  "premium_required_title": "Требуется Premium",
+  "premium_required_desc": "Для {feature} нужна активная подписка Premium."
 }

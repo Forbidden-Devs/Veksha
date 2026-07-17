@@ -212,5 +212,16 @@
   "settings_sub_desc": "Premium membuka Grammar Lens, page immersion, dan subtitle ganda.",
   "settings_sub_connect": "Berlangganan via Telegram",
   "settings_sub_manage": "Kelola di Telegram",
-  "settings_sub_err": "Tidak dapat membuka bot langganan. Coba lagi nanti."
+  "settings_sub_err": "Tidak dapat membuka bot langganan. Coba lagi nanti.",
+  "settings_sub_premium_active": "Premium — aktif",
+  "settings_promo_label": "Kode promo",
+  "settings_promo_placeholder": "Masukkan kode promo",
+  "settings_promo_submit": "Tukarkan",
+  "settings_promo_success": "Kode promo berhasil ditukarkan — Premium terbuka.",
+  "settings_promo_error_invalid": "Kode promo ini tidak ada.",
+  "settings_promo_error_exhausted": "Kode promo ini sudah sepenuhnya diklaim.",
+  "settings_promo_error_already_redeemed": "Anda sudah menukarkan kode promo ini.",
+  "settings_promo_error_generic": "Tidak dapat menukarkan kode promo. Coba lagi nanti.",
+  "premium_required_title": "Premium diperlukan",
+  "premium_required_desc": "{feature} memerlukan langganan Premium yang aktif."
 }

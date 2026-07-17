@@ -34,6 +34,10 @@ export function SettingsScreen() {
   const [billing, setBilling] = useState<api.BillingStatus | null>(null);
   const [tgOpening, setTgOpening] = useState(false);
   const [tgError, setTgError] = useState<string | null>(null);
+  const [promoCode, setPromoCode] = useState("");
+  const [promoSubmitting, setPromoSubmitting] = useState(false);
+  const [promoError, setPromoError] = useState<string | null>(null);
+  const [promoSuccess, setPromoSuccess] = useState(false);
   const [level, setLevel] = useState("");
   const [goals, setGoals] = useState("");
   const [prompt, setPrompt] = useState("");
@@ -128,6 +132,32 @@ export function SettingsScreen() {
       setTgError(t.settings_sub_err);
     } finally {
       setTgOpening(false);
+    }
+  }
+
+  async function handleRedeemPromo() {
+    const code = promoCode.trim();
+    if (!code || promoSubmitting) return;
+    setPromoSubmitting(true);
+    setPromoError(null);
+    setPromoSuccess(false);
+    try {
+      const result = await api.redeemPromoCode(code);
+      if (result.ok) {
+        setPromoCode("");
+        setPromoSuccess(true);
+        setBilling(await api.getBillingStatus());
+      } else {
+        setPromoError(
+          result.error === "exhausted" ? t.settings_promo_error_exhausted
+          : result.error === "already_redeemed" ? t.settings_promo_error_already_redeemed
+          : t.settings_promo_error_invalid,
+        );
+      }
+    } catch {
+      setPromoError(t.settings_promo_error_generic);
+    } finally {
+      setPromoSubmitting(false);
     }
   }
 
@@ -555,6 +585,33 @@ export function SettingsScreen() {
               {billing?.tier === "premium" ? t.settings_sub_manage : t.settings_sub_connect}
             </button>
             {tgError && <p className="onboarding-error">{tgError}</p>}
+
+            <label className="field-label" htmlFor="settings-promo-code">{t.settings_promo_label}</label>
+            <div className="settings-promo-row">
+              <input
+                id="settings-promo-code"
+                className="text-input"
+                type="text"
+                maxLength={64}
+                placeholder={t.settings_promo_placeholder}
+                value={promoCode}
+                onChange={(e) => {
+                  setPromoCode(e.target.value);
+                  setPromoError(null);
+                  setPromoSuccess(false);
+                }}
+                onKeyDown={(e) => { if (e.key === "Enter") handleRedeemPromo(); }}
+              />
+              <button
+                className="btn"
+                disabled={promoSubmitting || !promoCode.trim()}
+                onClick={handleRedeemPromo}
+              >
+                {t.settings_promo_submit}
+              </button>
+            </div>
+            {promoError && <p className="onboarding-error">{promoError}</p>}
+            {promoSuccess && <p className="settings-toggle-desc">{t.settings_promo_success}</p>}
           </div>
         )}
 

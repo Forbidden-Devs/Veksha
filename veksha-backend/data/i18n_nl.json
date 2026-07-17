@@ -339,5 +339,16 @@
   "settings_sub_desc": "Premium ontgrendelt Grammar Lens, pagina-immersie en dubbele ondertitels.",
   "settings_sub_connect": "Abonneren via Telegram",
   "settings_sub_manage": "Beheren in Telegram",
-  "settings_sub_err": "Kon de abonnementsbot niet openen. Probeer het later opnieuw."
+  "settings_sub_err": "Kon de abonnementsbot niet openen. Probeer het later opnieuw.",
+  "settings_sub_premium_active": "Premium — actief",
+  "settings_promo_label": "Promocode",
+  "settings_promo_placeholder": "Voer een promotiecode in",
+  "settings_promo_submit": "Inwisselen",
+  "settings_promo_success": "Promocode ingewisseld — Premium ontgrendeld.",
+  "settings_promo_error_invalid": "Deze promotiecode bestaat niet.",
+  "settings_promo_error_exhausted": "Deze promotiecode is al volledig geclaimd.",
+  "settings_promo_error_already_redeemed": "Je hebt deze promotiecode al ingewisseld.",
+  "settings_promo_error_generic": "Kon de promotiecode niet inwisselen. Probeer het later opnieuw.",
+  "premium_required_title": "Premium vereist",
+  "premium_required_desc": "{feature} vereist een actief Premium-abonnement."
 }

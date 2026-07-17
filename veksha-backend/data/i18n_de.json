@@ -355,5 +355,16 @@
   "settings_sub_desc": "Premium schaltet Grammar Lens, Seitenimmersion und doppelte Untertitel frei.",
   "settings_sub_connect": "Per Telegram abonnieren",
   "settings_sub_manage": "In Telegram verwalten",
-  "settings_sub_err": "Der Abo-Bot konnte nicht geöffnet werden. Bitte später erneut versuchen."
+  "settings_sub_err": "Der Abo-Bot konnte nicht geöffnet werden. Bitte später erneut versuchen.",
+  "settings_sub_premium_active": "Premium — aktiv",
+  "settings_promo_label": "Promo-Code",
+  "settings_promo_placeholder": "Promo-Code eingeben",
+  "settings_promo_submit": "Einlösen",
+  "settings_promo_success": "Promo-Code eingelöst — Premium freigeschaltet.",
+  "settings_promo_error_invalid": "Dieser Promo-Code existiert nicht.",
+  "settings_promo_error_exhausted": "Dieser Promo-Code wurde bereits vollständig eingelöst.",
+  "settings_promo_error_already_redeemed": "Du hast diesen Promo-Code bereits eingelöst.",
+  "settings_promo_error_generic": "Der Promo-Code konnte nicht eingelöst werden. Bitte versuche es später erneut.",
+  "premium_required_title": "Premium erforderlich",
+  "premium_required_desc": "{feature} erfordert ein aktives Premium-Abonnement."
 }

@@ -227,6 +227,20 @@ export function createTelegramBillingLink(): Promise<{ code: string; url: string
   return _post("/api/billing/telegram/link", {});
 }
 
+export interface PromoRedeemResult {
+  ok: boolean;
+  tier: "free" | "premium";
+  expires_at: number | null;
+  error: "invalid" | "exhausted" | "already_redeemed" | null;
+}
+
+/** Redeem a manually-issued promo code for a temporary Premium grant.
+ *  `ok: false` with `error` set means the code was rejected — not a
+ *  network/HTTP failure, so callers don't need a try/catch for it. */
+export function redeemPromoCode(code: string): Promise<PromoRedeemResult> {
+  return _post("/api/billing/promo/redeem", { code });
+}
+
 // ---------------------------------------------------------------------------
 // API calls (user derived from the bearer token server-side)
 // ---------------------------------------------------------------------------

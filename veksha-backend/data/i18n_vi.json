@@ -209,5 +209,16 @@
   "settings_sub_desc": "Premium mở khóa Grammar Lens, chế độ đắm chìm trang và phụ đề đôi.",
   "settings_sub_connect": "Đăng ký qua Telegram",
   "settings_sub_manage": "Quản lý trong Telegram",
-  "settings_sub_err": "Không thể mở bot đăng ký. Vui lòng thử lại sau."
+  "settings_sub_err": "Không thể mở bot đăng ký. Vui lòng thử lại sau.",
+  "settings_sub_premium_active": "Premium — đang hoạt động",
+  "settings_promo_label": "Mã khuyến mãi",
+  "settings_promo_placeholder": "Nhập mã khuyến mãi",
+  "settings_promo_submit": "Đổi",
+  "settings_promo_success": "Đã đổi mã khuyến mãi — Premium đã mở khóa.",
+  "settings_promo_error_invalid": "Mã khuyến mãi này không tồn tại.",
+  "settings_promo_error_exhausted": "Mã khuyến mãi này đã được nhận hết.",
+  "settings_promo_error_already_redeemed": "Bạn đã đổi mã khuyến mãi này rồi.",
+  "settings_promo_error_generic": "Không thể đổi mã khuyến mãi. Vui lòng thử lại sau.",
+  "premium_required_title": "Cần Premium",
+  "premium_required_desc": "{feature} cần gói Premium đang hoạt động."
 }

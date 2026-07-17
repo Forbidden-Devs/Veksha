@@ -114,6 +114,14 @@ export interface Strings {
   settings_sub_connect: string;
   settings_sub_manage: string;
   settings_sub_err: string;
+  settings_promo_label: string;
+  settings_promo_placeholder: string;
+  settings_promo_submit: string;
+  settings_promo_success: string;
+  settings_promo_error_invalid: string;
+  settings_promo_error_exhausted: string;
+  settings_promo_error_already_redeemed: string;
+  settings_promo_error_generic: string;
   premium_required_title: string;
   premium_required_desc: string;
   settings_account: string;
@@ -457,6 +465,14 @@ export const EN: Strings = {
   settings_sub_connect: "Subscribe via Telegram",
   settings_sub_manage: "Manage in Telegram",
   settings_sub_err: "Could not open the subscription bot. Try again later.",
+  settings_promo_label: "Promo code",
+  settings_promo_placeholder: "Enter a promo code",
+  settings_promo_submit: "Redeem",
+  settings_promo_success: "Promo code redeemed — Premium unlocked.",
+  settings_promo_error_invalid: "This promo code doesn't exist.",
+  settings_promo_error_exhausted: "This promo code has already been fully claimed.",
+  settings_promo_error_already_redeemed: "You've already redeemed this promo code.",
+  settings_promo_error_generic: "Could not redeem the promo code. Try again later.",
   premium_required_title: "Premium required",
   premium_required_desc: "{feature} requires an active Premium subscription.",
   settings_account: "Account",

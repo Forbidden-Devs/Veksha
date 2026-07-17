@@ -209,5 +209,16 @@
   "settings_sub_desc": "Premium odemkne Grammar Lens, ponoření do stránky a dvojité titulky.",
   "settings_sub_connect": "Předplatit přes Telegram",
   "settings_sub_manage": "Spravovat v Telegramu",
-  "settings_sub_err": "Nepodařilo se otevřít předplatitelského bota. Zkuste to prosím později."
+  "settings_sub_err": "Nepodařilo se otevřít předplatitelského bota. Zkuste to prosím později.",
+  "settings_sub_premium_active": "Premium — aktivní",
+  "settings_promo_label": "Promo kód",
+  "settings_promo_placeholder": "Zadejte promo kód",
+  "settings_promo_submit": "Uplatnit",
+  "settings_promo_success": "Promo kód uplatněn — Premium odemčeno.",
+  "settings_promo_error_invalid": "Tento promo kód neexistuje.",
+  "settings_promo_error_exhausted": "Tento promo kód už byl plně vyčerpán.",
+  "settings_promo_error_already_redeemed": "Tento promo kód už jste uplatnili.",
+  "settings_promo_error_generic": "Promo kód se nepodařilo uplatnit. Zkuste to prosím později.",
+  "premium_required_title": "Vyžaduje Premium",
+  "premium_required_desc": "{feature} vyžaduje aktivní předplatné Premium."
 }

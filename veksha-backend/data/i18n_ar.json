@@ -328,5 +328,16 @@
   "settings_sub_desc": "تُفعّل الخطة المميزة Grammar Lens، والانغماس في الصفحة، والترجمات الثنائية.",
   "settings_sub_connect": "اشترك عبر Telegram",
   "settings_sub_manage": "إدارة في Telegram",
-  "settings_sub_err": "تعذّر فتح بوت الاشتراك. حاول مرة أخرى لاحقًا."
+  "settings_sub_err": "تعذّر فتح بوت الاشتراك. حاول مرة أخرى لاحقًا.",
+  "settings_sub_premium_active": "Premium — نشط",
+  "settings_promo_label": "رمز ترويجي",
+  "settings_promo_placeholder": "أدخل رمزًا ترويجيًا",
+  "settings_promo_submit": "استرداد",
+  "settings_promo_success": "تم استرداد الرمز الترويجي — تم تفعيل Premium.",
+  "settings_promo_error_invalid": "هذا الرمز الترويجي غير موجود.",
+  "settings_promo_error_exhausted": "تم استخدام هذا الرمز الترويجي بالكامل.",
+  "settings_promo_error_already_redeemed": "لقد استرددت هذا الرمز الترويجي بالفعل.",
+  "settings_promo_error_generic": "تعذر استرداد الرمز الترويجي. حاول مرة أخرى لاحقًا.",
+  "premium_required_title": "Premium مطلوب",
+  "premium_required_desc": "يتطلب {feature} اشتراك Premium نشطًا."
 }

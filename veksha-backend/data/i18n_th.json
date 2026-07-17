@@ -209,5 +209,16 @@
   "settings_sub_desc": "พรีเมียมปลดล็อก Grammar Lens, page immersion และคำบรรยายสองภาษา",
   "settings_sub_connect": "สมัครผ่าน Telegram",
   "settings_sub_manage": "จัดการใน Telegram",
-  "settings_sub_err": "ไม่สามารถเปิดบอทสมัครสมาชิกได้ โปรดลองอีกครั้งภายหลัง"
+  "settings_sub_err": "ไม่สามารถเปิดบอทสมัครสมาชิกได้ โปรดลองอีกครั้งภายหลัง",
+  "settings_sub_premium_active": "พรีเมียม — ใช้งานอยู่",
+  "settings_promo_label": "รหัสโปรโมชัน",
+  "settings_promo_placeholder": "กรอกรหัสโปรโมชัน",
+  "settings_promo_submit": "แลกรับ",
+  "settings_promo_success": "แลกรหัสโปรโมชันสำเร็จ — ปลดล็อกพรีเมียมแล้ว",
+  "settings_promo_error_invalid": "ไม่มีรหัสโปรโมชันนี้",
+  "settings_promo_error_exhausted": "รหัสโปรโมชันนี้ถูกใช้ครบแล้ว",
+  "settings_promo_error_already_redeemed": "คุณได้แลกรหัสโปรโมชันนี้แล้ว",
+  "settings_promo_error_generic": "ไม่สามารถแลกรหัสโปรโมชันได้ ลองใหม่อีกครั้งภายหลัง",
+  "premium_required_title": "ต้องใช้พรีเมียม",
+  "premium_required_desc": "{feature} ต้องมีการสมัครสมาชิกพรีเมียมที่ใช้งานอยู่"
 }

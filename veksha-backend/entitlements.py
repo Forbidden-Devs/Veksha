@@ -29,11 +29,6 @@ from auth import current_user
 TIER_FREE = "free"
 TIER_PREMIUM = "premium"
 
-# Temporary launch override: keep the real subscription records and payment
-# flow intact, but grant Premium entitlements to every authenticated user.
-# Set to False to restore normal tier/expiry enforcement.
-GRANT_PREMIUM_TO_ALL = True
-
 # Feature flags gated behind the premium tier. Everything else is free.
 PREMIUM_FEATURES: frozenset[str] = frozenset({
     "grammar_lens",     # POST /api/grammar-lens/analyze
@@ -81,8 +76,6 @@ def subscription_of(username: str) -> tuple[str, float | None]:
     sub = db.subscription_get(username)
     if sub and sub["expires_at"] > time.time():
         return sub["tier"], sub["expires_at"]
-    if GRANT_PREMIUM_TO_ALL:
-        return TIER_PREMIUM, None
     return TIER_FREE, None
 
 

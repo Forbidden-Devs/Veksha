@@ -56,6 +56,19 @@ Configure `TELEGRAM_BOT_USERNAME` and `TELEGRAM_BOT_WEBHOOK_SECRET`; both
 empty disables billing (the link endpoint returns 503, everyone stays on the
 free tier).
 
+Accounts default to the free tier. For manual test grants (e.g. beta
+testers), mint a promo code with `ADMIN_API_SECRET` set and:
+
+```
+curl -X POST $API/api/billing/promo/create \
+  -H "X-Veksha-Admin-Secret: $ADMIN_API_SECRET" -H "Content-Type: application/json" \
+  -d '{"code": "BETA30", "days": 30, "max_redemptions": 20}'
+```
+
+Users redeem it once each via `POST /api/billing/promo/redeem` (Bearer
+token, body `{"code": "..."}`) for `days` of Premium; without a code an
+account stays on the free tier.
+
 ## Module map
 
 ```
@@ -98,7 +111,9 @@ api/                  routers (one file per domain)
 | `POST /api/immersion/analyze` | comprehensible-input page immersion (premium) |
 | `POST /api/subtitles/translate` | dual-subtitle line translation with word alignment (premium) |
 | `GET /api/billing/status`, `POST /api/billing/telegram/link` | subscription status / bot deep link |
+| `POST /api/billing/promo/redeem` | redeem a promo code for temporary Premium |
 | `GET /api/billing/plans`, `POST /api/billing/telegram/webhook` | companion-bot API (shared secret) |
+| `POST /api/billing/promo/create` | mint a promo code (admin shared secret) |
 | `GET /api/i18n/{lang}`, `POST /api/i18n/translate` | UI string catalogues |
 | `POST /api/debug/*` | development helpers (reset, simulate, advance-day) |
 

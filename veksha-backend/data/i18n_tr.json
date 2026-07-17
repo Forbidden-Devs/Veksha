@@ -206,5 +206,16 @@
   "settings_sub_desc": "Premium, Grammar Lens, sayfa sürükleyiciliği ve çift altyazıyı açar.",
   "settings_sub_connect": "Telegram üzerinden abone ol",
   "settings_sub_manage": "Telegram'da yönet",
-  "settings_sub_err": "Abonelik botu açılamadı. Lütfen daha sonra tekrar deneyin."
+  "settings_sub_err": "Abonelik botu açılamadı. Lütfen daha sonra tekrar deneyin.",
+  "settings_sub_premium_active": "Premium — aktif",
+  "settings_promo_label": "Promos kodu",
+  "settings_promo_placeholder": "Bir promos kodu girin",
+  "settings_promo_submit": "Kullan",
+  "settings_promo_success": "Promos kodu kullanıldı — Premium açıldı.",
+  "settings_promo_error_invalid": "Bu promos kodu mevcut değil.",
+  "settings_promo_error_exhausted": "Bu promos kodu tamamen kullanılmış.",
+  "settings_promo_error_already_redeemed": "Bu promos kodunu zaten kullandınız.",
+  "settings_promo_error_generic": "Promos kodu kullanılamadı. Daha sonra tekrar deneyin.",
+  "premium_required_title": "Premium gerekli",
+  "premium_required_desc": "{feature} için aktif bir Premium aboneliği gerekiyor."
 }

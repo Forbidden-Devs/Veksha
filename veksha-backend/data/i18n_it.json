@@ -212,5 +212,16 @@
   "settings_sub_desc": "Premium sblocca Grammar Lens, immersione nella pagina e sottotitoli duali.",
   "settings_sub_connect": "Abbonati via Telegram",
   "settings_sub_manage": "Gestisci su Telegram",
-  "settings_sub_err": "Impossibile aprire il bot dell'abbonamento. Riprova più tardi."
+  "settings_sub_err": "Impossibile aprire il bot dell'abbonamento. Riprova più tardi.",
+  "settings_sub_premium_active": "Premium — attivo",
+  "settings_promo_label": "Codice promo",
+  "settings_promo_placeholder": "Inserisci un codice promo",
+  "settings_promo_submit": "Riscatta",
+  "settings_promo_success": "Codice promo riscattato — Premium sbloccato.",
+  "settings_promo_error_invalid": "Questo codice promo non esiste.",
+  "settings_promo_error_exhausted": "Questo codice promo è già stato usato بالكامل.",
+  "settings_promo_error_already_redeemed": "Hai già riscattato questo codice promo.",
+  "settings_promo_error_generic": "Impossibile riscattare il codice promo. Riprova più tardi.",
+  "premium_required_title": "Premium richiesto",
+  "premium_required_desc": "{feature} richiede un abbonamento Premium attivo."
 }

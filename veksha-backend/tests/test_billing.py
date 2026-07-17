@@ -15,6 +15,7 @@ import time
 os.environ["VEKSHA_DATA_DIR"] = tempfile.mkdtemp(prefix="veksha-test-")
 os.environ["TELEGRAM_BOT_USERNAME"] = "veksha_test_bot"
 os.environ["TELEGRAM_BOT_WEBHOOK_SECRET"] = "test-secret"
+os.environ["ADMIN_API_SECRET"] = "test-admin-secret"
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import db  # noqa: E402
@@ -23,6 +24,7 @@ import api.billing as billing  # noqa: E402
 from fastapi import HTTPException  # noqa: E402
 
 SECRET = "test-secret"
+ADMIN_SECRET = "test-admin-secret"
 
 
 def _user(name: str) -> str:
@@ -55,7 +57,7 @@ def test_webhook_rejects_bad_secret():
 def test_link_flow():
     username = _user("link")
     out = _link(username, 111)
-    assert out["linked"] is True and out["tier"] == "premium"
+    assert out["linked"] is True and out["tier"] == "free"
     assert db.telegram_link_owner(111) == username
 
     # A code is single-use.
@@ -127,53 +129,137 @@ def test_unknown_plan_is_400():
         assert e.status_code == 400
 
 
-def test_feature_gating_expiry_and_global_override():
+def test_feature_gating_and_expiry():
     username = _user("gate")
-    try:
-        # Preserve coverage for the normal paid/free rules underneath the
-        # temporary launch override.
-        entitlements.GRANT_PREMIUM_TO_ALL = False
-        assert entitlements.has_feature(username, "grammar_lens") is False
-        assert entitlements.has_feature(username, "anything_ungated") is True
+    assert entitlements.has_feature(username, "grammar_lens") is False
+    assert entitlements.has_feature(username, "anything_ungated") is True
 
-        db.subscription_extend(username, entitlements.TIER_PREMIUM, 31)
-        assert entitlements.has_feature(username, "grammar_lens") is True
-        tier, expires_at = entitlements.subscription_of(username)
-        assert tier == "premium" and expires_at is not None
-
-        # Force-expire: back to free.
-        with db._conn() as c:
-            c.execute("UPDATE subscriptions SET expires_at=? WHERE username=?",
-                      (time.time() - 1, username))
-        assert entitlements.subscription_of(username) == ("free", None)
-        assert entitlements.has_feature(username, "grammar_lens") is False
-
-        # The gating dependency raises 402 with a machine-readable code.
-        check = entitlements.require_feature("grammar_lens")
-        try:
-            asyncio.run(check(username))
-            assert False, "expected 402"
-        except HTTPException as e:
-            assert e.status_code == 402
-            assert e.detail["code"] == "subscription_required"
-    finally:
-        entitlements.GRANT_PREMIUM_TO_ALL = True
-
-    assert entitlements.subscription_of(username) == ("premium", None)
+    db.subscription_extend(username, entitlements.TIER_PREMIUM, 31)
     assert entitlements.has_feature(username, "grammar_lens") is True
+    tier, expires_at = entitlements.subscription_of(username)
+    assert tier == "premium" and expires_at is not None
+
+    # Force-expire: back to free.
+    with db._conn() as c:
+        c.execute("UPDATE subscriptions SET expires_at=? WHERE username=?",
+                  (time.time() - 1, username))
+    assert entitlements.subscription_of(username) == ("free", None)
+    assert entitlements.has_feature(username, "grammar_lens") is False
+
+    # The gating dependency raises 402 with a machine-readable code.
+    check = entitlements.require_feature("grammar_lens")
+    try:
+        asyncio.run(check(username))
+        assert False, "expected 402"
+    except HTTPException as e:
+        assert e.status_code == 402
+        assert e.detail["code"] == "subscription_required"
 
 
 def test_billing_status_endpoint():
     username = _user("status")
     out = asyncio.run(billing.api_billing_status(username))
-    assert (out.tier, out.expires_at, out.telegram_linked) == ("premium", None, False)
-    assert "grammar_lens" in out.features
+    assert (out.tier, out.expires_at, out.telegram_linked) == ("free", None, False)
+    assert out.features == []
 
     _link(username, 666)
     db.subscription_extend(username, entitlements.TIER_PREMIUM, 31)
     out = asyncio.run(billing.api_billing_status(username))
     assert out.tier == "premium" and out.telegram_linked is True
     assert "grammar_lens" in out.features
+
+
+# ---------------------------------------------------------------------------
+# Promo codes
+# ---------------------------------------------------------------------------
+
+def _create_promo(code: str, days: float, max_redemptions: int = 1, secret: str = ADMIN_SECRET) -> dict:
+    return asyncio.run(billing.api_billing_promo_create(
+        billing.PromoCreateRequest(code=code, days=days, max_redemptions=max_redemptions),
+        x_veksha_admin_secret=secret,
+    ))
+
+
+def _redeem_promo(code: str, username: str) -> billing.PromoRedeemResponse:
+    return asyncio.run(billing.api_billing_promo_redeem(
+        billing.PromoRedeemRequest(code=code), username,
+    ))
+
+
+def test_promo_create_requires_admin_secret():
+    try:
+        _create_promo("BADAUTH", 30, secret="wrong")
+        assert False, "expected 401"
+    except HTTPException as e:
+        assert e.status_code == 401
+
+
+def test_promo_redeem_grants_premium_without_affecting_others():
+    other = _user("promo_control")
+    assert entitlements.subscription_of(other) == ("free", None)
+
+    _create_promo("WELCOME30", 30)
+    username = _user("promo_redeem")
+    assert entitlements.subscription_of(username) == ("free", None)
+
+    out = _redeem_promo("welcome30", username)  # codes are case-insensitive
+    assert out.ok is True and out.tier == "premium"
+    assert out.expires_at > time.time() + 29 * 86400
+
+    tier, expires_at = entitlements.subscription_of(username)
+    assert tier == "premium" and expires_at == out.expires_at
+    # Untouched accounts stay on the free tier without a code.
+    assert entitlements.subscription_of(other) == ("free", None)
+
+
+def test_promo_redeem_is_single_use_per_account():
+    _create_promo("ONETIME", 7, max_redemptions=5)
+    username = _user("promo_repeat")
+
+    first = _redeem_promo("ONETIME", username)
+    assert first.ok is True
+
+    second = _redeem_promo("ONETIME", username)
+    assert second.ok is False and second.error == "already_redeemed"
+
+
+def test_promo_redeem_retry_of_own_exhausted_code_reads_already_redeemed():
+    # A code fully exhausted by the user themselves reports "already_redeemed",
+    # not "exhausted".
+    _create_promo("SELFEXHAUST", 7, max_redemptions=1)
+    username = _user("promo_self_exhaust")
+
+    assert _redeem_promo("SELFEXHAUST", username).ok is True
+    out = _redeem_promo("SELFEXHAUST", username)
+    assert out.ok is False and out.error == "already_redeemed"
+
+
+def test_promo_redeem_respects_max_redemptions():
+    _create_promo("LIMITED", 7, max_redemptions=1)
+    first_user = _user("promo_limit_1")
+    second_user = _user("promo_limit_2")
+
+    assert _redeem_promo("LIMITED", first_user).ok is True
+
+    out = _redeem_promo("LIMITED", second_user)
+    assert out.ok is False and out.error == "exhausted"
+    assert entitlements.subscription_of(second_user) == ("free", None)
+
+
+def test_promo_redeem_unknown_code():
+    username = _user("promo_unknown")
+    out = _redeem_promo("DOES-NOT-EXIST", username)
+    assert out.ok is False and out.error == "invalid"
+    assert entitlements.subscription_of(username) == ("free", None)
+
+
+def test_promo_create_duplicate_code_is_409():
+    _create_promo("DUPETEST", 10)
+    try:
+        _create_promo("DUPETEST", 10)
+        assert False, "expected 409"
+    except HTTPException as e:
+        assert e.status_code == 409
 
 
 if __name__ == "__main__":

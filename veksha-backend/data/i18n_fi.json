@@ -208,5 +208,16 @@
   "settings_sub_desc": "Premium avaa Grammar Lensin, sivujen immersiivisen tilan ja kaksinkertaiset tekstitykset.",
   "settings_sub_connect": "Tilaa Telegramin kautta",
   "settings_sub_manage": "Hallitse Telegramissa",
-  "settings_sub_err": "Tilausbotin avaaminen epäonnistui. Yritä myöhemmin uudelleen."
+  "settings_sub_err": "Tilausbotin avaaminen epäonnistui. Yritä myöhemmin uudelleen.",
+  "settings_sub_premium_active": "Premium — aktiivinen",
+  "settings_promo_label": "Koodi",
+  "settings_promo_placeholder": "Anna kampanjakoodi",
+  "settings_promo_submit": "Käytä",
+  "settings_promo_success": "Kampanjakoodi käytetty — Premium avattu.",
+  "settings_promo_error_invalid": "Tätä kampanjakoodia ei ole.",
+  "settings_promo_error_exhausted": "Tämä kampanjakoodi on jo käytetty loppuun.",
+  "settings_promo_error_already_redeemed": "Olet jo käyttänyt tämän kampanjakoodin.",
+  "settings_promo_error_generic": "Kampanjakoodin käyttäminen ei onnistunut. Yritä myöhemmin uudelleen.",
+  "premium_required_title": "Premium vaaditaan",
+  "premium_required_desc": "{feature} vaatii aktiivisen Premium-tilauksen."
 }

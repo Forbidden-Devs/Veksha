@@ -201,6 +201,16 @@ html, body, #root {
   color: rgba(60, 52, 90, 0.75);
 }
 
+.settings-promo-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.settings-promo-row .text-input {
+  flex: 1;
+}
+
 .btn-signout {
   background: transparent;
   color: #b04a5e;

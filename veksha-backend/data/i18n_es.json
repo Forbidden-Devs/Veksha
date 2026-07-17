@@ -333,5 +333,16 @@
   "settings_sub_desc": "Premium desbloquea Grammar Lens, inmersión en la página y subtítulos duales.",
   "settings_sub_connect": "Suscribirse por Telegram",
   "settings_sub_manage": "Gestionar en Telegram",
-  "settings_sub_err": "No se pudo abrir el bot de suscripción. Inténtalo de nuevo más tarde."
+  "settings_sub_err": "No se pudo abrir el bot de suscripción. Inténtalo de nuevo más tarde.",
+  "settings_sub_premium_active": "Premium — activo",
+  "settings_promo_label": "Código promocional",
+  "settings_promo_placeholder": "Introduce un código promocional",
+  "settings_promo_submit": "Canjear",
+  "settings_promo_success": "Código promocional canjeado — Premium desbloqueado.",
+  "settings_promo_error_invalid": "Este código promocional no existe.",
+  "settings_promo_error_exhausted": "Este código promocional ya se ha reclamado por completo.",
+  "settings_promo_error_already_redeemed": "Ya has canjeado este código promocional.",
+  "settings_promo_error_generic": "No se pudo canjear el código promocional. Inténtalo de nuevo más tarde.",
+  "premium_required_title": "Premium requerido",
+  "premium_required_desc": "{feature} requiere una suscripción Premium activa."
 }
