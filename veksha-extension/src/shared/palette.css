@@ -1,0 +1,88 @@
+/**
+ * Veksha palette — the only place where brand colours are chosen manually.
+ *
+ * To recolour the extension, edit the six seed values below. Surfaces,
+ * borders, hover/soft variants, dark-theme colours, shadows and legacy
+ * `--av-*` aliases are derived automatically with color-mix().
+ */
+:root {
+  --vk-paper: #f6f2e9;
+  --vk-ink: #25291f;
+  --vk-primary: #a95124;
+  --vk-secondary: #3f6954;
+  --vk-success: #2f6a48;
+  --vk-danger: #9f332d;
+}
+
+/* Light is also the fallback and the fixed tutorial appearance. */
+:root,
+:root[data-veksha-theme="light"],
+html[data-vk-theme="light"],
+.tut-window[data-tutorial-palette="forest"] {
+  color-scheme: light;
+  --m-bg: var(--vk-paper);
+  --m-surface: color-mix(in srgb, var(--vk-paper) 18%, white);
+  --m-surface-2: color-mix(in srgb, var(--vk-ink) 8%, var(--vk-paper));
+  --m-fg: var(--vk-ink);
+  --m-dim: color-mix(in srgb, var(--vk-ink) 68%, var(--vk-paper));
+  --m-accent: var(--vk-primary);
+  --m-accent-hover: color-mix(in srgb, var(--vk-primary) 82%, black);
+  --m-accent-2: var(--vk-secondary);
+  --m-accent-soft: color-mix(in srgb, var(--vk-primary) 20%, var(--vk-paper));
+  --m-on-accent: color-mix(in srgb, var(--vk-paper) 88%, white);
+  --m-border: color-mix(in srgb, var(--vk-ink) 15%, var(--vk-paper));
+  --m-input-bg: var(--m-surface);
+  --m-input-fg: var(--m-fg);
+  --m-input-border: color-mix(in srgb, var(--vk-ink) 20%, var(--vk-paper));
+  --m-error: var(--vk-danger);
+  --m-ok: var(--vk-success);
+  --m-tile-shadow: 0 10px 24px color-mix(in srgb, var(--vk-ink) 13%, transparent);
+  --m-elevated-shadow: 0 18px 48px color-mix(in srgb, var(--vk-ink) 16%, transparent);
+}
+
+/* Dark appearance is derived from the same seeds — no second palette. */
+:root[data-veksha-theme="dark"],
+html[data-vk-theme="dark"] {
+  color-scheme: dark;
+  --m-bg: color-mix(in srgb, var(--vk-ink) 70%, black);
+  --m-surface: color-mix(in srgb, var(--vk-ink) 84%, black);
+  --m-surface-2: color-mix(in srgb, var(--vk-ink) 88%, white 12%);
+  --m-fg: color-mix(in srgb, var(--vk-paper) 92%, white);
+  --m-dim: color-mix(in srgb, var(--m-fg) 66%, var(--m-bg));
+  --m-accent: color-mix(in srgb, var(--vk-primary) 72%, white);
+  --m-accent-hover: color-mix(in srgb, var(--vk-primary) 62%, white);
+  --m-accent-2: color-mix(in srgb, var(--vk-secondary) 74%, white);
+  --m-accent-soft: color-mix(in srgb, var(--vk-primary) 28%, var(--m-bg));
+  --m-on-accent: var(--m-bg);
+  --m-border: color-mix(in srgb, var(--m-fg) 21%, var(--m-bg));
+  --m-input-bg: color-mix(in srgb, var(--m-surface) 88%, white 12%);
+  --m-input-fg: var(--m-fg);
+  --m-input-border: color-mix(in srgb, var(--m-fg) 24%, var(--m-bg));
+  --m-error: color-mix(in srgb, var(--vk-danger) 55%, white);
+  --m-ok: color-mix(in srgb, var(--vk-success) 55%, white);
+  --m-tile-shadow: 0 12px 28px color-mix(in srgb, black 28%, transparent);
+  --m-elevated-shadow: 0 20px 52px color-mix(in srgb, black 38%, transparent);
+}
+
+/* Compatibility aliases used by the older component stylesheet. */
+:root,
+.tut-window[data-tutorial-palette="forest"] {
+  --av-bg: var(--m-bg);
+  --av-surface: var(--m-surface);
+  --av-ink: var(--m-fg);
+  --av-muted: var(--m-dim);
+  --av-faint: color-mix(in srgb, var(--m-dim) 72%, var(--m-bg));
+  --av-border: var(--m-border);
+  --av-pink: var(--m-accent);
+  --av-pink-deep: var(--m-accent-hover);
+  --av-blue: var(--m-accent-2);
+  --av-blue-soft: color-mix(in srgb, var(--m-accent-2) 18%, var(--m-bg));
+  --av-blue-deep: color-mix(in srgb, var(--m-accent-2) 82%, black);
+  --av-accent: var(--m-accent);
+  --av-accent-soft: var(--m-accent-soft);
+  --av-gradient: linear-gradient(135deg, var(--m-accent), var(--m-accent-2));
+  --av-bubble-user: var(--m-accent-soft);
+  --av-bubble-bot: var(--m-surface-2);
+  --av-error: var(--m-error);
+  --av-ok: var(--m-ok);
+}

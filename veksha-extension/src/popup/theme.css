@@ -6,10 +6,8 @@
  * strict flat-and-sharp look. Imported after popup.css by every entry
  * (popup, training/lesson pages, veksha-web).
  *
- * Two palettes, swappable at runtime: shared/theme.ts sets
- * `data-veksha-theme` on <html> to "light" or "dark"; the token sets live
- * in the "Veksha forest system" section below (light doubles as the
- * no-attribute default).
+ * shared/theme.ts switches the `data-veksha-theme` attribute. The editable
+ * colour seeds and all derived light/dark tokens live in shared/palette.css.
  */
 
 :root {
@@ -88,13 +86,14 @@ body,
 
 .m-tiles {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(12, minmax(0, 1fr));
   grid-auto-rows: 108px;
   gap: 8px;
   align-content: start;
 }
 
 .m-tile {
+  grid-column: span 3;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -112,6 +111,8 @@ body,
   transition: transform 0.09s ease;
   text-align: left;
 }
+
+.m-tile-wide { grid-column: span 6; }
 
 .m-tile:hover { transform: scale(0.985); }
 .m-tile:active { transform: scale(0.955); }
@@ -196,87 +197,24 @@ body,
 
 .m-feature-tile.is-on {
   box-shadow:
-    inset 0 0 0 3px rgba(94, 240, 166, .85),
+    inset 0 0 0 3px color-mix(in srgb, var(--m-ok) 85%, transparent),
     var(--m-elevated-shadow);
 }
 
 .m-feature-tile.is-on .m-feature-state {
-  background: #16754b;
-  color: #fff;
+  background: color-mix(in srgb, var(--m-ok) 82%, black);
+  color: var(--m-on-accent);
 }
 
 .m-feature-tile.is-on .m-feature-state i {
-  background: #73ffb5;
-  box-shadow: 0 0 7px rgba(115, 255, 181, .9);
+  background: color-mix(in srgb, var(--m-ok) 45%, white);
+  box-shadow: 0 0 7px color-mix(in srgb, var(--m-ok) 90%, transparent);
 }
 
 .m-feature-tile.is-off .m-tile-icon {
   opacity: .62;
   filter: saturate(.45);
 }
-
-/* wide live tile */
-.m-tile-wide {
-  grid-column: span 2;
-  flex-direction: row;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 16px;
-}
-
-.m-tile-big {
-  font-size: 52px;
-  font-weight: 200;
-  line-height: 1;
-}
-
-.m-tile-wide-text {
-  font-size: 13px;
-  line-height: 1.3;
-  color: var(--m-on-accent);
-  opacity: 0.85;
-  max-width: 150px;
-}
-
-/* ask bar */
-.m-ask {
-  margin-top: auto;
-  display: flex;
-  gap: 8px;
-  align-items: stretch;
-}
-
-.m-ask-input {
-  flex: 1;
-  min-width: 0;
-  padding: 11px 12px;
-  border: 2px solid var(--m-border);
-  border-radius: var(--r-md);
-  background: var(--m-surface);
-  color: var(--m-fg);
-  font-size: 14px;
-  font-family: inherit;
-  outline: none;
-}
-
-.m-ask-input:focus { border-color: var(--m-accent); background: var(--m-surface-2); }
-.m-ask-input::placeholder { color: var(--m-dim); text-transform: lowercase; }
-
-.m-ask-send {
-  width: 44px;
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid var(--m-border);
-  border-radius: var(--r-md);
-  background: var(--m-surface);
-  color: var(--m-fg);
-  cursor: pointer;
-}
-
-.m-ask-send svg { width: 18px; height: 18px; }
-.m-ask-send:hover { border-color: var(--m-accent); }
 
 /* ---------------------------------------------------------------------------
    Re-skin of existing components (surfaces, buttons, inputs, chat)
@@ -441,9 +379,9 @@ body,
   background: var(--m-surface) !important;
 }
 
-.feedback-correct { background: #1e5631 !important; color: #d9f2df !important; }
-.feedback-incorrect { background: #7a1f2b !important; color: #ffe0e4 !important; }
-.feedback-vague { background: #6b5b13 !important; color: #fff6cf !important; }
+.feedback-correct { background: color-mix(in srgb, var(--m-ok) 76%, black) !important; color: color-mix(in srgb, var(--m-ok) 18%, white) !important; }
+.feedback-incorrect { background: color-mix(in srgb, var(--m-error) 76%, black) !important; color: color-mix(in srgb, var(--m-error) 18%, white) !important; }
+.feedback-vague { background: color-mix(in srgb, var(--m-accent) 58%, black) !important; color: color-mix(in srgb, var(--m-accent) 16%, white) !important; }
 
 /* the pastel logo badge becomes a flat accent square */
 .logo-badge, .logo-badge-sm, .shell-brand-mark {
@@ -630,55 +568,13 @@ body,
 input[type="range"] { accent-color: var(--m-accent); }
 
 /* ---------------------------------------------------------------------------
-   Veksha forest system — one identity, two accessible appearances
+   Veksha forest system — layout tokens; colours live in shared/palette.css
    --------------------------------------------------------------------------- */
 
-:root,
-:root[data-veksha-theme="light"] {
-  color-scheme: light;
+:root {
   --r-sm: 10px;
   --r-md: 14px;
   --r-lg: 22px;
-  --m-bg: #f6f2e9;
-  --m-surface: #fffdf8;
-  --m-surface-2: #ebe5d8;
-  --m-fg: #25291f;
-  --m-dim: #686b5f;
-  --m-accent: #a95124;
-  --m-accent-hover: #8e411c;
-  --m-accent-2: #3f6954;
-  --m-accent-soft: #f1d4b7;
-  --m-on-accent: #fffaf1;
-  --m-border: #d8d1c2;
-  --m-input-bg: #fffdf8;
-  --m-input-fg: #25291f;
-  --m-input-border: #cfc6b5;
-  --m-tile-shadow: 0 10px 24px rgba(77, 57, 35, 0.13);
-  --m-elevated-shadow: 0 18px 48px rgba(77, 57, 35, 0.16);
-  --av-error: #9f332d;
-  --av-ok: #2f6a48;
-}
-
-:root[data-veksha-theme="dark"] {
-  color-scheme: dark;
-  --m-bg: #171a16;
-  --m-surface: #222720;
-  --m-surface-2: #30372d;
-  --m-fg: #f5f0e5;
-  --m-dim: #b1b4a8;
-  --m-accent: #e07b42;
-  --m-accent-hover: #ee8d55;
-  --m-accent-2: #5b8a70;
-  --m-accent-soft: #4d3827;
-  --m-on-accent: #22140c;
-  --m-border: #464d42;
-  --m-input-bg: #292e27;
-  --m-input-fg: #f5f0e5;
-  --m-input-border: #4d5549;
-  --m-tile-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
-  --m-elevated-shadow: 0 20px 52px rgba(0, 0, 0, 0.38);
-  --av-error: #ef8a80;
-  --av-ok: #82c99e;
 }
 
 body,
@@ -784,25 +680,6 @@ body,
   box-shadow: none;
 }
 
-.m-ask {
-  padding: 7px;
-  gap: 7px;
-  border: 1px solid var(--m-border);
-  border-radius: 18px;
-  background: var(--m-surface);
-  box-shadow: var(--m-tile-shadow);
-}
-.m-ask-input { padding: 9px 10px; border: 0; background: transparent; }
-.m-ask-input:focus { background: transparent; }
-.m-ask-send {
-  width: 42px;
-  min-height: 42px;
-  border: 0;
-  border-radius: 13px;
-  background: var(--m-surface-2);
-}
-.m-ask-send { background: var(--m-accent); color: var(--m-on-accent); }
-
 .m-back { border: 1px solid var(--m-border); background: var(--m-surface); color: var(--m-fg); }
 .btn, .btn-gradient, .shell-btn-primary { text-transform: none; border-radius: var(--r-md) !important; }
 .btn:hover, .send-btn:hover { background: var(--m-accent-hover) !important; }
@@ -836,13 +713,14 @@ body,
   color: white;
   font-size: 15px;
 }
-.theme-swatch-light { background: linear-gradient(135deg, #f6f2e9 0 48%, #a95124 48% 72%, #3f6954 72%); }
-.theme-swatch-dark { background: linear-gradient(135deg, #171a16 0 48%, #e07b42 48% 72%, #5b8a70 72%); }
-.theme-swatch-light::after { content: "☀"; color: #25291f; }
+.theme-swatch-light { background: linear-gradient(135deg, var(--vk-paper) 0 48%, var(--vk-primary) 48% 72%, var(--vk-secondary) 72%); }
+.theme-swatch-dark { background: linear-gradient(135deg, color-mix(in srgb, var(--vk-ink) 70%, black) 0 48%, color-mix(in srgb, var(--vk-primary) 72%, white) 48% 72%, color-mix(in srgb, var(--vk-secondary) 74%, white) 72%); }
+.theme-swatch-light::after { content: "☀"; color: var(--vk-ink); }
 .theme-swatch-dark::after { content: "☾"; }
 
 @media (max-width: 560px) {
   .m-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 104px; }
+  .m-tile { grid-column: auto; }
   .m-tile-wide { grid-column: span 2; }
   .shell-topbar { min-height: 66px; padding-inline: 16px; }
   .screen-home { padding-inline: 16px; }
@@ -852,19 +730,77 @@ body,
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }
 
-/* Tutorial/demo follows the same forest system instead of the legacy pink-blue skin. */
-.tut-window, .tut-main { background: var(--m-bg) !important; color: var(--m-fg) !important; }
-.tut-header, .tut-footer { background: var(--m-surface) !important; border-color: var(--m-border) !important; }
-.tut-stage {
+/* Tutorial/demo uses one stable forest palette in both application themes. */
+.tut-window[data-tutorial-palette="forest"] {
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 22px;
+  background: var(--m-bg) !important;
+  color: var(--m-fg) !important;
+}
+
+.tut-window[data-tutorial-palette="forest"] .tut-main {
+  background: var(--m-bg) !important;
+  color: var(--m-fg) !important;
+}
+
+.tut-window[data-tutorial-palette="forest"] .tut-header,
+.tut-window[data-tutorial-palette="forest"] .tut-footer {
+  background: var(--m-surface) !important;
+  border-color: var(--m-border) !important;
+}
+
+.tut-window[data-tutorial-palette="forest"] .tut-stage {
   background:
-    radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--m-accent) 18%, transparent), transparent 36%),
-    radial-gradient(circle at 82% 88%, color-mix(in srgb, var(--m-accent-2) 16%, transparent), transparent 38%),
+    radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--m-accent) 17%, transparent), transparent 36%),
+    radial-gradient(circle at 82% 88%, color-mix(in srgb, var(--m-accent-2) 18%, transparent), transparent 38%),
     var(--m-surface-2) !important;
 }
-.tut-title, .tut-header-title, .tut-hero-name { color: var(--m-fg) !important; }
-.tut-body { color: var(--m-dim) !important; }
-.tut-dot { background: var(--m-border) !important; }
-.tut-dot-active { background: var(--m-accent) !important; }
-.tut-shot { border-color: var(--m-border) !important; box-shadow: var(--m-elevated-shadow) !important; }
-.tut-phone, .tut-win-frame { border-color: var(--m-border) !important; box-shadow: var(--m-elevated-shadow) !important; }
-.tut-u { text-decoration-color: var(--m-accent) !important; }
+
+.tut-window[data-tutorial-palette="forest"] :is(.tut-title, .tut-header-title, .tut-hero-name) {
+  color: var(--m-fg) !important;
+}
+
+.tut-window[data-tutorial-palette="forest"] .tut-body { color: var(--m-dim) !important; }
+.tut-window[data-tutorial-palette="forest"] .tut-dot { background: var(--m-border) !important; }
+.tut-window[data-tutorial-palette="forest"] .tut-dot-active { background: var(--av-gradient) !important; }
+
+.tut-window[data-tutorial-palette="forest"] :is(.tut-shot, .tut-phone, .tut-win-frame) {
+  border-color: var(--m-border) !important;
+  box-shadow: var(--m-elevated-shadow) !important;
+}
+
+.tut-window[data-tutorial-palette="forest"] :is(.tut-phone, .tut-win-frame, .tut-imm-demo, .tut-mini-card) {
+  background: var(--m-surface) !important;
+}
+
+.tut-window[data-tutorial-palette="forest"] .tut-imm-list li { color: var(--m-dim); }
+.tut-window[data-tutorial-palette="forest"] .tut-u {
+  color: var(--m-accent-2) !important;
+  text-decoration-color: var(--m-accent-2) !important;
+}
+
+.tut-window[data-tutorial-palette="forest"] .tut-imm-hl {
+  background: color-mix(in srgb, var(--m-accent-2) 18%, var(--m-bg));
+  text-decoration-color: color-mix(in srgb, var(--m-accent-2) 65%, transparent);
+}
+
+.tut-window[data-tutorial-palette="forest"] .tut-imm-tip,
+.tut-window[data-tutorial-palette="forest"] .tut-imm-tip-tail {
+  background: color-mix(in srgb, var(--m-accent-2) 72%, black);
+}
+
+.tut-window[data-tutorial-palette="forest"] .tut-imm-tip {
+  color: var(--m-on-accent);
+  box-shadow: 0 10px 30px color-mix(in srgb, var(--m-accent-2) 24%, transparent);
+}
+
+.tut-window[data-tutorial-palette="forest"] .btn-gradient {
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--m-accent) 24%, transparent);
+}
+
+.tut-window[data-tutorial-palette="forest"] .immersion-toggle,
+.tut-window[data-tutorial-palette="forest"] .immersion-toggle.is-on {
+  animation: none;
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--m-accent-2) 24%, transparent);
+}

@@ -161,6 +161,8 @@
   "__same_as_en__": [
     "debug_backend",
     "debug_title",
+    "dictionary_sort_az",
+    "dictionary_sort_za",
     "menu_debug",
     "menu_title"
   ],
@@ -220,5 +222,12 @@
   "settings_promo_error_already_redeemed": "Tento promo kód už jste uplatnili.",
   "settings_promo_error_generic": "Promo kód se nepodařilo uplatnit. Zkuste to prosím později.",
   "premium_required_title": "Vyžaduje Premium",
-  "premium_required_desc": "{feature} vyžaduje aktivní předplatné Premium."
+  "premium_required_desc": "{feature} vyžaduje aktivní předplatné Premium.",
+  "dictionary_search_placeholder": "Hledat slovo…",
+  "dictionary_sort_label": "Třídit slova",
+  "dictionary_sort_az": "A–Z",
+  "dictionary_sort_za": "Z–A",
+  "dictionary_sort_newest": "Nejnovější první",
+  "dictionary_sort_oldest": "Nejstarší první",
+  "dictionary_no_results": "Nebylo nalezeno žádné odpovídající slovo."
 }

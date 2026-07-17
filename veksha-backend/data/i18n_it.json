@@ -161,6 +161,8 @@
   "__same_as_en__": [
     "debug_backend",
     "debug_title",
+    "dictionary_sort_az",
+    "dictionary_sort_za",
     "grammar_lens_off",
     "grammar_lens_title",
     "menu_debug",
@@ -223,5 +225,12 @@
   "settings_promo_error_already_redeemed": "Hai già riscattato questo codice promo.",
   "settings_promo_error_generic": "Impossibile riscattare il codice promo. Riprova più tardi.",
   "premium_required_title": "Premium richiesto",
-  "premium_required_desc": "{feature} richiede un abbonamento Premium attivo."
+  "premium_required_desc": "{feature} richiede un abbonamento Premium attivo.",
+  "dictionary_search_placeholder": "Cerca una parola…",
+  "dictionary_sort_label": "Ordina le parole",
+  "dictionary_sort_az": "A–Z",
+  "dictionary_sort_za": "Z–A",
+  "dictionary_sort_newest": "Più recenti prima",
+  "dictionary_sort_oldest": "Più vecchi prima",
+  "dictionary_no_results": "Nessuna parola corrispondente trovata."
 }

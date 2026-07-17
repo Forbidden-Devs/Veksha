@@ -8,12 +8,12 @@ import type { SettingsData } from "../../shared/types";
 import { useApp } from "../App";
 
 /**
- * HomeScreen — Metro start screen: a tile grid plus the "ask or type" bar.
+ * HomeScreen — Metro start screen with a compact feature tile grid.
  *
  * Layout (mirrors the paper sketch):
- *   [assistant] [topics] [training] [immersion]
- *   [   words collected (wide, live)  ] [stats] [settings]
- *   [ ask-or-type input                       ] [send]
+ *   [dictionary] [topics] [training] [immersion]
+ *   [dual subs] [grammar] [CI meter] [my words]
+ *   [statistics] [settings] [          language          ]
  */
 
 const Icons = {
@@ -26,25 +26,20 @@ const Icons = {
   settings: <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6 1.7 1.7 0 0 0 10 3v-.2h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z"/></svg>,
   language: <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.2 2.5 3.3 5.5 3.3 9S14.2 18.5 12 21c-2.2-2.5-3.3-5.5-3.3-9S9.8 5.5 12 3Z"/></svg>,
   grammar: <svg viewBox="0 0 24 24"><path d="M8 4H5v16h3M16 4h3v16h-3M10 8h4M10 12h4M10 16h4"/></svg>,
+  dualSubtitles: <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 10h4M7 14h7M16 10h1M16 14h1"/></svg>,
   myWords: <svg viewBox="0 0 24 24"><path d="M4 19V6a2 2 0 0 1 2-2h11l3 3v12a1 1 0 0 1-1 1H6a2 2 0 0 1-2-2Z"/><path d="M8 9h8M8 13h5"/></svg>,
-  send: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M22 2L11 13" />
-      <path d="M22 2l-7 20-4-9-9-4z" />
-    </svg>
-  ),
 };
 
 export function HomeScreen() {
-  const { username, navigateTo, openTraining, requirePremiumFeature, targetLang, nativeLang, setLangPair, sendToChat } = useApp();
+  const { username, navigateTo, openTraining, requirePremiumFeature, targetLang, nativeLang, setLangPair } = useApp();
   const t = useT();
   const [counts, setCounts] = useState<{ words: number; due: number } | null>(null);
-  const [ask, setAsk] = useState("");
   const [settings, setSettings] = useState<SettingsData | null>(null);
   const [ciMeterOn, setCiMeterOn] = useState(false);
   const [grammarLensOn, setGrammarLensOn] = useState(false);
   const [immersionOn, setImmersionOn] = useState(false);
   const [vocabFreqOn, setVocabFreqOn] = useState(false);
+  const [dualSubsEnabled, setDualSubsEnabled] = useState(false);
 
   useEffect(() => {
     Promise.all([api.getKbSummary(username), api.getReminders(username)])
@@ -58,11 +53,22 @@ export function HomeScreen() {
       CONFIG.STORAGE_KEY_GRAMMAR_LENS,
       CONFIG.STORAGE_KEY_IMMERSION,
       CONFIG.STORAGE_KEY_VOCAB_FREQ,
+      CONFIG.STORAGE_KEY_DUAL_SUBS_FEATURE,
+      CONFIG.STORAGE_KEY_DUAL_SUBS,
     ]).then((result) => {
       setCiMeterOn(Boolean(result[CONFIG.STORAGE_KEY_CI_METER]));
       setGrammarLensOn(Boolean(result[CONFIG.STORAGE_KEY_GRAMMAR_LENS]));
       setImmersionOn(Boolean(result[CONFIG.STORAGE_KEY_IMMERSION]));
       setVocabFreqOn(Boolean(result[CONFIG.STORAGE_KEY_VOCAB_FREQ]));
+      const storedDualSubsFeature = result[CONFIG.STORAGE_KEY_DUAL_SUBS_FEATURE];
+      const legacyDualSubsEnabled = Boolean(result[CONFIG.STORAGE_KEY_DUAL_SUBS]);
+      const dualSubsFeatureEnabled = storedDualSubsFeature === undefined
+        ? legacyDualSubsEnabled
+        : Boolean(storedDualSubsFeature);
+      setDualSubsEnabled(dualSubsFeatureEnabled);
+      if (storedDualSubsFeature === undefined && legacyDualSubsEnabled) {
+        storageSet({ [CONFIG.STORAGE_KEY_DUAL_SUBS_FEATURE]: true });
+      }
     });
   }, []);
 
@@ -109,6 +115,20 @@ export function HomeScreen() {
     }
   }
 
+  async function toggleDualSubtitles() {
+    const next = !dualSubsEnabled;
+    if (next && !(await requirePremiumFeature("dual_subtitles", t.settings_dual_subtitles))) return;
+    setDualSubsEnabled(next);
+    try {
+      await storageSet({
+        [CONFIG.STORAGE_KEY_DUAL_SUBS_FEATURE]: next,
+        ...(next ? { [CONFIG.STORAGE_KEY_DUAL_SUBS]: true } : {}),
+      });
+    } catch {
+      setDualSubsEnabled(!next);
+    }
+  }
+
   useEffect(() => { api.getSettings(username).then(setSettings).catch(() => {}); }, [username, targetLang]);
 
   async function switchTargetLanguage() {
@@ -131,13 +151,6 @@ export function HomeScreen() {
     });
     setSettings(updated);
     setLangPair(next, nativeLang);
-  }
-
-  function submitAsk() {
-    const text = ask.trim();
-    if (!text) return;
-    setAsk("");
-    sendToChat(text);
   }
 
   return (
@@ -171,12 +184,16 @@ export function HomeScreen() {
         ) : <div className="m-tile m-tile-ghost" aria-hidden="true" />}
         {isExtension && (
           <button
-            className={`m-tile${ciMeterOn ? " m-tile-alt" : ""}`}
-            onClick={toggleCiMeter}
-            aria-pressed={ciMeterOn}
+            className={`m-tile m-feature-tile ${dualSubsEnabled ? "is-on" : "is-off"}`}
+            onClick={toggleDualSubtitles}
+            aria-pressed={dualSubsEnabled}
           >
-            <span className="m-tile-icon">{Icons.ciMeter}</span>
-            <span className="m-tile-label">{ciMeterOn ? t.ci_meter_on : t.ci_meter_off}</span>
+            <span className="m-tile-icon">{Icons.dualSubtitles}</span>
+            <span className="m-tile-label">{t.settings_dual_subtitles}</span>
+            <span className="m-feature-state">
+              <i aria-hidden="true" />
+              {dualSubsEnabled ? t.feature_enabled : t.feature_disabled}
+            </span>
           </button>
         )}
         {isExtension && (
@@ -195,6 +212,20 @@ export function HomeScreen() {
         )}
         {isExtension && (
           <button
+            className={`m-tile m-feature-tile ${ciMeterOn ? "is-on" : "is-off"}`}
+            onClick={toggleCiMeter}
+            aria-pressed={ciMeterOn}
+          >
+            <span className="m-tile-icon">{Icons.ciMeter}</span>
+            <span className="m-tile-label">{t.ci_meter_off}</span>
+            <span className="m-feature-state">
+              <i aria-hidden="true" />
+              {ciMeterOn ? t.feature_enabled : t.feature_disabled}
+            </span>
+          </button>
+        )}
+        {isExtension && (
+          <button
             className={`m-tile m-feature-tile ${vocabFreqOn ? "is-on" : "is-off"}`}
             onClick={() => navigateTo("myWords")}
           >
@@ -207,7 +238,7 @@ export function HomeScreen() {
           </button>
         )}
 
-        <button className="m-tile m-tile-wide m-tile-stats" onClick={() => navigateTo("statistics")}>
+        <button className="m-tile m-tile-stats" onClick={() => navigateTo("statistics")}>
           <span className="m-tile-icon">{Icons.stats}</span>
           <span className="m-tile-label">{t.nav_stats}</span>
           <span className="m-tile-badge">{counts?.words ?? "…"}</span>
@@ -216,24 +247,10 @@ export function HomeScreen() {
           <span className="m-tile-icon">{Icons.settings}</span>
           <span className="m-tile-label">{t.nav_settings}</span>
         </button>
-        <button className="m-tile m-tile-alt" onClick={switchTargetLanguage} disabled={!settings || (settings.target_langs?.length ?? 1) < 2}>
+        <button className="m-tile m-tile-wide m-tile-alt" onClick={switchTargetLanguage} disabled={!settings || (settings.target_langs?.length ?? 1) < 2}>
           <span className="m-tile-icon">{Icons.language}</span>
           <span className="m-tile-badge">{targetLang.toUpperCase()}</span>
           <span className="m-tile-label">{LANGUAGES.find((lang) => lang.code === targetLang)?.name ?? targetLang}</span>
-        </button>
-      </div>
-
-      <div className="m-ask">
-        <input
-          className="m-ask-input"
-          type="text"
-          placeholder={t.home_ask_placeholder}
-          value={ask}
-          onChange={(e) => setAsk(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && submitAsk()}
-        />
-        <button className="m-ask-send" onClick={submitAsk} aria-label={t.chat_placeholder}>
-          {Icons.send}
         </button>
       </div>
     </section>

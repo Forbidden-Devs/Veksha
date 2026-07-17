@@ -164,6 +164,8 @@
     "debug_reset_confirm",
     "debug_reset_desc",
     "debug_run",
+    "dictionary_sort_az",
+    "dictionary_sort_za",
     "menu_debug",
     "menu_settings",
     "train_all_done",
@@ -228,5 +230,12 @@
   "settings_promo_error_already_redeemed": "ამ პრომო კოდი უკვე გამოიყენეთ.",
   "settings_promo_error_generic": "პრომო კოდის გამოყენება ვერ მოხერხდა. სცადეთ მოგვიანებით.",
   "premium_required_title": "საჭიროა Premium",
-  "premium_required_desc": "{feature} მოითხოვს აქტიურ Premium გამოწერას."
+  "premium_required_desc": "{feature} მოითხოვს აქტიურ Premium გამოწერას.",
+  "dictionary_search_placeholder": "სიტყვის ძებნა…",
+  "dictionary_sort_label": "სიტყვების დალაგება",
+  "dictionary_sort_az": "A–Z",
+  "dictionary_sort_za": "Z–A",
+  "dictionary_sort_newest": "პირველად უახლესი",
+  "dictionary_sort_oldest": "პირველად ძველი",
+  "dictionary_no_results": "შესაბამისი სიტყვები ვერ მოიძებნა."
 }

@@ -339,5 +339,12 @@
   "settings_promo_error_already_redeemed": "لقد استرددت هذا الرمز الترويجي بالفعل.",
   "settings_promo_error_generic": "تعذر استرداد الرمز الترويجي. حاول مرة أخرى لاحقًا.",
   "premium_required_title": "Premium مطلوب",
-  "premium_required_desc": "يتطلب {feature} اشتراك Premium نشطًا."
+  "premium_required_desc": "يتطلب {feature} اشتراك Premium نشطًا.",
+  "dictionary_search_placeholder": "ابحث عن كلمة…",
+  "dictionary_sort_label": "ترتيب الكلمات",
+  "dictionary_sort_az": "من أ إلى ي",
+  "dictionary_sort_za": "من ي إلى أ",
+  "dictionary_sort_newest": "الأحدث أولًا",
+  "dictionary_sort_oldest": "الأقدم أولًا",
+  "dictionary_no_results": "لم يتم العثور على كلمات مطابقة."
 }

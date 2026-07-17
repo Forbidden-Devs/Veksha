@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as api from "../../shared/api";
 import { GoogleMark } from "../../shared/GoogleMark";
 import { useI18n, useT } from "../../shared/i18n";
 import { CONFIG } from "../../shared/config";
 import { LANGUAGES } from "../../shared/languages";
 import { isExtension, storageGet, storageRemove, storageSet } from "../../shared/platform";
-import { THEMES, type ThemeName, getTheme, setTheme } from "../../shared/theme";
+import { THEMES, type ThemeName, getTheme, previewTheme, setTheme } from "../../shared/theme";
 import { useApp } from "../App";
 
 // Written by the background when a Google-link flow finishes after the popup
@@ -22,7 +22,7 @@ function detectNativeLang(): string {
 }
 
 export function SettingsScreen() {
-  const { username, settingsMode, navigateTo, requirePremiumFeature, setLangPair, signOut, targetLang: appTargetLang, nativeLang: appNativeLang } = useApp();
+  const { username, settingsMode, navigateTo, setLangPair, signOut, targetLang: appTargetLang, nativeLang: appNativeLang } = useApp();
   const { switchLanguage, translating } = useI18n();
   const t = useT();
 
@@ -32,8 +32,6 @@ export function SettingsScreen() {
   const [linking, setLinking] = useState(false);
   const [linkError, setLinkError] = useState<string | null>(null);
   const [billing, setBilling] = useState<api.BillingStatus | null>(null);
-  const [tgOpening, setTgOpening] = useState(false);
-  const [tgError, setTgError] = useState<string | null>(null);
   const [promoCode, setPromoCode] = useState("");
   const [promoSubmitting, setPromoSubmitting] = useState(false);
   const [promoError, setPromoError] = useState<string | null>(null);
@@ -49,35 +47,36 @@ export function SettingsScreen() {
   const [overseer, setOverseer] = useState(false);
   const [miningSameLevelExamples, setMiningSameLevelExamples] = useState(2);
   const [miningHigherLevelExamples, setMiningHigherLevelExamples] = useState(1);
-  const [dualSubsEnabled, setDualSubsEnabled] = useState(false);
-  const [savedDualSubsEnabled, setSavedDualSubsEnabled] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [loadingSettings, setLoadingSettings] = useState(true);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
+  const savedThemeRef = useRef<ThemeName | null>(null);
+  const themeSavedRef = useRef(false);
+  const themeTouchedRef = useRef(false);
 
   const isOnboarding = settingsMode === "onboarding";
   const canLinkGoogle = isExtension && Boolean(CONFIG.GOOGLE_CLIENT_ID);
 
-  useEffect(() => { getTheme().then(setThemeState); }, []);
-
   useEffect(() => {
-    if (!isExtension) return;
-    storageGet([CONFIG.STORAGE_KEY_DUAL_SUBS_FEATURE, CONFIG.STORAGE_KEY_DUAL_SUBS]).then((stored) => {
-      const feature = stored[CONFIG.STORAGE_KEY_DUAL_SUBS_FEATURE];
-      const enabled = feature === undefined
-        ? Boolean(stored[CONFIG.STORAGE_KEY_DUAL_SUBS])
-        : Boolean(feature);
-      setDualSubsEnabled(enabled);
-      setSavedDualSubsEnabled(enabled);
-      if (feature === undefined && enabled) {
-        storageSet({ [CONFIG.STORAGE_KEY_DUAL_SUBS_FEATURE]: true });
-      }
-    }).catch(() => {});
+    let alive = true;
+    getTheme().then((savedTheme) => {
+      if (!alive) return;
+      savedThemeRef.current = savedTheme;
+      if (!themeTouchedRef.current) setThemeState(savedTheme);
+    });
+    return () => {
+      alive = false;
+      if (themeSavedRef.current) return;
+      if (savedThemeRef.current) previewTheme(savedThemeRef.current);
+      else void getTheme().then(previewTheme);
+    };
   }, []);
 
   function pickTheme(name: ThemeName) {
+    themeTouchedRef.current = true;
     setThemeState(name);
+    previewTheme(name);
   }
 
   useEffect(() => {
@@ -119,19 +118,6 @@ export function SettingsScreen() {
       // will be shown on the next open.
     } finally {
       setLinking(false);
-    }
-  }
-
-  async function handleTelegramSubscribe() {
-    setTgOpening(true);
-    setTgError(null);
-    try {
-      const { url } = await api.createTelegramBillingLink();
-      window.open(url, "_blank", "noopener");
-    } catch {
-      setTgError(t.settings_sub_err);
-    } finally {
-      setTgOpening(false);
     }
   }
 
@@ -242,16 +228,12 @@ export function SettingsScreen() {
       const localSettings: Record<string, unknown> = {
         [CONFIG.STORAGE_KEY_NATIVE_LANG]: nativeLang,
       };
-      if (isExtension && !isOnboarding) {
-        localSettings[CONFIG.STORAGE_KEY_DUAL_SUBS_FEATURE] = dualSubsEnabled;
-        if (dualSubsEnabled && !savedDualSubsEnabled) {
-          localSettings[CONFIG.STORAGE_KEY_DUAL_SUBS] = true;
-        }
-      }
       await storageSet(localSettings);
       await setTheme(theme);
+      savedThemeRef.current = theme;
+      themeSavedRef.current = true;
+      previewTheme(theme);
 
-      setSavedDualSubsEnabled(dualSubsEnabled);
       setLangPair(targetLang, nativeLang);
       await switchLanguage(nativeLang);
       navigateTo("home");
@@ -312,11 +294,6 @@ export function SettingsScreen() {
       setPrompt(next.prompt);
     }
     setError(null);
-  }
-
-  async function handleDualSubsEnabled(enabled: boolean) {
-    if (enabled && !(await requirePremiumFeature("dual_subtitles", t.settings_dual_subtitles))) return;
-    setDualSubsEnabled(enabled);
   }
 
   function btnLabel() {
@@ -551,21 +528,6 @@ export function SettingsScreen() {
           <span className="settings-toggle-slider" aria-hidden="true" />
         </label>
 
-        {isExtension && !isOnboarding && (
-          <label className="settings-toggle">
-            <span className="settings-toggle-copy">
-              <span className="settings-toggle-title">{t.settings_dual_subtitles}</span>
-              <span className="settings-toggle-desc">{t.settings_dual_subtitles_desc}</span>
-            </span>
-            <input
-              type="checkbox"
-              checked={dualSubsEnabled}
-              onChange={(event) => handleDualSubsEnabled(event.target.checked)}
-            />
-            <span className="settings-toggle-slider" aria-hidden="true" />
-          </label>
-        )}
-
         {error && <p className="onboarding-error">{error}</p>}
 
         {!isOnboarding && (
@@ -581,11 +543,9 @@ export function SettingsScreen() {
             {billing?.tier !== "premium" && (
               <span className="settings-toggle-desc">{t.settings_sub_desc}</span>
             )}
-            <button className="btn" disabled={tgOpening} onClick={handleTelegramSubscribe}>
+            <button className="btn" type="button" disabled aria-disabled="true">
               {billing?.tier === "premium" ? t.settings_sub_manage : t.settings_sub_connect}
             </button>
-            {tgError && <p className="onboarding-error">{tgError}</p>}
-
             <label className="field-label" htmlFor="settings-promo-code">{t.settings_promo_label}</label>
             <div className="settings-promo-row">
               <input

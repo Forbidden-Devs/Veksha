@@ -62,6 +62,7 @@ def test_review_flow_and_log():
     u.apply_kb_changes([Patch(type="add_word", value="hazelnut", counter=0, known=False)])
     w = u.find_word("hazelnut")
     assert w.stability == 0.0 and w.counter == 0
+    assert w.added_at > 0
 
     u.apply_review_result(w, "correct", task_type="translation")
     assert w.stability > 0 and w.counter == 1
@@ -94,6 +95,7 @@ def test_review_flow_and_log():
     # Word (de)serialization keeps the FSRS fields.
     w2 = Word.from_dict(w.to_dict())
     assert (w2.stability, w2.lapses, w2.last_review) == (w.stability, w.lapses, w.last_review)
+    assert w2.added_at == w.added_at
 
 
 if __name__ == "__main__":

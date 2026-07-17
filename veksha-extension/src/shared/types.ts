@@ -118,6 +118,7 @@ export interface WordEntry {
   counter: number;
   known: boolean;
   next_review: number;
+  added_at: number;
   sentence_mining?: SentenceMiningCard | null;
 }
 

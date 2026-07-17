@@ -156,6 +156,13 @@ export interface Strings {
   stats_vocabulary: string;
   dictionary_title: string;
   dictionary_cards: string;
+  dictionary_search_placeholder: string;
+  dictionary_sort_label: string;
+  dictionary_sort_az: string;
+  dictionary_sort_za: string;
+  dictionary_sort_newest: string;
+  dictionary_sort_oldest: string;
+  dictionary_no_results: string;
   dictionary_translation: string;
   dictionary_transcription: string;
   dictionary_show_answer: string;
@@ -505,6 +512,13 @@ export const EN: Strings = {
   stats_vocabulary: "Vocabulary",
   dictionary_title: "Dictionary",
   dictionary_cards: "Practice cards",
+  dictionary_search_placeholder: "Search for a word…",
+  dictionary_sort_label: "Sort words",
+  dictionary_sort_az: "A–Z",
+  dictionary_sort_za: "Z–A",
+  dictionary_sort_newest: "Newest first",
+  dictionary_sort_oldest: "Oldest first",
+  dictionary_no_results: "No matching words found.",
   dictionary_translation: "Translation",
   dictionary_transcription: "Transcription",
   dictionary_show_answer: "Show answer",

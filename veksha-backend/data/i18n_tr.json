@@ -159,7 +159,9 @@
   "edit_kb_topic_not_found": "Konu \"{value}\" bulunamadı.",
   "edit_kb_word_known_not_found": "\"{value}\" kelimesi öğrenildi olarak işaretlenemedi.",
   "__same_as_en__": [
-    "debug_backend"
+    "debug_backend",
+    "dictionary_sort_az",
+    "dictionary_sort_za"
   ],
   "dictionary_title": "Sözlük",
   "dictionary_cards": "Kartlarla pratik",
@@ -217,5 +219,12 @@
   "settings_promo_error_already_redeemed": "Bu promos kodunu zaten kullandınız.",
   "settings_promo_error_generic": "Promos kodu kullanılamadı. Daha sonra tekrar deneyin.",
   "premium_required_title": "Premium gerekli",
-  "premium_required_desc": "{feature} için aktif bir Premium aboneliği gerekiyor."
+  "premium_required_desc": "{feature} için aktif bir Premium aboneliği gerekiyor.",
+  "dictionary_search_placeholder": "Bir kelime ara…",
+  "dictionary_sort_label": "Kelimeleri sırala",
+  "dictionary_sort_az": "A–Z",
+  "dictionary_sort_za": "Z–A",
+  "dictionary_sort_newest": "En yeni önce",
+  "dictionary_sort_oldest": "En eski önce",
+  "dictionary_no_results": "Eşleşen kelime bulunamadı."
 }

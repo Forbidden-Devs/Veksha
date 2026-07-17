@@ -173,6 +173,11 @@ export default function App() {
     api.getBillingStatus().then(setBilling).catch(() => setBilling(null));
   }, [username]);
 
+  useEffect(() => {
+    if (!username) return;
+    void sendToActiveTab({ type: "VEKSHA_PING" });
+  }, [username]);
+
   const detected = (navigator.languages?.[0] ?? navigator.language ?? "en").slice(0, 2).toLowerCase();
   const [targetLang, setTargetLang] = useState("en");
   const [nativeLang, setNativeLang] = useState(detected);

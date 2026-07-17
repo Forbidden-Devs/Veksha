@@ -161,6 +161,8 @@
   "__same_as_en__": [
     "debug_backend",
     "debug_title",
+    "dictionary_sort_az",
+    "dictionary_sort_za",
     "grammar_lens_off",
     "grammar_lens_title",
     "menu_debug",
@@ -223,5 +225,12 @@
   "settings_promo_error_already_redeemed": "Anda sudah menukarkan kode promo ini.",
   "settings_promo_error_generic": "Tidak dapat menukarkan kode promo. Coba lagi nanti.",
   "premium_required_title": "Premium diperlukan",
-  "premium_required_desc": "{feature} memerlukan langganan Premium yang aktif."
+  "premium_required_desc": "{feature} memerlukan langganan Premium yang aktif.",
+  "dictionary_search_placeholder": "Cari kata…",
+  "dictionary_sort_label": "Urutkan kata",
+  "dictionary_sort_az": "A–Z",
+  "dictionary_sort_za": "Z–A",
+  "dictionary_sort_newest": "Terbaru dulu",
+  "dictionary_sort_oldest": "Terlama dulu",
+  "dictionary_no_results": "Tidak ada kata yang cocok."
 }

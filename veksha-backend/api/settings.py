@@ -103,6 +103,7 @@ class WordEntryResponse(BaseModel):
     counter: int
     known: bool
     next_review: float
+    added_at: float
     sentence_mining: SentenceMiningResponse | None = None
 
 
@@ -284,7 +285,7 @@ async def api_kb_words(username: CurrentUser) -> KBWordsResponse:
     storage = get_storage(username)
     words = sorted(
         (w for w in storage.words if w.language == storage.settings.target_lang),
-        key=lambda w: (w.known is True, w.name.lower()),
+        key=lambda w: w.name.casefold(),
     )
     return KBWordsResponse(words=[
         WordEntryResponse(
@@ -295,6 +296,7 @@ async def api_kb_words(username: CurrentUser) -> KBWordsResponse:
             counter=w.counter,
             known=bool(w.known),
             next_review=w.next_review,
+            added_at=w.added_at,
         )
         for w in words
     ])
@@ -324,6 +326,7 @@ async def api_kb_word_details(word: str, username: CurrentUser) -> WordEntryResp
         counter=entry.counter,
         known=bool(entry.known),
         next_review=entry.next_review,
+        added_at=entry.added_at,
         sentence_mining=SentenceMiningResponse(**entry.sentence_mining) if entry.sentence_mining else None,
     )
 
@@ -371,6 +374,7 @@ async def api_mine_kb_word(req: SentenceMiningRequest, username: CurrentUser) ->
         counter=entry.counter,
         known=bool(entry.known),
         next_review=entry.next_review,
+        added_at=entry.added_at,
         sentence_mining=SentenceMiningResponse(**entry.sentence_mining),
     )
 

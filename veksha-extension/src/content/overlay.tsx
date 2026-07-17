@@ -5,12 +5,13 @@ import { LessonWindow } from "../popup/overlays/LessonWindow";
 import { TopicPickerOverlay } from "../popup/overlays/TopicPickerOverlay";
 import { TutorialWindow } from "../popup/overlays/TutorialWindow";
 import { I18nProvider } from "../shared/i18n";
+import rawPaletteCss from "../shared/palette.css?inline";
 import rawPopupCss from "../popup/popup.css?inline";
 
 // In Shadow DOM :root doesn't resolve to the document root, use :host instead.
 // Also override lesson-overlay positioning which is designed for the in-popup context.
 const SHADOW_CSS =
-  rawPopupCss.replace(":root", ":host") +
+  `${rawPaletteCss}\n${rawPopupCss}`.replace(/:root/g, ":host") +
   `
   /* === page-overlay context overrides === */
   .training-window, .lesson-overlay, .tut-window {

@@ -159,6 +159,8 @@
   "edit_kb_topic_not_found": "ไม่พบหัวข้อ \"{value}\"",
   "edit_kb_word_known_not_found": "ไม่พบคำ \"{value}\" เพื่อทำเครื่องหมายว่าเรียนรู้แล้ว",
   "__same_as_en__": [
+    "dictionary_sort_az",
+    "dictionary_sort_za",
     "grammar_lens_off",
     "grammar_lens_title",
     "menu_debug",
@@ -220,5 +222,12 @@
   "settings_promo_error_already_redeemed": "คุณได้แลกรหัสโปรโมชันนี้แล้ว",
   "settings_promo_error_generic": "ไม่สามารถแลกรหัสโปรโมชันได้ ลองใหม่อีกครั้งภายหลัง",
   "premium_required_title": "ต้องใช้พรีเมียม",
-  "premium_required_desc": "{feature} ต้องมีการสมัครสมาชิกพรีเมียมที่ใช้งานอยู่"
+  "premium_required_desc": "{feature} ต้องมีการสมัครสมาชิกพรีเมียมที่ใช้งานอยู่",
+  "dictionary_search_placeholder": "ค้นหาคำ…",
+  "dictionary_sort_label": "เรียงคำ",
+  "dictionary_sort_az": "A–Z",
+  "dictionary_sort_za": "Z–A",
+  "dictionary_sort_newest": "ใหม่สุดก่อน",
+  "dictionary_sort_oldest": "เก่าสุดก่อน",
+  "dictionary_no_results": "ไม่พบคำที่ตรงกัน"
 }

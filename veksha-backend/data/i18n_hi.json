@@ -159,6 +159,8 @@
   "edit_kb_topic_not_found": "\"{value}\" विषय नहीं मिला।",
   "edit_kb_word_known_not_found": "सीखा हुआ चिह्नित करने के लिए \"{value}\" शब्द नहीं मिला।",
   "__same_as_en__": [
+    "dictionary_sort_az",
+    "dictionary_sort_za",
     "menu_debug",
     "menu_settings"
   ],
@@ -218,5 +220,12 @@
   "settings_promo_error_already_redeemed": "आपने यह प्रोमो कोड पहले ही रिडीम कर लिया है।",
   "settings_promo_error_generic": "प्रोमो कोड रिडीम नहीं किया जा सका। बाद में फिर कोशिश करें।",
   "premium_required_title": "प्रीमियम आवश्यक",
-  "premium_required_desc": "{feature} के लिए सक्रिय प्रीमियम सदस्यता चाहिए।"
+  "premium_required_desc": "{feature} के लिए सक्रिय प्रीमियम सदस्यता चाहिए।",
+  "dictionary_search_placeholder": "शब्द खोजें…",
+  "dictionary_sort_label": "शब्द क्रमबद्ध करें",
+  "dictionary_sort_az": "A–Z",
+  "dictionary_sort_za": "Z–A",
+  "dictionary_sort_newest": "सबसे नए पहले",
+  "dictionary_sort_oldest": "सबसे पुराने पहले",
+  "dictionary_no_results": "कोई मेल खाने वाले शब्द नहीं मिले।"
 }

@@ -160,6 +160,8 @@
   "edit_kb_word_known_not_found": "No se pudo encontrar la palabra \"{value}\" para marcarla como aprendida.",
   "__same_as_en__": [
     "debug_backend",
+    "dictionary_sort_az",
+    "dictionary_sort_za",
     "grammar_lens_off",
     "grammar_lens_title"
   ],
@@ -344,5 +346,12 @@
   "settings_promo_error_already_redeemed": "Ya has canjeado este código promocional.",
   "settings_promo_error_generic": "No se pudo canjear el código promocional. Inténtalo de nuevo más tarde.",
   "premium_required_title": "Premium requerido",
-  "premium_required_desc": "{feature} requiere una suscripción Premium activa."
+  "premium_required_desc": "{feature} requiere una suscripción Premium activa.",
+  "dictionary_search_placeholder": "Buscar una palabra…",
+  "dictionary_sort_label": "Ordenar palabras",
+  "dictionary_sort_az": "A–Z",
+  "dictionary_sort_za": "Z–A",
+  "dictionary_sort_newest": "Más recientes primero",
+  "dictionary_sort_oldest": "Más antiguas primero",
+  "dictionary_no_results": "No se encontraron palabras coincidentes."
 }

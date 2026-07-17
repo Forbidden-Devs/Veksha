@@ -85,9 +85,16 @@ class UserStorage:
             log.info("[storage] no KB for user %r, starting empty", username)
             return cls(username=username, settings=UserSettings(**(db.settings_get(username) or {})))
 
+        words = [Word.from_dict(w) for w in data.get("words", [])]
+        # Older KB documents predate `added_at`. Their list order is the only
+        # surviving insertion-order signal, so preserve it with stable values.
+        for index, word in enumerate(words):
+            if word.added_at <= 0:
+                word.added_at = float(index + 1)
+
         storage = cls(
             username=username,
-            words=[Word.from_dict(w) for w in data.get("words", [])],
+            words=words,
             lesson_topics=[LessonTopic.from_dict(t) for t in data.get("lesson_topics", [])],
             settings=UserSettings(**(db.settings_get(username) or {})),
         )
@@ -205,6 +212,7 @@ class UserStorage:
                 known=patch.known,
                 delayed=False,
                 next_review=next_review,
+                added_at=time.time(),
                 extra_data="",
             )
         )

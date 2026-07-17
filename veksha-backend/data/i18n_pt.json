@@ -199,6 +199,8 @@
   "edit_kb_word_known_not_found": "Não foi possível encontrar a palavra \"{value}\" para marcar como aprendida.",
   "__same_as_en__": [
     "debug_backend",
+    "dictionary_sort_az",
+    "dictionary_sort_za",
     "menu_title"
   ],
   "onboarding_name_placeholder": "Seu nome",
@@ -360,5 +362,12 @@
   "settings_promo_error_already_redeemed": "Você já resgatou este código promocional.",
   "settings_promo_error_generic": "Não foi possível resgatar o código promocional. Tente novamente mais tarde.",
   "premium_required_title": "Premium necessário",
-  "premium_required_desc": "{feature} requer uma assinatura Premium ativa."
+  "premium_required_desc": "{feature} requer uma assinatura Premium ativa.",
+  "dictionary_search_placeholder": "Pesquisar uma palavra…",
+  "dictionary_sort_label": "Ordenar palavras",
+  "dictionary_sort_az": "A–Z",
+  "dictionary_sort_za": "Z–A",
+  "dictionary_sort_newest": "Mais recentes primeiro",
+  "dictionary_sort_oldest": "Mais antigos primeiro",
+  "dictionary_no_results": "Nenhuma palavra correspondente encontrada."
 }

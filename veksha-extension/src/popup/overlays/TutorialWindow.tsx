@@ -333,7 +333,7 @@ export function TutorialWindow({ username: _username, onClose }: { username: str
   const back = () => setStep((s) => Math.max(0, s - 1));
 
   return (
-    <div className="tut-window">
+    <div className="tut-window" data-tutorial-palette="forest">
       <div className="tut-header" data-drag-handle>
         <div className="logo-badge logo-badge-sm">Ve</div>
         <span className="tut-header-title">{t.help_body}</span>

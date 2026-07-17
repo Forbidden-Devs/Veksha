@@ -161,6 +161,8 @@
   "__same_as_en__": [
     "debug_backend",
     "debug_title",
+    "dictionary_sort_az",
+    "dictionary_sort_za",
     "menu_debug",
     "menu_title"
   ],
@@ -345,5 +347,12 @@
   "settings_promo_error_already_redeemed": "Już wykorzystałeś(-aś) ten kod promocyjny.",
   "settings_promo_error_generic": "Nie udało się wykorzystać kodu promocyjnego. Spróbuj ponownie później.",
   "premium_required_title": "Wymagany Premium",
-  "premium_required_desc": "{feature} wymaga aktywnej subskrypcji Premium."
+  "premium_required_desc": "{feature} wymaga aktywnej subskrypcji Premium.",
+  "dictionary_search_placeholder": "Szukaj słowa…",
+  "dictionary_sort_label": "Sortuj słowa",
+  "dictionary_sort_az": "A–Z",
+  "dictionary_sort_za": "Z–A",
+  "dictionary_sort_newest": "Najnowsze na górze",
+  "dictionary_sort_oldest": "Najstarsze na górze",
+  "dictionary_no_results": "Nie znaleziono pasujących słów."
 }

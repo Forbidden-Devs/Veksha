@@ -1,10 +1,14 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as api from "../../shared/api";
 import { useT } from "../../shared/i18n";
 import { speakText } from "../../shared/speech";
 import type { WordEntry } from "../../shared/types";
 import { useApp } from "../App";
 import { AnkiCards } from "./AnkiCards";
+
+type DictionarySort = "az" | "za" | "newest" | "oldest";
+
+const wordCollator = new Intl.Collator(undefined, { sensitivity: "base", numeric: true });
 
 export function DictionaryScreen() {
   const { username, targetLang } = useApp();
@@ -14,11 +18,36 @@ export function DictionaryScreen() {
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
   const [miningWord, setMiningWord] = useState<string | null>(null);
   const [miningError, setMiningError] = useState<string | null>(null);
+  const [sort, setSort] = useState<DictionarySort>("az");
+  const [searchInput, setSearchInput] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const miningRequest = useRef(0);
 
   useEffect(() => {
     api.getKbWords(username).then((result) => setWords(result.words)).catch(() => setWords([]));
   }, [username, targetLang]);
+
+  const visibleWords = useMemo(() => {
+    if (!words) return words;
+    const query = searchQuery.trim().toLocaleLowerCase();
+    const filtered = query
+      ? words.filter((word) => word.name.toLocaleLowerCase().includes(query))
+      : words;
+
+    return [...filtered].sort((a, b) => {
+      const alphabetical = wordCollator.compare(a.name, b.name);
+      if (sort === "az") return alphabetical;
+      if (sort === "za") return -alphabetical;
+      const byDate = (a.added_at ?? 0) - (b.added_at ?? 0);
+      return sort === "newest" ? -byDate || alphabetical : byDate || alphabetical;
+    });
+  }, [words, searchQuery, sort]);
+
+  function updateSearch(value: string) {
+    setSearchInput(value);
+    const trimmed = value.trim();
+    setSearchQuery(trimmed.length >= 3 ? trimmed : "");
+  }
 
   function remove(word: string) {
     if (selectedWord === word) setSelectedWord(null);
@@ -65,12 +94,38 @@ export function DictionaryScreen() {
   return (
     <section className="screen screen-statistics dictionary-screen">
       <div className="dictionary-actions">
+        <input
+          className="dictionary-search"
+          type="search"
+          value={searchInput}
+          placeholder={t.dictionary_search_placeholder}
+          onChange={(event) => updateSearch(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              setSearchQuery(searchInput.trim());
+            }
+          }}
+        />
+        <select
+          className="dictionary-sort"
+          value={sort}
+          onChange={(event) => setSort(event.target.value as DictionarySort)}
+          aria-label={t.dictionary_sort_label}
+          title={t.dictionary_sort_label}
+        >
+          <option value="az">{t.dictionary_sort_az}</option>
+          <option value="za">{t.dictionary_sort_za}</option>
+          <option value="newest">{t.dictionary_sort_newest}</option>
+          <option value="oldest">{t.dictionary_sort_oldest}</option>
+        </select>
         <button className="btn btn-gradient" type="button" onClick={startCards} disabled={!words?.length}>🗂️ {t.dictionary_cards}</button>
       </div>
       <div className="word-list">
         {words === null && <p className="word-list-placeholder">…</p>}
         {words?.length === 0 && <p className="word-list-placeholder">{t.topics_empty}</p>}
-        {words?.map((word) => {
+        {!!words?.length && visibleWords?.length === 0 && <p className="word-list-placeholder">{t.dictionary_no_results}</p>}
+        {visibleWords?.map((word) => {
           const isSelected = selectedWord === word.name;
           return (
             <div key={word.name} className={`word-list-item dictionary-word-card${isSelected ? " is-open" : ""}`}>

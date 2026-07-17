@@ -162,6 +162,8 @@
     "chat_mode_training",
     "debug_backend",
     "debug_title",
+    "dictionary_sort_az",
+    "dictionary_sort_za",
     "grammar_role_verb",
     "level_setup_optional",
     "menu_debug",
@@ -366,5 +368,12 @@
   "settings_promo_error_already_redeemed": "Du hast diesen Promo-Code bereits eingelöst.",
   "settings_promo_error_generic": "Der Promo-Code konnte nicht eingelöst werden. Bitte versuche es später erneut.",
   "premium_required_title": "Premium erforderlich",
-  "premium_required_desc": "{feature} erfordert ein aktives Premium-Abonnement."
+  "premium_required_desc": "{feature} erfordert ein aktives Premium-Abonnement.",
+  "dictionary_search_placeholder": "Nach einem Wort suchen…",
+  "dictionary_sort_label": "Wörter sortieren",
+  "dictionary_sort_az": "A–Z",
+  "dictionary_sort_za": "Z–A",
+  "dictionary_sort_newest": "Neueste zuerst",
+  "dictionary_sort_oldest": "Älteste zuerst",
+  "dictionary_no_results": "Keine passenden Wörter gefunden."
 }

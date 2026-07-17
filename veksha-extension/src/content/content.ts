@@ -732,7 +732,9 @@ document.addEventListener("pointerup", (e) => {
 // ---------------------------------------------------------------------------
 
 chrome.runtime.onMessage.addListener((msg: Record<string, unknown>) => {
-  if (msg.type === "VEKSHA_AGGRESSIVE_REMINDER") {
+  if (msg.type === "VEKSHA_PING") {
+    return;
+  } else if (msg.type === "VEKSHA_AGGRESSIVE_REMINDER") {
     showAggressiveReminder(msg);
   } else if (msg.type === "VEKSHA_CLEAR_AGGRESSIVE_REMINDER") {
     removeAggressiveReminder();

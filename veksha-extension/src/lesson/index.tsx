@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { LessonWindow } from "../popup/overlays/LessonWindow";
 import { I18nProvider, useT } from "../shared/i18n";
 import { CONFIG } from "../shared/config";
+import "../shared/palette.css";
 import "../popup/popup.css";
 import "../popup/theme.css";
 import { initTheme } from "../shared/theme";

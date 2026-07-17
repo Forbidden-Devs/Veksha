@@ -218,5 +218,12 @@
   "settings_promo_error_already_redeemed": "Έχετε ήδη εξαργυρώσει αυτόν τον κωδικό προσφοράς.",
   "settings_promo_error_generic": "Δεν ήταν δυνατή η εξαργύρωση του κωδικού προσφοράς. Δοκιμάστε ξανά αργότερα.",
   "premium_required_title": "Απαιτείται Premium",
-  "premium_required_desc": "Το {feature} απαιτεί ενεργή συνδρομή Premium."
+  "premium_required_desc": "Το {feature} απαιτεί ενεργή συνδρομή Premium.",
+  "dictionary_search_placeholder": "Αναζήτηση λέξης…",
+  "dictionary_sort_label": "Ταξινόμηση λέξεων",
+  "dictionary_sort_az": "Α–Ω",
+  "dictionary_sort_za": "Ω–Α",
+  "dictionary_sort_newest": "Πρώτα τα νεότερα",
+  "dictionary_sort_oldest": "Πρώτα τα παλαιότερα",
+  "dictionary_no_results": "Δεν βρέθηκαν αντίστοιχες λέξεις."
 }

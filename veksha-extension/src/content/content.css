@@ -5,33 +5,13 @@
  * surfaces with rust-orange and pine-green accents, light and dark.
  */
 
+@import "../shared/palette.css";
+
 /* ---------------------------------------------------------------------- */
 /* Themes: content overlays follow the app palette (shared/theme.ts).      */
 /* The attribute is set on <html> by content.ts from storage (vk_theme);   */
 /* light doubles as the no-attribute default.                              */
 /* ---------------------------------------------------------------------- */
-
-:root {
-  --av-ink: #25291f;
-  --av-muted: #686b5f;
-  --av-border: #d8d1c2;
-  --av-surface: #fffdf8;
-  --av-accent: #a95124;
-  --av-accent-soft: #f1d4b7;
-  --av-gradient: linear-gradient(135deg, #a95124 0%, #3f6954 135%);
-  --av-error: #9f332d;
-}
-
-html[data-vk-theme="dark"] {
-  --av-ink: #f5f0e5;
-  --av-muted: #b1b4a8;
-  --av-border: #464d42;
-  --av-surface: #222720;
-  --av-accent: #e07b42;
-  --av-accent-soft: #4d3827;
-  --av-gradient: linear-gradient(135deg, #e07b42 0%, #5b8a70 135%);
-  --av-error: #ef8a80;
-}
 
 /* ---------------------------------------------------------------------- */
 /* PDF area translate (OCR)                                                 */
@@ -93,9 +73,9 @@ html[data-vk-theme="dark"] {
 
 .veksha-pdf-region-box {
   position: absolute;
-  border: 2px solid #f26ba6;
+  border: 2px solid var(--av-accent);
   border-radius: 6px;
-  background: rgba(242, 107, 166, 0.14);
+  background: color-mix(in srgb, var(--av-accent) 14%, transparent);
   box-shadow: 0 0 0 100vmax rgba(20, 16, 32, 0.12);
 }
 
@@ -127,9 +107,9 @@ html[data-vk-theme="dark"] {
 .veksha-img-region-box {
   position: fixed;
   z-index: 2147483601;
-  border: 2px solid #d93d82;
+  border: 2px solid var(--av-accent);
   border-radius: 6px;
-  background: rgba(217, 61, 130, 0.12);
+  background: color-mix(in srgb, var(--av-accent) 12%, transparent);
   pointer-events: none;
 }
 
@@ -351,7 +331,7 @@ html[data-vk-theme="dark"] {
   color: var(--av-accent);
   cursor: pointer;
   font-size: 13px;
-  box-shadow: 0 2px 7px rgba(217, 61, 130, 0.12);
+  box-shadow: 0 2px 7px color-mix(in srgb, var(--av-accent) 12%, transparent);
   transition: transform 0.12s ease, opacity 0.12s ease;
 }
 
@@ -374,7 +354,7 @@ html[data-vk-theme="dark"] {
   cursor: pointer;
   padding: 8px 16px;
   border-radius: 999px;
-  box-shadow: 0 2px 8px rgba(217, 61, 130, 0.25);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--av-accent) 25%, transparent);
   transition: transform 0.12s ease, opacity 0.12s ease;
   animation: veksha-gradient-drift 9s ease-in-out infinite;
 }
@@ -454,7 +434,7 @@ html[data-vk-theme="dark"] {
   width: 64px;
   height: 64px;
   border-radius: 8px;
-  box-shadow: 0 8px 22px rgba(217, 61, 130, 0.25);
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--av-accent) 25%, transparent);
 }
 
 .veksha-aggressive-copy {
@@ -480,7 +460,7 @@ html[data-vk-theme="dark"] {
   border-radius: 8px;
   padding: 14px 24px;
   background: linear-gradient(135deg, #e986ad, #8f6bd4);
-  box-shadow: 0 6px 18px rgba(217, 61, 130, 0.28);
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--av-accent) 28%, transparent);
   color: #fff;
   cursor: pointer;
   font-size: 13px;
@@ -520,7 +500,7 @@ html[data-vk-theme="dark"] {
 
 .veksha-static-close:hover {
   background: #ffffff;
-  color: #d93d82;
+  color: var(--av-accent);
 }
 
 .veksha-terror-close {
@@ -545,7 +525,7 @@ html[data-vk-theme="dark"] {
 
 .veksha-terror-close[data-catchable="true"] {
   background: #ffffff;
-  color: #d93d82;
+  color: var(--av-accent);
   cursor: pointer;
   animation: veksha-catchable 0.7s ease-in-out infinite;
 }
@@ -852,8 +832,8 @@ html[data-vk-theme="dark"] {
 }
 
 @keyframes av-yt-badge-pulse {
-  0%, 100% { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 0 0 rgba(242, 107, 166, 0); }
-  50% { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 0 4px rgba(242, 107, 166, 0.13); }
+  0%, 100% { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 0 0 transparent; }
+  50% { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 0 4px color-mix(in srgb, var(--av-accent) 13%, transparent); }
 }
 
 /* --- selectable captions --- */
@@ -878,13 +858,13 @@ html[data-vk-theme="dark"] {
 }
 
 .av-yt-word.av-yt-selected {
-  background: linear-gradient(90deg, #f26ba6, #4c9fe0);
+  background: var(--av-gradient);
   color: #fff;
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15);
 }
 
 .av-yt-captions ::selection {
-  background: rgba(242, 107, 166, 0.55);
+  background: color-mix(in srgb, var(--av-accent) 55%, transparent);
   color: #fff;
 }
 
@@ -977,7 +957,7 @@ html[data-vk-theme="dark"] {
   font-size: 18px;
   font-weight: 700;
   line-height: 1.25;
-  background: linear-gradient(95deg, #f3b6d2, #f26ba6 55%, #a6c4f0);
+  background: linear-gradient(95deg, color-mix(in srgb, var(--av-accent) 45%, white), var(--av-accent) 55%, color-mix(in srgb, var(--av-blue) 45%, white));
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -1086,7 +1066,7 @@ html[data-vk-theme="dark"] {
   font: inherit;
   color: inherit;
   text-decoration: underline dotted;
-  text-decoration-color: rgba(217, 61, 130, 0.5);
+  text-decoration-color: color-mix(in srgb, var(--av-accent) 50%, transparent);
   text-decoration-thickness: 1px;
   text-underline-offset: 0.18em;
   border-radius: 3px;
@@ -1095,8 +1075,8 @@ html[data-vk-theme="dark"] {
 }
 
 .av-imm:hover {
-  background-color: rgba(217, 61, 130, 0.1);
-  text-decoration-color: rgba(217, 61, 130, 0.85);
+  background-color: color-mix(in srgb, var(--av-accent) 10%, transparent);
+  text-decoration-color: color-mix(in srgb, var(--av-accent) 85%, transparent);
 }
 
 /* Tiny CEFR chip, shown only on hover so it never clutters the page. */
@@ -1105,8 +1085,8 @@ html[data-vk-theme="dark"] {
   margin-left: 0.35em;
   padding: 0 0.35em;
   border-radius: 4px;
-  background: rgba(217, 61, 130, 0.14);
-  color: #d93d82;
+  background: color-mix(in srgb, var(--av-accent) 14%, transparent);
+  color: var(--av-accent);
   font-size: 0.7em;
   font-weight: 700;
   letter-spacing: 0.04em;

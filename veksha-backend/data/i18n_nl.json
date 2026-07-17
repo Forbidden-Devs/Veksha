@@ -162,6 +162,8 @@
     "chat_mode_training",
     "debug_backend",
     "debug_title",
+    "dictionary_sort_az",
+    "dictionary_sort_za",
     "level_beginner",
     "menu_debug",
     "menu_title",
@@ -350,5 +352,12 @@
   "settings_promo_error_already_redeemed": "Je hebt deze promotiecode al ingewisseld.",
   "settings_promo_error_generic": "Kon de promotiecode niet inwisselen. Probeer het later opnieuw.",
   "premium_required_title": "Premium vereist",
-  "premium_required_desc": "{feature} vereist een actief Premium-abonnement."
+  "premium_required_desc": "{feature} vereist een actief Premium-abonnement.",
+  "dictionary_search_placeholder": "Zoek naar een woord…",
+  "dictionary_sort_label": "Woorden sorteren",
+  "dictionary_sort_az": "A–Z",
+  "dictionary_sort_za": "Z–A",
+  "dictionary_sort_newest": "Nieuwste eerst",
+  "dictionary_sort_oldest": "Oudste eerst",
+  "dictionary_no_results": "Geen overeenkomende woorden gevonden."
 }

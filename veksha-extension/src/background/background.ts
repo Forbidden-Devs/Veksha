@@ -174,11 +174,21 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
-chrome.contextMenus.onClicked.addListener((info, tab) => {
+chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId !== CTX_TRANSLATE_ID || !tab?.id) return;
   const text = (info.selectionText ?? "").trim();
   if (!text) return;
-  chrome.tabs.sendMessage(tab.id, { type: "VEKSHA_TRANSLATE_SELECTION", text }).catch(() => {});
+  const message = { type: "VEKSHA_TRANSLATE_SELECTION", text };
+  try {
+    await chrome.tabs.sendMessage(tab.id, message);
+  } catch {
+    try {
+      await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ["src/content/content.js"] });
+      await chrome.scripting.insertCSS({ target: { tabId: tab.id }, files: ["src/content/content.css"] });
+      await new Promise<void>((resolve) => setTimeout(resolve, 150));
+      await chrome.tabs.sendMessage(tab.id, message);
+    } catch {}
+  }
 });
 
 chrome.alarms.onAlarm.addListener(async (alarm) => {
@@ -414,4 +424,3 @@ async function shouldShowReminderNow(level: number): Promise<boolean> {
   await chrome.storage.local.set({ [LAST_REMINDER_AT_KEY]: now }).catch(() => {});
   return true;
 }
-

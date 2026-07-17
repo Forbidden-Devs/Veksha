@@ -1,7 +1,7 @@
 /**
  * theme.ts — runtime palette switching.
  *
- * Themes are CSS-token sets in popup/theme.css keyed by the
+ * Themes are derived CSS-token sets in shared/palette.css keyed by the
  * `data-veksha-theme` attribute on <html>. The chosen name persists in
  * storage (vk_theme) and is shared by every surface: popup, training/lesson
  * pages, the web app, and the content-script overlays (which read the same
@@ -28,6 +28,11 @@ export async function getTheme(): Promise<ThemeName> {
 
 function applyAttr(name: ThemeName): void {
   document.documentElement.dataset.vekshaTheme = name;
+}
+
+/** Apply a theme to the current surface without changing the saved choice. */
+export function previewTheme(name: ThemeName): void {
+  applyAttr(name);
 }
 
 /** Apply the stored theme; call once at every entry point before render. */

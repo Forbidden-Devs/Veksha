@@ -219,5 +219,12 @@
   "settings_promo_error_already_redeemed": "Olet jo käyttänyt tämän kampanjakoodin.",
   "settings_promo_error_generic": "Kampanjakoodin käyttäminen ei onnistunut. Yritä myöhemmin uudelleen.",
   "premium_required_title": "Premium vaaditaan",
-  "premium_required_desc": "{feature} vaatii aktiivisen Premium-tilauksen."
+  "premium_required_desc": "{feature} vaatii aktiivisen Premium-tilauksen.",
+  "dictionary_search_placeholder": "Hae sanaa…",
+  "dictionary_sort_label": "Lajittele sanat",
+  "dictionary_sort_az": "A–Ö",
+  "dictionary_sort_za": "Ö–A",
+  "dictionary_sort_newest": "Uusimmat ensin",
+  "dictionary_sort_oldest": "Vanhimmat ensin",
+  "dictionary_no_results": "Vastaavia sanoja ei löytynyt."
 }

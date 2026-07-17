@@ -223,5 +223,12 @@
   "settings_promo_error_already_redeemed": "Ви вже активували цей промокод.",
   "settings_promo_error_generic": "Не вдалося активувати промокод. Спробуйте пізніше.",
   "premium_required_title": "Потрібен Premium",
-  "premium_required_desc": "{feature} вимагає активної підписки Premium."
+  "premium_required_desc": "{feature} вимагає активної підписки Premium.",
+  "dictionary_search_placeholder": "Шукати слово…",
+  "dictionary_sort_label": "Сортувати слова",
+  "dictionary_sort_az": "А–Я",
+  "dictionary_sort_za": "Я–А",
+  "dictionary_sort_newest": "Спочатку нові",
+  "dictionary_sort_oldest": "Спочатку старі",
+  "dictionary_no_results": "Відповідних слів не знайдено."
 }

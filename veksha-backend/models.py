@@ -25,6 +25,7 @@ class Word:
     known: Union[bool, str] = False        # True/False or string explaining what user doesn't know
     delayed: bool = False                  # delayed — priority +1 in next training session
     next_review: float = 0.0               # timestamp of next review
+    added_at: float = 0.0                  # timestamp when the word entered the vocabulary
     extra_data: str = ""                   # translation/example shown on incorrect answer
     sentence_mining: dict[str, Any] = field(default_factory=dict)
     # FSRS memory state (see fsrs.py); stability == 0.0 means "no state yet",
@@ -50,6 +51,7 @@ class Word:
             known=d.get("known", False),
             delayed=d.get("delayed", False),
             next_review=d.get("next_review", 0.0),
+            added_at=d.get("added_at", 0.0),
             extra_data=d.get("extra_data", ""),
             sentence_mining=d.get("sentence_mining", {}) or {},
             stability=d.get("stability", 0.0),

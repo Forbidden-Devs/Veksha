@@ -159,6 +159,8 @@
   "edit_kb_topic_not_found": "「{value}」というトピックが見つかりませんでした。",
   "edit_kb_word_known_not_found": "学習済みにする「{value}」という単語が見つかりませんでした。",
   "__same_as_en__": [
+    "dictionary_sort_az",
+    "dictionary_sort_za",
     "grammar_lens_off",
     "grammar_lens_title",
     "settings_overseer"
@@ -344,5 +346,12 @@
   "settings_promo_error_already_redeemed": "このプロモコードはすでに適用済みです。",
   "settings_promo_error_generic": "プロモコードを適用できませんでした。あとでもう一度お試しください。",
   "premium_required_title": "Premium が必要です",
-  "premium_required_desc": "{feature} を使うには、Premium の有効なサブスクリプションが必要です。"
+  "premium_required_desc": "{feature} を使うには、Premium の有効なサブスクリプションが必要です。",
+  "dictionary_search_placeholder": "単語を検索…",
+  "dictionary_sort_label": "単語を並べ替え",
+  "dictionary_sort_az": "A–Z",
+  "dictionary_sort_za": "Z–A",
+  "dictionary_sort_newest": "新しい順",
+  "dictionary_sort_oldest": "古い順",
+  "dictionary_no_results": "一致する単語が見つかりません。"
 }
