@@ -19,6 +19,17 @@ Optional env vars: `OPENAI_MODEL`, `OPENAI_SMART_MODEL`, `REDIS_URL`
 `VEKSHA_DATA_DIR` (runtime data location — point at a persistent volume in
 production), `CORS_ALLOW_ORIGINS`, `VEKSHA_DEBUG_API`.
 
+Google login additionally requires a **Web application** OAuth client and:
+
+```bash
+export GOOGLE_CLIENT_ID="<id>.apps.googleusercontent.com"
+export GOOGLE_CLIENT_SECRET="<web-client-secret>"
+export GOOGLE_OAUTH_REDIRECT_URI="https://api.example.com/api/auth/google/callback"
+```
+
+Register the exact `GOOGLE_OAUTH_REDIRECT_URI` under **Authorized redirect
+URIs** in Google Cloud Console. Keep the client secret on the backend only.
+
 ## Auth & storage
 
 `POST /api/auth/register {"display_name"}` creates an account under a
@@ -30,14 +41,17 @@ back to it as the display name. Every other endpoint requires
 message `{"type": "auth", "token": "..."}` after connecting (never in the
 URL — query strings end up in access logs).
 
-Google sign-in (`POST /api/auth/google {"id_token"}`) is enabled by setting
-`GOOGLE_CLIENT_ID`: the ID token is verified via Google's tokeninfo endpoint
-(audience/issuer checked locally), and the linked account's bearer token is
-re-issued on every login — so a Google-linked account survives cleared client
-storage. First login creates an account with the Google profile name (or
-e-mail local part) as the display name. `POST /api/auth/google/link` attaches
-a Google identity to an existing account (409 if the identity belongs to
-someone else). Without a Google link, a lost token still means a new account.
+Google sign-in uses an Authorization Code flow whose only redirect is the
+backend HTTPS callback. The extension opens the authorization URL in a normal
+tab and polls with a separate high-entropy, single-use secret. No extension
+redirect URI or custom browser scheme is exposed to Google, so the same flow
+works in Chromium-, Firefox-, and WebKit-based browsers that support the
+extension APIs. The returned Google identity resolves to the same internal
+account and re-issues its bearer token, so signing in on another device or
+after clearing extension storage restores the same vocabulary and settings.
+Linking attaches a Google identity to an existing account (409 if it belongs
+to someone else). Without a Google link, a lost local token still means a new
+account.
 
 All user data (accounts, KBs, chat history) lives in SQLite at
 `data/veksha.db` (WAL mode). The KB is stored as one JSON document per user;
@@ -98,7 +112,8 @@ api/                  routers (one file per domain)
 | Route | Purpose |
 |---|---|
 | `POST /api/auth/register` | create account, returns bearer token |
-| `POST /api/auth/google`, `/api/auth/google/link` | Google sign-in / link identity |
+| `POST /api/auth/google/start`, `/api/auth/google/link/start` | start Google sign-in / identity link |
+| `GET /api/auth/google/callback`, `GET /api/auth/google/*/status/{flow_id}` | Google HTTPS callback / one-time result |
 | `POST /api/message` | assistant chat: answer questions or edit the KB |
 | `POST /api/translate`, `/api/quick_translate` | selection translation (+background KB update) |
 | `POST /api/explain` | expanded explanation for a selection |

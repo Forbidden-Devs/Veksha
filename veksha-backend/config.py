@@ -21,6 +21,10 @@ OPENAI_SMART_MODEL = os.getenv("OPENAI_SMART_MODEL", "gpt-4.1")   # smarter mode
 # Google OAuth: the client ID whose ID tokens /api/auth/google accepts
 # (audience check). Empty = Google sign-in disabled (503 from the endpoint).
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
+# Must exactly match the HTTPS redirect URI registered on the Web application
+# OAuth client in Google Cloud Console.
+GOOGLE_OAUTH_REDIRECT_URI = os.getenv("GOOGLE_OAUTH_REDIRECT_URI", "")
 
 # Telegram billing companion bot (veksha-tgbot/). The bot authenticates its
 # webhook calls to /api/billing/telegram/webhook with this shared secret;

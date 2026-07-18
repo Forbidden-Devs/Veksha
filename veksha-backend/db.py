@@ -71,6 +71,21 @@ def _conn() -> sqlite3.Connection:
                    PRIMARY KEY (provider, subject)
                )"""
         )
+        # Browser-neutral Google OAuth handshakes. Only a SHA-256 hash of the
+        # opaque flow id is stored; completed results are short-lived and are
+        # deleted as soon as the extension consumes them.
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS google_oauth_flows (
+                   state_key TEXT PRIMARY KEY,
+                   poll_key  TEXT UNIQUE NOT NULL,
+                   mode     TEXT NOT NULL,
+                   username TEXT,
+                   status   TEXT NOT NULL DEFAULT 'pending',
+                   result   TEXT NOT NULL DEFAULT '',
+                   error    TEXT NOT NULL DEFAULT '',
+                   created  REAL NOT NULL
+               )"""
+        )
         # One row per review; the raw material for FSRS weight optimization
         # and review-history UI. stability/difficulty are post-review values,
         # retrievability is the predicted recall just before the review
@@ -294,6 +309,73 @@ def identity_for_user(username: str, provider: str) -> Optional[dict]:
     return {"subject": row[0], "email": row[1]} if row else None
 
 
+# ---------------------------------------------------------------------------
+# Short-lived browser-neutral OAuth handshakes
+# ---------------------------------------------------------------------------
+
+def oauth_flow_create(state_key: str, poll_key: str, mode: str, username: Optional[str]) -> None:
+    with _conn() as c:
+        c.execute("DELETE FROM google_oauth_flows WHERE created<?", (time.time() - 900,))
+        c.execute(
+            "INSERT INTO google_oauth_flows (state_key, poll_key, mode, username, created) VALUES (?,?,?,?,?)",
+            (state_key, poll_key, mode, username, time.time()),
+        )
+
+
+def oauth_flow_get(state_key: str) -> Optional[dict]:
+    row = _conn().execute(
+        "SELECT mode, username, status, result, error, created "
+        "FROM google_oauth_flows WHERE state_key=?",
+        (state_key,),
+    ).fetchone()
+    if row is None or row[5] < time.time() - 600:
+        return None
+    return {
+        "mode": row[0], "username": row[1], "status": row[2],
+        "result": row[3], "error": row[4], "created": row[5],
+    }
+
+
+def oauth_flow_finish(state_key: str, *, result: Optional[dict] = None, error: str = "") -> bool:
+    """Finish a pending flow exactly once. Returns False for stale/replayed state."""
+    status = "complete" if result is not None else "error"
+    payload = json.dumps(result, separators=(",", ":")) if result is not None else ""
+    with _conn() as c:
+        cur = c.execute(
+            "UPDATE google_oauth_flows SET status=?, result=?, error=? "
+            "WHERE state_key=? AND status='pending' AND created>=?",
+            (status, payload, error, state_key, time.time() - 600),
+        )
+    return cur.rowcount == 1
+
+
+def oauth_flow_take(poll_key: str, mode: str, username: Optional[str] = None) -> Optional[dict]:
+    """Read flow state; atomically delete and return a terminal result."""
+    row = _conn().execute(
+        "SELECT state_key FROM google_oauth_flows WHERE poll_key=?", (poll_key,)
+    ).fetchone()
+    if row is None:
+        return None
+    state_key = row[0]
+    flow = oauth_flow_get(state_key)
+    if flow is None or flow["mode"] != mode:
+        return None
+    if mode == "link" and flow["username"] != username:
+        return None
+    if flow["status"] == "pending":
+        return {"status": "pending"}
+    with _conn() as c:
+        cur = c.execute(
+            "DELETE FROM google_oauth_flows WHERE state_key=? AND status=?",
+            (state_key, flow["status"]),
+        )
+    if cur.rowcount != 1:
+        return None
+    if flow["status"] == "complete":
+        return {"status": "complete", "result": json.loads(flow["result"])}
+    return {"status": "error", "error": flow["error"] or "failed"}
+
+
 def delete_user_data(username: str) -> None:
     """Wipe KB, chat history, review log and word frequency (keeps the account/token)."""
     with _conn() as c:
@@ -355,7 +437,7 @@ def purge_all_users() -> None:
     """Destructively remove every account and all account-owned data."""
     with _conn() as c:
         for table in (
-            "identities", "review_log", "word_freq", "chat_history",
+            "google_oauth_flows", "identities", "review_log", "word_freq", "chat_history",
             "kb", "user_languages", "user_settings",
             "subscriptions", "telegram_links", "telegram_link_codes",
             "star_payments", "promo_redemptions", "promo_codes", "users",

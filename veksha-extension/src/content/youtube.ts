@@ -204,7 +204,7 @@ function stripEdges(s: string): string {
 
 /** Build language <option>s (codes only — matches the page-wide translator). */
 function buildLangOptions(sel: HTMLSelectElement, selected: string, includeAuto: boolean): void {
-  sel.innerHTML = "";
+  sel.replaceChildren();
   for (const lang of LANGUAGES) {
     if (!includeAuto && lang.code === "auto") continue;
     const opt = document.createElement("option");
@@ -341,7 +341,7 @@ function openPopup(text: string, anchor: DOMRect): void {
   listenBtn.className = "av-yt-listen";
   listenBtn.title = deps.t("content_listen", "Listen");
   listenBtn.setAttribute("aria-label", listenBtn.title);
-  listenBtn.innerHTML = '<span aria-hidden="true">🔊</span>';
+  listenBtn.textContent = "🔊";
   listenBtn.disabled = true;
 
   const breakdownBtn = document.createElement("button");
@@ -375,7 +375,7 @@ function openPopup(text: string, anchor: DOMRect): void {
     runTranslation(currentText, translation, (tr, detected) => {
       currentTranslation = tr;
       currentDetected = detected ?? (deps.state.sourceLang === "auto" ? "" : deps.state.sourceLang);
-      listenBtn.disabled = !tr || !canSpeak();
+      listenBtn.disabled = !currentText.trim() || !currentDetected || !canSpeak();
       if (deps.state.sourceLang === "auto" && detected) {
         const autoOpt = sourceSelect.querySelector<HTMLOptionElement>('option[value="auto"]');
         if (autoOpt) autoOpt.textContent = detected.toUpperCase();
@@ -408,7 +408,7 @@ function openPopup(text: string, anchor: DOMRect): void {
 
   listenBtn.addEventListener("click", (e) => {
     e.stopPropagation();
-    if (currentTranslation) speakText(currentTranslation, deps.state.targetLang);
+    if (currentDetected) speakText(currentText, currentDetected);
   });
   breakdownBtn.addEventListener("click", (e) => {
     e.stopPropagation();

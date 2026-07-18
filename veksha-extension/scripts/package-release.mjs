@@ -77,7 +77,7 @@ function validateTarget(browser) {
 
 function zipDirectory(sourceDir, destination) {
   rmSync(destination, { force: true });
-  run("zip", ["-q", "-r", destination, "."], { cwd: sourceDir });
+  run("zip", ["-q", "-r", destination, ".", "-x", "*.DS_Store"], { cwd: sourceDir });
   run("unzip", ["-tq", destination]);
 }
 

@@ -10,13 +10,14 @@ import asyncio
 import os
 import sys
 import tempfile
+from urllib.parse import parse_qs, urlparse
 
 os.environ["VEKSHA_DATA_DIR"] = tempfile.mkdtemp(prefix="veksha-test-")
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import db  # noqa: E402
 import api.auth as auth_api  # noqa: E402
-from fastapi import HTTPException  # noqa: E402
+from fastapi import HTTPException, Response  # noqa: E402
 from storage import get_storage  # noqa: E402
 
 
@@ -67,10 +68,13 @@ def test_google_display_name_falls_back_to_email():
 
 def test_second_login_returns_same_account_and_token():
     first = _login(_claims("sub-200", email="a@x.com", name="A"))
+    storage = get_storage(first.username)
+    storage.settings.display_name = "Saved profile"
+    storage.save()
     second = _login(_claims("sub-200", email="a@x.com", name="A"))
     assert second.created is False
     assert (second.username, second.token) == (first.username, first.token)
-    assert second.display_name == "A"
+    assert second.display_name == "Saved profile"
 
 
 def test_link_to_existing_account():
@@ -114,6 +118,71 @@ def test_unconfigured_server_returns_503():
         assert False, "expected 503"
     except HTTPException as e:
         assert e.status_code == 503
+
+
+def test_browser_neutral_flow_logs_in_and_is_single_use():
+    import config
+    old = (config.GOOGLE_CLIENT_ID, config.GOOGLE_CLIENT_SECRET, config.GOOGLE_OAUTH_REDIRECT_URI)
+    config.GOOGLE_CLIENT_ID = "test-client"
+    config.GOOGLE_CLIENT_SECRET = "test-secret"
+    config.GOOGLE_OAUTH_REDIRECT_URI = "https://auth.example.com/api/auth/google/callback"
+    original_exchange = auth_api._exchange_google_code
+
+    async def fake_exchange(code: str) -> dict:
+        assert code == "authorization-code"
+        return _claims("sub-web-flow", email="portable@example.com", name="Portable User")
+
+    auth_api._exchange_google_code = fake_exchange
+    try:
+        start = auth_api._start_google_flow("login")
+        query = parse_qs(urlparse(start.authorization_url).query)
+        assert query["response_type"] == ["code"]
+        assert query["redirect_uri"] == [config.GOOGLE_OAUTH_REDIRECT_URI]
+        state = query["state"][0]
+        assert state != start.flow_id
+        assert "orion-oauth" not in start.authorization_url
+
+        page = asyncio.run(auth_api.api_auth_google_callback(
+            state=state, code="authorization-code", error=None,
+        ))
+        assert page.status_code == 200
+        outcome = asyncio.run(auth_api.api_auth_google_status(start.flow_id, Response()))
+        assert outcome["status"] == "complete"
+        assert outcome["result"]["display_name"] == "Portable User"
+        assert db.token_owner(outcome["result"]["token"]) == outcome["result"]["username"]
+
+        try:
+            asyncio.run(auth_api.api_auth_google_status(start.flow_id, Response()))
+            assert False, "completed flow must only be consumable once"
+        except HTTPException as exc:
+            assert exc.status_code == 404
+    finally:
+        auth_api._exchange_google_code = original_exchange
+        config.GOOGLE_CLIENT_ID, config.GOOGLE_CLIENT_SECRET, config.GOOGLE_OAUTH_REDIRECT_URI = old
+
+
+def test_link_flow_is_bound_to_current_account():
+    import config
+    old = (config.GOOGLE_CLIENT_ID, config.GOOGLE_CLIENT_SECRET, config.GOOGLE_OAUTH_REDIRECT_URI)
+    config.GOOGLE_CLIENT_ID = "test-client"
+    config.GOOGLE_CLIENT_SECRET = "test-secret"
+    config.GOOGLE_OAUTH_REDIRECT_URI = "https://auth.example.com/api/auth/google/callback"
+    owner = asyncio.run(auth_api.api_register(auth_api.RegisterRequest(display_name="Owner")))
+    stranger = asyncio.run(auth_api.api_register(auth_api.RegisterRequest(display_name="Stranger")))
+    try:
+        start = auth_api._start_google_flow("link", owner.username)
+        assert asyncio.run(auth_api.api_auth_google_link_status(
+            start.flow_id, Response(), owner.username,
+        )) == {"status": "pending"}
+        try:
+            asyncio.run(auth_api.api_auth_google_link_status(
+                start.flow_id, Response(), stranger.username,
+            ))
+            assert False, "another account must not read a link flow"
+        except HTTPException as exc:
+            assert exc.status_code == 404
+    finally:
+        config.GOOGLE_CLIENT_ID, config.GOOGLE_CLIENT_SECRET, config.GOOGLE_OAUTH_REDIRECT_URI = old
 
 
 if __name__ == "__main__":

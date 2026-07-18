@@ -1,6 +1,6 @@
 import { CONFIG } from "../shared/config";
-import { getReminders, getSettings, googleAuth, googleLink } from "../shared/api";
-import { googleSignIn } from "../shared/googleAuth";
+import { getReminders, getSettings } from "../shared/api";
+import { googleLinkAccount, googleSignIn } from "../shared/googleAuth";
 import type { RemindersData } from "../shared/types";
 import type { CaptureController } from "../shared/capture";
 
@@ -272,8 +272,7 @@ chrome.runtime.onMessage.addListener((msg: Record<string, unknown>, _sender, sen
     // the auth window takes focus, the background survives. Credentials are
     // persisted before responding, so even a dead popup ends up signed in.
     (async () => {
-      const idToken = await googleSignIn();
-      const resp = await googleAuth(idToken);
+      const resp = await googleSignIn();
       await chrome.storage.local.set({
         [CONFIG.STORAGE_KEY_USERNAME]: resp.username,
         [CONFIG.STORAGE_KEY_TOKEN]: resp.token,
@@ -288,14 +287,13 @@ chrome.runtime.onMessage.addListener((msg: Record<string, unknown>, _sender, sen
   if (msg.type === "VEKSHA_GOOGLE_LINK") {
     (async () => {
       try {
-        const idToken = await googleSignIn();
-        const res = await googleLink(idToken);
+        const res = await googleLinkAccount();
         const result = { ok: true, email: res.email };
         await chrome.storage.local.set({ [GOOGLE_LINK_RESULT_KEY]: result });
         sendResponse(result);
       } catch (err) {
         const m = String((err as Error).message ?? err);
-        const error = m === "google-cancelled" ? "cancelled" : m.includes("HTTP 409") ? "taken" : "failed";
+        const error = m === "google-cancelled" ? "cancelled" : m === "google-taken" ? "taken" : "failed";
         // A cancelled window is not worth reporting after the fact.
         if (error !== "cancelled") {
           await chrome.storage.local.set({ [GOOGLE_LINK_RESULT_KEY]: { ok: false, error } });

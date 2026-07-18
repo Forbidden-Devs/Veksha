@@ -1,8 +1,8 @@
 export const CONFIG = {
   BACKEND_URL: "https://veksha-backend-production.up.railway.app",
-  // Google OAuth client id ("Web application" type in Google Cloud Console).
-  // Must match the backend's GOOGLE_CLIENT_ID env var. Empty string hides the
-  // "Continue with Google" button.
+  // Public Google OAuth client id ("Web application" type). Authentication
+  // itself runs through the backend HTTPS callback; this value only enables
+  // the UI and must match the backend's GOOGLE_CLIENT_ID.
   GOOGLE_CLIENT_ID: "213004589034-fgni2g4c9fmh10bn9quq9de5qn8h8kjc.apps.googleusercontent.com" as string,
   STORAGE_KEY_USERNAME: "veksha_username",
   STORAGE_KEY_TOKEN: "veksha_token",

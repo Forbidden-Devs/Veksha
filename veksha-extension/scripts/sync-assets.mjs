@@ -8,7 +8,16 @@
  *   tesseract.js worker + wasm cores  -> public/tesseract/
  *   source/tesseract-lang/*.gz        -> public/tesseract/lang/
  */
-import { cpSync, copyFileSync, existsSync, mkdirSync, readdirSync, rmSync } from "node:fs";
+import {
+  cpSync,
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -37,7 +46,16 @@ mkdirSync(tessLangPublic, { recursive: true });
 
 const tessWorker = join(root, "node_modules", "tesseract.js", "dist", "worker.min.js");
 if (existsSync(tessWorker)) {
-  copyFileSync(tessWorker, join(tessPublic, "worker.min.js"));
+  // Tesseract's prebuilt worker retains legacy eval-like fallbacks for browsers
+  // without globalThis. Our supported browsers all provide globalThis, and AMO
+  // rejects Function constructors even when that fallback is unreachable.
+  const workerCode = readFileSync(tessWorker, "utf8")
+    .replace(
+      /Function\("r","regeneratorRuntime = r"\)\(([A-Za-z_$][\w$]*)\)/g,
+      "globalThis.regeneratorRuntime=$1",
+    )
+    .replace(/new Function\("return this"\)\(\)/g, "globalThis");
+  writeFileSync(join(tessPublic, "worker.min.js"), workerCode);
 }
 
 const tessCoreDir = join(root, "node_modules", "tesseract.js-core");

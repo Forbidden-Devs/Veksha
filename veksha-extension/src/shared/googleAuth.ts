@@ -1,58 +1,102 @@
 /**
- * googleAuth.ts — Google sign-in for the extension popup.
+ * Browser-neutral Google sign-in.
  *
- * Runs the OAuth implicit flow (response_type=id_token) inside the browser's
- * extension-auth window via chrome.identity.launchWebAuthFlow — works in both
- * Chrome (…chromiumapp.org redirect) and Firefox (…allizom.org redirect).
- * The returned ID token is sent to POST /api/auth/google, which verifies it
- * and issues our own bearer token.
- *
- * Setup: register chrome.identity.getRedirectURL() as an authorized redirect
- * URI of the Google OAuth client (see veksha-extension/README.md).
+ * Google always redirects to an HTTPS endpoint on the Veksha backend. The
+ * extension opens that flow in a normal browser tab and polls the backend
+ * with a high-entropy, single-use flow id. This avoids browser-specific
+ * redirect schemes (chromiumapp.org, allizom.org, orion-oauth://, …).
  */
 import { CONFIG } from "./config";
 
-const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
-
-function decodeJwtPayload(idToken: string): Record<string, unknown> {
-  const base64 = idToken.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
-  return JSON.parse(atob(base64)) as Record<string, unknown>;
+export interface GoogleLoginResult {
+  username: string;
+  token: string;
+  display_name: string;
+  created: boolean;
 }
 
-/** Interactive Google sign-in; resolves with a nonce-checked Google ID token.
- *  Throws Error("google-cancelled") when the user closes the auth window. */
-export async function googleSignIn(): Promise<string> {
+export interface GoogleLinkResult {
+  ok: boolean;
+  email: string;
+}
+
+interface FlowStart {
+  flow_id: string;
+  authorization_url: string;
+  expires_in: number;
+}
+
+type FlowStatus<T> =
+  | { status: "pending" }
+  | { status: "complete"; result: T }
+  | { status: "error"; error: string };
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function storedToken(): Promise<string> {
+  const values = await chrome.storage.local.get(CONFIG.STORAGE_KEY_TOKEN);
+  return String(values[CONFIG.STORAGE_KEY_TOKEN] ?? "");
+}
+
+async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(url, init);
+  if (!response.ok) {
+    const body = await response.text().catch(() => "");
+    throw new Error(`google-flow HTTP ${response.status}: ${body.slice(0, 300)}`);
+  }
+  return response.json() as Promise<T>;
+}
+
+async function runGoogleFlow<T>(mode: "login" | "link"): Promise<T> {
   if (!CONFIG.GOOGLE_CLIENT_ID) throw new Error("google-not-configured");
 
-  const redirectUri = chrome.identity.getRedirectURL();
-  const nonce = crypto.randomUUID().replace(/-/g, "");
-  const params = new URLSearchParams({
-    client_id: CONFIG.GOOGLE_CLIENT_ID,
-    response_type: "id_token",
-    redirect_uri: redirectUri,
-    scope: "openid email profile",
-    nonce,
-    prompt: "select_account",
+  const token = mode === "link" ? await storedToken() : "";
+  if (mode === "link" && !token) throw new Error("google-not-authenticated");
+  const prefix = mode === "link" ? "/api/auth/google/link" : "/api/auth/google";
+  const headers: Record<string, string> = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const start = await requestJson<FlowStart>(`${CONFIG.BACKEND_URL}${prefix}/start`, {
+    method: "POST",
+    headers,
   });
+  const tab = await chrome.tabs.create({ url: start.authorization_url, active: true });
+  const deadline = Date.now() + Math.min(start.expires_in, 600) * 1000;
 
-  let resultUrl: string | undefined;
   try {
-    resultUrl = await chrome.identity.launchWebAuthFlow({
-      url: `${GOOGLE_AUTH_URL}?${params.toString()}`,
-      interactive: true,
-    });
-  } catch {
-    // Both browsers reject when the user closes the window.
-    throw new Error("google-cancelled");
+    while (Date.now() < deadline) {
+      const status = await requestJson<FlowStatus<T>>(
+        `${CONFIG.BACKEND_URL}${prefix}/status/${encodeURIComponent(start.flow_id)}`,
+        { headers },
+      );
+      if (status.status === "complete") return status.result;
+      if (status.status === "error") {
+        throw new Error(status.error === "cancelled" ? "google-cancelled" : `google-${status.error}`);
+      }
+
+      // Treat a manually closed auth tab as cancellation. Check after polling
+      // so a completed callback wins a close/poll race.
+      if (tab.id != null) {
+        try {
+          await chrome.tabs.get(tab.id);
+        } catch {
+          throw new Error("google-cancelled");
+        }
+      }
+      await sleep(800);
+    }
+    throw new Error("google-timeout");
+  } finally {
+    if (tab.id != null) await chrome.tabs.remove(tab.id).catch(() => {});
   }
-  if (!resultUrl) throw new Error("google-cancelled");
+}
 
-  const fragment = new URL(resultUrl).hash.replace(/^#/, "");
-  const idToken = new URLSearchParams(fragment).get("id_token");
-  if (!idToken) throw new Error("google-no-token");
+export function googleSignIn(): Promise<GoogleLoginResult> {
+  return runGoogleFlow<GoogleLoginResult>("login");
+}
 
-  // The nonce must round-trip into the token — guards against a response
-  // injected into the auth window.
-  if (decodeJwtPayload(idToken).nonce !== nonce) throw new Error("google-bad-nonce");
-  return idToken;
+export function googleLinkAccount(): Promise<GoogleLinkResult> {
+  return runGoogleFlow<GoogleLinkResult>("link");
 }

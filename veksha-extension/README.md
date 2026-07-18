@@ -86,26 +86,26 @@ The onboarding screen shows "Continue with Google" when
 `CONFIG.GOOGLE_CLIENT_ID` (src/shared/config.ts) is set. Local setup:
 
 1. Google Cloud Console → APIs & Services → Credentials → Create credentials
-   → OAuth client ID → type **Web application** (works for Chrome and
-   Firefox; configure the consent screen first if asked).
-2. Find your redirect URI: open the popup's devtools console and run
-   `chrome.identity.getRedirectURL()` — e.g.
-   `https://<extension-id>.chromiumapp.org/` in Chrome/Brave or
-   `https://<hash>.extensions.allizom.org/` in Firefox/Zen. Add both as
-   **Authorized redirect URIs** of the client. (Unpacked extension IDs are
-   derived from the install path, so they are stable per machine.)
-3. Put the client ID into `CONFIG.GOOGLE_CLIENT_ID` and start the backend
-   with the same id: `export GOOGLE_CLIENT_ID="<id>.apps.googleusercontent.com"`.
+   → OAuth client ID → type **Web application** (configure the consent screen
+   first if asked).
+2. Add the backend HTTPS callback
+   `https://veksha-backend-production.up.railway.app/api/auth/google/callback`
+   as the client's single
+   **Authorized redirect URI**. Do not add `chromiumapp.org`, `allizom.org`,
+   or custom schemes such as `orion-oauth://`.
+3. Put the client ID into `CONFIG.GOOGLE_CLIENT_ID`. Configure the backend
+   with the same `GOOGLE_CLIENT_ID`, its `GOOGLE_CLIENT_SECRET`, and the exact
+   callback as `GOOGLE_OAUTH_REDIRECT_URI`.
 
 Flow: the popup asks the background (`VEKSHA_GOOGLE_SIGNIN` /
-`VEKSHA_GOOGLE_LINK`) to run `chrome.identity.launchWebAuthFlow`
-(shared/googleAuth.ts) — the popup dies as soon as the OAuth window takes
-focus, so the flow must live in the background. The obtained ID token
-(implicit flow, nonce-checked) goes to `POST /api/auth/google`, which
-verifies it server-side and returns the regular bearer token; the background
-persists credentials (and the link outcome) to storage so the next popup
-open picks them up even if the original one closed. An existing linked
-account is recovered with its vocabulary; a new Google user continues
+`VEKSHA_GOOGLE_LINK`) to start a backend Authorization Code flow. The
+background opens Google in a normal tab and polls the backend with a separate
+single-use secret; Google returns only to the HTTPS backend callback. This
+avoids every browser-specific extension callback and works across Chrome,
+Brave, Vivaldi, Firefox, Zen, Orion, and other compatible browsers. The
+background persists credentials (and the link outcome) to storage so the
+next popup open picks them up even if the original popup closed. An existing
+linked account is recovered with its vocabulary; a new Google user continues
 onboarding.
 
 ## Identity

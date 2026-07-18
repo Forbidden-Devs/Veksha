@@ -260,25 +260,45 @@ function showAggressiveReminder(msg: Record<string, unknown>) {
   if (overseer) {
     helpPanel = document.createElement("div");
     helpPanel.className = "veksha-terror-help";
-    helpPanel.innerHTML = `
-      <div class="veksha-terror-help-title">Как отключить напоминание</div>
-      <div class="veksha-terror-help-row">
-        <span class="veksha-terror-help-icon">✓</span>
-        <span><b>Закончить тренировку</b><small>Самый быстрый способ</small></span>
-      </div>
-      <div class="veksha-terror-help-row">
-        <span class="veksha-terror-help-icon">+</span>
-        <span><b>Поймать крестик</b><small>Сложность зависит от ловкости</small></span>
-      </div>
-      <div class="veksha-terror-help-note">Выбери любой способ, чтобы продолжить.</div>
-    `;
+    const helpTitle = document.createElement("div");
+    helpTitle.className = "veksha-terror-help-title";
+    helpTitle.textContent = "Как отключить напоминание";
+    helpPanel.appendChild(helpTitle);
+
+    const helpRows = [
+      ["✓", "Закончить тренировку", "Самый быстрый способ"],
+      ["+", "Поймать крестик", "Сложность зависит от ловкости"],
+    ];
+    for (const [iconText, title, description] of helpRows) {
+      const row = document.createElement("div");
+      row.className = "veksha-terror-help-row";
+      const rowIcon = document.createElement("span");
+      rowIcon.className = "veksha-terror-help-icon";
+      rowIcon.textContent = iconText;
+      const rowCopy = document.createElement("span");
+      const rowTitle = document.createElement("b");
+      rowTitle.textContent = title;
+      const rowDescription = document.createElement("small");
+      rowDescription.textContent = description;
+      rowCopy.append(rowTitle, rowDescription);
+      row.append(rowIcon, rowCopy);
+      helpPanel.appendChild(row);
+    }
+
+    const helpNote = document.createElement("div");
+    helpNote.className = "veksha-terror-help-note";
+    helpNote.textContent = "Выбери любой способ, чтобы продолжить.";
+    helpPanel.appendChild(helpNote);
   }
 
   const captions = document.createElement("div");
   captions.className = "veksha-terror-captions";
   const headline = document.createElement("div");
   headline.className = "veksha-terror-headline";
-  headline.innerHTML = "Каждую минуту без тренировки<br>ты <span>упускаешь новые слова.</span>";
+  const headlineBreak = document.createElement("br");
+  const headlineAccent = document.createElement("span");
+  headlineAccent.textContent = "упускаешь новые слова.";
+  headline.append("Каждую минуту без тренировки", headlineBreak, "ты ", headlineAccent);
   const prompt = document.createElement("div");
   prompt.className = "veksha-terror-prompt";
   prompt.textContent = "Представь, что ты уже знаешь:";
@@ -363,7 +383,7 @@ function showIcon(rect: DOMRect, selectedText: string) {
 }
 
 function buildLanguageOptions(selectEl: HTMLSelectElement, selectedCode: string) {
-  selectEl.innerHTML = "";
+  selectEl.replaceChildren();
   for (const lang of LANGUAGES) {
     const opt = document.createElement("option");
     opt.value = lang.code;
@@ -448,7 +468,7 @@ function openPopup(selectedText: string, rect: DOMRect, opts?: { fixed?: boolean
   listenBtn.className = "veksha-listen-btn";
   listenBtn.title = t("content_listen", "Listen");
   listenBtn.setAttribute("aria-label", listenBtn.title);
-  listenBtn.innerHTML = '<span aria-hidden="true">🔊</span>';
+  listenBtn.textContent = "🔊";
   listenBtn.disabled = true;
 
   const secondaryActions = document.createElement("div");
@@ -467,7 +487,7 @@ function openPopup(selectedText: string, rect: DOMRect, opts?: { fixed?: boolean
   let currentDetectedSource = state.sourceLang === "auto" ? "" : state.sourceLang;
 
   listenBtn.addEventListener("click", () => {
-    speakText(currentTranslation, state.targetLang);
+    if (currentDetectedSource) speakText(currentText, currentDetectedSource);
   });
 
   explainBtn.addEventListener("click", () => {
@@ -484,7 +504,7 @@ function openPopup(selectedText: string, rect: DOMRect, opts?: { fixed?: boolean
     requestTranslation(text, state.sourceLang, state.targetLang, resultBox, sourceSelect, (tr, detected) => {
       currentTranslation = tr;
       currentDetectedSource = detected ?? (state.sourceLang === "auto" ? "" : state.sourceLang);
-      listenBtn.disabled = !tr || !canSpeak();
+      listenBtn.disabled = !currentText.trim() || !currentDetectedSource || !canSpeak();
 
       // If the source is the user's native language, redo the translation INTO
       // the studied language instead (once).

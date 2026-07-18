@@ -106,7 +106,10 @@ function renderBadge(result: CiMeterResult | null, loading: boolean): void {
   }
 
   if (loading) {
-    badge.innerHTML = `<div class="veksha-ci-badge-pill">${t("ci_meter_loading", "Checking readability…")}</div>`;
+    const loadingPill = document.createElement("div");
+    loadingPill.className = "veksha-ci-badge-pill";
+    loadingPill.textContent = t("ci_meter_loading", "Checking readability…");
+    badge.replaceChildren(loadingPill);
     return;
   }
   if (!result) {
@@ -120,23 +123,28 @@ function renderBadge(result: CiMeterResult | null, loading: boolean): void {
     .replace("{pct}", String(pct))
     .replace("{cefr}", result.cefr);
 
-  badge.innerHTML = `
-    <button type="button" class="veksha-ci-badge-pill">${icon} ${summary}</button>
-    <div class="veksha-ci-badge-detail" hidden>
-      <div class="veksha-ci-badge-verdict">${verdictText(t, result.verdict)}</div>
-      <button type="button" class="veksha-ci-badge-refine">${t("ci_meter_refine", "Refine with AI")}</button>
-    </div>
-  `;
+  const pill = document.createElement("button");
+  pill.type = "button";
+  pill.className = "veksha-ci-badge-pill";
+  pill.textContent = `${icon} ${summary}`;
 
-  const pill = badge.querySelector<HTMLButtonElement>(".veksha-ci-badge-pill");
-  const detail = badge.querySelector<HTMLElement>(".veksha-ci-badge-detail");
-  const refineBtn = badge.querySelector<HTMLButtonElement>(".veksha-ci-badge-refine");
+  const detail = document.createElement("div");
+  detail.className = "veksha-ci-badge-detail";
+  detail.hidden = true;
+  const verdict = document.createElement("div");
+  verdict.className = "veksha-ci-badge-verdict";
+  verdict.textContent = verdictText(t, result.verdict);
+  const refineBtn = document.createElement("button");
+  refineBtn.type = "button";
+  refineBtn.className = "veksha-ci-badge-refine";
+  refineBtn.textContent = t("ci_meter_refine", "Refine with AI");
+  detail.append(verdict, refineBtn);
+  badge.replaceChildren(pill, detail);
 
-  pill?.addEventListener("click", () => {
-    if (!detail) return;
+  pill.addEventListener("click", () => {
     detail.hidden = !detail.hidden;
   });
-  refineBtn?.addEventListener("click", (e) => {
+  refineBtn.addEventListener("click", (e) => {
     e.stopPropagation();
     void runScan(true);
   });
