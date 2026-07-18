@@ -1,0 +1,70 @@
+name: Reusable Node checks
+
+on:
+  workflow_call:
+    inputs:
+      target:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  extension:
+    name: Extension checks
+    if: inputs.target == 'extension'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: veksha-extension
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: veksha-extension/package-lock.json
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run release
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: extension-${{ github.sha }}
+          path: veksha-extension/artifacts/*.zip
+          if-no-files-found: error
+          retention-days: 14
+
+  web:
+    name: Web checks
+    if: inputs.target == 'web'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: |
+            veksha-extension/package-lock.json
+            veksha-web/package-lock.json
+
+      - name: Install extension dependencies used by shared sources
+        working-directory: veksha-extension
+        run: npm ci
+
+      - name: Install web dependencies
+        working-directory: veksha-web
+        run: npm ci
+
+      - name: Typecheck web and shared sources
+        working-directory: veksha-web
+        run: npm run typecheck
+
+      - name: Build web
+        working-directory: veksha-web
+        run: npm run build

@@ -235,6 +235,13 @@ def _conn() -> sqlite3.Connection:
     return conn
 
 
+def healthcheck() -> None:
+    """Raise when the primary SQLite database cannot serve a trivial query."""
+    row = _conn().execute("SELECT 1").fetchone()
+    if row != (1,):
+        raise RuntimeError("database healthcheck returned an unexpected result")
+
+
 # ---------------------------------------------------------------------------
 # Users / tokens
 # ---------------------------------------------------------------------------
