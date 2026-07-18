@@ -1,10 +1,27 @@
 {
   "manifest_version": 3,
   "name": "Veksha",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "Translate any selection with one click, build your vocabulary, and train it through a built-in chat — powered by Veksha backend.",
-  "{{chrome}}.permissions": ["storage", "activeTab", "alarms", "notifications", "tabs", "offscreen", "scripting", "contextMenus"],
-  "{{firefox}}.permissions": ["storage", "activeTab", "alarms", "notifications", "tabs", "scripting", "contextMenus"],
+  "{{chrome}}.permissions": [
+    "storage",
+    "activeTab",
+    "alarms",
+    "notifications",
+    "tabs",
+    "offscreen",
+    "scripting",
+    "contextMenus"
+  ],
+  "{{firefox}}.permissions": [
+    "storage",
+    "activeTab",
+    "alarms",
+    "notifications",
+    "tabs",
+    "scripting",
+    "contextMenus"
+  ],
   "host_permissions": [
     "https://veksha.app/*",
     "<all_urls>"
@@ -29,7 +46,9 @@
     "type": "module"
   },
   "{{firefox}}.background": {
-    "scripts": ["src/background/background.ts"],
+    "scripts": [
+      "src/background/background.ts"
+    ],
     "type": "module"
   },
   "content_security_policy": {
@@ -37,16 +56,27 @@
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["src/content/content.ts"],
-      "css": ["src/content/content.css"],
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "src/content/content.ts"
+      ],
+      "css": [
+        "src/content/content.css"
+      ],
       "run_at": "document_idle"
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": ["source/*", "icons/icon48.png"],
-      "matches": ["<all_urls>"]
+      "resources": [
+        "source/*",
+        "icons/icon48.png"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
     }
   ],
   "action": {
