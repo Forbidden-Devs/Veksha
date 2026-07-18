@@ -18,7 +18,15 @@ export function TargetLangScreen({
   const [selected, setSelected] = useState<string[]>(() => {
     return (initialLangs ?? []).filter((code) => options.some((l) => l.code === code));
   });
+  const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
+  const normalizedQuery = query.trim().toLocaleLowerCase();
+  const visibleOptions = normalizedQuery
+    ? options.filter((language) =>
+        language.name.toLocaleLowerCase().includes(normalizedQuery)
+        || language.code.includes(normalizedQuery)
+      )
+    : options;
 
   async function handleContinue() {
     setLoading(true);
@@ -40,8 +48,17 @@ export function TargetLangScreen({
         <p className="lang-pick-subtitle">{t.target_lang_subtitle}</p>
       </div>
 
+      <input
+        className="text-input lang-pick-search"
+        type="search"
+        value={query}
+        placeholder={t.settings_add_language}
+        aria-label={t.settings_add_language}
+        onChange={(event) => setQuery(event.target.value)}
+      />
+
       <div className="lang-pick-grid">
-        {options.map((lang) => (
+        {visibleOptions.map((lang) => (
           <button
             key={lang.code}
             className={`lang-card${selected.includes(lang.code) ? " lang-card--selected" : ""}`}

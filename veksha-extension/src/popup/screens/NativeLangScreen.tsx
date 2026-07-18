@@ -13,6 +13,7 @@ export function NativeLangScreen({ initialLang, onContinue }: { initialLang?: st
   const t = useT();
   const { lang, translating, switchLanguage } = useI18n();
   const [selected, setSelected] = useState<string>(() => initialLang ?? detectBrowserLang());
+  const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   // Once the user has clicked a tile, their choice owns the selection.
   const touchedRef = useRef(false);
@@ -26,6 +27,13 @@ export function NativeLangScreen({ initialLang, onContinue }: { initialLang?: st
   }, [lang]);
 
   const busy = loading || translating;
+  const normalizedQuery = query.trim().toLocaleLowerCase();
+  const visibleLanguages = normalizedQuery
+    ? LANG_OPTIONS.filter((language) =>
+        language.name.toLocaleLowerCase().includes(normalizedQuery)
+        || language.code.includes(normalizedQuery)
+      )
+    : LANG_OPTIONS;
 
   /** Tile click: select AND switch the surrounding interface right away,
    *  so the screen itself greets the user in the language they just chose. */
@@ -49,8 +57,17 @@ export function NativeLangScreen({ initialLang, onContinue }: { initialLang?: st
         <p className="lang-pick-subtitle">{t.native_lang_subtitle}</p>
       </div>
 
+      <input
+        className="text-input lang-pick-search"
+        type="search"
+        value={query}
+        placeholder={t.settings_native_lang}
+        aria-label={t.settings_native_lang}
+        onChange={(event) => setQuery(event.target.value)}
+      />
+
       <div className="lang-pick-grid">
-        {LANG_OPTIONS.map((lang) => (
+        {visibleLanguages.map((lang) => (
           <button
             key={lang.code}
             className={`lang-card${selected === lang.code ? " lang-card--selected" : ""}`}
