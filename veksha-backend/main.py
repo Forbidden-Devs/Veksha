@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -21,6 +22,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 import i18n
+import db
 from api import auth as api_auth
 from api import billing
 from api import ci_meter
@@ -56,6 +58,24 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.get("/healthz", include_in_schema=False)
+async def healthz():
+    """Lightweight Railway healthcheck without external API calls."""
+    try:
+        db.healthcheck()
+    except Exception:
+        log.exception("Backend healthcheck failed")
+        return JSONResponse(
+            status_code=503,
+            content={"status": "unhealthy", "service": "backend"},
+        )
+    return {
+        "status": "ok",
+        "service": "backend",
+        "revision": os.getenv("RAILWAY_GIT_COMMIT_SHA", "local"),
+    }
 
 
 @app.exception_handler(Exception)

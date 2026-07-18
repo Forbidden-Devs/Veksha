@@ -1,0 +1,47 @@
+## Как открыть PR:
+
+Основная ветка master, работа ведётся через короткие feature-ветки без develop.
+PR открываем на один "тикет".
+
+## Для каждого pull request:
+  * backend: тесты;
+  * extension: typecheck, сборка Chrome и Firefox, проверка manifest;
+  * web: typecheck и production build;
+  * bot: тесты и проверка запуска;
+  * admin: typecheck, тесты и build;
+  * общая итоговая проверка CI, обязательная перед merge.
+# Деплой Veksha
+
+## Текущая схема
+
+- GitHub — источник кода и проверок.
+- Railway project содержит production backend.
+- Backend подключён к ветке `master` и каталогу `/veksha-backend`.
+- Railway `Wait for CI` не начинает deploy, пока GitHub workflow на push не
+  завершится успешно.
+- Watch path `/veksha-backend/**` не позволяет изменениям других приложений
+  перезапускать backend.
+
+## Backend
+
+Конфигурация сборки и запуска хранится в `veksha-backend/railway.toml`.
+Railway проверяет `GET /healthz` до переключения трафика. Endpoint не вызывает
+OpenAI, Google или Telegram и возвращает Git commit из
+`RAILWAY_GIT_COMMIT_SHA`.
+
+После deploy проверяем:
+
+1. deployment имеет статус `SUCCESS`;
+2. `/healthz` возвращает HTTP 200 и `status: ok`;
+3. revision совпадает с ожидаемым commit SHA;
+4. в runtime logs нет повторяющихся ошибок запуска.
+
+## Откат
+
+1. В Railway выбрать последний стабильный deployment и выполнить rollback.
+2. Если проблема находится в коде, сделать revert отдельным commit в `master`.
+3. Дождаться успешного CI и нового Railway deployment.
+4. Повторно проверить `/healthz` и пользовательский сценарий.
+
+Production нельзя исправлять только через ручные настройки: устойчивое изменение
+должно быть отражено в Git или задокументированной переменной Railway.
