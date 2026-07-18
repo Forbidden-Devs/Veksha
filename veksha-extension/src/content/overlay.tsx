@@ -185,6 +185,13 @@ function PageOverlay({
     <div
       ref={ref}
       className={autoHeight ? "av-overlay-auto" : undefined}
+      // Keyboard events are composed, so they cross the Shadow DOM boundary
+      // unless we stop them here.  Let child controls handle the event first
+      // (including TrainingWindow's Enter shortcut), then keep it away from
+      // host-page shortcuts such as YouTube's Space and GitHub's A/C/L keys.
+      onKeyDown={(e) => e.stopPropagation()}
+      onKeyUp={(e) => e.stopPropagation()}
+      onKeyPress={(e) => e.stopPropagation()}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
