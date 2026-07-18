@@ -198,7 +198,10 @@ export default function App() {
   const [pendingNativeLang, setPendingNativeLang] = useState(detected);
   const [pendingUsername, setPendingUsername] = useState("");
   const [pendingDisplayName, setPendingDisplayName] = useState("");
-  const [pendingTargetLangs, setPendingTargetLangs] = useState<string[]>(["en"]);
+  // A fresh profile must make an explicit first choice. Preselecting English
+  // made a click on another language add it *after* English, so the UI showed
+  // two learning languages and kept English active.
+  const [pendingTargetLangs, setPendingTargetLangs] = useState<string[]>([]);
   const [pendingLevelSetup, setPendingLevelSetup] = useState<Record<string, { level: string; goals: string; prompt: string }>>({});
   const [pendingLevelIndex, setPendingLevelIndex] = useState(0);
 
@@ -233,7 +236,7 @@ export default function App() {
           if (saved?.ob) {
             setPendingNativeLang(saved.ob.nativeLang);
             setNativeLang(saved.ob.nativeLang);
-            setPendingTargetLangs(saved.ob.targetLangs?.length ? saved.ob.targetLangs : ["en"]);
+            setPendingTargetLangs(saved.ob.targetLangs ?? []);
           }
           setPendingUsername(stored);
           setPendingDisplayName(googleHandoff.display_name);
@@ -258,7 +261,7 @@ export default function App() {
         setNativeLang(ob.nativeLang);
         setPendingUsername(ob.username);
         setPendingDisplayName(ob.displayName);
-        setPendingTargetLangs(ob.targetLangs?.length ? ob.targetLangs : ["en"]);
+        setPendingTargetLangs(ob.targetLangs ?? []);
         setPendingLevelSetup(ob.levelSetup ?? {});
         setPendingLevelIndex(ob.levelIndex ?? 0);
         setObStep(ob.step);
@@ -364,7 +367,7 @@ export default function App() {
     // the username step skip registration for the signed-out account.
     setPendingUsername("");
     setPendingDisplayName("");
-    setPendingTargetLangs(["en"]);
+    setPendingTargetLangs([]);
     setPendingLevelSetup({});
     setPendingLevelIndex(0);
     setObStep("native_lang");
@@ -414,19 +417,19 @@ export default function App() {
       setPendingLevelIndex((index) => index + 1);
       return;
     }
-    try {
-      await api.saveSettings(pendingUsername, {
-        englishLevel: opts.level,
-        goals: opts.goals,
-        generalPrompt: opts.prompt,
-        displayName: pendingDisplayName,
-        nativeLang: pendingNativeLang,
-        targetLang: pendingTargetLangs[0],
-        targetLangs: pendingTargetLangs,
-        languageSettings,
-      });
-    } catch { /* ignore — user can update in Settings later */ }
-    setLangPair(pendingTargetLangs[0], pendingNativeLang);
+    const saved = await api.saveSettings(pendingUsername, {
+      englishLevel: opts.level,
+      goals: opts.goals,
+      generalPrompt: opts.prompt,
+      displayName: pendingDisplayName,
+      nativeLang: pendingNativeLang,
+      targetLang: pendingTargetLangs[0],
+      targetLangs: pendingTargetLangs,
+      languageSettings,
+    });
+    // The backend is the source of truth for filtering/order. Do not enter the
+    // app with optimistic language state when saving failed or was normalized.
+    setLangPair(saved.target_lang, saved.native_lang);
     setUsername(pendingUsername);
     setScreen("home");
     setShowTour(true); // the animated tour runs right after registration

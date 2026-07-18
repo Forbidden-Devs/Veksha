@@ -16,8 +16,7 @@ export function TargetLangScreen({
   const t = useT();
   const options = LANGUAGES.filter((l) => l.code !== "auto" && l.code !== nativeLang);
   const [selected, setSelected] = useState<string[]>(() => {
-    const valid = (initialLangs ?? []).filter((code) => options.some((l) => l.code === code));
-    return valid.length ? valid : [options[0]?.code ?? "en"];
+    return (initialLangs ?? []).filter((code) => options.some((l) => l.code === code));
   });
   const [loading, setLoading] = useState(false);
 

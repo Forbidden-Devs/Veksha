@@ -46,7 +46,14 @@ export function LevelSetupScreen({
     if (!level) { setError(t.settings_err_no_level); return; }
     setError(null);
     setLoading(true);
-    await onComplete({ level, goals, prompt });
+    try {
+      await onComplete({ level, goals, prompt });
+    } catch (err) {
+      // Keep the user on the final onboarding step instead of opening a
+      // partially configured profile with missing/incorrect languages.
+      setError(`${t.settings_err_save}: ${(err as Error).message}`);
+      setLoading(false);
+    }
   }
 
   return (
