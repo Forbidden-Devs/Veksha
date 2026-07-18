@@ -275,6 +275,27 @@ def user_token(username: str) -> Optional[str]:
     return row[0] if row else None
 
 
+def user_has_account_activity(username: str) -> bool:
+    """Whether an account has durable activity that must prevent automatic
+    identity recovery/reassignment."""
+    checks = (
+        ("chat_history", "username"),
+        ("review_log", "username"),
+        ("word_freq", "username"),
+        ("user_languages", "username"),
+        ("subscriptions", "username"),
+        ("telegram_links", "username"),
+        ("star_payments", "username"),
+        ("promo_redemptions", "username"),
+    )
+    conn = _conn()
+    return any(
+        conn.execute(f"SELECT 1 FROM {table} WHERE {column}=? LIMIT 1", (username,)).fetchone()
+        is not None
+        for table, column in checks
+    )
+
+
 # ---------------------------------------------------------------------------
 # External identities (Google OAuth)
 # ---------------------------------------------------------------------------
@@ -299,6 +320,23 @@ def identity_link(provider: str, subject: str, email: str, username: str) -> boo
         return True
     except sqlite3.IntegrityError:
         return False
+
+
+def identity_reassign(
+    provider: str,
+    subject: str,
+    from_username: str,
+    to_username: str,
+    email: str,
+) -> bool:
+    """Move an identity from one exact owner to another, atomically."""
+    with _conn() as c:
+        cur = c.execute(
+            "UPDATE identities SET username=?, email=? "
+            "WHERE provider=? AND subject=? AND username=?",
+            (to_username, email, provider, subject, from_username),
+        )
+    return cur.rowcount == 1
 
 
 def identity_for_user(username: str, provider: str) -> Optional[dict]:

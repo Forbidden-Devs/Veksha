@@ -276,10 +276,21 @@ chrome.runtime.onMessage.addListener((msg: Record<string, unknown>, _sender, sen
       await chrome.storage.local.set({
         [CONFIG.STORAGE_KEY_USERNAME]: resp.username,
         [CONFIG.STORAGE_KEY_TOKEN]: resp.token,
+        [CONFIG.STORAGE_KEY_GOOGLE_SIGNIN_RESULT]: {
+          username: resp.username,
+          display_name: resp.display_name,
+          created: resp.created,
+          ts: Date.now(),
+        },
       });
       return resp;
     })()
-      .then((resp) => sendResponse({ ok: true, username: resp.username, created: resp.created }))
+      .then((resp) => sendResponse({
+        ok: true,
+        username: resp.username,
+        display_name: resp.display_name,
+        created: resp.created,
+      }))
       .catch((err) => sendResponse({ ok: false, error: String((err as Error).message ?? err) }));
     return true;
   }

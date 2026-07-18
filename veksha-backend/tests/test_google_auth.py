@@ -79,6 +79,11 @@ def test_second_login_returns_same_account_and_token():
 
 def test_link_to_existing_account():
     reg = asyncio.run(auth_api.api_register(auth_api.RegisterRequest(display_name="Veteran")))
+    veteran_storage = get_storage(reg.username)
+    veteran_storage.settings.native_lang = "ru"
+    veteran_storage.settings.target_lang = "en"
+    veteran_storage.settings.language_settings = {"en": {"level": "a2", "goals": "", "prompt": ""}}
+    veteran_storage.save()
     orig = auth_api._verify_google_id_token
 
     async def fake_verify(_):
@@ -107,6 +112,20 @@ def test_link_to_existing_account():
             assert e.status_code == 409
     finally:
         auth_api._verify_google_id_token = orig
+
+
+def test_link_recovers_identity_from_pristine_google_profile():
+    hidden = _login(_claims("sub-popup-race", email="race@x.com", name="Hidden"))
+    assert hidden.created is True
+    current = asyncio.run(auth_api.api_register(auth_api.RegisterRequest(display_name="Real profile")))
+
+    result = auth_api._google_link(
+        _claims("sub-popup-race", email="race@x.com"), current.username,
+    )
+    assert result == {"ok": True, "email": "race@x.com"}
+    assert db.identity_owner("google", "sub-popup-race") == current.username
+    restored = _login(_claims("sub-popup-race", email="race@x.com"))
+    assert (restored.username, restored.token) == (current.username, current.token)
 
 
 def test_unconfigured_server_returns_503():

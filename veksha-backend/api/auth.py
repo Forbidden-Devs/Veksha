@@ -250,6 +250,23 @@ def _google_link(claims: dict, username: str) -> dict:
     if owner == username:
         return {"ok": True, "email": email}
     if owner is not None:
+        # Recovery for accounts orphaned by the old popup OAuth race: Google
+        # created an account, the popup reopened on the stale name step, and
+        # the user then registered a second local account. Only reclaim an
+        # owner that never completed onboarding and contains no learning data.
+        previous = get_storage(owner)
+        if (
+            not previous.settings.is_onboarded()
+            and not previous.words
+            and not previous.lesson_topics
+            and not db.user_has_account_activity(owner)
+            and db.identity_reassign(_PROVIDER, sub, owner, username, email)
+        ):
+            log.info(
+                "[auth] moved google identity from pristine account %r to user %r",
+                owner, username,
+            )
+            return {"ok": True, "email": email}
         raise HTTPException(status_code=409, detail="This Google account is already linked to another user.")
     if not db.identity_link(_PROVIDER, sub, email, username):
         raise HTTPException(status_code=409, detail="This Google account is already linked to another user.")

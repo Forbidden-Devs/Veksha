@@ -134,6 +134,13 @@ interface SavedUiState {
   ob?: SavedObState;
 }
 
+interface GoogleSigninHandoff {
+  username: string;
+  display_name: string;
+  created: boolean;
+  ts: number;
+}
+
 async function loadSavedUiState(): Promise<SavedUiState | null> {
   try {
     const stored = await sessionGet([UI_STATE_KEY]);
@@ -202,17 +209,50 @@ export default function App() {
 
   useEffect(() => {
     Promise.all([
-      storageGet([CONFIG.STORAGE_KEY_USERNAME, CONFIG.STORAGE_KEY_TOKEN]),
+      storageGet([
+        CONFIG.STORAGE_KEY_USERNAME,
+        CONFIG.STORAGE_KEY_TOKEN,
+        CONFIG.STORAGE_KEY_GOOGLE_SIGNIN_RESULT,
+      ]),
       loadSavedUiState(),
     ]).then(async ([result, saved]) => {
       const stored = result[CONFIG.STORAGE_KEY_USERNAME] as string | undefined;
       const token = result[CONFIG.STORAGE_KEY_TOKEN] as string | undefined;
+      const googleHandoff = result[CONFIG.STORAGE_KEY_GOOGLE_SIGNIN_RESULT] as GoogleSigninHandoff | undefined;
       if (stored && token) api.setAuthToken(token);
+      // OAuth runs in the background and opening its tab usually destroys the
+      // action popup. Consume the background handoff before the stale
+      // pre-OAuth onboarding snapshot, otherwise an authenticated user lands
+      // back on the name form and can accidentally create a second profile.
+      if (
+        stored && token && googleHandoff?.username === stored &&
+        Date.now() - googleHandoff.ts <= UI_STATE_TTL_MS
+      ) {
+        await storageRemove([CONFIG.STORAGE_KEY_GOOGLE_SIGNIN_RESULT]);
+        if (googleHandoff.created) {
+          if (saved?.ob) {
+            setPendingNativeLang(saved.ob.nativeLang);
+            setNativeLang(saved.ob.nativeLang);
+            setPendingTargetLangs(saved.ob.targetLangs?.length ? saved.ob.targetLangs : ["en"]);
+          }
+          setPendingUsername(stored);
+          setPendingDisplayName(googleHandoff.display_name);
+          setObStep("target_lang");
+          setUsername(null);
+          return;
+        }
+        setUsername(stored);
+        await routeAfterUsername(stored);
+        return;
+      }
+      if (googleHandoff) {
+        await storageRemove([CONFIG.STORAGE_KEY_GOOGLE_SIGNIN_RESULT]);
+      }
       // A popup killed mid-onboarding: resume the same step with the pending
       // choices instead of restarting from scratch. Credentials may already
       // exist (registration happens at the username step), so this must be
       // checked before the signed-in route.
-      if (saved?.ob) {
+      if (saved?.ob && !(stored && token && saved.ob.step === "username" && !saved.ob.username)) {
         const ob = saved.ob;
         setPendingNativeLang(ob.nativeLang);
         setNativeLang(ob.nativeLang);
@@ -339,15 +379,17 @@ export default function App() {
   // has already persisted the credentials and the next open picks them up.
   async function handleGoogleSignIn() {
     const resp = (await chrome.runtime.sendMessage({ type: "VEKSHA_GOOGLE_SIGNIN" })) as
-      | { ok: true; username: string; created: boolean }
+      | { ok: true; username: string; display_name: string; created: boolean }
       | { ok: false; error: string }
       | undefined;
     if (!resp) throw new Error("google-cancelled"); // popup lost the response
     if (!resp.ok) throw new Error(resp.error);
+    await storageRemove([CONFIG.STORAGE_KEY_GOOGLE_SIGNIN_RESULT]);
     const st = await storageGet([CONFIG.STORAGE_KEY_TOKEN]);
     api.setAuthToken((st[CONFIG.STORAGE_KEY_TOKEN] as string) || null);
     if (resp.created) {
       setPendingUsername(resp.username);
+      setPendingDisplayName(resp.display_name);
       setObStep("target_lang");
       return;
     }

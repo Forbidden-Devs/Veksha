@@ -6,7 +6,7 @@
   "{{chrome}}.permissions": ["storage", "activeTab", "alarms", "notifications", "tabs", "offscreen", "scripting", "contextMenus"],
   "{{firefox}}.permissions": ["storage", "activeTab", "alarms", "notifications", "tabs", "scripting", "contextMenus"],
   "host_permissions": [
-    "https://veksha-backend-production.up.railway.app/*",
+    "https://veksha.app/*",
     "<all_urls>"
   ],
   "{{firefox}}.browser_specific_settings": {

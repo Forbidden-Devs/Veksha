@@ -1,11 +1,14 @@
 export const CONFIG = {
-  BACKEND_URL: "https://veksha-backend-production.up.railway.app",
+  BACKEND_URL: "https://veksha.app",
   // Public Google OAuth client id ("Web application" type). Authentication
   // itself runs through the backend HTTPS callback; this value only enables
   // the UI and must match the backend's GOOGLE_CLIENT_ID.
   GOOGLE_CLIENT_ID: "213004589034-fgni2g4c9fmh10bn9quq9de5qn8h8kjc.apps.googleusercontent.com" as string,
   STORAGE_KEY_USERNAME: "veksha_username",
   STORAGE_KEY_TOKEN: "veksha_token",
+  // One-shot handoff from the background OAuth task to a popup that may have
+  // been destroyed while the Google tab had focus.
+  STORAGE_KEY_GOOGLE_SIGNIN_RESULT: "veksha_google_signin_result",
   STORAGE_KEY_DUAL_SUBS_FEATURE: "veksha_dualsubs_feature_enabled",
   STORAGE_KEY_DUAL_SUBS: "veksha_dualsubs_on",
   STORAGE_KEY_LANG_PAIR: "veksha_lang_pair",

@@ -89,7 +89,7 @@ The onboarding screen shows "Continue with Google" when
    → OAuth client ID → type **Web application** (configure the consent screen
    first if asked).
 2. Add the backend HTTPS callback
-   `https://veksha-backend-production.up.railway.app/api/auth/google/callback`
+   `https://veksha.app/api/auth/google/callback`
    as the client's single
    **Authorized redirect URI**. Do not add `chromiumapp.org`, `allizom.org`,
    or custom schemes such as `orion-oauth://`.

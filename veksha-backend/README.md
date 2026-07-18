@@ -24,7 +24,7 @@ Google login additionally requires a **Web application** OAuth client and:
 ```bash
 export GOOGLE_CLIENT_ID="<id>.apps.googleusercontent.com"
 export GOOGLE_CLIENT_SECRET="<web-client-secret>"
-export GOOGLE_OAUTH_REDIRECT_URI="https://api.example.com/api/auth/google/callback"
+export GOOGLE_OAUTH_REDIRECT_URI="https://veksha.app/api/auth/google/callback"
 ```
 
 Register the exact `GOOGLE_OAUTH_REDIRECT_URI` under **Authorized redirect
