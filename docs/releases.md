@@ -1,18 +1,29 @@
 # Процесс выпуска расширения
 
-Эта автоматизация относится к следующему этапу CI/CD. Текущий CI уже создаёт и
-сохраняет проверочные Chrome, Firefox и Firefox source ZIP, но не публикует их.
+GitHub Actions полностью автоматизирует подготовку версии и создание GitHub
+Release. Публикация архивов в магазины браузеров остаётся отдельным этапом.
 
-Целевой процесс:
+Текущий процесс:
 
 1. Workflow «Prepare extension release» получает `patch`, `minor` или `major`.
-2. Автоматически обновляет одну исходную версию и создаёт release PR.
-3. После merge создаётся тег `extension-vX.Y.Z`.
-4. CI собирает три уже поддерживаемых артефакта:
+2. Скрипт синхронно обновляет версию в `package.json`, `package-lock.json` и
+   `manifest.json`, проверяет сборку и создаёт release PR.
+3. После merge workflow проверяет, что номер версии увеличился, и создаёт тег
+   `extension-vX.Y.Z`.
+4. Workflow собирает три артефакта:
    - Chrome ZIP;
    - Firefox ZIP;
    - Firefox source ZIP.
 
-5. Артефакты сохраняются в GitHub Release.
-6. Публикация в магазины требует ручного подтверждения через GitHub Environment
-   `browser-stores`.
+5. Архивы и `SHA256SUMS.txt` сохраняются в артефактах workflow и GitHub Release.
+6. Повторный запуск безопасен: существующий корректный тег переиспользуется, а
+   файлы существующего Release обновляются.
+
+Чтобы подготовить выпуск, откройте Actions → **Prepare extension release** →
+**Run workflow**, выберите `patch`, `minor` или `major`, затем дождитесь CI и
+слейте созданный PR. Обычные изменения `package.json` без смены версии релиз не
+создают.
+
+Автоматическая публикация в Chrome Web Store и Firefox Add-ons относится к
+следующему этапу и должна требовать ручного подтверждения через GitHub
+Environment `browser-stores`.

@@ -1,0 +1,115 @@
+name: Release extension
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - veksha-extension/package.json
+      - veksha-extension/package-lock.json
+      - veksha-extension/manifest.json
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-extension
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build GitHub Release
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: veksha-extension
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - id: version
+        name: Detect version change
+        run: |
+          current="$(node -p "require('./package.json').version")"
+          previous="$(git show "$GITHUB_SHA^:veksha-extension/package.json" | node -p "JSON.parse(require('fs').readFileSync(0, 'utf8')).version")"
+          node scripts/set-version.mjs --check
+
+          echo "current=$current" >> "$GITHUB_OUTPUT"
+          if [[ "$current" == "$previous" ]]; then
+            echo "Version remains $current; no release is required."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          node - "$previous" "$current" <<'NODE'
+          const parse = (value) => value.split(".").map(Number);
+          const [previous, current] = process.argv.slice(2).map(parse);
+          const greater = current.some((part, index) =>
+            part > previous[index] && current.slice(0, index).every((value, i) => value === previous[i]),
+          );
+          if (!greater) throw new Error(`Version must increase: ${previous.join(".")} -> ${current.join(".")}`);
+          NODE
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-node@v7
+        if: steps.version.outputs.changed == 'true'
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: veksha-extension/package-lock.json
+
+      - name: Install dependencies
+        if: steps.version.outputs.changed == 'true'
+        run: npm ci
+
+      - name: Validate and package
+        if: steps.version.outputs.changed == 'true'
+        run: |
+          npm run typecheck
+          npm run test:version
+          npm run version:check
+          npm run release
+          sha256sum artifacts/*.zip > artifacts/SHA256SUMS.txt
+
+      - uses: actions/upload-artifact@v7
+        if: steps.version.outputs.changed == 'true'
+        with:
+          name: extension-v${{ steps.version.outputs.current }}
+          path: |
+            veksha-extension/artifacts/*.zip
+            veksha-extension/artifacts/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Tag commit and publish GitHub Release
+        if: steps.version.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.current }}
+        run: |
+          tag="extension-v$VERSION"
+          git fetch --tags --force
+          if git rev-parse --verify "refs/tags/$tag" >/dev/null 2>&1; then
+            tagged_sha="$(git rev-list -n 1 "$tag")"
+            if [[ "$tagged_sha" != "$GITHUB_SHA" ]]; then
+              echo "$tag already points to $tagged_sha instead of $GITHUB_SHA"
+              exit 1
+            fi
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag -a "$tag" -m "Veksha Extension v$VERSION"
+            git push origin "$tag"
+          fi
+
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$tag" artifacts/*.zip artifacts/SHA256SUMS.txt --clobber --repo "$GITHUB_REPOSITORY"
+          else
+            gh release create "$tag" \
+              artifacts/*.zip \
+              artifacts/SHA256SUMS.txt \
+              --repo "$GITHUB_REPOSITORY" \
+              --verify-tag \
+              --title "Veksha Extension v$VERSION" \
+              --generate-notes
+          fi
