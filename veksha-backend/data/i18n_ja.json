@@ -353,5 +353,6 @@
   "dictionary_sort_za": "Z–A",
   "dictionary_sort_newest": "新しい順",
   "dictionary_sort_oldest": "古い順",
-  "dictionary_no_results": "一致する単語が見つかりません。"
+  "dictionary_no_results": "一致する単語が見つかりません。",
+  "grammar_patterns_title": "文脈で学ぶ文法"
 }

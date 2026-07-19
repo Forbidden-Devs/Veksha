@@ -375,5 +375,6 @@
   "dictionary_sort_za": "Z–A",
   "dictionary_sort_newest": "Neueste zuerst",
   "dictionary_sort_oldest": "Älteste zuerst",
-  "dictionary_no_results": "Keine passenden Wörter gefunden."
+  "dictionary_no_results": "Keine passenden Wörter gefunden.",
+  "grammar_patterns_title": "Grammatik im Kontext"
 }

@@ -354,5 +354,6 @@
   "dictionary_sort_za": "Z–A",
   "dictionary_sort_newest": "Najnowsze na górze",
   "dictionary_sort_oldest": "Najstarsze na górze",
-  "dictionary_no_results": "Nie znaleziono pasujących słów."
+  "dictionary_no_results": "Nie znaleziono pasujących słów.",
+  "grammar_patterns_title": "Gramatyka w kontekście"
 }

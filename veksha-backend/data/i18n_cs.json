@@ -229,5 +229,6 @@
   "dictionary_sort_za": "Z–A",
   "dictionary_sort_newest": "Nejnovější první",
   "dictionary_sort_oldest": "Nejstarší první",
-  "dictionary_no_results": "Nebylo nalezeno žádné odpovídající slovo."
+  "dictionary_no_results": "Nebylo nalezeno žádné odpovídající slovo.",
+  "grammar_patterns_title": "Gramatika v kontextu"
 }

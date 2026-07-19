@@ -23,6 +23,7 @@
   "grammar_lens_off": "Грамматический объектив",
   "grammar_lens_loading": "Анализируем видимый текст…",
   "grammar_lens_disable": "Выключить Grammar Lens",
+  "grammar_patterns_title": "Грамматика в контексте",
   "grammar_role_subject": "Подлежащее",
   "grammar_role_verb": "Глагол",
   "grammar_role_object": "Дополнение",

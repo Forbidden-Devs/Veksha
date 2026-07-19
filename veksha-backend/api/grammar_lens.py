@@ -29,8 +29,16 @@ class GrammarSegment(BaseModel):
     explanation: str = ""
 
 
+class GrammarAnnotation(BaseModel):
+    text: str
+    category: str
+    label: str
+    explanation: str = ""
+
+
 class GrammarBlock(BaseModel):
     segments: list[GrammarSegment] = Field(default_factory=list)
+    annotations: list[GrammarAnnotation] = Field(default_factory=list)
 
 
 class GrammarLensResponse(BaseModel):
@@ -46,7 +54,9 @@ async def api_grammar_lens_analyze(
     req: GrammarLensRequest,
     username: CurrentUser,
 ) -> GrammarLensResponse:
-    native_lang = get_storage(username).settings.native_lang or "en"
+    settings = get_storage(username).settings
+    native_lang = settings.native_lang or "en"
+    learner_level = settings.english_level or "unknown"
     semaphore = asyncio.Semaphore(_CONCURRENCY)
 
     async def run(text: str) -> GrammarBlock:
@@ -54,8 +64,11 @@ async def api_grammar_lens_analyze(
             return GrammarBlock()
         text = text[:_MAX_BLOCK_CHARS]
         async with semaphore:
-            segments = await llm.analyze_grammar_block(text, native_lang)
-        return GrammarBlock(segments=[GrammarSegment(**item) for item in segments])
+            analysis = await llm.analyze_grammar_block(text, native_lang, learner_level)
+        return GrammarBlock(
+            segments=[GrammarSegment(**item) for item in analysis["segments"]],
+            annotations=[GrammarAnnotation(**item) for item in analysis["annotations"]],
+        )
 
     blocks = await asyncio.gather(*(run(text) for text in req.blocks[:_MAX_BLOCKS]))
     return GrammarLensResponse(blocks=list(blocks))

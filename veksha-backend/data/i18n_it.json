@@ -232,5 +232,6 @@
   "dictionary_sort_za": "Z–A",
   "dictionary_sort_newest": "Più recenti prima",
   "dictionary_sort_oldest": "Più vecchi prima",
-  "dictionary_no_results": "Nessuna parola corrispondente trovata."
+  "dictionary_no_results": "Nessuna parola corrispondente trovata.",
+  "grammar_patterns_title": "Grammatica nel contesto"
 }

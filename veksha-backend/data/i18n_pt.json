@@ -369,5 +369,6 @@
   "dictionary_sort_za": "Z–A",
   "dictionary_sort_newest": "Mais recentes primeiro",
   "dictionary_sort_oldest": "Mais antigos primeiro",
-  "dictionary_no_results": "Nenhuma palavra correspondente encontrada."
+  "dictionary_no_results": "Nenhuma palavra correspondente encontrada.",
+  "grammar_patterns_title": "Gramática em contexto"
 }

@@ -353,5 +353,6 @@
   "dictionary_sort_za": "Z–A",
   "dictionary_sort_newest": "Más recientes primero",
   "dictionary_sort_oldest": "Más antiguas primero",
-  "dictionary_no_results": "No se encontraron palabras coincidentes."
+  "dictionary_no_results": "No se encontraron palabras coincidentes.",
+  "grammar_patterns_title": "Gramática en contexto"
 }

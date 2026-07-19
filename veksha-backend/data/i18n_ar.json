@@ -346,5 +346,6 @@
   "dictionary_sort_za": "من ي إلى أ",
   "dictionary_sort_newest": "الأحدث أولًا",
   "dictionary_sort_oldest": "الأقدم أولًا",
-  "dictionary_no_results": "لم يتم العثور على كلمات مطابقة."
+  "dictionary_no_results": "لم يتم العثور على كلمات مطابقة.",
+  "grammar_patterns_title": "القواعد في السياق"
 }

@@ -229,5 +229,6 @@
   "dictionary_sort_za": "Z–A",
   "dictionary_sort_newest": "Mới nhất trước",
   "dictionary_sort_oldest": "Cũ nhất trước",
-  "dictionary_no_results": "Không tìm thấy từ phù hợp."
+  "dictionary_no_results": "Không tìm thấy từ phù hợp.",
+  "grammar_patterns_title": "Ngữ pháp trong ngữ cảnh"
 }

@@ -227,5 +227,6 @@
   "dictionary_sort_za": "Z–A",
   "dictionary_sort_newest": "सबसे नए पहले",
   "dictionary_sort_oldest": "सबसे पुराने पहले",
-  "dictionary_no_results": "कोई मेल खाने वाले शब्द नहीं मिले।"
+  "dictionary_no_results": "कोई मेल खाने वाले शब्द नहीं मिले।",
+  "grammar_patterns_title": "संदर्भ में व्याकरण"
 }

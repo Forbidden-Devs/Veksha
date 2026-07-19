@@ -226,5 +226,6 @@
   "dictionary_sort_za": "Z–A",
   "dictionary_sort_newest": "En yeni önce",
   "dictionary_sort_oldest": "En eski önce",
-  "dictionary_no_results": "Eşleşen kelime bulunamadı."
+  "dictionary_no_results": "Eşleşen kelime bulunamadı.",
+  "grammar_patterns_title": "Bağlamda dilbilgisi"
 }

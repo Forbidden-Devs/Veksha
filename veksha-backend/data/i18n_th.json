@@ -229,5 +229,6 @@
   "dictionary_sort_za": "Z–A",
   "dictionary_sort_newest": "ใหม่สุดก่อน",
   "dictionary_sort_oldest": "เก่าสุดก่อน",
-  "dictionary_no_results": "ไม่พบคำที่ตรงกัน"
+  "dictionary_no_results": "ไม่พบคำที่ตรงกัน",
+  "grammar_patterns_title": "ไวยากรณ์ในบริบท"
 }

@@ -230,5 +230,6 @@
   "dictionary_sort_za": "Я–А",
   "dictionary_sort_newest": "Спочатку нові",
   "dictionary_sort_oldest": "Спочатку старі",
-  "dictionary_no_results": "Відповідних слів не знайдено."
+  "dictionary_no_results": "Відповідних слів не знайдено.",
+  "grammar_patterns_title": "Граматика в контексті"
 }
