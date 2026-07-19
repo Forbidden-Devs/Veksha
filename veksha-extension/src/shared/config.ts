@@ -1,14 +1,21 @@
 export const CONFIG = {
-  BACKEND_URL: "https://veksha.app",
+  // Watch builds talk to the local FastAPI process. Production/store builds
+  // keep the public HTTPS origin; __DEV_BUILD__ is injected by Vite.
+  BACKEND_URL: __DEV_BUILD__ ? "http://127.0.0.1:8000" : "https://veksha.app",
   // Public Google OAuth client id ("Web application" type). Authentication
   // itself runs through the backend HTTPS callback; this value only enables
   // the UI and must match the backend's GOOGLE_CLIENT_ID.
   GOOGLE_CLIENT_ID: "213004589034-fgni2g4c9fmh10bn9quq9de5qn8h8kjc.apps.googleusercontent.com" as string,
-  STORAGE_KEY_USERNAME: "veksha_username",
-  STORAGE_KEY_TOKEN: "veksha_token",
+  // Keep local credentials separate from production. The persistent browser
+  // profile used by npm run dev may already contain a veksha.app bearer token,
+  // which is invalid against a fresh local database.
+  STORAGE_KEY_USERNAME: __DEV_BUILD__ ? "veksha_username_dev" : "veksha_username",
+  STORAGE_KEY_TOKEN: __DEV_BUILD__ ? "veksha_token_dev" : "veksha_token",
   // One-shot handoff from the background OAuth task to a popup that may have
   // been destroyed while the Google tab had focus.
-  STORAGE_KEY_GOOGLE_SIGNIN_RESULT: "veksha_google_signin_result",
+  STORAGE_KEY_GOOGLE_SIGNIN_RESULT: __DEV_BUILD__
+    ? "veksha_google_signin_result_dev"
+    : "veksha_google_signin_result",
   STORAGE_KEY_DUAL_SUBS_FEATURE: "veksha_dualsubs_feature_enabled",
   STORAGE_KEY_DUAL_SUBS: "veksha_dualsubs_on",
   STORAGE_KEY_LANG_PAIR: "veksha_lang_pair",

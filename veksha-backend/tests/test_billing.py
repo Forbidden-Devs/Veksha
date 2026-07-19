@@ -19,12 +19,16 @@ os.environ["ADMIN_API_SECRET"] = "test-admin-secret"
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import db  # noqa: E402
+import config  # noqa: E402
 import entitlements  # noqa: E402
 import api.billing as billing  # noqa: E402
 from fastapi import HTTPException  # noqa: E402
 
 SECRET = "test-secret"
 ADMIN_SECRET = "test-admin-secret"
+
+# Exercise real free/premium transitions, not the local development bypass.
+config.DEV_ALL_FEATURES = False
 
 
 def _user(name: str) -> str:
@@ -154,6 +158,17 @@ def test_feature_gating_and_expiry():
     except HTTPException as e:
         assert e.status_code == 402
         assert e.detail["code"] == "subscription_required"
+
+
+def test_local_development_feature_bypass_is_reported_to_client():
+    username = _user("dev_features")
+    config.DEV_ALL_FEATURES = True
+    try:
+        assert entitlements.has_feature(username, "dual_subtitles") is True
+        out = asyncio.run(billing.api_billing_status(username))
+        assert set(out.features) == set(entitlements.PREMIUM_FEATURES)
+    finally:
+        config.DEV_ALL_FEATURES = False
 
 
 def test_billing_status_endpoint():

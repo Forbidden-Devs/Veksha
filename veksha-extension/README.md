@@ -33,7 +33,10 @@ Add-on → select `dist/firefox/manifest.json`. (Permanent installs need the
 add-on signed by AMO; the `browser_specific_settings.gecko.id` is set in
 `manifest.json`.)
 
-Backend URL is configured in `src/shared/config.ts` (`BACKEND_URL`).
+`npm run dev`, `dev:zen`, and `dev:firefox` automatically use the local backend
+at `http://127.0.0.1:8000`. Production builds use `https://veksha.app`.
+Development credentials use separate storage keys, so a production token in
+the persistent browser profile cannot cause local `401` responses.
 `scripts/sync-assets.mjs` copies tesseract/langdata assets into `public/`
 before the build (`npm run sync-assets`).
 

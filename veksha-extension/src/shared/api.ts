@@ -360,6 +360,19 @@ export function subtitleTranslate(
   }, 20_000);
 }
 
+/** Translate adjacent subtitle cues together so the model gets context and playback is prefetched. */
+export function subtitleTranslateBatch(
+  lines: string[][],
+  sourceLang: string,
+  targetLang: string
+): Promise<{ lines: SubtitleTranslation[] }> {
+  return _post("/api/subtitles/translate-batch", {
+    lines,
+    source_lang: sourceLang,
+    target_lang: targetLang,
+  }, 45_000);
+}
+
 export function explain(username: string, text: string, translation: string): Promise<{ explanation: string }> {
   return _post("/api/explain", { text, translation });
 }
