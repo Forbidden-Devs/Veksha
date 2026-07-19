@@ -19,6 +19,10 @@ Optional env vars: `OPENAI_MODEL`, `OPENAI_SMART_MODEL`, `REDIS_URL`
 `VEKSHA_DATA_DIR` (runtime data location — point at a persistent volume in
 production), `CORS_ALLOW_ORIGINS`, `VEKSHA_DEBUG_API`.
 
+Local runs grant premium-gated development features automatically, so dual
+subtitles, Grammar Lens, and immersion can be exercised without Telegram
+billing. Set `VEKSHA_DEV_ALL_FEATURES=0` to test the real free-tier gates.
+
 Google login additionally requires a **Web application** OAuth client and:
 
 ```bash
@@ -125,6 +129,7 @@ api/                  routers (one file per domain)
 | `GET/POST /api/lesson-topics`, `WS /api/lesson/ws` | topic lessons |
 | `POST /api/immersion/analyze` | comprehensible-input page immersion (premium) |
 | `POST /api/subtitles/translate` | dual-subtitle line translation with word alignment (premium) |
+| `POST /api/subtitles/translate-batch` | contextual pretranslation of adjacent timed subtitle cues (premium) |
 | `GET /api/billing/status`, `POST /api/billing/telegram/link` | subscription status / bot deep link |
 | `POST /api/billing/promo/redeem` | redeem a promo code for temporary Premium |
 | `GET /api/billing/plans`, `POST /api/billing/telegram/webhook` | companion-bot API (shared secret) |

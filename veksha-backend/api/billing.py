@@ -61,7 +61,11 @@ async def api_billing_status(username: CurrentUser) -> BillingStatusResponse:
     return BillingStatusResponse(
         tier=tier,
         expires_at=expires_at,
-        features=entitlements.features_of(tier),
+        features=(
+            sorted(entitlements.PREMIUM_FEATURES)
+            if config.DEV_ALL_FEATURES
+            else entitlements.features_of(tier)
+        ),
         telegram_linked=bool(db.telegram_linked_user_ids(username)),
     )
 

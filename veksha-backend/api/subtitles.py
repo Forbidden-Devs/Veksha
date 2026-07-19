@@ -1,11 +1,10 @@
 """
 api/subtitles.py — dual-subtitle translation endpoint.
 
-  POST /api/subtitles/translate — translate one subtitle line with word
-                                  alignment (see llm/subtitles.py)
+  POST /api/subtitles/translate       — translate one subtitle line with alignment
+  POST /api/subtitles/translate-batch — pretranslate adjacent timed cues
 
-The extension sends the current caption line as the same whitespace tokens it
-rendered as interactive spans; alignment indices refer to those tokens.
+Alignment indices always refer to the whitespace tokens submitted for that cue.
 """
 from __future__ import annotations
 
@@ -16,7 +15,7 @@ from pydantic import BaseModel, Field
 
 from auth import CurrentUser
 from entitlements import require_feature
-from llm.subtitles import translate_subtitle_line
+from llm.subtitles import translate_subtitle_batch, translate_subtitle_line
 
 log = logging.getLogger(__name__)
 
@@ -24,6 +23,7 @@ router = APIRouter()
 
 MAX_TOKENS = 40
 MAX_TOKEN_LENGTH = 48
+MAX_BATCH_LINES = 12
 
 
 class SubtitleTranslateRequest(BaseModel):
@@ -43,6 +43,16 @@ class SubtitleTranslateResponse(BaseModel):
     detected_source_lang: str | None = None
 
 
+class SubtitleBatchTranslateRequest(BaseModel):
+    lines: list[list[str]] = Field(..., min_length=1, max_length=MAX_BATCH_LINES)
+    source_lang: str = "auto"
+    target_lang: str = Field(..., min_length=2, max_length=8)
+
+
+class SubtitleBatchTranslateResponse(BaseModel):
+    lines: list[SubtitleTranslateResponse]
+
+
 @router.post(
     "/api/subtitles/translate",
     response_model=SubtitleTranslateResponse,
@@ -60,3 +70,29 @@ async def api_subtitles_translate(
         log.warning("[subtitles] translate failed for user %r: %s", username, err)
         raise HTTPException(status_code=502, detail="Subtitle translation failed.")
     return SubtitleTranslateResponse(**result)
+
+
+@router.post(
+    "/api/subtitles/translate-batch",
+    response_model=SubtitleBatchTranslateResponse,
+    dependencies=[Depends(require_feature("dual_subtitles"))],
+)
+async def api_subtitles_translate_batch(
+    req: SubtitleBatchTranslateRequest, username: CurrentUser,
+) -> SubtitleBatchTranslateResponse:
+    lines = [
+        [token.strip()[:MAX_TOKEN_LENGTH] for token in line if token.strip()]
+        for line in req.lines
+    ]
+    if any(not line for line in lines):
+        raise HTTPException(status_code=400, detail="subtitle lines must not be empty")
+    if any(len(line) > MAX_TOKENS for line in lines):
+        raise HTTPException(status_code=400, detail=f"each line may contain at most {MAX_TOKENS} tokens")
+    try:
+        results = await translate_subtitle_batch(lines, req.source_lang, req.target_lang)
+    except Exception as err:
+        log.warning("[subtitles] batch translate failed for user %r: %s", username, err)
+        raise HTTPException(status_code=502, detail="Subtitle batch translation failed.")
+    return SubtitleBatchTranslateResponse(
+        lines=[SubtitleTranslateResponse(**result) for result in results],
+    )

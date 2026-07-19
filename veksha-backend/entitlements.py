@@ -24,6 +24,7 @@ import time
 from fastapi import Depends, HTTPException
 
 import db
+import config
 from auth import current_user
 
 TIER_FREE = "free"
@@ -85,6 +86,8 @@ def features_of(tier: str) -> list[str]:
 
 def has_feature(username: str, feature: str) -> bool:
     if feature not in PREMIUM_FEATURES:
+        return True
+    if config.DEV_ALL_FEATURES:
         return True
     tier, _ = subscription_of(username)
     return tier == TIER_PREMIUM

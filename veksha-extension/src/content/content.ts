@@ -798,8 +798,7 @@ chrome.runtime.onMessage.addListener((msg: Record<string, unknown>) => {
 });
 
 // ---------------------------------------------------------------------------
-// YouTube subtitle study mode — same contextual translator, player-friendly UI.
-// Activates only while the video is paused (see youtube.ts).
+// YouTube subtitle study mode — preloaded timed-text plus a DOM fallback.
 // ---------------------------------------------------------------------------
 
 if (/(^|\.)youtube\.com$/.test(location.hostname)) {

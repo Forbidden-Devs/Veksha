@@ -11,6 +11,7 @@ Results are cached in db_cache (ns="dualsub") — subtitle lines repeat heavily
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 
@@ -34,6 +35,24 @@ translate as a unit (idioms, phrasal verbs, articles merging into a word). Every
 every translation index should appear in at most one pair; omit tokens that have no counterpart.
 - source_lang: ISO 639-1 of the source line (detect it if the given source language is "auto").
 - Keep the translation register informal/natural, as film subtitles.
+"""
+
+_BATCH_SYSTEM = """\
+You translate multiple timed video-subtitle cues from {source_lang} to {target_lang} for a language learner, \
+and word-align every translation independently.
+
+Reply ONLY with one JSON object, no markdown:
+{{"lines": [{{"index": 0, "translation_tokens": ["..."], \
+"alignment": [[[si, ...], [ti, ...]], ...], "source_lang": "xx"}}, ...]}}
+
+Rules:
+- Return exactly one item for every input index, using the same index.
+- translation_tokens is a natural subtitle translation split into display tokens, with punctuation attached.
+- alignment indices are local to that line. Group words only when they translate as a unit.
+- Each source and destination index may occur in at most one alignment pair.
+- source_lang is ISO 639-1; detect it when the requested source language is "auto".
+- Use the surrounding lines as context, but never merge, split, or reorder cues.
+- Keep the register concise and natural, as film subtitles.
 """
 
 
@@ -103,3 +122,72 @@ async def translate_subtitle_line(
 
     await db_cache.cache_set("dualsub", cache_key, result)
     return result
+
+
+async def translate_subtitle_batch(
+    lines: list[list[str]], source_lang: str, target_lang: str,
+) -> list[dict]:
+    """Translate several adjacent cues in one model call, retaining per-line alignment."""
+    results: list[dict | None] = [None] * len(lines)
+    missing: list[int] = []
+    cache_keys: list[str] = []
+    for index, tokens in enumerate(lines):
+        key = db_cache.make_key(source_lang, target_lang, " ".join(tokens))
+        cache_keys.append(key)
+        cached = await db_cache.cache_get("dualsub", key)
+        if cached is None:
+            missing.append(index)
+        else:
+            results[index] = cached
+
+    if missing:
+        payload = [
+            {"index": index, "tokens": lines[index]}
+            for index in missing
+        ]
+        by_index: dict[int, dict] = {}
+        try:
+            raw = await _call(
+                system=_BATCH_SYSTEM.format(
+                    source_lang=source_lang or "auto", target_lang=target_lang,
+                ),
+                user=json.dumps(payload, ensure_ascii=False),
+                max_tokens=max(900, min(4200, 360 * len(missing))),
+                temp=0.1,
+                json_mode=True,
+                call_name="dualsub_batch",
+            )
+            data = json.loads(_clean_json(raw))
+            returned = data.get("lines") if isinstance(data, dict) else None
+            if isinstance(returned, list):
+                for item in returned:
+                    if not isinstance(item, dict) or not isinstance(item.get("index"), int):
+                        continue
+                    index = item["index"]
+                    if index not in missing:
+                        continue
+                    validated = _validate(item, n_src=len(lines[index]))
+                    if validated is not None:
+                        by_index[index] = validated
+        except Exception as err:
+            log.warning("subtitle batch model call failed; falling back per cue: %s", err)
+
+        # A JSON batch can be truncated or omit one difficult line. Preserve
+        # every valid result and retry only missing cues instead of failing the
+        # whole prefetch window with HTTP 502.
+        retry_indices = [index for index in missing if index not in by_index]
+        if retry_indices:
+            retry_results = await asyncio.gather(*(
+                translate_subtitle_line(lines[index], source_lang, target_lang)
+                for index in retry_indices
+            ))
+            by_index.update(zip(retry_indices, retry_results))
+
+        for index in missing:
+            result = by_index[index]
+            results[index] = result
+            await db_cache.cache_set("dualsub", cache_keys[index], result)
+
+    if any(result is None for result in results):
+        raise ValueError("subtitle batch translation: incomplete results")
+    return [result for result in results if result is not None]

@@ -17,7 +17,13 @@
 import { quickTranslate, explain } from "../shared/api";
 import { canSpeak, speakText } from "../shared/speech";
 import { LANGUAGES } from "../shared/languages";
-import { initDualSubs, sync as syncDualSubs } from "./dualsubs";
+import {
+  initDualSubs,
+  setTimeline as setDualSubsTimeline,
+  sync as syncDualSubs,
+  syncAtTime as syncDualSubsAtTime,
+} from "./dualsubs";
+import type { TimedCaptionCue } from "../shared/youtubeCaptions";
 
 export interface YouTubeStudyDeps {
   getUsername: () => Promise<string | null>;
@@ -51,6 +57,13 @@ let dragging = false;
 let wrapTimer = 0;
 let captionObserver: MutationObserver | null = null;
 let observedContainer: HTMLElement | null = null;
+let timelineReady = false;
+let loadedVideoId = "";
+let captionLoadSeq = 0;
+let timelineFrame = 0;
+let captionRetryTimer = 0;
+let captionRetryVideoId = "";
+let captionRetryCount = 0;
 
 // ---------------------------------------------------------------------------
 // DOM lookups (queried lazily — YouTube is an SPA and re-renders constantly)
@@ -119,6 +132,7 @@ function ensureCaptionsInteractive(): void {
 
 /** Feed the current line to the dual-subtitle row (see dualsubs.ts). */
 function updateDualSubs(): void {
+  if (timelineReady) return;
   const words = Array.from(
     document.querySelectorAll<HTMLElement>(`${SEL.captionContainer} .av-yt-word`),
   );
@@ -126,6 +140,111 @@ function updateDualSubs(): void {
   const windows = Array.from(document.querySelectorAll<HTMLElement>(SEL.captionWindow));
   if (windows.length) rect = unionRect(windows);
   syncDualSubs(words, words.length ? rect : null);
+}
+
+function currentCaptionRect(): DOMRect | null {
+  const windows = Array.from(document.querySelectorAll<HTMLElement>(SEL.captionWindow));
+  if (windows.length) return unionRect(windows);
+  const player = getPlayer();
+  if (!player) return null;
+  const rect = player.getBoundingClientRect();
+  return new DOMRect(
+    rect.left + rect.width * 0.15,
+    rect.top + rect.height * 0.79,
+    rect.width * 0.7,
+    Math.max(28, rect.height * 0.06),
+  );
+}
+
+function currentVideoId(): string {
+  const url = new URL(location.href);
+  if (url.pathname === "/watch") return url.searchParams.get("v") ?? "";
+  const match = url.pathname.match(/^\/(?:shorts|live)\/([\w-]{6,20})/);
+  return match?.[1] ?? "";
+}
+
+interface CaptionLoadResponse {
+  ok: boolean;
+  cues?: TimedCaptionCue[];
+  translatedCues?: TimedCaptionCue[];
+  track?: { languageCode: string; kind: "asr" | "manual" } | null;
+  retryable?: boolean;
+  error?: string;
+}
+
+function scheduleCaptionRetry(videoId: string): void {
+  if (videoId !== currentVideoId() || captionRetryCount >= 4) return;
+  captionRetryCount += 1;
+  window.clearTimeout(captionRetryTimer);
+  captionRetryTimer = window.setTimeout(() => {
+    if (videoId !== currentVideoId()) return;
+    loadedVideoId = "";
+    void loadTimedCaptions();
+  }, captionRetryCount * 750);
+}
+
+/** Load signed timed-text data at navigation time, before the first visual cue appears. */
+async function loadTimedCaptions(): Promise<void> {
+  const videoId = currentVideoId();
+  if (!videoId) {
+    window.clearTimeout(captionRetryTimer);
+    captionRetryVideoId = "";
+    captionRetryCount = 0;
+    if (loadedVideoId) {
+      loadedVideoId = "";
+      timelineReady = false;
+      captionLoadSeq += 1;
+      setDualSubsTimeline([]);
+    }
+    return;
+  }
+  if (videoId === loadedVideoId) return;
+  if (videoId !== captionRetryVideoId) {
+    captionRetryVideoId = videoId;
+    captionRetryCount = 0;
+  }
+  loadedVideoId = videoId;
+  timelineReady = false;
+  setDualSubsTimeline([]);
+  const seq = ++captionLoadSeq;
+  try {
+    const response = await chrome.runtime.sendMessage({
+      type: "VEKSHA_YOUTUBE_CAPTIONS",
+      videoId,
+      sourceLang: deps.state.sourceLang,
+      targetLang: deps.state.targetLang,
+    }) as CaptionLoadResponse | undefined;
+    if (seq !== captionLoadSeq || videoId !== currentVideoId()) return;
+    if (!response?.ok || !response.cues?.length) {
+      console.debug("[Veksha][yt] timed captions unavailable", response?.error ?? "empty track");
+      scheduleCaptionRetry(videoId);
+      return;
+    }
+    captionRetryCount = 0;
+    timelineReady = true;
+    console.debug("[Veksha][yt] timed captions ready", {
+      kind: response.track?.kind ?? "unknown",
+      sourceCues: response.cues.length,
+      translatedCues: response.translatedCues?.length ?? 0,
+    });
+    setDualSubsTimeline(
+      response.cues,
+      response.translatedCues ?? [],
+      response.track?.kind === "asr",
+    );
+  } catch {
+    // DOM observation remains as a compatibility fallback for restricted,
+    // private, live, or otherwise unavailable timed-text tracks.
+    scheduleCaptionRetry(videoId);
+  }
+}
+
+function driveTimeline(): void {
+  if (timelineReady) {
+    const video = getPlayer()?.querySelector<HTMLVideoElement>("video");
+    if (video) syncDualSubsAtTime(video.currentTime * 1000, currentCaptionRect());
+  }
+  timelineFrame = window.requestAnimationFrame(driveTimeline);
 }
 
 /** Watch the caption container so words are re-wrapped the instant YouTube
@@ -387,11 +506,19 @@ function openPopup(text: string, anchor: DOMRect): void {
   sourceSelect.addEventListener("change", (e) => {
     e.stopPropagation();
     deps.state.sourceLang = sourceSelect.value;
+    loadedVideoId = "";
+    timelineReady = false;
+    setDualSubsTimeline([]);
+    void loadTimedCaptions();
     retranslate();
   });
   targetSelect.addEventListener("change", (e) => {
     e.stopPropagation();
     deps.state.targetLang = targetSelect.value;
+    loadedVideoId = "";
+    timelineReady = false;
+    setDualSubsTimeline([]);
+    void loadTimedCaptions();
     retranslate();
   });
   swapBtn.addEventListener("click", (e) => {
@@ -400,6 +527,10 @@ function openPopup(text: string, anchor: DOMRect): void {
     if (!reverseTarget || !currentTranslation) return;
     deps.state.sourceLang = deps.state.targetLang;
     deps.state.targetLang = reverseTarget;
+    loadedVideoId = "";
+    timelineReady = false;
+    setDualSubsTimeline([]);
+    void loadTimedCaptions();
     buildLangOptions(sourceSelect, deps.state.sourceLang, true);
     buildLangOptions(targetSelect, deps.state.targetLang, false);
     currentText = currentTranslation;
@@ -592,6 +723,14 @@ export function initYouTubeStudy(d: YouTubeStudyDeps): void {
     layer = null;
     removePopup();
   });
+
+  // YouTube is an SPA: this custom event fires for normal videos, Shorts and
+  // history navigation. A URL poll covers browser variants that suppress it.
+  document.addEventListener("yt-navigate-finish", () => void loadTimedCaptions());
+  window.addEventListener("popstate", () => void loadTimedCaptions());
+  window.setInterval(() => void loadTimedCaptions(), 1000);
+  void loadTimedCaptions();
+  timelineFrame = window.requestAnimationFrame(driveTimeline);
 
   // Keep caption words wrapped as YouTube re-renders the line (playing or
   // paused). Cheap: a couple of querySelectors, skipping already-wrapped segs.

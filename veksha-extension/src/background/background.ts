@@ -3,11 +3,95 @@ import { getReminders, getSettings } from "../shared/api";
 import { googleLinkAccount, googleSignIn } from "../shared/googleAuth";
 import type { RemindersData } from "../shared/types";
 import type { CaptureController } from "../shared/capture";
+import {
+  captionTrackJson3Url,
+  extractCaptionTracks,
+  parseJson3Captions,
+  selectCaptionTrack,
+} from "../shared/youtubeCaptions";
 
 // Google-link outcome persisted for the Settings screen: the popup usually
 // closes as soon as the OAuth window takes focus, so the result must survive
 // until the popup is opened again.
 const GOOGLE_LINK_RESULT_KEY = "vk_google_link_result";
+
+/** Runs in YouTube's MAIN world so signed caption URLs use the exact player
+ * response, cookies and visitor state of the video being watched. Keep this
+ * function self-contained: chrome.scripting serializes it into the page. */
+async function readYouTubeCaptionsInPage(sourceLang: string, targetLang: string) {
+  type Track = { baseUrl: string; languageCode: string; kind?: string; vssId?: string };
+  type Player = HTMLElement & {
+    getPlayerResponse?: () => {
+      captions?: { playerCaptionsTracklistRenderer?: {
+        captionTracks?: Track[];
+        audioTracks?: { captionTrackIndices?: number[]; defaultCaptionTrackIndex?: number }[];
+        defaultAudioTrackIndex?: number;
+      } };
+    };
+    getOption?: (module: string, option: string) => { languageCode?: string; kind?: string; vssId?: string } | null;
+  };
+  const player = document.getElementById("movie_player") as Player | null;
+  const initial = (globalThis as typeof globalThis & {
+    ytInitialPlayerResponse?: ReturnType<NonNullable<Player["getPlayerResponse"]>>;
+  }).ytInitialPlayerResponse;
+  const response = player?.getPlayerResponse?.() ?? initial;
+  const renderer = response?.captions?.playerCaptionsTracklistRenderer;
+  const tracks = renderer?.captionTracks ?? [];
+  if (!tracks.length) return { ok: false, retryable: !player, error: "caption-tracks-unavailable" };
+
+  const baseLanguage = (code: string) => code.toLowerCase().split(/[-_]/)[0];
+  const active = player?.getOption?.("captions", "track");
+  let candidates: Track[] = [];
+  if (active?.vssId) candidates = tracks.filter((track) => track.vssId === active.vssId);
+  if (!candidates.length && active?.languageCode) {
+    candidates = tracks.filter((track) =>
+      track.languageCode.toLowerCase() === active.languageCode?.toLowerCase()
+      && (!active.kind || track.kind === active.kind));
+  }
+  if (!candidates.length && sourceLang && sourceLang !== "auto") {
+    const exact = tracks.filter((track) => track.languageCode.toLowerCase() === sourceLang.toLowerCase());
+    const sameBase = tracks.filter((track) => baseLanguage(track.languageCode) === baseLanguage(sourceLang));
+    candidates = exact.length ? exact : sameBase;
+  }
+  if (!candidates.length) {
+    const audioIndex = renderer?.defaultAudioTrackIndex ?? 0;
+    const audio = renderer?.audioTracks?.[audioIndex];
+    const indices = audio?.captionTrackIndices ?? [];
+    candidates = indices.map((index) => tracks[index]).filter(Boolean);
+    const defaultTrack = audio?.defaultCaptionTrackIndex;
+    if (typeof defaultTrack === "number" && tracks[defaultTrack]) {
+      candidates = [tracks[defaultTrack], ...candidates.filter((track) => track !== tracks[defaultTrack])];
+    }
+  }
+  if (!candidates.length) candidates = tracks;
+  const firstLanguage = baseLanguage(candidates[0].languageCode);
+  const sameLanguage = candidates.filter((track) => baseLanguage(track.languageCode) === firstLanguage);
+  const track = sameLanguage.find((item) => item.kind !== "asr") ?? sameLanguage[0];
+  if (!track) return { ok: false, error: "caption-track-unavailable" };
+
+  const load = async (translatedTo?: string) => {
+    const url = new URL(track.baseUrl);
+    url.searchParams.set("fmt", "json3");
+    if (translatedTo) url.searchParams.set("tlang", translatedTo);
+    const result = await fetch(url.toString(), { credentials: "include" });
+    if (!result.ok) throw new Error(`caption HTTP ${result.status}`);
+    const text = await result.text();
+    if (!text.trim()) throw new Error("empty caption response");
+    return JSON.parse(text) as unknown;
+  };
+
+  const sourcePayload = await load();
+  let translatedPayload: unknown = null;
+  if (targetLang && targetLang !== "auto" && baseLanguage(targetLang) !== baseLanguage(track.languageCode)) {
+    try { translatedPayload = await load(targetLang); } catch { /* LLM remains the fallback */ }
+  }
+  return {
+    ok: true,
+    sourcePayload,
+    translatedPayload,
+    track: { languageCode: track.languageCode, kind: track.kind === "asr" ? "asr" : "manual" },
+  };
+}
 
 // WebSocket proxy for session windows (Firefox build): extension pages can
 // have plain ws:// blocked by profile security settings, while this event
@@ -344,6 +428,85 @@ chrome.runtime.onMessage.addListener((msg: Record<string, unknown>, _sender, sen
       }))
       .finally(() => clearTimeout(timer));
     return true; // async
+  }
+
+  if (msg.type === "VEKSHA_YOUTUBE_CAPTIONS") {
+    const videoId = typeof msg.videoId === "string" ? msg.videoId : "";
+    const sourceLang = typeof msg.sourceLang === "string" ? msg.sourceLang : "auto";
+    const targetLang = typeof msg.targetLang === "string" ? msg.targetLang : "";
+    if (!/^[\w-]{6,20}$/.test(videoId)) {
+      sendResponse({ ok: false, error: "invalid-video-id" });
+      return false;
+    }
+    (async () => {
+      const tabId = _sender.tab?.id;
+      if (tabId !== undefined) {
+        try {
+          const injected = await chrome.scripting.executeScript({
+            target: { tabId },
+            world: "MAIN",
+            func: readYouTubeCaptionsInPage,
+            args: [sourceLang, targetLang],
+          });
+          const pageResult = injected[0]?.result as {
+            ok?: boolean;
+            retryable?: boolean;
+            sourcePayload?: unknown;
+            translatedPayload?: unknown;
+            track?: { languageCode: string; kind: string };
+          } | undefined;
+          if (pageResult?.ok && pageResult.sourcePayload) {
+            return {
+              ok: true,
+              cues: parseJson3Captions(pageResult.sourcePayload),
+              translatedCues: parseJson3Captions(pageResult.translatedPayload),
+              track: pageResult.track ?? null,
+            };
+          }
+          if (pageResult?.retryable) return { ok: false, retryable: true, error: "player-not-ready" };
+        } catch {
+          // Older browser builds may not support MAIN-world execution. The
+          // signed watch-page fallback below preserves compatibility.
+        }
+      }
+
+      const watchUrl = `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}&hl=en`;
+      const page = await fetch(watchUrl, { credentials: "include" });
+      if (!page.ok) throw new Error(`YouTube watch page returned HTTP ${page.status}`);
+      const tracks = extractCaptionTracks(await page.text());
+      const track = selectCaptionTrack(tracks, sourceLang);
+      if (!track) return { ok: true, cues: [], track: null };
+      const timedUrl = captionTrackJson3Url(track.baseUrl);
+      const parsedUrl = new URL(timedUrl);
+      if (!/(^|\.)youtube\.com$/.test(parsedUrl.hostname)) {
+        throw new Error("unexpected YouTube caption host");
+      }
+      const timed = await fetch(timedUrl, { credentials: "include" });
+      if (!timed.ok) throw new Error(`YouTube captions returned HTTP ${timed.status}`);
+      const cues = parseJson3Captions(await timed.json());
+      let translatedCues: ReturnType<typeof parseJson3Captions> = [];
+      if (targetLang && targetLang !== "auto" && targetLang.split("-")[0] !== track.languageCode.split("-")[0]) {
+        try {
+          const translatedUrl = captionTrackJson3Url(track.baseUrl, targetLang);
+          const translated = await fetch(translatedUrl, { credentials: "include" });
+          if (translated.ok) translatedCues = parseJson3Captions(await translated.json());
+        } catch {
+          // The source timeline is still useful; LLM prefetch remains available.
+        }
+      }
+      return {
+        ok: true,
+        cues,
+        translatedCues,
+        track: {
+          languageCode: track.languageCode,
+          kind: track.kind === "asr" ? "asr" : "manual",
+        },
+      };
+    })()
+      .then(sendResponse)
+      .catch((err) => sendResponse({ ok: false, error: String((err as Error).message ?? err) }));
+    return true;
   }
 
   if (msg.type === "VEKSHA_CAPTURE") {
