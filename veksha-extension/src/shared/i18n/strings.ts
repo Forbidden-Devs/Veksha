@@ -79,6 +79,7 @@ export interface Strings {
   grammar_lens_off: string;
   grammar_lens_loading: string;
   grammar_lens_disable: string;
+  grammar_patterns_title: string;
   grammar_role_subject: string;
   grammar_role_verb: string;
   grammar_role_object: string;
@@ -454,6 +455,7 @@ export const EN: Strings = {
   grammar_lens_off: "Grammar Lens",
   grammar_lens_loading: "Analyzing visible text…",
   grammar_lens_disable: "Turn off Grammar Lens",
+  grammar_patterns_title: "Grammar in context",
   grammar_role_subject: "Subject",
   grammar_role_verb: "Verb",
   grammar_role_object: "Object",
