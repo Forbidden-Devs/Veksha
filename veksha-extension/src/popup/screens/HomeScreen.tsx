@@ -5,6 +5,16 @@ import { useT } from "../../shared/i18n";
 import { LANGUAGES } from "../../shared/languages";
 import { isExtension, storageGet, storageSet } from "../../shared/platform";
 import type { SettingsData } from "../../shared/types";
+import {
+  blockAiOnPage,
+  blockAiOnSite,
+  enableAiOnPage,
+  enableAiOnSite,
+  isAiBlocked,
+  normalizeAiBlocklist,
+  pageKey,
+  type AiBlocklist,
+} from "../../shared/aiBlocklist";
 import { useApp } from "../App";
 
 /**
@@ -28,6 +38,7 @@ const Icons = {
   grammar: <svg viewBox="0 0 24 24"><path d="M8 4H5v16h3M16 4h3v16h-3M10 8h4M10 12h4M10 16h4"/></svg>,
   dualSubtitles: <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 10h4M7 14h7M16 10h1M16 14h1"/></svg>,
   myWords: <svg viewBox="0 0 24 24"><path d="M4 19V6a2 2 0 0 1 2-2h11l3 3v12a1 1 0 0 1-1 1H6a2 2 0 0 1-2-2Z"/><path d="M8 9h8M8 13h5"/></svg>,
+  aiBlock: <svg viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.7 2.8 8.1 7 10 4.2-1.9 7-5.3 7-10V6l-7-3Z"/><path d="m8 16 8-8"/><circle cx="9" cy="9" r="1"/><circle cx="15" cy="15" r="1"/></svg>,
 };
 
 export function HomeScreen() {
@@ -40,6 +51,11 @@ export function HomeScreen() {
   const [immersionOn, setImmersionOn] = useState(false);
   const [vocabFreqOn, setVocabFreqOn] = useState(false);
   const [dualSubsEnabled, setDualSubsEnabled] = useState(false);
+  const [activeUrl, setActiveUrl] = useState("");
+  const [aiBlocklist, setAiBlocklist] = useState<AiBlocklist>({ sites: [], pages: [], allowedPages: [] });
+  const [blockDialogOpen, setBlockDialogOpen] = useState(false);
+  const aiBlockAvailable = pageKey(activeUrl) !== null;
+  const aiBlocked = aiBlockAvailable && isAiBlocked(activeUrl, aiBlocklist);
 
   useEffect(() => {
     Promise.all([api.getKbSummary(username), api.getReminders(username)])
@@ -55,6 +71,7 @@ export function HomeScreen() {
       CONFIG.STORAGE_KEY_VOCAB_FREQ,
       CONFIG.STORAGE_KEY_DUAL_SUBS_FEATURE,
       CONFIG.STORAGE_KEY_DUAL_SUBS,
+      CONFIG.STORAGE_KEY_AI_BLOCKLIST,
     ]).then((result) => {
       setCiMeterOn(Boolean(result[CONFIG.STORAGE_KEY_CI_METER]));
       setGrammarLensOn(Boolean(result[CONFIG.STORAGE_KEY_GRAMMAR_LENS]));
@@ -69,8 +86,30 @@ export function HomeScreen() {
       if (storedDualSubsFeature === undefined && legacyDualSubsEnabled) {
         storageSet({ [CONFIG.STORAGE_KEY_DUAL_SUBS_FEATURE]: true });
       }
+      setAiBlocklist(normalizeAiBlocklist(result[CONFIG.STORAGE_KEY_AI_BLOCKLIST]));
     });
+    if (isExtension) {
+      chrome.tabs.query({ active: true, currentWindow: true }).then(([tab]) => setActiveUrl(tab?.url ?? "")).catch(() => {});
+    }
   }, []);
+
+  async function updateAiBlocklist(next: AiBlocklist) {
+    setAiBlocklist(next);
+    setBlockDialogOpen(false);
+    await storageSet({ [CONFIG.STORAGE_KEY_AI_BLOCKLIST]: next });
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tab?.id) await chrome.tabs.sendMessage(tab.id, { type: "VEKSHA_AI_BLOCKLIST_UPDATED" });
+    } catch { /* restricted pages simply use the saved preference later */ }
+  }
+
+  function chooseAiBlock(scope: "page" | "site") {
+    if (!activeUrl) return;
+    const next = aiBlocked
+      ? scope === "page" ? enableAiOnPage(aiBlocklist, activeUrl) : enableAiOnSite(aiBlocklist, activeUrl)
+      : scope === "page" ? blockAiOnPage(aiBlocklist, activeUrl) : blockAiOnSite(aiBlocklist, activeUrl);
+    void updateAiBlocklist(next);
+  }
 
   async function toggleCiMeter() {
     const next = !ciMeterOn;
@@ -171,70 +210,86 @@ export function HomeScreen() {
         </button>
         {isExtension ? (
           <button
-            className={`m-tile m-feature-tile ${immersionOn ? "is-on" : "is-off"}`}
-            onClick={openImmersion}
+            className={`m-tile m-feature-tile ${aiBlocked ? "is-blocked" : immersionOn ? "is-on" : "is-off"}`}
+            onClick={openImmersion} disabled={aiBlocked}
           >
             <span className="m-tile-icon">{Icons.immersion}</span>
             <span className="m-tile-label">{t.nav_immersion}</span>
             <span className="m-feature-state">
               <i aria-hidden="true" />
-              {immersionOn ? t.feature_enabled : t.feature_disabled}
+              {aiBlocked ? t.feature_blocked : immersionOn ? t.feature_enabled : t.feature_disabled}
             </span>
           </button>
         ) : <div className="m-tile m-tile-ghost" aria-hidden="true" />}
         {isExtension && (
           <button
-            className={`m-tile m-feature-tile ${dualSubsEnabled ? "is-on" : "is-off"}`}
+            className={`m-tile m-feature-tile ${aiBlocked ? "is-blocked" : dualSubsEnabled ? "is-on" : "is-off"}`}
             onClick={toggleDualSubtitles}
+            disabled={aiBlocked}
             aria-pressed={dualSubsEnabled}
           >
             <span className="m-tile-icon">{Icons.dualSubtitles}</span>
             <span className="m-tile-label">{t.settings_dual_subtitles}</span>
             <span className="m-feature-state">
               <i aria-hidden="true" />
-              {dualSubsEnabled ? t.feature_enabled : t.feature_disabled}
+              {aiBlocked ? t.feature_blocked : dualSubsEnabled ? t.feature_enabled : t.feature_disabled}
             </span>
           </button>
         )}
         {isExtension && (
           <button
-            className={`m-tile m-feature-tile ${grammarLensOn ? "is-on" : "is-off"}`}
+            className={`m-tile m-feature-tile ${aiBlocked ? "is-blocked" : grammarLensOn ? "is-on" : "is-off"}`}
             onClick={toggleGrammarLens}
+            disabled={aiBlocked}
             aria-pressed={grammarLensOn}
           >
             <span className="m-tile-icon">{Icons.grammar}</span>
             <span className="m-tile-label">{t.grammar_lens_title}</span>
             <span className="m-feature-state">
               <i aria-hidden="true" />
-              {grammarLensOn ? t.feature_enabled : t.feature_disabled}
+              {aiBlocked ? t.feature_blocked : grammarLensOn ? t.feature_enabled : t.feature_disabled}
             </span>
           </button>
         )}
         {isExtension && (
           <button
-            className={`m-tile m-feature-tile ${ciMeterOn ? "is-on" : "is-off"}`}
+            className={`m-tile m-feature-tile ${aiBlocked ? "is-blocked" : ciMeterOn ? "is-on" : "is-off"}`}
             onClick={toggleCiMeter}
+            disabled={aiBlocked}
             aria-pressed={ciMeterOn}
           >
             <span className="m-tile-icon">{Icons.ciMeter}</span>
             <span className="m-tile-label">{t.ci_meter_off}</span>
             <span className="m-feature-state">
               <i aria-hidden="true" />
-              {ciMeterOn ? t.feature_enabled : t.feature_disabled}
+              {aiBlocked ? t.feature_blocked : ciMeterOn ? t.feature_enabled : t.feature_disabled}
             </span>
           </button>
         )}
         {isExtension && (
           <button
-            className={`m-tile m-feature-tile ${vocabFreqOn ? "is-on" : "is-off"}`}
+            className={`m-tile m-feature-tile ${aiBlocked ? "is-blocked" : vocabFreqOn ? "is-on" : "is-off"}`}
             onClick={() => navigateTo("myWords")}
+            disabled={aiBlocked}
           >
             <span className="m-tile-icon">{Icons.myWords}</span>
             <span className="m-tile-label">{t.my_words_title}</span>
             <span className="m-feature-state">
               <i aria-hidden="true" />
-              {vocabFreqOn ? t.feature_enabled : t.feature_disabled}
+              {aiBlocked ? t.feature_blocked : vocabFreqOn ? t.feature_enabled : t.feature_disabled}
             </span>
+          </button>
+        )}
+
+        {isExtension && (
+          <button
+            className={`m-tile m-feature-tile m-ai-block-tile ${aiBlocked ? "is-on" : "is-off"}`}
+            onClick={() => setBlockDialogOpen(true)}
+            disabled={!aiBlockAvailable}
+          >
+            <span className="m-tile-icon">{Icons.aiBlock}</span>
+            <span className="m-tile-label">{t.ai_block_title}</span>
+            <span className="m-feature-state"><i aria-hidden="true" />{aiBlocked ? t.ai_block_enabled : t.feature_disabled}</span>
           </button>
         )}
 
@@ -253,6 +308,20 @@ export function HomeScreen() {
           <span className="m-tile-label">{LANGUAGES.find((lang) => lang.code === targetLang)?.name ?? targetLang}</span>
         </button>
       </div>
+      {blockDialogOpen && (
+        <div className="ai-block-dialog-backdrop" role="presentation" onMouseDown={() => setBlockDialogOpen(false)}>
+          <div className="ai-block-dialog" role="dialog" aria-modal="true" aria-labelledby="ai-block-title" onMouseDown={(event) => event.stopPropagation()}>
+            <button className="ai-block-dialog-close" onClick={() => setBlockDialogOpen(false)} aria-label="Close">×</button>
+            <span className="ai-block-dialog-icon">{Icons.aiBlock}</span>
+            <h2 id="ai-block-title">{t.ai_block_title}</h2>
+            <div className="ai-block-dialog-actions">
+              <button onClick={() => chooseAiBlock("page")}>{aiBlocked ? t.ai_block_enable_page : t.ai_block_disable_page}</button>
+              <button onClick={() => chooseAiBlock("site")}>{aiBlocked ? t.ai_block_enable_site : t.ai_block_disable_site}</button>
+            </div>
+            <p>{t.ai_block_dialog_hint}</p>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

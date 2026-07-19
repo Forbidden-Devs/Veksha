@@ -216,6 +216,22 @@ body,
   filter: saturate(.45);
 }
 
+.m-feature-tile.is-blocked {
+  opacity: 1;
+  color: color-mix(in srgb, var(--m-fg) 70%, transparent);
+  background: color-mix(in srgb, var(--m-surface-2) 88%, var(--m-bg)) !important;
+  border-color: var(--m-border) !important;
+  box-shadow: none;
+  filter: grayscale(.55);
+}
+
+.m-feature-tile.is-blocked .m-feature-state {
+  background: color-mix(in srgb, var(--m-dim) 24%, transparent);
+  color: var(--m-dim);
+}
+
+.m-ai-block-tile.is-on { filter: none; }
+
 /* ---------------------------------------------------------------------------
    Re-skin of existing components (surfaces, buttons, inputs, chat)
    --------------------------------------------------------------------------- */
