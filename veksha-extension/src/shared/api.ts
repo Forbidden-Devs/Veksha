@@ -315,9 +315,26 @@ export interface GrammarSegment {
   explanation: string;
 }
 
+export type GrammarCategory =
+  | "tense_aspect" | "voice" | "mood_modality" | "clause_link"
+  | "negation_question" | "agreement_form" | "determiner_article"
+  | "verb_pattern" | "word_order" | "comparison";
+
+export interface GrammarAnnotation {
+  text: string;
+  category: GrammarCategory;
+  label: string;
+  explanation: string;
+}
+
+export interface GrammarBlockAnalysis {
+  segments: GrammarSegment[];
+  annotations: GrammarAnnotation[];
+}
+
 export function analyzeGrammarLens(
   blocks: string[]
-): Promise<{ blocks: { segments: GrammarSegment[] }[] }> {
+): Promise<{ blocks: GrammarBlockAnalysis[] }> {
   return _post("/api/grammar-lens/analyze", { blocks }, 45_000);
 }
 
