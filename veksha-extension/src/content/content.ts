@@ -8,6 +8,53 @@ import { initImmersion, setImmersionEnabled } from "./immersion";
 import { initCiMeter, setCiMeterEnabled } from "./cimeter";
 import { initGrammarLens, setGrammarLensEnabled } from "./grammar-lens";
 import { initVocabFreq, setVocabFreqEnabled } from "./vocabfreq";
+import { isAiBlocked, normalizeAiBlocklist } from "../shared/aiBlocklist";
+
+// Fail closed for the few milliseconds needed to read the local rule set.
+let aiBlockedOnThisPage = true;
+document.documentElement.dataset.vekshaAiBlocked = "true";
+
+async function refreshAiBlockedState(): Promise<void> {
+  try {
+    const result = await chrome.storage.local.get([
+      CONFIG.STORAGE_KEY_AI_BLOCKLIST,
+      CONFIG.STORAGE_KEY_IMMERSION,
+      CONFIG.STORAGE_KEY_CI_METER,
+      CONFIG.STORAGE_KEY_GRAMMAR_LENS,
+      CONFIG.STORAGE_KEY_VOCAB_FREQ,
+    ]);
+    aiBlockedOnThisPage = isAiBlocked(location.href, normalizeAiBlocklist(result[CONFIG.STORAGE_KEY_AI_BLOCKLIST]));
+    if (!aiBlockedOnThisPage) {
+      setCiMeterEnabled(Boolean(result[CONFIG.STORAGE_KEY_CI_METER]));
+      setVocabFreqEnabled(Boolean(result[CONFIG.STORAGE_KEY_VOCAB_FREQ]));
+      setGrammarLensEnabled(Boolean(result[CONFIG.STORAGE_KEY_GRAMMAR_LENS]));
+      setImmersionEnabled(!result[CONFIG.STORAGE_KEY_GRAMMAR_LENS] && Boolean(result[CONFIG.STORAGE_KEY_IMMERSION]));
+    }
+  } catch {
+    aiBlockedOnThisPage = false;
+  }
+  if (aiBlockedOnThisPage) {
+    removeAll();
+    setImmersionEnabled(false);
+    setCiMeterEnabled(false);
+    setGrammarLensEnabled(false);
+    setVocabFreqEnabled(false);
+    pdfFab?.remove();
+    pdfFab = null;
+  } else {
+    ensurePdfFab();
+  }
+  document.documentElement.dataset.vekshaAiBlocked = String(aiBlockedOnThisPage);
+  document.dispatchEvent(new CustomEvent("VEKSHA_AI_BLOCK_STATE", { detail: { blocked: aiBlockedOnThisPage } }));
+}
+
+void refreshAiBlockedState();
+let lastBlocklistUrl = location.href;
+window.setInterval(() => {
+  if (location.href === lastBlocklistUrl) return;
+  lastBlocklistUrl = location.href;
+  void refreshAiBlockedState();
+}, 1_000);
 
 let icon: HTMLElement | null = null;
 let popup: HTMLElement | null = null;
@@ -661,6 +708,7 @@ function inYouTubeStudyUI(node: EventTarget | null): boolean {
 }
 
 document.addEventListener("mouseup", (e) => {
+  if (aiBlockedOnThisPage) return;
   if (icon?.contains(e.target as Node) || popup?.contains(e.target as Node)) return;
   // YouTube captions have their own study-mode popup — stay out of its way.
   if (inYouTubeStudyUI(e.target)) return;
@@ -700,6 +748,7 @@ let imgRegion: { x: number; y: number; started: boolean; el: HTMLElement } | nul
 let imgRegionBox: HTMLElement | null = null;
 
 document.addEventListener("pointerdown", (e) => {
+  if (aiBlockedOnThisPage) return;
   if (e.button !== 0) return;
   const el = e.target as HTMLElement | null;
   if (!el || el.tagName !== "IMG") return;
@@ -770,17 +819,24 @@ chrome.runtime.onMessage.addListener((msg: Record<string, unknown>) => {
     typeof msg.topic === "string"
   ) {
     showLessonOverlay(msg.username, msg.topic);
+  } else if (msg.type === "VEKSHA_AI_BLOCKLIST_UPDATED") {
+    void refreshAiBlockedState();
   } else if (msg.type === "VEKSHA_TOGGLE_IMMERSION") {
+    if (aiBlockedOnThisPage) return;
     if (msg.enabled) setGrammarLensEnabled(false);
     setImmersionEnabled(Boolean(msg.enabled));
   } else if (msg.type === "VEKSHA_TOGGLE_CI_METER") {
+    if (aiBlockedOnThisPage) return;
     setCiMeterEnabled(Boolean(msg.enabled));
   } else if (msg.type === "VEKSHA_TOGGLE_GRAMMAR_LENS") {
+    if (aiBlockedOnThisPage) return;
     if (msg.enabled) setImmersionEnabled(false);
     setGrammarLensEnabled(Boolean(msg.enabled));
   } else if (msg.type === "VEKSHA_TOGGLE_VOCAB_FREQ") {
+    if (aiBlockedOnThisPage) return;
     setVocabFreqEnabled(Boolean(msg.enabled));
   } else if (msg.type === "VEKSHA_TRANSLATE_SELECTION" && typeof msg.text === "string") {
+    if (aiBlockedOnThisPage) return;
     openPopup((msg.text as string).trim(), new DOMRect(lastMouse.x, lastMouse.y, 0, 0), { fixed: true });
   } else if (msg.type === "VEKSHA_OCR_DONE" && typeof msg.requestId === "string") {
     const cb = pdfOcrCallbacks.get(msg.requestId);
@@ -820,22 +876,23 @@ chrome.storage.local.get(["vk_theme"], (res) => {
   document.documentElement.dataset.vkTheme = (res.vk_theme as string) || "light";
 });
 chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === "local" && changes[CONFIG.STORAGE_KEY_AI_BLOCKLIST]) void refreshAiBlockedState();
   if (area === "local" && changes.vk_theme) {
     document.documentElement.dataset.vkTheme = String(changes.vk_theme.newValue ?? "light");
   }
 });
 
 chrome.storage.local.get([CONFIG.STORAGE_KEY_CI_METER], (res) => {
-  if (res[CONFIG.STORAGE_KEY_CI_METER]) setCiMeterEnabled(true);
+  if (!aiBlockedOnThisPage && res[CONFIG.STORAGE_KEY_CI_METER]) setCiMeterEnabled(true);
 });
 
 chrome.storage.local.get([CONFIG.STORAGE_KEY_VOCAB_FREQ], (res) => {
-  if (res[CONFIG.STORAGE_KEY_VOCAB_FREQ]) setVocabFreqEnabled(true);
+  if (!aiBlockedOnThisPage && res[CONFIG.STORAGE_KEY_VOCAB_FREQ]) setVocabFreqEnabled(true);
 });
 
 chrome.storage.local.get([CONFIG.STORAGE_KEY_IMMERSION, CONFIG.STORAGE_KEY_GRAMMAR_LENS], (res) => {
-  if (res[CONFIG.STORAGE_KEY_GRAMMAR_LENS]) setGrammarLensEnabled(true);
-  else if (res[CONFIG.STORAGE_KEY_IMMERSION]) setImmersionEnabled(true);
+  if (!aiBlockedOnThisPage && res[CONFIG.STORAGE_KEY_GRAMMAR_LENS]) setGrammarLensEnabled(true);
+  else if (!aiBlockedOnThisPage && res[CONFIG.STORAGE_KEY_IMMERSION]) setImmersionEnabled(true);
 });
 
 // ---------------------------------------------------------------------------
@@ -861,7 +918,7 @@ function isPdfPage(): boolean {
 }
 
 function ensurePdfFab(): void {
-  if (pdfFab || !isPdfPage()) return;
+  if (aiBlockedOnThisPage || pdfFab || !isPdfPage()) return;
   pdfFab = document.createElement("div");
   pdfFab.className = "veksha-pdf-fab";
   pdfFab.title = t("pdf_translate_region", "Translate an area of the PDF");
@@ -954,6 +1011,7 @@ function cleanupPdfRegion(): void {
 }
 
 function runRegionTranslate(rect: PdfRect, anchorEl?: HTMLElement | null): void {
+  if (aiBlockedOnThisPage) return;
   // Tear down our selection UI first so it isn't captured in the screenshot.
   cleanupPdfRegion();
   if (pdfFab) pdfFab.style.display = "none";

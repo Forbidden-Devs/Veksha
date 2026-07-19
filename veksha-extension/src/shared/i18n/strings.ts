@@ -10,6 +10,22 @@ export interface Strings {
   app_loading: string;
   feature_enabled: string;
   feature_disabled: string;
+  feature_blocked: string;
+  ai_block_title: string;
+  ai_block_enabled: string;
+  ai_block_disable_page: string;
+  ai_block_disable_site: string;
+  ai_block_enable_page: string;
+  ai_block_enable_site: string;
+  ai_block_dialog_hint: string;
+  ai_block_settings_hint: string;
+  ai_block_settings_title: string;
+  ai_block_settings_desc: string;
+  ai_block_add_placeholder: string;
+  ai_block_add: string;
+  ai_block_remove: string;
+  ai_block_empty: string;
+  ai_block_invalid: string;
   // Native language picker (step 1 of onboarding)
   native_lang_title: string;
   native_lang_subtitle: string;
@@ -374,6 +390,22 @@ export const EN: Strings = {
   app_loading: "Loading...",
   feature_enabled: "On",
   feature_disabled: "Off",
+  feature_blocked: "Blocked",
+  ai_block_title: "Disable AI features",
+  ai_block_enabled: "Active here",
+  ai_block_disable_page: "Disable on this page",
+  ai_block_disable_site: "Disable on this entire site",
+  ai_block_enable_page: "Enable on this page",
+  ai_block_enable_site: "Enable on this entire site",
+  ai_block_dialog_hint: "You can always review and edit the full blocklist in Settings.",
+  ai_block_settings_hint: "The full list of blocked sites is always available in Settings.",
+  ai_block_settings_title: "AI feature blocklist",
+  ai_block_settings_desc: "Veksha AI tools will stay inactive on these sites and pages.",
+  ai_block_add_placeholder: "example.com",
+  ai_block_add: "Add site",
+  ai_block_remove: "Remove",
+  ai_block_empty: "No sites or pages are blocked yet.",
+  ai_block_invalid: "Enter a valid site address.",
   native_lang_title: "What's your language?",
   native_lang_subtitle: "We'll show translations and the interface in your language",
   target_lang_title: "What do you want to learn?",

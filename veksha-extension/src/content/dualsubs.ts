@@ -103,6 +103,17 @@ export function initDualSubs(d: DualSubsDeps): void {
   });
   document.addEventListener("mouseover", onMouseOver, true);
   document.addEventListener("mouseout", onMouseOut, true);
+  document.addEventListener("VEKSHA_AI_BLOCK_STATE", ((event: CustomEvent<{ blocked: boolean }>) => {
+    if (event.detail.blocked) {
+      window.clearTimeout(debounceTimer);
+      hideRow();
+      clearHighlights();
+      toggleEl?.remove();
+      toggleEl = null;
+    } else {
+      currentLine = "";
+    }
+  }) as EventListener);
 }
 
 function setFeatureEnabled(next: boolean): void {
@@ -188,6 +199,8 @@ function syncTokens(
   captionRect: DOMRect | null,
   provisionalTokens: string[] = [],
 ): void {
+  if (document.documentElement.dataset.vekshaAiBlocked === "true") return;
+
   if (!featureEnabled) {
     hideRow();
     return;

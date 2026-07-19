@@ -7,6 +7,7 @@ import { LANGUAGES } from "../../shared/languages";
 import { isExtension, storageGet, storageRemove, storageSet } from "../../shared/platform";
 import { THEMES, type ThemeName, getTheme, previewTheme, setTheme } from "../../shared/theme";
 import { useApp } from "../App";
+import { normalizeAiBlocklist, siteKey, type AiBlocklist } from "../../shared/aiBlocklist";
 
 // Written by the background when a Google-link flow finishes after the popup
 // has already closed (the OAuth window steals focus and kills the popup).
@@ -51,12 +52,45 @@ export function SettingsScreen() {
   const [saving, setSaving] = useState(false);
   const [loadingSettings, setLoadingSettings] = useState(true);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
+  const [aiBlocklist, setAiBlocklist] = useState<AiBlocklist>({ sites: [], pages: [], allowedPages: [] });
+  const [blockedSiteInput, setBlockedSiteInput] = useState("");
+  const [blockedSiteError, setBlockedSiteError] = useState(false);
   const savedThemeRef = useRef<ThemeName | null>(null);
   const themeSavedRef = useRef(false);
   const themeTouchedRef = useRef(false);
 
   const isOnboarding = settingsMode === "onboarding";
   const canLinkGoogle = isExtension && Boolean(CONFIG.GOOGLE_CLIENT_ID);
+
+  useEffect(() => {
+    if (!isExtension || isOnboarding) return;
+    storageGet([CONFIG.STORAGE_KEY_AI_BLOCKLIST]).then((result) => {
+      setAiBlocklist(normalizeAiBlocklist(result[CONFIG.STORAGE_KEY_AI_BLOCKLIST]));
+    }).catch(() => {});
+  }, [isOnboarding]);
+
+  function saveAiBlocklist(next: AiBlocklist) {
+    setAiBlocklist(next);
+    void storageSet({ [CONFIG.STORAGE_KEY_AI_BLOCKLIST]: next });
+  }
+
+  function addBlockedSite() {
+    const site = siteKey(blockedSiteInput.trim());
+    if (!site) { setBlockedSiteError(true); return; }
+    saveAiBlocklist({ ...aiBlocklist, sites: [...new Set([...aiBlocklist.sites, site])] });
+    setBlockedSiteInput("");
+    setBlockedSiteError(false);
+  }
+
+  function removeBlockedEntry(kind: "site" | "page", value: string) {
+    saveAiBlocklist(kind === "site"
+      ? {
+          ...aiBlocklist,
+          sites: aiBlocklist.sites.filter((item) => item !== value),
+          allowedPages: aiBlocklist.allowedPages.filter((page) => siteKey(page) !== value),
+        }
+      : { ...aiBlocklist, pages: aiBlocklist.pages.filter((item) => item !== value) });
+  }
 
   useEffect(() => {
     let alive = true;
@@ -529,6 +563,45 @@ export function SettingsScreen() {
         </label>
 
         {error && <p className="onboarding-error">{error}</p>}
+
+        {!isOnboarding && (
+          <section className="settings-panel settings-blocklist">
+            <div className="settings-panel-heading">
+              <span className="settings-panel-icon" aria-hidden="true">⊘</span>
+              <div>
+                <h2>{t.ai_block_settings_title}</h2>
+                <p>{t.ai_block_settings_desc}</p>
+              </div>
+            </div>
+            <div className="settings-blocklist-add">
+              <input
+                className="text-input"
+                type="text"
+                value={blockedSiteInput}
+                placeholder={t.ai_block_add_placeholder}
+                onChange={(event) => { setBlockedSiteInput(event.target.value); setBlockedSiteError(false); }}
+                onKeyDown={(event) => { if (event.key === "Enter") addBlockedSite(); }}
+              />
+              <button className="btn settings-blocklist-add-btn" type="button" onClick={addBlockedSite} disabled={!blockedSiteInput.trim()}>{t.ai_block_add}</button>
+            </div>
+            {blockedSiteError && <p className="onboarding-error">{t.ai_block_invalid}</p>}
+            <div className="settings-blocklist-items">
+              {aiBlocklist.sites.map((site) => (
+                <div className="settings-blocklist-item" key={`site:${site}`}>
+                  <span><b>{site}</b><small>{t.ai_block_disable_site}</small></span>
+                  <button type="button" onClick={() => removeBlockedEntry("site", site)}>{t.ai_block_remove}</button>
+                </div>
+              ))}
+              {aiBlocklist.pages.map((page) => (
+                <div className="settings-blocklist-item" key={`page:${page}`}>
+                  <span><b>{page}</b><small>{t.ai_block_disable_page}</small></span>
+                  <button type="button" onClick={() => removeBlockedEntry("page", page)}>{t.ai_block_remove}</button>
+                </div>
+              ))}
+              {!aiBlocklist.sites.length && !aiBlocklist.pages.length && <p className="settings-blocklist-empty">{t.ai_block_empty}</p>}
+            </div>
+          </section>
+        )}
 
         {!isOnboarding && (
           <div className="settings-account">

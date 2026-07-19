@@ -123,6 +123,7 @@ function markCaptionsInteractive(): void {
 
 /** Make sure the current caption line is wrapped + marked interactive. */
 function ensureCaptionsInteractive(): void {
+  if (document.documentElement.dataset.vekshaAiBlocked === "true") return;
   if (!document.querySelector(SEL.captionContainer)) return;
   wrapWords();
   markCaptionsInteractive();
@@ -586,6 +587,7 @@ async function runTranslation(
   out: HTMLElement,
   onDone: (translation: string, detectedSourceLang: string | null) => void
 ): Promise<void> {
+  if (document.documentElement.dataset.vekshaAiBlocked === "true") return;
   const id = ++reqId;
   let username: string | null = null;
   try {
@@ -670,6 +672,7 @@ function onSeeking(e: Event): void {
 }
 
 function onDocMouseDown(e: MouseEvent): void {
+  if (document.documentElement.dataset.vekshaAiBlocked === "true") return;
   const target = e.target as HTMLElement | null;
   if (target?.closest(SEL.captionContainer)) {
     // Start a hover-drag word selection. Block native text-drag (the "subtitle
