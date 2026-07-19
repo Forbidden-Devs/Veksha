@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Veksha",
-  "version": "0.8.1",
+  "version": "0.9.0",
   "description": "Translate any selection with one click, build your vocabulary, and train it through a built-in chat — powered by Veksha backend.",
   "{{chrome}}.permissions": [
     "storage",
