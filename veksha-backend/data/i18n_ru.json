@@ -373,5 +373,21 @@
   "settings_promo_error_already_redeemed": "Вы уже активировали этот промокод.",
   "settings_promo_error_generic": "Не удалось активировать промокод. Попробуйте позже.",
   "premium_required_title": "Требуется Premium",
-  "premium_required_desc": "Для {feature} нужна активная подписка Premium."
+  "premium_required_desc": "Для {feature} нужна активная подписка Premium.",
+  "feature_blocked": "Заблокировано",
+  "ai_block_title": "Отключить функции AI",
+  "ai_block_enabled": "Активно здесь",
+  "ai_block_disable_page": "Отключить на этой странице",
+  "ai_block_disable_site": "Отключить на всем сайте",
+  "ai_block_enable_page": "Включить на этой странице",
+  "ai_block_enable_site": "Включить на всем сайте",
+  "ai_block_dialog_hint": "Вы всегда можете просмотреть и изменить полный список блокировок в Настройках.",
+  "ai_block_settings_hint": "Полный список заблокированных сайтов всегда доступен в Настройках.",
+  "ai_block_settings_title": "Список блокировок AI-функций",
+  "ai_block_settings_desc": "Инструменты Veksha AI будут оставаться неактивными на этих сайтах и страницах.",
+  "ai_block_add_placeholder": "example.com",
+  "ai_block_add": "Добавить сайт",
+  "ai_block_remove": "Удалить",
+  "ai_block_empty": "Пока не заблокировано ни одного сайта или страницы.",
+  "ai_block_invalid": "Введите корректный адрес сайта."
 }
