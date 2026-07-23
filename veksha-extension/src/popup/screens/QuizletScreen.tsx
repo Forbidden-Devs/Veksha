@@ -4,7 +4,7 @@ import { useT } from "../../shared/i18n";
 import { useApp } from "../App";
 
 export function QuizletScreen() {
-  const { username, navigateTo } = useApp();
+  const { username } = useApp();
   const t = useT();
   const [status, setStatus] = useState<api.QuizletExportStatus | null>(null);
   const [loading, setLoading] = useState(true);
@@ -141,60 +141,48 @@ export function QuizletScreen() {
   }
 
   return (
-    <section className="screen">
-      <button className="screen-header-back" onClick={() => navigateTo("home")} />
-      <h1 className="screen-title">Quizlet Export</h1>
-
-      <div className="screen-content">
+    <section className="screen quizlet-screen">
+      <div className="quizlet-content">
         {loading ? (
-          <p className="settings-toggle-desc">Loading...</p>
+          <p className="quizlet-placeholder">Loading...</p>
         ) : status ? (
           <>
-            <div className="settings-section">
-              <label className="field-label">Export Status</label>
+            <section className="quizlet-card">
+              <h2>Export status</h2>
               <div className="quizlet-stats">
-                <p><strong>Total words:</strong> {status.total_words}</p>
-                <p><strong>Exported:</strong> {status.exported_words}</p>
-                <p><strong>Not exported:</strong> {status.unexported_words}</p>
+                <div><strong>{status.total_words}</strong><span>Total words</span></div>
+                <div><strong>{status.exported_words}</strong><span>Exported</span></div>
+                <div><strong>{status.unexported_words}</strong><span>Not exported</span></div>
               </div>
-            </div>
+            </section>
 
-            <div className="settings-section">
-              <label className="field-label">Export Options</label>
-              <button
-                className="btn btn-block"
-                disabled={exporting || status.unexported_words === 0}
-                onClick={handleExportUnexported}
-              >
-                {exporting ? "Exporting..." : `Export New (${status.unexported_words})`}
-              </button>
-              <p className="quizlet-hint">
-                Exports only words you haven't exported yet. Downloads as CSV file.
-              </p>
+            <section className="quizlet-card">
+              <h2>Export options</h2>
+              <div className="quizlet-actions">
+                <div>
+                  <button className="btn btn-block" disabled={exporting || status.unexported_words === 0} onClick={handleExportUnexported}>
+                    {exporting ? "Exporting..." : `Export New (${status.unexported_words})`}
+                  </button>
+                  <p className="quizlet-hint">Only words you haven't exported yet.</p>
+                </div>
+                <div>
+                  <button className="btn btn-block" disabled={exporting || status.total_words === 0} onClick={handleExportAll}>
+                    {exporting ? "Exporting..." : `Export All (${status.total_words})`}
+                  </button>
+                  <p className="quizlet-hint">All words in your vocabulary.</p>
+                </div>
+              </div>
+              <p className="quizlet-format-hint">Both options download a CSV file ready for Quizlet.</p>
+            </section>
 
-              <button
-                className="btn btn-block"
-                disabled={exporting || status.total_words === 0}
-                onClick={handleExportAll}
-                style={{ marginTop: "1rem" }}
-              >
-                {exporting ? "Exporting..." : `Export All (${status.total_words})`}
-              </button>
-              <p className="quizlet-hint">
-                Exports all your words. Downloads as CSV file.
-              </p>
-            </div>
-
-            <div className="settings-section" style={{ marginTop: "2rem", borderTop: "1px solid var(--color-border)" }}>
-              <label className="field-label">Import from Quizlet</label>
-              <p className="quizlet-hint">
+            <section className="quizlet-card">
+              <h2>Import from Quizlet</h2>
+              <p className="quizlet-hint quizlet-import-copy">
                 Upload a CSV file from Quizlet to add words to your vocabulary. Columns: Word, Translation, Context
               </p>
 
-              <label className="field-label" htmlFor="quizlet-file-input">
-                <div className="btn btn-block" style={{ cursor: "pointer" }}>
-                  {importing ? "Importing..." : "Select CSV File"}
-                </div>
+              <label className={`btn btn-block quizlet-file-button${importing ? " is-disabled" : ""}`} htmlFor="quizlet-file-input">
+                {importing ? "Importing..." : "Select CSV File"}
               </label>
               <input
                 id="quizlet-file-input"
@@ -206,25 +194,25 @@ export function QuizletScreen() {
               />
 
               {importResult && (
-                <div className="quizlet-import-result" style={{ marginTop: "1rem", padding: "1rem", backgroundColor: "var(--color-bg-alt)", borderRadius: "4px" }}>
+                <div className="quizlet-import-result">
                   <p>✓ <strong>Imported:</strong> {importResult.imported} words</p>
                   <p>⊘ <strong>Skipped:</strong> {importResult.skipped} words</p>
                   {importResult.errors.length > 0 && (
-                    <details style={{ marginTop: "0.5rem" }}>
+                    <details>
                       <summary>Errors ({importResult.errors.length})</summary>
-                      <ul style={{ fontSize: "0.85em", color: "var(--color-error)", marginTop: "0.5rem" }}>
+                      <ul>
                         {importResult.errors.map((err, i) => <li key={i}>{err}</li>)}
                       </ul>
                     </details>
                   )}
                 </div>
               )}
-            </div>
+            </section>
 
             {error && <p className="onboarding-error">{error}</p>}
-            {success && !importResult && <p className="settings-toggle-desc">✓ Export successful! File downloaded.</p>}
+            {success && !importResult && <p className="quizlet-success">✓ Export successful! File downloaded.</p>}
 
-            <div className="quizlet-import-hint" style={{ marginTop: "2rem" }}>
+            <aside className="quizlet-import-hint">
               <p><strong>How to export from Quizlet:</strong></p>
               <ol>
                 <li>Go to your Quizlet study set</li>
@@ -232,7 +220,7 @@ export function QuizletScreen() {
                 <li>Select "Download as..." → CSV</li>
                 <li>Upload the CSV file here</li>
               </ol>
-            </div>
+            </aside>
           </>
         ) : (
           <p className="onboarding-error">Failed to load status</p>
