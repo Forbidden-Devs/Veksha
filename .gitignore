@@ -44,6 +44,8 @@ veksha-extension/icons/Untitled.png
 # Env / secrets
 .env
 .env.*
+!.env.example
+!**/.env.example
 .claude/
 
 # OS

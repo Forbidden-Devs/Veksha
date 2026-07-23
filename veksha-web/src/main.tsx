@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { I18nProvider } from "../../veksha-extension/src/shared/i18n";
+import "../../veksha-extension/src/shared/palette.css";
 import "../../veksha-extension/src/popup/popup.css";
 import "../../veksha-extension/src/popup/theme.css";
 import { initTheme } from "../../veksha-extension/src/shared/theme";
@@ -16,3 +17,9 @@ createRoot(document.getElementById("root")!).render(
     </I18nProvider>
   </StrictMode>
 );
+
+if (import.meta.env.PROD && "serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(() => {});
+  });
+}

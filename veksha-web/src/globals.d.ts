@@ -1,3 +1,5 @@
+/// <reference types="vite/client" />
+
 /**
  * Build-time constants of the extension build (vite define). The web app has
  * no such defines — shared code must guard with `typeof __BROWSER__`.

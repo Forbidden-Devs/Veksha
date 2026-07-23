@@ -281,11 +281,12 @@ export async function quickTranslate(
   username: string,
   text: string,
   sourceLang: string,
-  targetLang: string
+  targetLang: string,
+  bidirectional = false,
 ): Promise<TranslateResponse> {
   const resp = await _post<TranslateResponse>(
     "/api/quick_translate",
-    { text, source_lang: sourceLang, target_lang: targetLang },
+    { text, source_lang: sourceLang, target_lang: targetLang, bidirectional },
     15_000
   );
   // Every translation quietly saves a word — tell the background so it can

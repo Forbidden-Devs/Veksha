@@ -1,9 +1,9 @@
 # Veksha Web
 
-The Veksha study app as a standalone web page (PWA-installable): chat
-assistant, trainings, topic lessons, statistics, and settings. It reuses the
-extension popup source tree directly — see `src/main.tsx`, which imports
-`App` from `../veksha-extension/src/popup/`.
+The Veksha mobile study companion as an installable PWA: quick translation
+and word capture, vocabulary, spaced-repetition training, topic lessons,
+assistant, statistics, and settings. It reuses the extension's study screens
+but provides its own responsive home screen and mobile navigation.
 
 The browser extension remains the capture surface (selection translate,
 immersion, YouTube, OCR); this app is the study surface that works on any
@@ -20,9 +20,9 @@ npm run build      # dist/
 npm run typecheck  # tsc over web + shared popup sources
 ```
 
-The backend URL comes from `veksha-extension/src/shared/config.ts`
-(`BACKEND_URL`). Remember to include the web origin in the backend's
-`CORS_ALLOW_ORIGINS`.
+Production uses `https://veksha.app` by default. Set `VITE_BACKEND_URL` at
+build time for local, preview, or staging environments. Remember to include
+the deployed web origin in the backend's `CORS_ALLOW_ORIGINS`.
 
 ## How platform differences are handled
 
@@ -32,12 +32,16 @@ The backend URL comes from `veksha-extension/src/shared/config.ts`
   caches, UI flags).
 - Trainings/lessons: the extension popup injects them into the active tab;
   on the web they render as in-app overlays (see `webOverlay` in `App.tsx`).
-- Immersion toggle is hidden on the web (it requires a content script).
+- Page capture, immersion, dual subtitles, grammar lens, browsing frequency,
+  OCR and AI blocking stay extension-only.
 - Tutorial screenshots fall back to placeholders (images are not bundled).
+- Google sign-in/linking lets the PWA and extension open the same account.
+- A service worker caches the application shell; live learning data still
+  requires a connection to the backend.
 
-## Not done yet
+## Railway
 
-- No service worker: the manifest makes the app installable, but there is no
-  offline support (training requires the backend anyway).
-- Accounts created in the extension and on the web are separate unless you
-  copy the token; a proper login flow (Google OAuth) is the planned fix.
+Use the repository root as the service source because the web build imports
+shared extension files. Point the service config at `/veksha-web/railway.toml`;
+its watch paths include both the web app and shared UI source. After assigning
+a public domain, add that exact origin to backend `CORS_ALLOW_ORIGINS`.
