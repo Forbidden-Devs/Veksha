@@ -6,7 +6,7 @@ import { showTrainingOverlay, showLessonOverlay, showTopicPickerOverlay, showTut
 import { initYouTubeStudy, YT_STUDY_GUARD_SELECTOR } from "./youtube";
 import { initImmersion, setImmersionEnabled } from "./immersion";
 import { initCiMeter, setCiMeterEnabled } from "./cimeter";
-import { initGrammarLens, setGrammarLensEnabled } from "./grammar-lens";
+import { analyzeGrammarSelection, initGrammarLens, isGrammarLensEnabled, setGrammarLensEnabled } from "./grammar-lens";
 import { initVocabFreq, setVocabFreqEnabled } from "./vocabfreq";
 import { isAiBlocked, normalizeAiBlocklist } from "../shared/aiBlocklist";
 
@@ -57,6 +57,7 @@ window.setInterval(() => {
 }, 1_000);
 
 let icon: HTMLElement | null = null;
+let lensIcon: HTMLElement | null = null;
 let popup: HTMLElement | null = null;
 let aggressiveReminder: HTMLElement | null = null;
 let terrorEvasionTimer: ReturnType<typeof setInterval> | null = null;
@@ -162,7 +163,7 @@ async function getUsername(): Promise<string | null> {
   return cachedUsername;
 }
 
-function removeIcon() { icon?.remove(); icon = null; }
+function removeIcon() { icon?.remove(); icon = null; lensIcon?.remove(); lensIcon = null; }
 function removePopup() { popup?.remove(); popup = null; }
 function removeAll() { removeIcon(); removePopup(); }
 
@@ -416,10 +417,12 @@ function showIcon(rect: DOMRect, selectedText: string) {
   const iconSize = 32;
   const gap = 7;
   const fitsRight = rect.right + gap + iconSize <= window.innerWidth;
-  icon.style.top = `${window.scrollY + rect.top + Math.max(0, (rect.height - iconSize) / 2)}px`;
-  icon.style.left = fitsRight
-    ? `${window.scrollX + rect.right + gap}px`
-    : `${window.scrollX + Math.max(0, rect.left - gap - iconSize)}px`;
+  const iconTop = window.scrollY + rect.top + Math.max(0, (rect.height - iconSize) / 2);
+  const iconLeft = fitsRight
+    ? window.scrollX + rect.right + gap
+    : window.scrollX + Math.max(0, rect.left - gap - iconSize);
+  icon.style.top = `${iconTop}px`;
+  icon.style.left = `${iconLeft}px`;
   icon.addEventListener("mousedown", (e) => { e.preventDefault(); e.stopPropagation(); });
   icon.addEventListener("click", (e) => {
     e.preventDefault(); e.stopPropagation();
@@ -427,6 +430,24 @@ function showIcon(rect: DOMRect, selectedText: string) {
     removeIcon();
   });
   document.documentElement.appendChild(icon);
+
+  // Second action, shown only while Grammar Lens is on: detailed grammar
+  // analysis of the selection, rendered in the Grammar Lens panel.
+  if (isGrammarLensEnabled()) {
+    lensIcon = document.createElement("div");
+    lensIcon.className = "veksha-icon veksha-icon-lens";
+    lensIcon.title = t("grammar_analyze_selection", "Analyze the grammar of the selection");
+    lensIcon.textContent = "🔍";
+    lensIcon.style.top = `${iconTop + iconSize + 5}px`;
+    lensIcon.style.left = `${iconLeft}px`;
+    lensIcon.addEventListener("mousedown", (e) => { e.preventDefault(); e.stopPropagation(); });
+    lensIcon.addEventListener("click", (e) => {
+      e.preventDefault(); e.stopPropagation();
+      analyzeGrammarSelection(selectedText);
+      removeIcon();
+    });
+    document.documentElement.appendChild(lensIcon);
+  }
 }
 
 function buildLanguageOptions(selectEl: HTMLSelectElement, selectedCode: string) {
@@ -709,7 +730,7 @@ function inYouTubeStudyUI(node: EventTarget | null): boolean {
 
 document.addEventListener("mouseup", (e) => {
   if (aiBlockedOnThisPage) return;
-  if (icon?.contains(e.target as Node) || popup?.contains(e.target as Node)) return;
+  if (icon?.contains(e.target as Node) || lensIcon?.contains(e.target as Node) || popup?.contains(e.target as Node)) return;
   // YouTube captions have their own study-mode popup — stay out of its way.
   if (inYouTubeStudyUI(e.target)) return;
   setTimeout(() => {
@@ -728,7 +749,7 @@ document.addEventListener("mouseup", (e) => {
 });
 
 document.addEventListener("mousedown", (e) => {
-  if (icon?.contains(e.target as Node) || popup?.contains(e.target as Node)) return;
+  if (icon?.contains(e.target as Node) || lensIcon?.contains(e.target as Node) || popup?.contains(e.target as Node)) return;
   if (inYouTubeStudyUI(e.target)) return;
   removeAll();
 }, true);

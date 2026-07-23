@@ -186,6 +186,12 @@
   transform: translateY(-1px) scale(1.05);
 }
 
+.veksha-icon-lens {
+  background: #ffffff;
+  font-size: 15px;
+  line-height: 1;
+}
+
 .veksha-popup {
   width: min(360px, calc(100vw - 24px));
   min-width: 280px;
@@ -1118,13 +1124,6 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42);
 }
 
-.av-grammar-focus {
-  outline: 2px solid #ffd166;
-  outline-offset: 2px;
-  background: rgba(255, 209, 102, 0.34) !important;
-  filter: none !important;
-}
-
 .av-grammar[data-av-grammar-role="subject"] {
   background: rgba(52, 120, 246, 0.16);
   border-bottom-color: #3478f6;
@@ -1183,6 +1182,12 @@
   letter-spacing: 0.01em;
 }
 
+.veksha-grammar-legend-buttons {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
 .veksha-grammar-legend-header button {
   width: 24px;
   height: 24px;
@@ -1195,9 +1200,14 @@
   cursor: pointer;
 }
 
-.veksha-grammar-legend-header button:hover {
+.veksha-grammar-legend-header button:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.1);
   color: #fff;
+}
+
+.veksha-grammar-legend-toggle:disabled {
+  opacity: 0.35;
+  cursor: default;
 }
 
 .veksha-grammar-legend-items {
@@ -1221,12 +1231,12 @@
   background: #aaa;
 }
 
-.veksha-grammar-legend-item i[data-role="subject"] { background: #5792ff; }
-.veksha-grammar-legend-item i[data-role="verb"] { background: #f06a6a; }
-.veksha-grammar-legend-item i[data-role="object"] { background: #a77ae9; }
-.veksha-grammar-legend-item i[data-role="place"] { background: #48be7d; }
-.veksha-grammar-legend-item i[data-role="time"] { background: #efae42; }
-.veksha-grammar-legend-item i[data-role="modifier"] { background: #e46ba7; }
+.veksha-grammar-legend i[data-role="subject"] { background: #5792ff; }
+.veksha-grammar-legend i[data-role="verb"] { background: #f06a6a; }
+.veksha-grammar-legend i[data-role="object"] { background: #a77ae9; }
+.veksha-grammar-legend i[data-role="place"] { background: #48be7d; }
+.veksha-grammar-legend i[data-role="time"] { background: #efae42; }
+.veksha-grammar-legend i[data-role="modifier"] { background: #e46ba7; }
 
 .veksha-grammar-legend-status {
   margin-top: 8px;
@@ -1234,27 +1244,88 @@
   font-size: 11px;
 }
 
-.veksha-grammar-insights {
+.veksha-grammar-legend-hint {
+  margin-top: 8px;
+  color: rgba(247, 244, 251, 0.58);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+/* Detailed analysis of a user-selected sentence (expanded mode) */
+.veksha-grammar-detail {
   margin-top: 10px;
   padding-top: 9px;
   border-top: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-.veksha-grammar-insights > strong {
+.veksha-grammar-detail-quote {
   display: block;
-  margin-bottom: 7px;
+  margin-bottom: 8px;
+  max-height: 54px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  color: #ffdca0;
+  font-size: 11px;
+  font-style: normal;
+  line-height: 1.4;
+}
+
+.veksha-grammar-detail-body {
+  display: grid;
+  gap: 6px;
+  max-height: min(300px, 42vh);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.veksha-grammar-detail-body > strong {
+  display: block;
+  margin-top: 3px;
   color: rgba(247, 244, 251, 0.72);
   font-size: 10px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
-.veksha-grammar-insights-list {
+.veksha-grammar-detail-seg {
   display: grid;
-  gap: 6px;
-  max-height: min(300px, 42vh);
-  overflow-y: auto;
-  scrollbar-width: thin;
+  grid-template-columns: 9px 1fr;
+  gap: 2px 6px;
+  align-items: baseline;
+}
+
+.veksha-grammar-detail-seg i {
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+  background: #aaa;
+}
+
+.veksha-grammar-detail-seg span {
+  color: rgba(247, 244, 251, 0.88);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.veksha-grammar-detail-seg b {
+  color: #fff;
+}
+
+.veksha-grammar-detail-seg small {
+  grid-column: 2;
+  color: rgba(247, 244, 251, 0.58);
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.veksha-grammar-detail-loading,
+.veksha-grammar-detail-error {
+  color: rgba(247, 244, 251, 0.58);
+  font-size: 11px;
+}
+
+.veksha-grammar-detail-error {
+  color: #ff9c9c;
 }
 
 .veksha-grammar-insight {

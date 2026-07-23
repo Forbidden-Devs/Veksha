@@ -95,6 +95,14 @@ export interface Strings {
   grammar_lens_off: string;
   grammar_lens_loading: string;
   grammar_lens_disable: string;
+  grammar_lens_collapse: string;
+  grammar_lens_expand: string;
+  grammar_hint_select: string;
+  grammar_analyze_selection: string;
+  grammar_analysis_loading: string;
+  grammar_analysis_failed: string;
+  grammar_analysis_empty: string;
+  grammar_roles_title: string;
   grammar_patterns_title: string;
   grammar_role_subject: string;
   grammar_role_verb: string;
@@ -498,6 +506,14 @@ export const EN: Strings = {
   grammar_lens_off: "Grammar Lens",
   grammar_lens_loading: "Analyzing visible text…",
   grammar_lens_disable: "Turn off Grammar Lens",
+  grammar_lens_collapse: "Collapse the analysis",
+  grammar_lens_expand: "Show the last analysis",
+  grammar_hint_select: "Select a sentence on the page and press the 🔍 button next to it for a detailed grammar analysis.",
+  grammar_analyze_selection: "Analyze the grammar of the selection",
+  grammar_analysis_loading: "Analyzing the sentence…",
+  grammar_analysis_failed: "Could not analyze the selection. Try again.",
+  grammar_analysis_empty: "No notable grammar found in this selection.",
+  grammar_roles_title: "Sentence roles",
   grammar_patterns_title: "Grammar in context",
   grammar_role_subject: "Subject",
   grammar_role_verb: "Verb",
