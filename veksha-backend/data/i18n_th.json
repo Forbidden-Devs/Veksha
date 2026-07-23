@@ -231,5 +231,19 @@
   "dictionary_sort_oldest": "เก่าสุดก่อน",
   "dictionary_no_results": "ไม่พบคำที่ตรงกัน",
   "grammar_patterns_title": "ไวยากรณ์ในบริบท",
-  "language_search_no_results": "ไม่พบภาษา ลองใช้ชื่ออื่น"
+  "language_search_no_results": "ไม่พบภาษา ลองใช้ชื่ออื่น",
+  "feature_guide_open": "ทำงานอย่างไร",
+  "feature_guide_close": "เข้าใจแล้ว",
+  "ci_meter_guide_title": "CI meter ทำงานอย่างไร",
+  "ci_meter_guide_intro": "CI meter จะตรวจอย่างรวดเร็วว่าเนื้อหาบนหน้านั้นเหมาะและเข้าใจง่ายสำหรับระดับภาษาปัจจุบันของคุณหรือไม่",
+  "ci_meter_guide_step_1": "เปิดบทความในภาษาที่คุณกำลังเรียน แล้วเปิด CI meter จาก Veksha",
+  "ci_meter_guide_step_2": "ป้ายจะแสดงบนหน้า พร้อมเปอร์เซ็นต์คำศัพท์ที่คุ้นเคยและระดับ CEFR โดยประมาณ",
+  "ci_meter_guide_step_3": "เปิดป้ายเพื่อดูผล: สีเขียวคือ i+1 ที่เหมาะที่สุด, สีน้ำเงินคือง่าย, สีเหลืองคือใกล้ระดับของคุณ, และสีแดงอาจยากเกินไป",
+  "ci_meter_guide_tip": "เลือก “Refine with AI” ในป้ายเมื่อคุณต้องการประเมินความยากแบบละเอียดตามบริบทมากขึ้น",
+  "dual_subtitles_guide_title": "คำบรรยายคู่ทำงานอย่างไร",
+  "dual_subtitles_guide_intro": "คำบรรยายคู่จะแสดงคำแปลเหนือคำบรรยายต้นฉบับขณะคุณดู YouTube",
+  "dual_subtitles_guide_step_1": "เปิดวิดีโอ YouTube และเปิดคำบรรยายต้นฉบับ",
+  "dual_subtitles_guide_step_2": "เปิด Dual subtitles ใน Veksha บรรทัดแปลจะแสดงเหนือบรรทัดต้นฉบับ",
+  "dual_subtitles_guide_step_3": "ใช้ปุ่มรูปโลกข้างคำบรรยายเพื่อซ่อนหรือแสดงคำแปลโดยไม่ต้องออกจากวิดีโอ",
+  "dual_subtitles_guide_tip": "วางเมาส์เหนือคำในคำบรรยายต้นฉบับเพื่อไฮไลต์คำที่ตรงกันในคำแปล"
 }

@@ -355,5 +355,19 @@
   "dictionary_sort_oldest": "Más antiguas primero",
   "dictionary_no_results": "No se encontraron palabras coincidentes.",
   "grammar_patterns_title": "Gramática en contexto",
-  "language_search_no_results": "No se encontraron idiomas. Prueba con otro nombre."
+  "language_search_no_results": "No se encontraron idiomas. Prueba con otro nombre.",
+  "feature_guide_open": "Cómo funciona",
+  "feature_guide_close": "Entendido",
+  "ci_meter_guide_title": "Cómo funciona el medidor CI",
+  "ci_meter_guide_intro": "El medidor CI comprueba rápidamente si una página resulta cómoda y útil para tu nivel actual del idioma.",
+  "ci_meter_guide_step_1": "Abre un artículo en el idioma que estás aprendiendo y luego activa el medidor CI desde Veksha.",
+  "ci_meter_guide_step_2": "Aparece una insignia en la página con el porcentaje de vocabulario familiar y el nivel CEFR estimado.",
+  "ci_meter_guide_step_3": "Abre la insignia para ver el veredicto: verde es material i+1 ideal, azul es fácil, amarillo está cerca de tu nivel y rojo puede ser demasiado difícil.",
+  "ci_meter_guide_tip": "Elige “Refinar con AI” dentro de la insignia cuando quieras una estimación de dificultad más contextual.",
+  "dual_subtitles_guide_title": "Cómo funcionan los subtítulos duales",
+  "dual_subtitles_guide_intro": "Los subtítulos duales añaden una traducción encima de los subtítulos originales mientras ves YouTube.",
+  "dual_subtitles_guide_step_1": "Abre un video de YouTube y activa sus subtítulos originales.",
+  "dual_subtitles_guide_step_2": "Activa Subtítulos duales en Veksha. La línea traducida aparece encima de la original.",
+  "dual_subtitles_guide_step_3": "Usa el botón del globo junto a los subtítulos para ocultar o mostrar la traducción sin salir del video.",
+  "dual_subtitles_guide_tip": "Pasa el cursor sobre una palabra en los subtítulos originales para resaltar la palabra correspondiente en la traducción."
 }

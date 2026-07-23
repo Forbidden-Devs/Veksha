@@ -234,5 +234,19 @@
   "dictionary_sort_oldest": "Terlama dulu",
   "dictionary_no_results": "Tidak ada kata yang cocok.",
   "grammar_patterns_title": "Tata bahasa dalam konteks",
-  "language_search_no_results": "Tidak ada bahasa ditemukan. Coba nama lain."
+  "language_search_no_results": "Tidak ada bahasa ditemukan. Coba nama lain.",
+  "feature_guide_open": "Cara kerjanya",
+  "feature_guide_close": "Mengerti",
+  "ci_meter_guide_title": "Cara kerja meter CI",
+  "ci_meter_guide_intro": "Meter CI dengan cepat mengecek apakah sebuah halaman nyaman dan berguna untuk level bahasa Anda saat ini.",
+  "ci_meter_guide_step_1": "Buka artikel dalam bahasa yang sedang Anda pelajari, lalu aktifkan meter CI dari Veksha.",
+  "ci_meter_guide_step_2": "Lencana akan muncul di halaman dengan persentase kosakata yang sudah dikenal dan perkiraan level CEFR.",
+  "ci_meter_guide_step_3": "Buka lencana untuk melihat hasilnya: hijau adalah materi i+1 ideal, biru mudah, kuning mendekati level Anda, dan merah mungkin terlalu sulit.",
+  "ci_meter_guide_tip": "Pilih “Perjelas dengan AI” di dalam lencana saat Anda ingin perkiraan tingkat kesulitan yang lebih kontekstual.",
+  "dual_subtitles_guide_title": "Cara kerja subtitle ganda",
+  "dual_subtitles_guide_intro": "Subtitle ganda menambahkan terjemahan di atas caption asli saat Anda menonton YouTube.",
+  "dual_subtitles_guide_step_1": "Buka video YouTube dan aktifkan caption aslinya.",
+  "dual_subtitles_guide_step_2": "Aktifkan Subtitle ganda di Veksha. Baris terjemahan muncul di atas baris asli.",
+  "dual_subtitles_guide_step_3": "Gunakan tombol globe di samping caption untuk menyembunyikan atau menampilkan terjemahan tanpa meninggalkan video.",
+  "dual_subtitles_guide_tip": "Arahkan kursor ke kata di caption asli untuk menyorot kata yang cocok di terjemahan."
 }

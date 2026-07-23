@@ -170,10 +170,17 @@ def _conn() -> sqlite3.Connection:
                    username   TEXT PRIMARY KEY,
                    tier       TEXT NOT NULL,
                    expires_at REAL NOT NULL,
+                   features   TEXT NOT NULL DEFAULT '',
                    updated    REAL NOT NULL,
                    FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
                )"""
         )
+        subscription_columns = {
+            row[1] for row in conn.execute("PRAGMA table_info(subscriptions)").fetchall()
+        }
+        if "features" not in subscription_columns:
+            # Empty means the legacy Premium bundle (all paid features).
+            conn.execute("ALTER TABLE subscriptions ADD COLUMN features TEXT NOT NULL DEFAULT ''")
         # Telegram accounts linked for billing: payments arriving from this
         # telegram_user_id credit the linked Veksha account.
         conn.execute(
@@ -216,10 +223,16 @@ def _conn() -> sqlite3.Connection:
                    days            REAL NOT NULL,
                    max_redemptions INTEGER NOT NULL,
                    redemptions     INTEGER NOT NULL DEFAULT 0,
+                   features        TEXT NOT NULL DEFAULT '',
                    created         REAL NOT NULL,
                    note            TEXT NOT NULL DEFAULT ''
                )"""
         )
+        promo_columns = {
+            row[1] for row in conn.execute("PRAGMA table_info(promo_codes)").fetchall()
+        }
+        if "features" not in promo_columns:
+            conn.execute("ALTER TABLE promo_codes ADD COLUMN features TEXT NOT NULL DEFAULT ''")
         # One row per (code, username): the primary key stops a user from
         # redeeming the same code twice.
         conn.execute(
@@ -228,6 +241,38 @@ def _conn() -> sqlite3.Connection:
                    username    TEXT NOT NULL,
                    redeemed_at REAL NOT NULL,
                    PRIMARY KEY (code, username)
+               )"""
+        )
+        # Per-feature monthly prices are mutable through the admin API. The
+        # initial values preserve the old 100-Star full-bundle price.
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS feature_prices (
+                   feature       TEXT PRIMARY KEY,
+                   stars_monthly INTEGER NOT NULL CHECK(stars_monthly > 0),
+                   updated       REAL NOT NULL
+               )"""
+        )
+        now = time.time()
+        conn.executemany(
+            "INSERT OR IGNORE INTO feature_prices (feature, stars_monthly, updated) VALUES (?,?,?)",
+            [
+                ("grammar_lens", 40, now),
+                ("immersion", 35, now),
+                ("dual_subtitles", 25, now),
+            ],
+        )
+        # Opaque checkout snapshots lock the chosen features and amount before
+        # Telegram opens. A paid checkout cannot be replayed with a new charge.
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS billing_checkouts (
+                   code             TEXT PRIMARY KEY,
+                   username         TEXT NOT NULL,
+                   features         TEXT NOT NULL,
+                   stars_amount     INTEGER NOT NULL,
+                   days             REAL NOT NULL,
+                   telegram_user_id INTEGER,
+                   paid             INTEGER NOT NULL DEFAULT 0,
+                   created          REAL NOT NULL
                )"""
         )
         conn.commit()
@@ -627,12 +672,17 @@ def word_freq_top(username: str, language: str, limit: int) -> list[dict]:
 
 def subscription_get(username: str) -> Optional[dict]:
     row = _conn().execute(
-        "SELECT tier, expires_at FROM subscriptions WHERE username=?", (username,)
+        "SELECT tier, expires_at, features FROM subscriptions WHERE username=?", (username,)
     ).fetchone()
-    return {"tier": row[0], "expires_at": row[1]} if row else None
+    return {"tier": row[0], "expires_at": row[1], "features": row[2]} if row else None
 
 
-def subscription_extend(username: str, tier: str, days: float) -> float:
+def subscription_extend(
+    username: str,
+    tier: str,
+    days: float,
+    features: Optional[list[str]] = None,
+) -> float:
     """Grant `tier` for `days` more days and return the new expiry.
 
     An active subscription of the same tier is extended from its current
@@ -644,23 +694,118 @@ def subscription_extend(username: str, tier: str, days: float) -> float:
     if current and current["tier"] == tier and current["expires_at"] > now:
         base = current["expires_at"]
     expires_at = base + days * 86400.0
+    encoded_features = "" if features is None else json.dumps(sorted(set(features)), separators=(",", ":"))
     with _conn() as c:
         c.execute(
-            "INSERT OR REPLACE INTO subscriptions (username, tier, expires_at, updated) "
-            "VALUES (?,?,?,?)",
-            (username, tier, expires_at, now),
+            "INSERT OR REPLACE INTO subscriptions (username, tier, expires_at, features, updated) "
+            "VALUES (?,?,?,?,?)",
+            (username, tier, expires_at, encoded_features, now),
         )
     return expires_at
 
 
-def promo_code_create(code: str, days: float, max_redemptions: int = 1, note: str = "") -> bool:
+def subscription_cancel(username: str) -> None:
+    """End paid access immediately while retaining an auditable row."""
+    now = time.time()
+    with _conn() as c:
+        c.execute(
+            "INSERT OR REPLACE INTO subscriptions (username, tier, expires_at, features, updated) "
+            "VALUES (?,?,?,?,?)",
+            (username, "free", now, "[]", now),
+        )
+
+
+def feature_prices_get() -> list[dict]:
+    rows = _conn().execute(
+        "SELECT feature, stars_monthly, updated FROM feature_prices ORDER BY feature"
+    ).fetchall()
+    return [
+        {"feature": row[0], "stars_monthly": row[1], "updated": row[2]}
+        for row in rows
+    ]
+
+
+def feature_price_set(feature: str, stars_monthly: int) -> dict:
+    now = time.time()
+    with _conn() as c:
+        c.execute(
+            "INSERT OR REPLACE INTO feature_prices (feature, stars_monthly, updated) VALUES (?,?,?)",
+            (feature, stars_monthly, now),
+        )
+    return {"feature": feature, "stars_monthly": stars_monthly, "updated": now}
+
+
+def billing_checkout_create(
+    username: str,
+    code: str,
+    features: list[str],
+    stars_amount: int,
+    days: float = 31,
+) -> None:
+    with _conn() as c:
+        c.execute("DELETE FROM billing_checkouts WHERE username=? AND paid=0", (username,))
+        c.execute(
+            "INSERT INTO billing_checkouts "
+            "(code, username, features, stars_amount, days, created) VALUES (?,?,?,?,?,?)",
+            (code, username, json.dumps(sorted(set(features))), stars_amount, days, time.time()),
+        )
+
+
+def billing_checkout_get(code: str) -> Optional[dict]:
+    row = _conn().execute(
+        "SELECT username, features, stars_amount, days, telegram_user_id, paid, created "
+        "FROM billing_checkouts WHERE code=?",
+        (code,),
+    ).fetchone()
+    if not row:
+        return None
+    return {
+        "code": code,
+        "username": row[0],
+        "features": json.loads(row[1]),
+        "stars_amount": row[2],
+        "days": row[3],
+        "telegram_user_id": row[4],
+        "paid": bool(row[5]),
+        "created": row[6],
+    }
+
+
+def billing_checkout_link(code: str, telegram_user_id: int) -> Optional[dict]:
+    with _conn() as c:
+        cur = c.execute(
+            "UPDATE billing_checkouts SET telegram_user_id=? "
+            "WHERE code=? AND telegram_user_id IS NULL AND paid=0",
+            (telegram_user_id, code),
+        )
+    return billing_checkout_get(code) if cur.rowcount == 1 else None
+
+
+def billing_checkout_mark_paid(code: str, telegram_user_id: int) -> bool:
+    with _conn() as c:
+        cur = c.execute(
+            "UPDATE billing_checkouts SET paid=1 "
+            "WHERE code=? AND telegram_user_id=? AND paid=0",
+            (code, telegram_user_id),
+        )
+    return cur.rowcount == 1
+
+
+def promo_code_create(
+    code: str,
+    days: float,
+    max_redemptions: int = 1,
+    note: str = "",
+    features: Optional[list[str]] = None,
+) -> bool:
     """Mint a promo code. Returns False if the code already exists."""
     try:
         with _conn() as c:
             c.execute(
-                "INSERT INTO promo_codes (code, days, max_redemptions, redemptions, created, note) "
-                "VALUES (?,?,?,0,?,?)",
-                (code, days, max_redemptions, time.time(), note),
+                "INSERT INTO promo_codes "
+                "(code, days, max_redemptions, redemptions, features, created, note) "
+                "VALUES (?,?,?,0,?,?,?)",
+                (code, days, max_redemptions, json.dumps(features or []), time.time(), note),
             )
         return True
     except sqlite3.IntegrityError:
@@ -709,6 +854,34 @@ def promo_code_redeem(code: str, username: str) -> tuple[str, Optional[float]]:
 
         days = c.execute("SELECT days FROM promo_codes WHERE code=?", (code,)).fetchone()[0]
     return "ok", days
+
+
+def promo_code_features(code: str) -> list[str]:
+    row = _conn().execute("SELECT features FROM promo_codes WHERE code=?", (code,)).fetchone()
+    if not row or not row[0]:
+        return []
+    return json.loads(row[0])
+
+
+def promo_codes_get(limit: int = 100) -> list[dict]:
+    """Return recent promo codes for the authenticated admin dashboard."""
+    rows = _conn().execute(
+        "SELECT code, days, max_redemptions, redemptions, features, created, note "
+        "FROM promo_codes ORDER BY created DESC LIMIT ?",
+        (max(1, min(limit, 500)),),
+    ).fetchall()
+    return [
+        {
+            "code": row[0],
+            "days": row[1],
+            "max_redemptions": row[2],
+            "redemptions": row[3],
+            "features": json.loads(row[4] or "[]"),
+            "created": row[5],
+            "note": row[6],
+        }
+        for row in rows
+    ]
 
 
 def telegram_link_code_create(username: str, code: str) -> None:
@@ -782,6 +955,12 @@ def star_payment_record(
         return True
     except sqlite3.IntegrityError:
         return False
+
+
+def star_payment_exists(charge_id: str) -> bool:
+    return _conn().execute(
+        "SELECT 1 FROM star_payments WHERE telegram_payment_charge_id=?", (charge_id,)
+    ).fetchone() is not None
 
 
 def history_get(username: str) -> list[dict]:

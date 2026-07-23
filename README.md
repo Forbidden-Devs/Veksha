@@ -21,6 +21,8 @@ veksha-web/        The same study app (chat / training / lessons / stats)
 veksha-tgbot/      Telegram companion bot: sells subscriptions in Telegram
                     Stars and reports payments to the backend via webhook
                     (see veksha-backend/entitlements.py for tiers/plans).
+veksha-admin/      Internal billing dashboard: per-feature Stars prices and
+                    scoped promo-code issuance.
 ```
 
 ## Quick start

@@ -11,6 +11,8 @@ export interface Strings {
   feature_enabled: string;
   feature_disabled: string;
   feature_blocked: string;
+  common_yes: string;
+  common_no: string;
   ai_block_title: string;
   ai_block_enabled: string;
   ai_block_disable_page: string;
@@ -75,6 +77,20 @@ export interface Strings {
   ci_meter_verdict_too_easy: string;
   ci_meter_verdict_too_hard: string;
   ci_meter_verdict_close: string;
+  feature_guide_open: string;
+  feature_guide_close: string;
+  ci_meter_guide_title: string;
+  ci_meter_guide_intro: string;
+  ci_meter_guide_step_1: string;
+  ci_meter_guide_step_2: string;
+  ci_meter_guide_step_3: string;
+  ci_meter_guide_tip: string;
+  dual_subtitles_guide_title: string;
+  dual_subtitles_guide_intro: string;
+  dual_subtitles_guide_step_1: string;
+  dual_subtitles_guide_step_2: string;
+  dual_subtitles_guide_step_3: string;
+  dual_subtitles_guide_tip: string;
   grammar_lens_title: string;
   grammar_lens_on: string;
   grammar_lens_off: string;
@@ -142,6 +158,20 @@ export interface Strings {
   settings_promo_error_generic: string;
   premium_required_title: string;
   premium_required_desc: string;
+  subscription_title: string;
+  subscription_intro_new: string;
+  subscription_intro_manage: string;
+  subscription_intro_add: string;
+  subscription_grammar_desc: string;
+  subscription_monthly: string;
+  subscription_total: string;
+  subscription_continue: string;
+  subscription_opened: string;
+  subscription_empty: string;
+  subscription_load_error: string;
+  subscription_cancel: string;
+  subscription_cancel_confirm: string;
+  subscription_cancel_error: string;
   settings_account: string;
   settings_google_link: string;
   settings_google_linked: string;
@@ -393,6 +423,8 @@ export const EN: Strings = {
   feature_enabled: "On",
   feature_disabled: "Off",
   feature_blocked: "Blocked",
+  common_yes: "Yes",
+  common_no: "No",
   ai_block_title: "Disable AI features",
   ai_block_enabled: "Active here",
   ai_block_disable_page: "Disable on this page",
@@ -452,6 +484,20 @@ export const EN: Strings = {
   ci_meter_verdict_too_easy: "You know this well already — good for fluency practice, but little new vocabulary.",
   ci_meter_verdict_too_hard: "This may be too difficult right now — expect to look up a lot of words.",
   ci_meter_verdict_close: "Close to your level.",
+  feature_guide_open: "How it works",
+  feature_guide_close: "Got it",
+  ci_meter_guide_title: "How the CI meter works",
+  ci_meter_guide_intro: "The CI meter quickly checks whether a page is comfortable and useful for your current language level.",
+  ci_meter_guide_step_1: "Open an article in the language you're learning, then turn on the CI meter from Veksha.",
+  ci_meter_guide_step_2: "A badge appears on the page with the percentage of familiar vocabulary and the estimated CEFR level.",
+  ci_meter_guide_step_3: "Open the badge to see the verdict: green is ideal i+1 material, blue is easy, yellow is close to your level, and red may be too hard.",
+  ci_meter_guide_tip: "Choose “Refine with AI” inside the badge when you want a more contextual difficulty estimate.",
+  dual_subtitles_guide_title: "How dual subtitles work",
+  dual_subtitles_guide_intro: "Dual subtitles add a translation above the original captions while you watch YouTube.",
+  dual_subtitles_guide_step_1: "Open a YouTube video and turn on its original captions.",
+  dual_subtitles_guide_step_2: "Turn on Dual subtitles in Veksha. The translated line appears above the original one.",
+  dual_subtitles_guide_step_3: "Use the globe button beside the captions to hide or show the translation without leaving the video.",
+  dual_subtitles_guide_tip: "Hover over a word in the original captions to highlight the matching word in the translation.",
   grammar_lens_title: "Grammar Lens",
   grammar_lens_on: "Grammar Lens on",
   grammar_lens_off: "Grammar Lens",
@@ -504,10 +550,10 @@ export const EN: Strings = {
   settings_sub_free: "Free plan",
   settings_sub_premium: "Premium — active until",
   settings_sub_premium_active: "Premium — active",
-  settings_sub_desc: "Premium unlocks Grammar Lens, page immersion and dual subtitles.",
-  settings_sub_connect: "Subscribe via Telegram",
-  settings_sub_manage: "Manage in Telegram",
-  settings_sub_err: "Could not open the subscription bot. Try again later.",
+  settings_sub_desc: "Choose only the paid features you need and see the exact monthly total before payment.",
+  settings_sub_connect: "Choose features",
+  settings_sub_manage: "Change feature selection",
+  settings_sub_err: "Could not open the payment form. Try again later.",
   settings_promo_label: "Promo code",
   settings_promo_placeholder: "Enter a promo code",
   settings_promo_submit: "Redeem",
@@ -516,8 +562,22 @@ export const EN: Strings = {
   settings_promo_error_exhausted: "This promo code has already been fully claimed.",
   settings_promo_error_already_redeemed: "You've already redeemed this promo code.",
   settings_promo_error_generic: "Could not redeem the promo code. Try again later.",
-  premium_required_title: "Premium required",
-  premium_required_desc: "{feature} requires an active Premium subscription.",
+  premium_required_title: "Feature not active",
+  premium_required_desc: "{feature} isn't included in your subscription. Would you like to add it?",
+  subscription_title: "Choose your features",
+  subscription_intro_new: "All paid features are selected. Turn off anything you don't need — the total updates immediately.",
+  subscription_intro_manage: "Your active features are selected. Adjust the set and continue to confirm the new subscription.",
+  subscription_intro_add: "The requested feature and your current features are selected. Review the total before paying.",
+  subscription_grammar_desc: "Analyzes grammar patterns directly in the text you're reading.",
+  subscription_monthly: "/ month",
+  subscription_total: "Total",
+  subscription_continue: "Continue to payment",
+  subscription_opened: "The secure Telegram payment form has opened in a new tab.",
+  subscription_empty: "Select at least one feature to continue.",
+  subscription_load_error: "Could not load subscription options. Try again later.",
+  subscription_cancel: "Cancel subscription",
+  subscription_cancel_confirm: "Cancel the subscription and turn off all paid features now?",
+  subscription_cancel_error: "Could not cancel the subscription. Try again later.",
   settings_account: "Account",
   settings_google_link: "Link Google account",
   settings_google_linked: "Google account linked",

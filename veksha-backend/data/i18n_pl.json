@@ -356,5 +356,19 @@
   "dictionary_sort_oldest": "Najstarsze na górze",
   "dictionary_no_results": "Nie znaleziono pasujących słów.",
   "grammar_patterns_title": "Gramatyka w kontekście",
-  "language_search_no_results": "Nie znaleziono języków. Spróbuj innej nazwy."
+  "language_search_no_results": "Nie znaleziono języków. Spróbuj innej nazwy.",
+  "feature_guide_open": "Jak to działa",
+  "feature_guide_close": "Jasne",
+  "ci_meter_guide_title": "Jak działa wskaźnik CI",
+  "ci_meter_guide_intro": "Wskaźnik CI szybko sprawdza, czy strona jest wygodna i przydatna dla Twojego obecnego poziomu języka.",
+  "ci_meter_guide_step_1": "Otwórz artykuł w języku, którego się uczysz, a potem włącz wskaźnik CI w Veksha.",
+  "ci_meter_guide_step_2": "Na stronie pojawia się plakietka z procentem znanego słownictwa i szacowanym poziomem CEFR.",
+  "ci_meter_guide_step_3": "Otwórz plakietkę, aby zobaczyć ocenę: zielony to idealny materiał i+1, niebieski jest łatwy, żółty jest blisko Twojego poziomu, a czerwony może być za trudny.",
+  "ci_meter_guide_tip": "Wybierz „Refine with AI” w plakietce, gdy chcesz dokładniej oszacować trudność w kontekście.",
+  "dual_subtitles_guide_title": "Jak działają podwójne napisy",
+  "dual_subtitles_guide_intro": "Podwójne napisy dodają tłumaczenie nad oryginalnymi napisami podczas oglądania YouTube.",
+  "dual_subtitles_guide_step_1": "Otwórz film na YouTube i włącz jego oryginalne napisy.",
+  "dual_subtitles_guide_step_2": "Włącz Podwójne napisy w Veksha. Tłumaczona linia pojawia się nad oryginałem.",
+  "dual_subtitles_guide_step_3": "Użyj przycisku globusa obok napisów, aby ukryć lub pokazać tłumaczenie bez wychodzenia z filmu.",
+  "dual_subtitles_guide_tip": "Najedź na słowo w oryginalnych napisach, aby podświetlić odpowiadające mu słowo w tłumaczeniu."
 }
