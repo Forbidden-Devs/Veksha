@@ -328,9 +328,9 @@ async def api_billing_telegram_webhook(
             if checkout_code:
                 db.billing_checkout_mark_paid(checkout_code, req.telegram_user_id)
             log.info(
-                "[billing] payment %r: user %r → %s until %s (%s stars)",
-                req.telegram_payment_charge_id, username, plan["tier"],
-                expires_at, req.stars_amount,
+                "[billing] payment %r applied to tier %s",
+                req.telegram_payment_charge_id,
+                plan["tier"],
             )
         else:
             log.warning("[billing] duplicate payment webhook %r ignored",
