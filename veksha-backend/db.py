@@ -13,9 +13,12 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import secrets
 import threading
 import time
+from datetime import datetime, timedelta, timezone
+from decimal import Decimal
 from typing import Any, Optional
 
 from psycopg import IntegrityError
@@ -277,6 +280,46 @@ def _conn():
         conn.execute(
             "CREATE INDEX IF NOT EXISTS ix_quizlet_exports_user ON quizlet_exports (username)"
         )
+        # One row per successful OpenAI request. Token counts come from the
+        # provider response rather than local estimates, so cached responses
+        # and failed calls do not inflate the totals.
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS ai_usage (
+                   id                BIGSERIAL PRIMARY KEY,
+                   username          TEXT NOT NULL,
+                   call_name         TEXT NOT NULL,
+                   model             TEXT NOT NULL,
+                   prompt_tokens     INTEGER NOT NULL,
+                   completion_tokens INTEGER NOT NULL,
+                   total_tokens      INTEGER NOT NULL,
+                   cached_tokens     INTEGER NOT NULL DEFAULT 0,
+                   reasoning_tokens  INTEGER NOT NULL DEFAULT 0,
+                   created           DOUBLE PRECISION NOT NULL,
+                   FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
+               )"""
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS ix_ai_usage_user_created "
+            "ON ai_usage (username, created DESC)"
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS ix_ai_usage_created ON ai_usage (created DESC)"
+        )
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS admin_query_audit (
+                   id          BIGSERIAL PRIMARY KEY,
+                   query_text  TEXT NOT NULL,
+                   succeeded   INTEGER NOT NULL,
+                   row_count   INTEGER NOT NULL DEFAULT 0,
+                   duration_ms DOUBLE PRECISION NOT NULL,
+                   error       TEXT NOT NULL DEFAULT '',
+                   created     DOUBLE PRECISION NOT NULL
+               )"""
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS ix_admin_query_audit_created "
+            "ON admin_query_audit (created DESC)"
+        )
         _initialized = True
     return database
 
@@ -337,6 +380,7 @@ def user_has_account_activity(username: str) -> bool:
         ("telegram_links", "username"),
         ("star_payments", "username"),
         ("promo_redemptions", "username"),
+        ("ai_usage", "username"),
     )
     conn = _conn()
     return any(
@@ -532,9 +576,219 @@ def purge_all_users() -> None:
             "google_oauth_flows", "identities", "review_log", "word_freq",
             "kb", "user_languages", "user_settings",
             "subscriptions", "telegram_links", "telegram_link_codes",
-            "star_payments", "promo_redemptions", "promo_codes", "users",
+            "star_payments", "promo_redemptions", "promo_codes", "ai_usage", "users",
         ):
             c.execute(f"DELETE FROM {table}")
+
+
+# ---------------------------------------------------------------------------
+# AI usage
+# ---------------------------------------------------------------------------
+
+def ai_usage_record(
+    username: str,
+    call_name: str,
+    model: str,
+    prompt_tokens: int,
+    completion_tokens: int,
+    total_tokens: int,
+    cached_tokens: int = 0,
+    reasoning_tokens: int = 0,
+) -> None:
+    """Persist provider-reported token usage for one successful AI call."""
+    values = list(max(0, int(value or 0)) for value in (
+        prompt_tokens, completion_tokens, total_tokens, cached_tokens, reasoning_tokens,
+    ))
+    if not values[2]:
+        values[2] = values[0] + values[1]
+    with _conn() as c:
+        c.execute(
+            "INSERT INTO ai_usage "
+            "(username, call_name, model, prompt_tokens, completion_tokens, total_tokens, "
+            "cached_tokens, reasoning_tokens, created) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+            (username, call_name[:120], model[:120], *values, time.time()),
+        )
+
+
+def _ai_usage_summary(since: float | None = None) -> dict:
+    where = "WHERE created >= %s" if since is not None else ""
+    params = (since,) if since is not None else None
+    row = _conn().execute(
+        "SELECT COUNT(*), COUNT(DISTINCT username), "
+        "COALESCE(SUM(prompt_tokens),0), COALESCE(SUM(completion_tokens),0), "
+        "COALESCE(SUM(total_tokens),0), COALESCE(SUM(cached_tokens),0), "
+        f"COALESCE(SUM(reasoning_tokens),0) FROM ai_usage {where}",
+        params,
+    ).fetchone()
+    return {
+        "requests": row[0], "active_users": row[1],
+        "prompt_tokens": row[2], "completion_tokens": row[3],
+        "total_tokens": row[4], "cached_tokens": row[5],
+        "reasoning_tokens": row[6],
+    }
+
+
+def ai_usage_stats(days: int = 30, user_limit: int = 100) -> dict:
+    """Aggregate AI usage for the admin dashboard."""
+    days = max(1, min(days, 366))
+    cutoff = time.time() - days * 86400
+    users = _conn().execute(
+        "SELECT a.username, COALESCE(NULLIF(s.display_name, ''), a.username), "
+        "COUNT(*), SUM(a.prompt_tokens), SUM(a.completion_tokens), SUM(a.total_tokens), "
+        "SUM(a.cached_tokens), SUM(a.reasoning_tokens), MAX(a.created) "
+        "FROM ai_usage a LEFT JOIN user_settings s ON s.username=a.username "
+        "GROUP BY a.username, s.display_name ORDER BY SUM(a.total_tokens) DESC LIMIT %s",
+        (max(1, min(user_limit, 500)),),
+    ).fetchall()
+    daily_rows = _conn().execute(
+        "SELECT to_char(to_timestamp(created) AT TIME ZONE 'UTC', 'YYYY-MM-DD'), "
+        "COUNT(*), COUNT(DISTINCT username), SUM(total_tokens) "
+        "FROM ai_usage WHERE created >= %s GROUP BY 1 ORDER BY 1",
+        (cutoff,),
+    ).fetchall()
+    daily_by_date = {row[0]: row[1:] for row in daily_rows}
+    today = datetime.now(timezone.utc).date()
+    daily = []
+    for offset in range(days - 1, -1, -1):
+        date = (today - timedelta(days=offset)).isoformat()
+        row = daily_by_date.get(date, (0, 0, 0))
+        daily.append({"date": date, "requests": row[0], "active_users": row[1], "total_tokens": row[2]})
+    operation_rows = _conn().execute(
+        "SELECT call_name, model, COUNT(*), SUM(total_tokens) FROM ai_usage "
+        "WHERE created >= %s GROUP BY call_name, model ORDER BY SUM(total_tokens) DESC LIMIT 30",
+        (cutoff,),
+    ).fetchall()
+    return {
+        "period_days": days,
+        "all_time": _ai_usage_summary(),
+        "period": _ai_usage_summary(cutoff),
+        "daily": daily,
+        "users": [
+            {
+                "username": row[0], "display_name": row[1], "requests": row[2],
+                "prompt_tokens": row[3], "completion_tokens": row[4],
+                "total_tokens": row[5], "cached_tokens": row[6],
+                "reasoning_tokens": row[7], "last_used": row[8],
+            }
+            for row in users
+        ],
+        "operations": [
+            {"call_name": row[0], "model": row[1], "requests": row[2], "total_tokens": row[3]}
+            for row in operation_rows
+        ],
+    }
+
+
+# ---------------------------------------------------------------------------
+# Read-only admin SQL console
+# ---------------------------------------------------------------------------
+
+_ADMIN_QUERY_START = re.compile(r"^(select|with|explain|show|values|table)\b", re.IGNORECASE)
+_ADMIN_QUERY_BLOCKED = re.compile(
+    r"\b(pg_advisory|pg_terminate_backend|pg_cancel_backend|pg_reload_conf|"
+    r"pg_rotate_logfile|pg_log_backend_memory_contexts|pg_read_file|"
+    r"pg_read_binary_file|pg_ls_dir|lo_import|lo_export|dblink|set_config)\w*\s*\(",
+    re.IGNORECASE,
+)
+
+
+def validate_admin_query(sql: str) -> str:
+    """Accept a single inspection statement; PostgreSQL enforces read-only too."""
+    query = sql.strip()
+    if query.endswith(";"):
+        query = query[:-1].rstrip()
+    if not query:
+        raise ValueError("SQL-запрос пуст.")
+    if len(query) > 20_000:
+        raise ValueError("SQL-запрос слишком длинный (максимум 20 000 символов).")
+    if ";" in query:
+        raise ValueError("Разрешён только один SQL-запрос без внутренних точек с запятой.")
+    if not _ADMIN_QUERY_START.match(query):
+        raise ValueError("Разрешены только SELECT, WITH, EXPLAIN, SHOW, VALUES и TABLE.")
+    if _ADMIN_QUERY_BLOCKED.search(query):
+        raise ValueError("Этот вызов PostgreSQL недоступен в диагностической консоли.")
+    return query
+
+
+def _admin_json_value(value: Any) -> Any:
+    if value is None or isinstance(value, (bool, int, float)):
+        return value
+    if isinstance(value, str):
+        return value if len(value) <= 20_000 else value[:20_000] + "…[обрезано]"
+    if isinstance(value, Decimal):
+        return str(value)
+    if isinstance(value, (bytes, bytearray, memoryview)):
+        rendered = "\\x" + bytes(value).hex()
+        return rendered if len(rendered) <= 20_000 else rendered[:20_000] + "…[обрезано]"
+    if isinstance(value, (datetime,)):
+        return value.isoformat()
+    if isinstance(value, (list, tuple)):
+        return [_admin_json_value(item) for item in value[:500]]
+    if isinstance(value, dict):
+        return {
+            str(key): _admin_json_value(item)
+            for key, item in list(value.items())[:500]
+        }
+    return str(value)
+
+
+def admin_readonly_query(sql: str, limit: int = 200, timeout_ms: int = 3000) -> dict:
+    """Execute one bounded statement in a PostgreSQL read-only transaction."""
+    query = validate_admin_query(sql)
+    limit = max(1, min(limit, 500))
+    timeout_ms = max(100, min(timeout_ms, 10_000))
+    started = time.perf_counter()
+    with _conn() as c:
+        read_only = c.execute("SET TRANSACTION READ ONLY")
+        read_only.close()
+        timeout = c.execute(
+            "SELECT set_config('statement_timeout', %s, true)",
+            (str(timeout_ms),),
+        )
+        timeout.close()
+        cursor = c.execute(query)
+        try:
+            if cursor.description is None:
+                raise ValueError("Запрос не вернул табличный результат.")
+            columns = [column.name for column in cursor.description]
+            raw_rows = cursor.fetchmany(limit + 1)
+        finally:
+            cursor.close()
+    truncated = len(raw_rows) > limit
+    rows = []
+    output_size = 0
+    for raw_row in raw_rows[:limit]:
+        row = [_admin_json_value(value) for value in raw_row]
+        row_size = len(json.dumps(row, ensure_ascii=False, default=str))
+        if output_size + row_size > 1_000_000:
+            truncated = True
+            break
+        rows.append(row)
+        output_size += row_size
+    return {
+        "columns": columns,
+        "rows": rows,
+        "row_count": len(rows),
+        "truncated": truncated,
+        "duration_ms": round((time.perf_counter() - started) * 1000, 2),
+    }
+
+
+def admin_query_audit_record(
+    sql: str,
+    succeeded: bool,
+    row_count: int,
+    duration_ms: float,
+    error: str = "",
+) -> None:
+    """Record SQL-console activity without depending on the query transaction."""
+    with _conn() as c:
+        c.execute(
+            "INSERT INTO admin_query_audit "
+            "(query_text, succeeded, row_count, duration_ms, error, created) "
+            "VALUES (%s,%s,%s,%s,%s,%s)",
+            (sql[:4000], int(succeeded), row_count, duration_ms, error[:1000], time.time()),
+        )
 
 
 # ---------------------------------------------------------------------------

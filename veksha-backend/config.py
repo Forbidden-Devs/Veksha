@@ -47,6 +47,11 @@ TELEGRAM_LINK_CODE_TTL_SECONDS = int(
 # (503) — set this in the server environment before minting promo codes.
 ADMIN_API_SECRET = os.getenv("ADMIN_API_SECRET", "")
 
+# Additional secret required by the read-only database console in the admin
+# application. It must differ from ADMIN_API_SECRET so a leaked general admin
+# credential does not automatically expose account data through SQL.
+ADMIN_DATABASE_SECRET = os.getenv("ADMIN_DATABASE_SECRET", "")
+
 # Optional Redis cache for one- and two-word translations.
 # Leave REDIS_URL empty to run without caching.
 REDIS_URL = os.getenv("REDIS_URL", "")

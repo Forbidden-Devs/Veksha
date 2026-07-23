@@ -17,6 +17,40 @@ export type PromoCode = {
 export type AdminOverview = {
   features: BillingFeature[];
   promos: PromoCode[];
+  ai_usage: AiUsageStats;
+};
+
+export type AiUsageSummary = {
+  requests: number;
+  active_users: number;
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
+  cached_tokens: number;
+  reasoning_tokens: number;
+};
+
+export type AiUsageUser = Omit<AiUsageSummary, "active_users"> & {
+  username: string;
+  display_name: string;
+  last_used: number;
+};
+
+export type AiUsageStats = {
+  period_days: number;
+  all_time: AiUsageSummary;
+  period: AiUsageSummary;
+  daily: Array<{ date: string; requests: number; active_users: number; total_tokens: number }>;
+  users: AiUsageUser[];
+  operations: Array<{ call_name: string; model: string; requests: number; total_tokens: number }>;
+};
+
+export type DatabaseQueryResult = {
+  columns: string[];
+  rows: unknown[][];
+  row_count: number;
+  truncated: boolean;
+  duration_ms: number;
 };
 
 export type PromoDraft = {
@@ -67,5 +101,11 @@ export const adminApi = {
     request<{ ok: boolean }>("/api/billing/promo/create", secret, {
       method: "POST",
       body: JSON.stringify({ ...draft, code: normalizedCode(draft.code) }),
+    }),
+  databaseQuery: (secret: string, databaseSecret: string, sql: string) =>
+    request<DatabaseQueryResult>("/api/admin/database/query", secret, {
+      method: "POST",
+      headers: { "X-Veksha-Database-Secret": databaseSecret },
+      body: JSON.stringify({ sql }),
     }),
 };

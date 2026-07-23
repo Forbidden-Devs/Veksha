@@ -87,6 +87,8 @@ async def privacy_policy() -> str:
       of the current website;</li>
     <li>chat messages, saved vocabulary, training answers, learning history,
       language preferences, goals, settings, and feature state;</li>
+    <li>AI feature usage records, including the feature, model, timestamp, and
+      provider-reported input, output, cached, reasoning, and total token counts;</li>
     <li>an optional linked Telegram account identifier and subscription
       status when Telegram billing is used.</li>
   </ul>
@@ -95,7 +97,8 @@ async def privacy_policy() -> str:
   <p>Information is used to provide translations, explanations, language
   analysis, vocabulary storage and synchronization, personalized training,
   lessons, chat, authentication, optional reminders, support, and optional
-  subscription billing. Veksha does not sell personal data and does not use
+  subscription billing. AI usage counts are used for service operations,
+  capacity planning, and cost monitoring. Veksha does not sell personal data and does not use
   personal data for advertising, credit decisions, or purposes unrelated to
   the extension's language-learning features.</p>
 

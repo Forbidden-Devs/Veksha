@@ -9,6 +9,8 @@ import logging
 import aiohttp
 
 from config import OPENAI_API_KEY, OPENAI_MODEL
+import db
+from usage_context import get_usage_user
 
 log = logging.getLogger(__name__)
 
@@ -124,8 +126,27 @@ async def _call(
                 log.error("[LLM] <- %s | HTTP %d | body=%s", call_name, r.status, _truncate(await r.text(), 1000))
             r.raise_for_status()
             data = await r.json()
-            content = data["choices"][0]["message"]["content"].strip()
             usage = data.get("usage", {})
+            username = get_usage_user()
+            if username:
+                prompt_details = usage.get("prompt_tokens_details") or {}
+                completion_details = usage.get("completion_tokens_details") or {}
+                try:
+                    db.ai_usage_record(
+                        username=username,
+                        call_name=call_name,
+                        model=resolved_model,
+                        prompt_tokens=usage.get("prompt_tokens", 0),
+                        completion_tokens=usage.get("completion_tokens", 0),
+                        total_tokens=usage.get("total_tokens", 0),
+                        cached_tokens=prompt_details.get("cached_tokens", 0),
+                        reasoning_tokens=completion_details.get("reasoning_tokens", 0),
+                    )
+                except Exception:
+                    # Usage accounting must never turn a valid AI response into
+                    # an application error.
+                    log.exception("[LLM] failed to persist usage for %s", call_name)
+            content = data["choices"][0]["message"]["content"].strip()
             log.info(
                 "[LLM] <- %s | model=%s tokens(prompt=%s completion=%s total=%s) | response=%r",
                 call_name, resolved_model,

@@ -6,6 +6,10 @@ os.environ.setdefault(
     "DATABASE_URL",
     "postgresql://veksha:veksha@localhost:5432/veksha",
 )
+os.environ.setdefault("ADMIN_DATABASE_SECRET", "test-database-secret")
+os.environ.setdefault("ADMIN_API_SECRET", "test-admin-secret")
+os.environ.setdefault("TELEGRAM_BOT_USERNAME", "veksha_test_bot")
+os.environ.setdefault("TELEGRAM_BOT_WEBHOOK_SECRET", "test-secret")
 
 
 @pytest.fixture(scope="session", autouse=True)
