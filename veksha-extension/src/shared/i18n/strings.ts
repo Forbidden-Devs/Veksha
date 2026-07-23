@@ -110,6 +110,9 @@ export interface Strings {
   my_words_known: string;
   my_words_unknown: string;
   my_words_seen_on: string;
+  my_words_add: string;
+  my_words_added: string;
+  my_words_add_error: string;
   // Settings
   settings_title: string;
   settings_intro: string;
@@ -506,6 +509,9 @@ export const EN: Strings = {
   my_words_known: "Known",
   my_words_unknown: "Not yet known",
   my_words_seen_on: "{n}× · mostly on {domain}",
+  my_words_add: "Add to dictionary",
+  my_words_added: "Added to dictionary",
+  my_words_add_error: "Could not add the word. Try again.",
   settings_title: "Settings",
   settings_intro: "Tell us your languages and level so we can pick the right words and difficulty for you.",
   settings_theme: "Theme",

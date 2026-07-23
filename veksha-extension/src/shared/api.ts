@@ -354,6 +354,7 @@ export interface VocabFrequencyEntry {
   count: number;
   domains: Record<string, number>;
   known: boolean;
+  in_dictionary: boolean;
 }
 
 export function trackVocabFrequency(text: string, domain: string): Promise<{ tracked: number }> {
@@ -473,6 +474,12 @@ export function getKbSummary(username: string): Promise<KBSummaryData> {
 
 export function getKbWords(username: string): Promise<{ words: WordEntry[] }> {
   return _get("/api/kb_words");
+}
+
+export async function addKbWord(username: string, word: string): Promise<WordEntry> {
+  const entry = await _post<WordEntry>("/api/kb_word", { word }, 45_000);
+  runtimeSend({ type: "VEKSHA_WORD_SAVED" });
+  return entry;
 }
 
 export function getKbWordDetails(username: string, word: string): Promise<WordEntry> {

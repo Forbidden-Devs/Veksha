@@ -75,6 +75,9 @@ UI_STRINGS: dict[str, str] = {
     "grammar_role_place": "Place",
     "grammar_role_time": "Time",
     "grammar_role_modifier": "Modifier",
+    "my_words_add": "Add to dictionary",
+    "my_words_added": "Added to dictionary",
+    "my_words_add_error": "Could not add the word. Try again.",
     # Settings
     "settings_title": "Settings",
     "settings_intro": "Tell us your languages and level so we can pick the right words and difficulty for you.",

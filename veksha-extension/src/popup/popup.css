@@ -1389,6 +1389,21 @@ html, body, #root {
   background: #fbe0ec;
 }
 
+.my-words-add {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--av-border);
+  border-radius: 50%;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.my-words-add.is-added {
+  color: var(--m-ok) !important;
+}
+
 .word-list-name {
   font-size: 13px;
   font-weight: 600;
