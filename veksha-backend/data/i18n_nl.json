@@ -360,5 +360,19 @@
   "dictionary_sort_newest": "Nieuwste eerst",
   "dictionary_sort_oldest": "Oudste eerst",
   "dictionary_no_results": "Geen overeenkomende woorden gevonden.",
-  "grammar_patterns_title": "Grammatica in context"
+  "grammar_patterns_title": "Grammatica in context",
+  "feature_guide_open": "Hoe het werkt",
+  "feature_guide_close": "Begrepen",
+  "ci_meter_guide_title": "Hoe de CI-meter werkt",
+  "ci_meter_guide_intro": "De CI-meter controleert snel of een pagina prettig en nuttig is voor jouw huidige taalniveau.",
+  "ci_meter_guide_step_1": "Open een artikel in de taal die je leert en zet de CI-meter aan in Veksha.",
+  "ci_meter_guide_step_2": "Er verschijnt een badge op de pagina met het percentage bekende woordenschat en het geschatte CEFR-niveau.",
+  "ci_meter_guide_step_3": "Open de badge om het oordeel te zien: groen is ideaal i+1-materiaal, blauw is makkelijk, geel zit dicht bij je niveau en rood kan te moeilijk zijn.",
+  "ci_meter_guide_tip": "Kies 'Verfijnen met AI' in de badge als je een nauwkeuriger inschatting van de moeilijkheid wilt.",
+  "dual_subtitles_guide_title": "Hoe dubbele ondertitels werken",
+  "dual_subtitles_guide_intro": "Dubbele ondertitels voegen een vertaling toe boven de originele ondertitels terwijl je YouTube kijkt.",
+  "dual_subtitles_guide_step_1": "Open een YouTube-video en zet de originele ondertitels aan.",
+  "dual_subtitles_guide_step_2": "Zet Dubbele ondertitels aan in Veksha. De vertaalde regel verschijnt boven de originele.",
+  "dual_subtitles_guide_step_3": "Gebruik de wereldbolknop naast de ondertitels om de vertaling te verbergen of weer te tonen zonder de video te verlaten.",
+  "dual_subtitles_guide_tip": "Beweeg over een woord in de originele ondertitels om het bijbehorende woord in de vertaling te markeren."
 }

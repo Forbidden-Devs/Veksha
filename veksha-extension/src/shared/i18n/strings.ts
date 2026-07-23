@@ -74,6 +74,20 @@ export interface Strings {
   ci_meter_verdict_too_easy: string;
   ci_meter_verdict_too_hard: string;
   ci_meter_verdict_close: string;
+  feature_guide_open: string;
+  feature_guide_close: string;
+  ci_meter_guide_title: string;
+  ci_meter_guide_intro: string;
+  ci_meter_guide_step_1: string;
+  ci_meter_guide_step_2: string;
+  ci_meter_guide_step_3: string;
+  ci_meter_guide_tip: string;
+  dual_subtitles_guide_title: string;
+  dual_subtitles_guide_intro: string;
+  dual_subtitles_guide_step_1: string;
+  dual_subtitles_guide_step_2: string;
+  dual_subtitles_guide_step_3: string;
+  dual_subtitles_guide_tip: string;
   grammar_lens_title: string;
   grammar_lens_on: string;
   grammar_lens_off: string;
@@ -450,6 +464,20 @@ export const EN: Strings = {
   ci_meter_verdict_too_easy: "You know this well already — good for fluency practice, but little new vocabulary.",
   ci_meter_verdict_too_hard: "This may be too difficult right now — expect to look up a lot of words.",
   ci_meter_verdict_close: "Close to your level.",
+  feature_guide_open: "How it works",
+  feature_guide_close: "Got it",
+  ci_meter_guide_title: "How the CI meter works",
+  ci_meter_guide_intro: "The CI meter quickly checks whether a page is comfortable and useful for your current language level.",
+  ci_meter_guide_step_1: "Open an article in the language you're learning, then turn on the CI meter from Veksha.",
+  ci_meter_guide_step_2: "A badge appears on the page with the percentage of familiar vocabulary and the estimated CEFR level.",
+  ci_meter_guide_step_3: "Open the badge to see the verdict: green is ideal i+1 material, blue is easy, yellow is close to your level, and red may be too hard.",
+  ci_meter_guide_tip: "Choose “Refine with AI” inside the badge when you want a more contextual difficulty estimate.",
+  dual_subtitles_guide_title: "How dual subtitles work",
+  dual_subtitles_guide_intro: "Dual subtitles add a translation above the original captions while you watch YouTube.",
+  dual_subtitles_guide_step_1: "Open a YouTube video and turn on its original captions.",
+  dual_subtitles_guide_step_2: "Turn on Dual subtitles in Veksha. The translated line appears above the original one.",
+  dual_subtitles_guide_step_3: "Use the globe button beside the captions to hide or show the translation without leaving the video.",
+  dual_subtitles_guide_tip: "Hover over a word in the original captions to highlight the matching word in the translation.",
   grammar_lens_title: "Grammar Lens",
   grammar_lens_on: "Grammar Lens on",
   grammar_lens_off: "Grammar Lens",

@@ -354,5 +354,19 @@
   "dictionary_sort_newest": "新しい順",
   "dictionary_sort_oldest": "古い順",
   "dictionary_no_results": "一致する単語が見つかりません。",
-  "grammar_patterns_title": "文脈で学ぶ文法"
+  "grammar_patterns_title": "文脈で学ぶ文法",
+  "feature_guide_open": "使い方",
+  "feature_guide_close": "了解",
+  "ci_meter_guide_title": "CIメーターの仕組み",
+  "ci_meter_guide_intro": "CIメーターは、今の言語レベルにとってページが快適で役立つかをすばやくチェックします。",
+  "ci_meter_guide_step_1": "学習中の言語で記事を開き、VekshaでCIメーターをオンにします。",
+  "ci_meter_guide_step_2": "ページに、なじみのある語彙の割合と推定CEFRレベルを示すバッジが表示されます。",
+  "ci_meter_guide_step_3": "バッジを開くと判定が見られます。緑は理想的なi+1素材、青は簡単、黄色はレベルに近い、赤は難しすぎる可能性があります。",
+  "ci_meter_guide_tip": "より文脈に合った難易度の見積もりがほしいときは、バッジ内の「AIで絞り込む」を選んでください。",
+  "dual_subtitles_guide_title": "デュアル字幕の仕組み",
+  "dual_subtitles_guide_intro": "デュアル字幕は、YouTube視聴中に元の字幕の上に翻訳を表示します。",
+  "dual_subtitles_guide_step_1": "YouTube動画を開き、元の字幕をオンにします。",
+  "dual_subtitles_guide_step_2": "Vekshaでデュアル字幕をオンにします。翻訳行が元の字幕の上に表示されます。",
+  "dual_subtitles_guide_step_3": "字幕横の地球アイコンを使うと、動画を離れずに翻訳の表示・非表示を切り替えられます。",
+  "dual_subtitles_guide_tip": "元の字幕の単語にカーソルを合わせると、翻訳内の対応する単語がハイライトされます。"
 }

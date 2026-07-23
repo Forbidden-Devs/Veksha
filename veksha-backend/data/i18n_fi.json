@@ -227,5 +227,19 @@
   "dictionary_sort_newest": "Uusimmat ensin",
   "dictionary_sort_oldest": "Vanhimmat ensin",
   "dictionary_no_results": "Vastaavia sanoja ei löytynyt.",
-  "grammar_patterns_title": "Kielioppi kontekstissa"
+  "grammar_patterns_title": "Kielioppi kontekstissa",
+  "feature_guide_open": "Miten se toimii",
+  "feature_guide_close": "Selvä",
+  "ci_meter_guide_title": "Miten CI-mittari toimii",
+  "ci_meter_guide_intro": "CI-mittari tarkistaa nopeasti, onko sivu mukava ja hyödyllinen nykyiselle kielitasollesi.",
+  "ci_meter_guide_step_1": "Avaa artikkeli opiskelemallasi kielellä ja kytke sitten CI-mittari päälle Vekshasta.",
+  "ci_meter_guide_step_2": "Sivulle ilmestyy merkki, jossa näkyy tuttujen sanojen osuus ja arvioitu CEFR-taso.",
+  "ci_meter_guide_step_3": "Avaa merkki nähdäksesi arvion: vihreä on ihanteellista i+1-materiaalia, sininen on helppoa, keltainen on lähellä tasoasi ja punainen voi olla liian vaikeaa.",
+  "ci_meter_guide_tip": "Valitse merkin sisältä “Tarkenna AI:lla”, kun haluat tarkemman arvion vaikeustasosta kontekstin perusteella.",
+  "dual_subtitles_guide_title": "Miten kaksinkertaiset tekstitykset toimivat",
+  "dual_subtitles_guide_intro": "Kaksinkertaiset tekstitykset lisäävät käännöksen alkuperäisen tekstityksen yläpuolelle, kun katsot YouTubea.",
+  "dual_subtitles_guide_step_1": "Avaa YouTube-video ja kytke sen alkuperäiset tekstitykset päälle.",
+  "dual_subtitles_guide_step_2": "Kytke Dual subtitles päälle Vekshassa. Käännetty rivi näkyy alkuperäisen yläpuolella.",
+  "dual_subtitles_guide_step_3": "Käytä tekstitysten vieressä olevaa maapallopainiketta piilottaaksesi tai näyttääksesi käännöksen poistumatta videosta.",
+  "dual_subtitles_guide_tip": "Vie курсori alkuperäisten tekstitysten sanan päälle, niin vastaava sana korostuu käännöksessä."
 }

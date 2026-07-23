@@ -230,5 +230,19 @@
   "dictionary_sort_newest": "Nejnovější první",
   "dictionary_sort_oldest": "Nejstarší první",
   "dictionary_no_results": "Nebylo nalezeno žádné odpovídající slovo.",
-  "grammar_patterns_title": "Gramatika v kontextu"
+  "grammar_patterns_title": "Gramatika v kontextu",
+  "feature_guide_open": "Jak to funguje",
+  "feature_guide_close": "Mám to",
+  "ci_meter_guide_title": "Jak funguje CI metr",
+  "ci_meter_guide_intro": "CI metr rychle zkontroluje, jestli je stránka pro vaši aktuální úroveň jazyka srozumitelná a užitečná.",
+  "ci_meter_guide_step_1": "Otevřete článek v jazyce, který se učíte, a pak ve Veksha zapněte CI metr.",
+  "ci_meter_guide_step_2": "Na stránce se zobrazí odznak s procentem známé slovní zásoby a odhadovanou úrovní CEFR.",
+  "ci_meter_guide_step_3": "Otevřete odznak a uvidíte verdikt: zelená je ideální materiál i+1, modrá je snadná, žlutá je blízko vaší úrovni a červená může být příliš těžká.",
+  "ci_meter_guide_tip": "Když chcete přesnější odhad obtížnosti v kontextu, zvolte v odznaku „Upřesnit pomocí AI“.",
+  "dual_subtitles_guide_title": "Jak fungují duální titulky",
+  "dual_subtitles_guide_intro": "Duální titulky přidají při sledování YouTube překlad nad původní titulky.",
+  "dual_subtitles_guide_step_1": "Otevřete video na YouTube a zapněte jeho původní titulky.",
+  "dual_subtitles_guide_step_2": "Ve Veksha zapněte duální titulky. Přeložený řádek se zobrazí nad původním.",
+  "dual_subtitles_guide_step_3": "Pomocí tlačítka s glóbem vedle titulků skryjete nebo zobrazíte překlad, aniž byste opustili video.",
+  "dual_subtitles_guide_tip": "Najetím na slovo v původních titulcích zvýrazníte odpovídající slovo v překladu."
 }

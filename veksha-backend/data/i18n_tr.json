@@ -227,5 +227,19 @@
   "dictionary_sort_newest": "En yeni önce",
   "dictionary_sort_oldest": "En eski önce",
   "dictionary_no_results": "Eşleşen kelime bulunamadı.",
-  "grammar_patterns_title": "Bağlamda dilbilgisi"
+  "grammar_patterns_title": "Bağlamda dilbilgisi",
+  "feature_guide_open": "Nasıl çalışır",
+  "feature_guide_close": "Anladım",
+  "ci_meter_guide_title": "CI göstergesi nasıl çalışır",
+  "ci_meter_guide_intro": "CI göstergesi, bir sayfanın mevcut dil seviyeniz için rahat ve faydalı olup olmadığını hızlıca kontrol eder.",
+  "ci_meter_guide_step_1": "Öğrendiğiniz dilde bir makale açın, ardından Veksha'dan CI göstergesini açın.",
+  "ci_meter_guide_step_2": "Sayfada, tanıdık kelime oranı ve tahmini CEFR seviyesi gösteren bir rozet görünür.",
+  "ci_meter_guide_step_3": "Rozeti açarak sonucu görün: yeşil ideal i+1 içeriktir, mavi kolaydır, sarı seviyenize yakındır ve kırmızı fazla zor olabilir.",
+  "ci_meter_guide_tip": "Daha bağlamsal bir zorluk tahmini istediğinizde rozet içindeki “AI ile geliştir” seçeneğini kullanın.",
+  "dual_subtitles_guide_title": "Çift altyazı nasıl çalışır",
+  "dual_subtitles_guide_intro": "Çift altyazı, YouTube izlerken orijinal altyazının üstüne bir çeviri ekler.",
+  "dual_subtitles_guide_step_1": "Bir YouTube videosu açın ve orijinal altyazıları etkinleştirin.",
+  "dual_subtitles_guide_step_2": "Veksha'da Çift altyazıyı açın. Çevrilen satır, orijinal satırın üstünde görünür.",
+  "dual_subtitles_guide_step_3": "Çeviriyi videodan çıkmadan gizlemek veya göstermek için altyazıların yanındaki dünya düğmesini kullanın.",
+  "dual_subtitles_guide_tip": "Orijinal altyazılardaki bir kelimenin üzerine gelerek çevirideki eşleşen kelimeyi vurgulayın."
 }

@@ -376,5 +376,19 @@
   "dictionary_sort_newest": "Neueste zuerst",
   "dictionary_sort_oldest": "Älteste zuerst",
   "dictionary_no_results": "Keine passenden Wörter gefunden.",
-  "grammar_patterns_title": "Grammatik im Kontext"
+  "grammar_patterns_title": "Grammatik im Kontext",
+  "feature_guide_open": "So funktioniert’s",
+  "feature_guide_close": "Verstanden",
+  "ci_meter_guide_title": "So funktioniert der CI-Meter",
+  "ci_meter_guide_intro": "Der CI-Meter prüft schnell, ob eine Seite für dein aktuelles Sprachniveau angenehm und nützlich ist.",
+  "ci_meter_guide_step_1": "Öffne einen Artikel in der Sprache, die du lernst, und aktiviere dann den CI-Meter in Veksha.",
+  "ci_meter_guide_step_2": "Ein Badge erscheint auf der Seite mit dem Anteil vertrauten Wortschatzes und dem geschätzten CEFR-Niveau.",
+  "ci_meter_guide_step_3": "Öffne das Badge, um die Einschätzung zu sehen: Grün ist ideales i+1-Material, Blau ist leicht, Gelb liegt nah an deinem Niveau und Rot ist vielleicht zu schwer.",
+  "ci_meter_guide_tip": "Wähle im Badge „Mit AI verfeinern“, wenn du eine kontextbezogenere Schwierigkeitsschätzung möchtest.",
+  "dual_subtitles_guide_title": "So funktionieren doppelte Untertitel",
+  "dual_subtitles_guide_intro": "Doppelte Untertitel fügen beim Ansehen von YouTube eine Übersetzung über den Originaluntertiteln hinzu.",
+  "dual_subtitles_guide_step_1": "Öffne ein YouTube-Video und aktiviere die Originaluntertitel.",
+  "dual_subtitles_guide_step_2": "Aktiviere Doppelte Untertitel in Veksha. Die übersetzte Zeile erscheint über der Originalzeile.",
+  "dual_subtitles_guide_step_3": "Nutze die Globus-Schaltfläche neben den Untertiteln, um die Übersetzung ein- oder auszublenden, ohne das Video zu verlassen.",
+  "dual_subtitles_guide_tip": "Fahre in den Originaluntertiteln mit der Maus über ein Wort, um das passende Wort in der Übersetzung hervorzuheben."
 }

@@ -230,5 +230,19 @@
   "dictionary_sort_newest": "Mới nhất trước",
   "dictionary_sort_oldest": "Cũ nhất trước",
   "dictionary_no_results": "Không tìm thấy từ phù hợp.",
-  "grammar_patterns_title": "Ngữ pháp trong ngữ cảnh"
+  "grammar_patterns_title": "Ngữ pháp trong ngữ cảnh",
+  "feature_guide_open": "Cách hoạt động",
+  "feature_guide_close": "Đã hiểu",
+  "ci_meter_guide_title": "CI meter hoạt động thế nào",
+  "ci_meter_guide_intro": "CI meter kiểm tra nhanh xem một trang có dễ chịu và hữu ích với trình độ ngôn ngữ hiện tại của bạn không.",
+  "ci_meter_guide_step_1": "Mở một bài viết bằng ngôn ngữ bạn đang học, rồi bật CI meter từ Veksha.",
+  "ci_meter_guide_step_2": "Một huy hiệu sẽ hiện trên trang với tỷ lệ từ vựng quen thuộc và mức CEFR ước tính.",
+  "ci_meter_guide_step_3": "Mở huy hiệu để xem kết quả: xanh lá là tài liệu i+1 lý tưởng, xanh dương là dễ, vàng là gần trình độ của bạn, và đỏ có thể quá khó.",
+  "ci_meter_guide_tip": "Chọn “Refine with AI” trong huy hiệu khi bạn muốn ước tính độ khó theo ngữ cảnh hơn.",
+  "dual_subtitles_guide_title": "Phụ đề kép hoạt động thế nào",
+  "dual_subtitles_guide_intro": "Phụ đề kép thêm bản dịch phía trên phụ đề gốc khi bạn xem YouTube.",
+  "dual_subtitles_guide_step_1": "Mở một video YouTube và bật phụ đề gốc.",
+  "dual_subtitles_guide_step_2": "Bật Dual subtitles trong Veksha. Dòng dịch sẽ hiện phía trên dòng gốc.",
+  "dual_subtitles_guide_step_3": "Dùng nút quả địa cầu bên cạnh phụ đề để ẩn hoặc hiện bản dịch mà không rời video.",
+  "dual_subtitles_guide_tip": "Di chuột lên một từ trong phụ đề gốc để làm nổi bật từ tương ứng trong bản dịch."
 }
