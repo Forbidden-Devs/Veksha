@@ -23,6 +23,22 @@ jobs:
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
+    env:
+      DATABASE_URL: postgresql://veksha:veksha@localhost:5432/veksha
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: veksha
+          POSTGRES_USER: veksha
+          POSTGRES_PASSWORD: veksha
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U veksha -d veksha"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 15
     steps:
       - uses: actions/checkout@v7
 

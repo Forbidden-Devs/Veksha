@@ -2,7 +2,7 @@
 session_state.py — per-user chat history for the assistant pipeline.
 
 Stores the recent assistant-chat exchange (outside of trainings/lessons) in
-SQLite (see db.py); the last few messages are passed to the Input Processor
+PostgreSQL (see db.py); the last few messages are passed to the Input Processor
 as conversation context.
 """
 from __future__ import annotations

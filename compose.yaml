@@ -1,0 +1,29 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: veksha
+      POSTGRES_USER: veksha
+      POSTGRES_PASSWORD: veksha
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U veksha -d veksha"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+    volumes:
+      - veksha-postgres:/var/lib/postgresql/data
+
+  redis:
+    image: redis:8-alpine
+    profiles: ["cache"]
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - veksha-redis:/data
+
+volumes:
+  veksha-postgres:
+  veksha-redis:

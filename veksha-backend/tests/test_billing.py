@@ -78,7 +78,7 @@ def test_expired_code_is_rejected():
     username = _user("expired")
     link = asyncio.run(billing.api_billing_telegram_link(username))
     with db._conn() as c:
-        c.execute("UPDATE telegram_link_codes SET created=? WHERE code=?",
+        c.execute("UPDATE telegram_link_codes SET created=%s WHERE code=%s",
                   (time.time() - 10_000, link.code))
     try:
         _webhook({"event": "link", "code": link.code, "telegram_user_id": 333})
@@ -145,7 +145,7 @@ def test_feature_gating_and_expiry():
 
     # Force-expire: back to free.
     with db._conn() as c:
-        c.execute("UPDATE subscriptions SET expires_at=? WHERE username=?",
+        c.execute("UPDATE subscriptions SET expires_at=%s WHERE username=%s",
                   (time.time() - 1, username))
     assert entitlements.subscription_of(username) == ("free", None)
     assert entitlements.has_feature(username, "grammar_lens") is False

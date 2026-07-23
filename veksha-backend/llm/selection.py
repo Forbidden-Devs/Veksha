@@ -162,7 +162,7 @@ async def explain_selection(text: str, translation: str, level: str = "intermedi
     key = make_key(text, translation, level)
     cached = await cache_get("explain", key)
     if isinstance(cached, str) and cached:
-        log.info("[explain_selection] cache hit (sqlite)")
+        log.info("[explain_selection] cache hit (postgres)")
         return cached
 
     system = _EXPLAIN_SELECTION_SYSTEM.format(text=text, translation=translation, level=level)

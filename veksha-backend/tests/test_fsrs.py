@@ -10,7 +10,7 @@ import sys
 import tempfile
 import time
 
-# Isolated SQLite for the test run; must be set before importing config/db.
+# Isolated runtime-file directory; the PostgreSQL test URL comes from conftest.
 os.environ["VEKSHA_DATA_DIR"] = tempfile.mkdtemp(prefix="veksha-test-")
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -58,6 +58,7 @@ def test_retrievability():
 
 
 def test_review_flow_and_log():
+    db.create_user(USER)
     u = UserStorage(username=USER)
     u.apply_kb_changes([Patch(type="add_word", value="hazelnut", counter=0, known=False)])
     w = u.find_word("hazelnut")

@@ -7,12 +7,17 @@ import os
 
 OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
 
-# Directory for all runtime data (SQLite databases, i18n catalogue caches).
-# Point this at a persistent volume in production (e.g. /data on Railway) —
-# the default lives inside the app checkout and is wiped on redeploy.
+# Directory for runtime files such as downloaded i18n catalogue caches.
 DATA_DIR: str = os.getenv(
     "VEKSHA_DATA_DIR", os.path.join(os.path.dirname(__file__), "data")
 )
+
+# PostgreSQL is the durable store for accounts, learning state, billing data,
+# chat history, and reusable LLM output caches. Railway injects DATABASE_URL
+# automatically when a PostgreSQL service is attached to the backend.
+DATABASE_URL = os.getenv("DATABASE_URL", "")
+DATABASE_POOL_MIN_SIZE = int(os.getenv("DATABASE_POOL_MIN_SIZE", "1"))
+DATABASE_POOL_MAX_SIZE = int(os.getenv("DATABASE_POOL_MAX_SIZE", "10"))
 
 # OpenAI models
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.4-mini")          # fast model for classification / short replies
