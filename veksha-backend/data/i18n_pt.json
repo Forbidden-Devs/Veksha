@@ -370,5 +370,19 @@
   "dictionary_sort_newest": "Mais recentes primeiro",
   "dictionary_sort_oldest": "Mais antigos primeiro",
   "dictionary_no_results": "Nenhuma palavra correspondente encontrada.",
-  "grammar_patterns_title": "Gramática em contexto"
+  "grammar_patterns_title": "Gramática em contexto",
+  "feature_guide_open": "Como funciona",
+  "feature_guide_close": "Entendi",
+  "ci_meter_guide_title": "Como funciona o medidor CI",
+  "ci_meter_guide_intro": "O medidor CI verifica rapidamente se uma página está confortável e útil para o seu nível atual no idioma.",
+  "ci_meter_guide_step_1": "Abra um artigo no idioma que você está aprendendo e ative o medidor CI no Veksha.",
+  "ci_meter_guide_step_2": "Um selo aparece na página com a porcentagem de vocabulário familiar e o nível CEFR estimado.",
+  "ci_meter_guide_step_3": "Abra o selo para ver o veredito: verde é material i+1 ideal, azul é fácil, amarelo está perto do seu nível e vermelho pode ser difícil demais.",
+  "ci_meter_guide_tip": "Escolha “Refinar com AI” dentro do selo quando quiser uma estimativa de dificuldade mais contextual.",
+  "dual_subtitles_guide_title": "Como funcionam as legendas duplas",
+  "dual_subtitles_guide_intro": "As legendas duplas adicionam uma tradução acima das legendas originais enquanto você assiste ao YouTube.",
+  "dual_subtitles_guide_step_1": "Abra um vídeo no YouTube e ative as legendas originais.",
+  "dual_subtitles_guide_step_2": "Ative Legendas duplas no Veksha. A linha traduzida aparece acima da original.",
+  "dual_subtitles_guide_step_3": "Use o botão de globo ao lado das legendas para ocultar ou mostrar a tradução sem sair do vídeo.",
+  "dual_subtitles_guide_tip": "Passe o mouse sobre uma palavra nas legendas originais para destacar a palavra correspondente na tradução."
 }

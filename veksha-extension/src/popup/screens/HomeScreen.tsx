@@ -54,8 +54,18 @@ export function HomeScreen() {
   const [activeUrl, setActiveUrl] = useState("");
   const [aiBlocklist, setAiBlocklist] = useState<AiBlocklist>({ sites: [], pages: [], allowedPages: [] });
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
+  const [featureGuide, setFeatureGuide] = useState<"ci_meter" | "dual_subtitles" | null>(null);
   const aiBlockAvailable = pageKey(activeUrl) !== null;
   const aiBlocked = aiBlockAvailable && isAiBlocked(activeUrl, aiBlocklist);
+
+  useEffect(() => {
+    if (!featureGuide) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setFeatureGuide(null);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [featureGuide]);
 
   useEffect(() => {
     Promise.all([api.getKbSummary(username), api.getReminders(username)])
@@ -222,19 +232,28 @@ export function HomeScreen() {
           </button>
         ) : <div className="m-tile m-tile-ghost" aria-hidden="true" />}
         {isExtension && (
-          <button
-            className={`m-tile m-feature-tile ${aiBlocked ? "is-blocked" : dualSubsEnabled ? "is-on" : "is-off"}`}
-            onClick={toggleDualSubtitles}
-            disabled={aiBlocked}
-            aria-pressed={dualSubsEnabled}
-          >
-            <span className="m-tile-icon">{Icons.dualSubtitles}</span>
-            <span className="m-tile-label">{t.settings_dual_subtitles}</span>
-            <span className="m-feature-state">
-              <i aria-hidden="true" />
-              {aiBlocked ? t.feature_blocked : dualSubsEnabled ? t.feature_enabled : t.feature_disabled}
-            </span>
-          </button>
+          <div className="m-feature-guide-wrap">
+            <button
+              className={`m-tile m-feature-tile ${aiBlocked ? "is-blocked" : dualSubsEnabled ? "is-on" : "is-off"}`}
+              onClick={toggleDualSubtitles}
+              disabled={aiBlocked}
+              aria-pressed={dualSubsEnabled}
+            >
+              <span className="m-tile-icon">{Icons.dualSubtitles}</span>
+              <span className="m-tile-label">{t.settings_dual_subtitles}</span>
+              <span className="m-feature-state">
+                <i aria-hidden="true" />
+                {aiBlocked ? t.feature_blocked : dualSubsEnabled ? t.feature_enabled : t.feature_disabled}
+              </span>
+            </button>
+            <button
+              type="button"
+              className="m-feature-guide-button"
+              aria-label={`${t.feature_guide_open}: ${t.settings_dual_subtitles}`}
+              title={t.feature_guide_open}
+              onClick={() => setFeatureGuide("dual_subtitles")}
+            >?</button>
+          </div>
         )}
         {isExtension && (
           <button
@@ -252,19 +271,28 @@ export function HomeScreen() {
           </button>
         )}
         {isExtension && (
-          <button
-            className={`m-tile m-feature-tile ${aiBlocked ? "is-blocked" : ciMeterOn ? "is-on" : "is-off"}`}
-            onClick={toggleCiMeter}
-            disabled={aiBlocked}
-            aria-pressed={ciMeterOn}
-          >
-            <span className="m-tile-icon">{Icons.ciMeter}</span>
-            <span className="m-tile-label">{t.ci_meter_off}</span>
-            <span className="m-feature-state">
-              <i aria-hidden="true" />
-              {aiBlocked ? t.feature_blocked : ciMeterOn ? t.feature_enabled : t.feature_disabled}
-            </span>
-          </button>
+          <div className="m-feature-guide-wrap">
+            <button
+              className={`m-tile m-feature-tile ${aiBlocked ? "is-blocked" : ciMeterOn ? "is-on" : "is-off"}`}
+              onClick={toggleCiMeter}
+              disabled={aiBlocked}
+              aria-pressed={ciMeterOn}
+            >
+              <span className="m-tile-icon">{Icons.ciMeter}</span>
+              <span className="m-tile-label">{t.ci_meter_off}</span>
+              <span className="m-feature-state">
+                <i aria-hidden="true" />
+                {aiBlocked ? t.feature_blocked : ciMeterOn ? t.feature_enabled : t.feature_disabled}
+              </span>
+            </button>
+            <button
+              type="button"
+              className="m-feature-guide-button"
+              aria-label={`${t.feature_guide_open}: ${t.ci_meter_off}`}
+              title={t.feature_guide_open}
+              onClick={() => setFeatureGuide("ci_meter")}
+            >?</button>
+          </div>
         )}
         {isExtension && (
           <button
@@ -319,6 +347,40 @@ export function HomeScreen() {
               <button onClick={() => chooseAiBlock("site")}>{aiBlocked ? t.ai_block_enable_site : t.ai_block_disable_site}</button>
             </div>
             <p>{t.ai_block_dialog_hint}</p>
+          </div>
+        </div>
+      )}
+      {featureGuide && (
+        <div className="feature-guide-backdrop" role="presentation" onMouseDown={() => setFeatureGuide(null)}>
+          <div
+            className="feature-guide-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="feature-guide-title"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <button className="feature-guide-close" onClick={() => setFeatureGuide(null)} aria-label={t.feature_guide_close}>×</button>
+            <span className="feature-guide-icon" aria-hidden="true">
+              {featureGuide === "ci_meter" ? Icons.ciMeter : Icons.dualSubtitles}
+            </span>
+            <h2 id="feature-guide-title">
+              {featureGuide === "ci_meter" ? t.ci_meter_guide_title : t.dual_subtitles_guide_title}
+            </h2>
+            <p className="feature-guide-intro">
+              {featureGuide === "ci_meter" ? t.ci_meter_guide_intro : t.dual_subtitles_guide_intro}
+            </p>
+            <ol>
+              {(featureGuide === "ci_meter"
+                ? [t.ci_meter_guide_step_1, t.ci_meter_guide_step_2, t.ci_meter_guide_step_3]
+                : [t.dual_subtitles_guide_step_1, t.dual_subtitles_guide_step_2, t.dual_subtitles_guide_step_3]
+              ).map((step, index) => <li key={index}>{step}</li>)}
+            </ol>
+            <p className="feature-guide-tip">
+              {featureGuide === "ci_meter" ? t.ci_meter_guide_tip : t.dual_subtitles_guide_tip}
+            </p>
+            <button className="btn btn-gradient btn-block" type="button" onClick={() => setFeatureGuide(null)}>
+              {t.feature_guide_close}
+            </button>
           </div>
         </div>
       )}
