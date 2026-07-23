@@ -395,6 +395,158 @@ body,
   line-height: 1.45;
 }
 
+/* Quizlet is a dense utility screen: keep every action in a distinct,
+   scrollable surface instead of relying on legacy classes with no layout. */
+.quizlet-screen {
+  min-height: 0;
+  padding: 8px 18px 18px;
+}
+
+.quizlet-content {
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding: 0 2px 8px 0;
+  scrollbar-gutter: stable;
+}
+
+.quizlet-card,
+.quizlet-import-hint {
+  padding: 16px;
+  border: 1px solid var(--m-border);
+  border-radius: 16px;
+  background: var(--m-surface);
+}
+
+.quizlet-card h2 {
+  margin: 0 0 12px;
+  color: var(--m-fg);
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.quizlet-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.quizlet-stats div {
+  min-width: 0;
+  padding: 12px 10px;
+  border-radius: 12px;
+  background: var(--m-surface-2);
+  text-align: center;
+}
+
+.quizlet-stats strong,
+.quizlet-stats span {
+  display: block;
+}
+
+.quizlet-stats strong {
+  color: var(--m-accent);
+  font-size: 22px;
+}
+
+.quizlet-stats span {
+  margin-top: 3px;
+  overflow: hidden;
+  color: var(--m-dim);
+  font-size: 10.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quizlet-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.quizlet-hint,
+.quizlet-format-hint,
+.quizlet-placeholder {
+  margin: 0;
+  color: var(--m-dim);
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+.quizlet-actions .quizlet-hint {
+  margin-top: 7px;
+  text-align: center;
+}
+
+.quizlet-format-hint {
+  margin-top: 10px;
+}
+
+.quizlet-import-copy {
+  margin-bottom: 12px;
+}
+
+.quizlet-file-button {
+  cursor: pointer;
+}
+
+.quizlet-file-button.is-disabled {
+  opacity: .55;
+  cursor: default;
+  pointer-events: none;
+}
+
+.quizlet-import-result {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--m-surface-2);
+  font-size: 12px;
+}
+
+.quizlet-import-result p,
+.quizlet-import-hint p {
+  margin: 0;
+}
+
+.quizlet-import-result p + p {
+  margin-top: 5px;
+}
+
+.quizlet-import-result details {
+  margin-top: 8px;
+}
+
+.quizlet-import-result ul {
+  margin: 7px 0 0;
+  padding-left: 20px;
+  color: var(--m-error);
+  font-size: 11px;
+}
+
+.quizlet-success {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--m-ok) 13%, var(--m-surface));
+  color: var(--m-ok);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.quizlet-import-hint {
+  color: var(--m-dim);
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+.quizlet-import-hint ol {
+  margin: 8px 0 0;
+  padding-left: 20px;
+}
+
 /* ---------------------------------------------------------------------------
    Re-skin of existing components (surfaces, buttons, inputs, chat)
    --------------------------------------------------------------------------- */

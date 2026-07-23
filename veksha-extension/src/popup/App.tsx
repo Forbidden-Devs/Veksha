@@ -595,6 +595,8 @@ export default function App() {
     statistics: { title: t.nav_stats, sub: t.sub_stats },
     dictionary: { title: t.dictionary_title, sub: "" },
     immersion: { title: t.nav_immersion, sub: "" },
+    myWords: { title: t.my_words_title, sub: "" },
+    quizlet: { title: "Quizlet", sub: "" },
     settings: { title: t.nav_settings, sub: t.sub_settings },
     subscription: { title: t.subscription_title, sub: "" },
     debug: { title: t.debug_title, sub: "" },

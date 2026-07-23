@@ -62,14 +62,20 @@ export function MyWordsScreen() {
 
   return (
     <section className="screen screen-statistics my-words-screen">
-      <h2 className="lang-pick-title">{t.my_words_title}</h2>
-      <p className="imm-modal-sub">{t.my_words_intro}</p>
+      <div className="my-words-intro">
+        <p>{t.my_words_intro}</p>
+        <button
+          className={`btn btn-block my-words-toggle${enabled ? " is-on" : ""}`}
+          type="button"
+          onClick={toggle}
+          aria-pressed={enabled}
+        >
+          <span className="my-words-toggle-dot" aria-hidden="true" />
+          {enabled ? t.my_words_on : t.my_words_off}
+        </button>
+      </div>
 
-      <button className="btn btn-gradient btn-block" type="button" onClick={toggle}>
-        {enabled ? t.my_words_on : t.my_words_off}
-      </button>
-
-      <div className="word-list">
+      <div className="word-list my-words-list">
         {addError && <p className="onboarding-error">{t.my_words_add_error}</p>}
         {words === null && <p className="word-list-placeholder">…</p>}
         {words?.length === 0 && <p className="word-list-placeholder">{t.my_words_empty}</p>}
@@ -78,25 +84,29 @@ export function MyWordsScreen() {
           const isAdded = entry.in_dictionary || addedWords.has(entry.word);
           return (
             <div key={entry.word} className="word-list-item">
-              <strong className="word-list-name">{entry.word}</strong>
-              <span className="dictionary-row-translation">
-                {t.my_words_seen_on.replace("{n}", String(entry.count)).replace("{domain}", domain)}
-              </span>
-              <span className={`my-words-badge ${entry.known ? "is-known" : "is-unknown"}`}>
-                {entry.known ? t.my_words_known : t.my_words_unknown}
-              </span>
-              <button
-                type="button"
-                className={`icon-btn my-words-add${isAdded ? " is-added" : ""}`}
-                onClick={() => void addToDictionary(entry.word)}
-                disabled={addingWord !== null || isAdded}
-                aria-label={isAdded
-                  ? `${entry.word}: ${t.my_words_added}`
-                  : `${entry.word}: ${t.my_words_add}`}
-                title={isAdded ? t.my_words_added : t.my_words_add}
-              >
-                {addingWord === entry.word ? "…" : isAdded ? "✓" : "+"}
-              </button>
+              <div className="my-words-word">
+                <strong className="word-list-name">{entry.word}</strong>
+                <span className="my-words-meta">
+                  {t.my_words_seen_on.replace("{n}", String(entry.count)).replace("{domain}", domain)}
+                </span>
+              </div>
+              <div className="my-words-actions">
+                <span className={`my-words-badge ${entry.known ? "is-known" : "is-unknown"}`}>
+                  {entry.known ? t.my_words_known : t.my_words_unknown}
+                </span>
+                <button
+                  type="button"
+                  className={`icon-btn my-words-add${isAdded ? " is-added" : ""}`}
+                  onClick={() => void addToDictionary(entry.word)}
+                  disabled={addingWord !== null || isAdded}
+                  aria-label={isAdded
+                    ? `${entry.word}: ${t.my_words_added}`
+                    : `${entry.word}: ${t.my_words_add}`}
+                  title={isAdded ? t.my_words_added : t.my_words_add}
+                >
+                  {addingWord === entry.word ? "…" : isAdded ? "✓" : "+"}
+                </button>
+              </div>
             </div>
           );
         })}

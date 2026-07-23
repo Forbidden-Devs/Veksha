@@ -113,6 +113,10 @@ export interface Strings {
   my_words_add: string;
   my_words_added: string;
   my_words_add_error: string;
+  my_words_guide_step_1: string;
+  my_words_guide_step_2: string;
+  my_words_guide_step_3: string;
+  my_words_guide_tip: string;
   // Settings
   settings_title: string;
   settings_intro: string;
@@ -512,6 +516,10 @@ export const EN: Strings = {
   my_words_add: "Add to dictionary",
   my_words_added: "Added to dictionary",
   my_words_add_error: "Could not add the word. Try again.",
+  my_words_guide_step_1: "Open your word list and turn tracking on there. Veksha counts words only on pages in your target language.",
+  my_words_guide_step_2: "As you browse, a personal frequency list grows automatically and shows where each word appeared most often.",
+  my_words_guide_step_3: "Add an unfamiliar word to your dictionary with one click, then practise it in training.",
+  my_words_guide_tip: "The tile opens your word list, tracking is controlled inside it, and the question-mark button always opens this guide.",
   settings_title: "Settings",
   settings_intro: "Tell us your languages and level so we can pick the right words and difficulty for you.",
   settings_theme: "Theme",

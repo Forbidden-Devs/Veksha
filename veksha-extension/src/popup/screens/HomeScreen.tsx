@@ -55,7 +55,7 @@ export function HomeScreen() {
   const [activeUrl, setActiveUrl] = useState("");
   const [aiBlocklist, setAiBlocklist] = useState<AiBlocklist>({ sites: [], pages: [], allowedPages: [] });
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
-  const [featureGuide, setFeatureGuide] = useState<"ci_meter" | "dual_subtitles" | null>(null);
+  const [featureGuide, setFeatureGuide] = useState<"immersion" | "ci_meter" | "dual_subtitles" | "my_words" | null>(null);
   const [quickText, setQuickText] = useState("");
   const [quickResult, setQuickResult] = useState<string | null>(null);
   const [quickLoading, setQuickLoading] = useState(false);
@@ -209,25 +209,6 @@ export function HomeScreen() {
     }
   }
 
-  async function toggleVocabFrequency() {
-    const next = !vocabFreqOn;
-    setVocabFreqOn(next);
-    try {
-      await storageSet({ [CONFIG.STORAGE_KEY_VOCAB_FREQ]: next });
-    } catch {
-      setVocabFreqOn(!next);
-      return;
-    }
-    try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (tab?.id) {
-        await chrome.tabs.sendMessage(tab.id, { type: "VEKSHA_TOGGLE_VOCAB_FREQ", enabled: next });
-      }
-    } catch {
-      // Restricted pages apply the saved preference on the next regular page.
-    }
-  }
-
   async function toggleDualSubtitles() {
     const next = !dualSubsEnabled;
     if (next && !(await requirePremiumFeature("dual_subtitles", t.settings_dual_subtitles))) return;
@@ -362,7 +343,7 @@ export function HomeScreen() {
               className="m-feature-guide-button"
               aria-label={`${t.feature_guide_open}: ${t.nav_immersion}`}
               title={t.feature_guide_open}
-              onClick={() => navigateTo("immersion")}
+              onClick={() => setFeatureGuide("immersion")}
             >?</button>
           </div>
         ) : <div className="m-tile m-tile-ghost" aria-hidden="true" />}
@@ -432,16 +413,14 @@ export function HomeScreen() {
         {isExtension && (
           <div className="m-feature-guide-wrap">
             <button
-              className={`m-tile m-feature-tile ${aiBlocked ? "is-blocked" : vocabFreqOn ? "is-on" : "is-off"}`}
-              onClick={toggleVocabFrequency}
-              disabled={aiBlocked}
-              aria-pressed={vocabFreqOn}
+              className={`m-tile m-feature-tile m-feature-destination ${vocabFreqOn ? "is-on" : "is-off"}`}
+              onClick={() => navigateTo("myWords")}
             >
               <span className="m-tile-icon">{Icons.myWords}</span>
               <span className="m-tile-label">{t.my_words_title}</span>
               <span className="m-feature-state">
                 <i aria-hidden="true" />
-                {aiBlocked ? t.feature_blocked : vocabFreqOn ? t.feature_enabled : t.feature_disabled}
+                {vocabFreqOn ? t.feature_enabled : t.feature_disabled}
               </span>
             </button>
             <button
@@ -449,7 +428,7 @@ export function HomeScreen() {
               className="m-feature-guide-button"
               aria-label={`${t.feature_guide_open}: ${t.my_words_title}`}
               title={t.feature_guide_open}
-              onClick={() => navigateTo("myWords")}
+              onClick={() => setFeatureGuide("my_words")}
             >?</button>
           </div>
         )}
@@ -511,22 +490,54 @@ export function HomeScreen() {
           >
             <button className="feature-guide-close" onClick={() => setFeatureGuide(null)} aria-label={t.feature_guide_close}>×</button>
             <span className="feature-guide-icon" aria-hidden="true">
-              {featureGuide === "ci_meter" ? Icons.ciMeter : Icons.dualSubtitles}
+              {featureGuide === "ci_meter"
+                ? Icons.ciMeter
+                : featureGuide === "dual_subtitles"
+                  ? Icons.dualSubtitles
+                  : featureGuide === "immersion"
+                    ? Icons.immersion
+                    : Icons.myWords}
             </span>
             <h2 id="feature-guide-title">
-              {featureGuide === "ci_meter" ? t.ci_meter_guide_title : t.dual_subtitles_guide_title}
+              {featureGuide === "ci_meter"
+                ? t.ci_meter_guide_title
+                : featureGuide === "dual_subtitles"
+                  ? t.dual_subtitles_guide_title
+                  : featureGuide === "immersion"
+                    ? t.nav_immersion
+                    : t.my_words_title}
             </h2>
             <p className="feature-guide-intro">
-              {featureGuide === "ci_meter" ? t.ci_meter_guide_intro : t.dual_subtitles_guide_intro}
+              {featureGuide === "ci_meter"
+                ? t.ci_meter_guide_intro
+                : featureGuide === "dual_subtitles"
+                  ? t.dual_subtitles_guide_intro
+                  : featureGuide === "immersion"
+                    ? t.imm_modal_sub
+                    : t.my_words_intro}
             </p>
             <ol>
               {(featureGuide === "ci_meter"
                 ? [t.ci_meter_guide_step_1, t.ci_meter_guide_step_2, t.ci_meter_guide_step_3]
-                : [t.dual_subtitles_guide_step_1, t.dual_subtitles_guide_step_2, t.dual_subtitles_guide_step_3]
+                : featureGuide === "dual_subtitles"
+                  ? [t.dual_subtitles_guide_step_1, t.dual_subtitles_guide_step_2, t.dual_subtitles_guide_step_3]
+                  : featureGuide === "immersion"
+                    ? [
+                        `${t.imm_card1_title}. ${t.imm_card1_desc}`,
+                        `${t.imm_card2_title}. ${t.imm_card2_desc}`,
+                        `${t.imm_card3_title}. ${t.imm_card3_desc}`,
+                      ]
+                    : [t.my_words_guide_step_1, t.my_words_guide_step_2, t.my_words_guide_step_3]
               ).map((step, index) => <li key={index}>{step}</li>)}
             </ol>
             <p className="feature-guide-tip">
-              {featureGuide === "ci_meter" ? t.ci_meter_guide_tip : t.dual_subtitles_guide_tip}
+              {featureGuide === "ci_meter"
+                ? t.ci_meter_guide_tip
+                : featureGuide === "dual_subtitles"
+                  ? t.dual_subtitles_guide_tip
+                  : featureGuide === "immersion"
+                    ? t.immersion_hint
+                    : t.my_words_guide_tip}
             </p>
             <button className="btn btn-gradient btn-block" type="button" onClick={() => setFeatureGuide(null)}>
               {t.feature_guide_close}
