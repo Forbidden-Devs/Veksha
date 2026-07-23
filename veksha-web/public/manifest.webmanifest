@@ -2,12 +2,24 @@
   "name": "Veksha",
   "short_name": "Veksha",
   "description": "Learn vocabulary from what you read — spaced repetition without manual flashcards.",
+  "id": "/",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#7c3aed",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "orientation": "portrait-primary",
+  "background_color": "#f6f2e9",
+  "theme_color": "#a95124",
+  "categories": ["education", "productivity"],
   "icons": [
     { "src": "/icons/icon48.png", "sizes": "48x48", "type": "image/png" },
-    { "src": "/icons/icon128.png", "sizes": "128x128", "type": "image/png" }
+    { "src": "/icons/icon128.png", "sizes": "128x128", "type": "image/png" },
+    { "src": "/icons/icon192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "My words", "short_name": "Words", "url": "/?open=dictionary", "icons": [{ "src": "/icons/icon192.png", "sizes": "192x192" }] },
+    { "name": "Training", "short_name": "Train", "url": "/?open=training", "icons": [{ "src": "/icons/icon192.png", "sizes": "192x192" }] }
   ]
 }

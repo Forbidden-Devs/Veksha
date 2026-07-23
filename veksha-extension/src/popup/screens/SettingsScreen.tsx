@@ -3,6 +3,7 @@ import * as api from "../../shared/api";
 import { GoogleMark } from "../../shared/GoogleMark";
 import { useI18n, useT } from "../../shared/i18n";
 import { CONFIG } from "../../shared/config";
+import { googleLinkAccount } from "../../shared/googleAuth";
 import { LANGUAGES } from "../../shared/languages";
 import { isExtension, storageGet, storageRemove, storageSet } from "../../shared/platform";
 import { THEMES, type ThemeName, getTheme, previewTheme, setTheme } from "../../shared/theme";
@@ -61,7 +62,7 @@ export function SettingsScreen() {
   const themeTouchedRef = useRef(false);
 
   const isOnboarding = settingsMode === "onboarding";
-  const canLinkGoogle = isExtension && Boolean(CONFIG.GOOGLE_CLIENT_ID);
+  const canLinkGoogle = Boolean(CONFIG.GOOGLE_CLIENT_ID);
 
   useEffect(() => {
     if (!isExtension || isOnboarding) return;
@@ -140,6 +141,11 @@ export function SettingsScreen() {
     setLinking(true);
     setLinkError(null);
     try {
+      if (!isExtension) {
+        const result = await googleLinkAccount();
+        applyLinkResult({ ok: result.ok, email: result.email });
+        return;
+      }
       // The flow runs in the background — it survives this popup closing.
       const r = (await chrome.runtime.sendMessage({ type: "VEKSHA_GOOGLE_LINK" })) as
         | GoogleLinkResult

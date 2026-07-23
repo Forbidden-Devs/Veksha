@@ -1,0 +1,11 @@
+[build]
+builder = "RAILPACK"
+buildCommand = "npm --prefix veksha-web ci && npm --prefix veksha-web run build"
+watchPatterns = ["/veksha-web/**", "/veksha-extension/src/popup/**", "/veksha-extension/src/shared/**"]
+
+[deploy]
+startCommand = "npm --prefix veksha-web start"
+healthcheckPath = "/healthz"
+healthcheckTimeout = 20
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3

@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import * as api from "../shared/api";
 import { CONFIG } from "../shared/config";
+import { googleSignIn } from "../shared/googleAuth";
 import { useI18n } from "../shared/i18n";
 import { isExtension, sessionGet, sessionSet, storageGet, storageRemove, storageSet } from "../shared/platform";
 import type { Screen, SettingsMode } from "../shared/types";
@@ -169,6 +170,8 @@ export default function App() {
   // Help bubble — pops up on the chat screen, dismissed by any click outside it.
   const [helpVisible, setHelpVisible] = useState(true);
   const helpRef = useRef<HTMLDivElement>(null);
+  const webShortcutHandled = useRef(false);
+  const [initialRouteReady, setInitialRouteReady] = useState(false);
 
   useEffect(() => {
     if (!toastMsg) return;
@@ -322,6 +325,7 @@ export default function App() {
       } else {
         setScreen("home");
       }
+      setInitialRouteReady(true);
     } catch (err) {
       // Stale credentials (account wiped server-side) — back to onboarding.
       if (String((err as Error).message).includes("HTTP 401")) {
@@ -329,6 +333,7 @@ export default function App() {
         return;
       }
       setScreen("home");
+      setInitialRouteReady(true);
     }
   }
 
@@ -382,6 +387,23 @@ export default function App() {
   // existing one goes to its usual screen. If the popup died, the background
   // has already persisted the credentials and the next open picks them up.
   async function handleGoogleSignIn() {
+    if (!isExtension) {
+      const resp = await googleSignIn();
+      api.setAuthToken(resp.token);
+      await storageSet({
+        [CONFIG.STORAGE_KEY_USERNAME]: resp.username,
+        [CONFIG.STORAGE_KEY_TOKEN]: resp.token,
+      });
+      if (resp.created) {
+        setPendingUsername(resp.username);
+        setPendingDisplayName(resp.display_name);
+        setObStep("target_lang");
+        return;
+      }
+      setUsername(resp.username);
+      await routeAfterUsername(resp.username);
+      return;
+    }
     const resp = (await chrome.runtime.sendMessage({ type: "VEKSHA_GOOGLE_SIGNIN" })) as
       | { ok: true; username: string; display_name: string; created: boolean }
       | { ok: false; error: string }
@@ -433,7 +455,8 @@ export default function App() {
     setLangPair(saved.target_lang, saved.native_lang);
     setUsername(pendingUsername);
     setScreen("home");
-    setShowTour(true); // the animated tour runs right after registration
+    setInitialRouteReady(true);
+    setShowTour(isExtension); // the tour demonstrates extension-only capture features
   }
 
   const startTour = useCallback(() => {
@@ -514,6 +537,14 @@ export default function App() {
     else window.close();
   }, [username]);
 
+  useEffect(() => {
+    if (isExtension || !username || !initialRouteReady || webShortcutHandled.current) return;
+    webShortcutHandled.current = true;
+    const action = new URLSearchParams(window.location.search).get("open");
+    if (action === "dictionary") setScreen("dictionary");
+    if (action === "training") void openTraining();
+  }, [username, initialRouteReady, openTraining]);
+
   // Still checking storage — render nothing to avoid flash
   if (username === undefined) {
     return <div className="app" />;
@@ -530,7 +561,7 @@ export default function App() {
           <OnboardingScreen
             initialName={pendingDisplayName}
             onComplete={handleUsernameEntered}
-            onGoogle={isExtension && CONFIG.GOOGLE_CLIENT_ID ? handleGoogleSignIn : undefined}
+            onGoogle={CONFIG.GOOGLE_CLIENT_ID ? handleGoogleSignIn : undefined}
             onBack={() => setObStep("native_lang")}
           />
         )}
@@ -600,7 +631,7 @@ export default function App() {
 
   return (
     <AppContext.Provider value={ctx}>
-      <div className="app" onClick={handleAppClick}>
+      <div className={`app${isExtension ? "" : " app-web"}`} onClick={handleAppClick}>
         <div className="shell-main">
           <div className="shell-topbar">
             {screen !== "home" && (
@@ -642,9 +673,29 @@ export default function App() {
           </div>
         </div>
 
+        {!isExtension && (
+          <nav className="web-bottom-nav" aria-label="Primary navigation">
+            <button className={screen === "home" ? "is-active" : ""} onClick={() => navigateTo("home")}>
+              <span aria-hidden="true">⌂</span><small>Veksha</small>
+            </button>
+            <button className={screen === "dictionary" ? "is-active" : ""} onClick={() => navigateTo("dictionary")}>
+              <span aria-hidden="true">Aa</span><small>{t.dictionary_title}</small>
+            </button>
+            <button onClick={openTraining}>
+              <span className="web-nav-practice" aria-hidden="true">↻</span><small>{t.nav_training}</small>
+            </button>
+            <button className={screen === "chat" ? "is-active" : ""} onClick={() => navigateTo("chat")}>
+              <span aria-hidden="true">✦</span><small>{t.nav_assistant}</small>
+            </button>
+            <button className={screen === "settings" ? "is-active" : ""} onClick={() => navigateTo("settings", { settingsMode: "menu" })}>
+              <span aria-hidden="true">⚙</span><small>{t.nav_settings}</small>
+            </button>
+          </nav>
+        )}
+
         {showTour && <TourScreen onFinish={() => setShowTour(false)} />}
 
-        {screen === "chat" && helpVisible && !showTour && (
+        {isExtension && screen === "chat" && helpVisible && !showTour && (
           <div className="help-bubble" ref={helpRef}>
             <div className="help-bubble-row">
               <div className="help-bubble-icon">🪄</div>

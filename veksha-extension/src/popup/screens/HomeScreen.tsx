@@ -55,6 +55,10 @@ export function HomeScreen() {
   const [aiBlocklist, setAiBlocklist] = useState<AiBlocklist>({ sites: [], pages: [], allowedPages: [] });
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
   const [featureGuide, setFeatureGuide] = useState<"ci_meter" | "dual_subtitles" | null>(null);
+  const [quickText, setQuickText] = useState("");
+  const [quickResult, setQuickResult] = useState<string | null>(null);
+  const [quickLoading, setQuickLoading] = useState(false);
+  const [quickError, setQuickError] = useState(false);
   const aiBlockAvailable = pageKey(activeUrl) !== null;
   const aiBlocked = aiBlockAvailable && isAiBlocked(activeUrl, aiBlocklist);
 
@@ -72,6 +76,28 @@ export function HomeScreen() {
       .then(([kb, rem]) => setCounts({ words: kb.learning_count + kb.known_count, due: rem.due_words }))
       .catch(() => {});
   }, [username]);
+
+  async function handleQuickTranslate(event: React.FormEvent) {
+    event.preventDefault();
+    const text = quickText.trim();
+    if (!text || quickLoading) return;
+    setQuickLoading(true);
+    setQuickError(false);
+    setQuickResult(null);
+    try {
+      const result = await api.quickTranslate(username, text, nativeLang, targetLang, true);
+      setQuickResult(result.translation);
+      const [kb, reminders] = await Promise.all([
+        api.getKbSummary(username),
+        api.getReminders(username),
+      ]);
+      setCounts({ words: kb.learning_count + kb.known_count, due: reminders.due_words });
+    } catch {
+      setQuickError(true);
+    } finally {
+      setQuickLoading(false);
+    }
+  }
 
   useEffect(() => {
     storageGet([
@@ -200,6 +226,66 @@ export function HomeScreen() {
     });
     setSettings(updated);
     setLangPair(next, nativeLang);
+  }
+
+  if (!isExtension) {
+    const languageName = LANGUAGES.find((lang) => lang.code === targetLang)?.name ?? targetLang.toUpperCase();
+    return (
+      <section className="screen screen-home web-home">
+        <div className="web-home-hero">
+          <div className="web-home-kicker">{languageName} · {targetLang.toUpperCase()}</div>
+          <h1>{t.tour_s0_title.replace("|", " ")}</h1>
+          <p>{t.tutorial_s4_body}</p>
+          <form className="web-quick-add" onSubmit={handleQuickTranslate}>
+            <input
+              type="text"
+              value={quickText}
+              onChange={(event) => setQuickText(event.target.value)}
+              placeholder={t.dictionary_search_placeholder}
+              autoCapitalize="none"
+              autoComplete="off"
+              maxLength={500}
+              aria-label={t.chat_mode_translate}
+            />
+            <button type="submit" disabled={!quickText.trim() || quickLoading}>
+              {quickLoading ? "…" : "→"}
+            </button>
+          </form>
+          {quickResult && (
+            <button className="web-quick-result" type="button" onClick={() => navigateTo("dictionary")}>
+              <span>{quickResult}</span><small>{t.tour_saved}</small>
+            </button>
+          )}
+          {quickError && <p className="web-quick-error">Translation unavailable. Try again.</p>}
+        </div>
+
+        <div className="web-today-grid">
+          <button className="web-today-card is-primary" onClick={openTraining}>
+            <span className="web-today-value">{counts?.due ?? "…"}</span>
+            <span>{t.stats_ready}</span>
+            <strong>{t.nav_training} →</strong>
+          </button>
+          <button className="web-today-card" onClick={() => navigateTo("dictionary")}>
+            <span className="web-today-value">{counts?.words ?? "…"}</span>
+            <span>{t.dictionary_title}</span>
+            <strong>{t.dictionary_cards} →</strong>
+          </button>
+        </div>
+
+        <div className="web-action-grid">
+          <button onClick={() => navigateTo("chat")}><span>{Icons.dictionary}</span><strong>{t.nav_assistant}</strong><small>{t.sub_assistant}</small></button>
+          <button onClick={() => navigateTo("topics")}><span>{Icons.topics}</span><strong>{t.nav_topics}</strong><small>{t.sub_topics}</small></button>
+          <button onClick={() => navigateTo("statistics")}><span>{Icons.stats}</span><strong>{t.nav_stats}</strong></button>
+          <button onClick={() => navigateTo("settings", { settingsMode: "menu" })}><span>{Icons.settings}</span><strong>{t.nav_settings}</strong></button>
+        </div>
+
+        <button className="web-language-switch" onClick={switchTargetLanguage} disabled={!settings || (settings.target_langs?.length ?? 1) < 2}>
+          <span>{Icons.language}</span>
+          <span>{languageName}</span>
+          <strong>{targetLang.toUpperCase()}</strong>
+        </button>
+      </section>
+    );
   }
 
   return (

@@ -9,6 +9,7 @@
     "dev": "vite",
     "prebuild": "npm run sync-assets",
     "build": "vite build",
+    "start": "node scripts/serve.mjs",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit"
   },
