@@ -1,8 +1,6 @@
-"""db.py — SQLite storage for users, per-user KB, and chat history.
+"""db.py — PostgreSQL storage for users, per-user KB, and chat history.
 
-Replaces the per-user JSON files in data/. One database file
-(data/veksha.db), WAL mode, one connection per thread (same pattern as
-db_cache.py). The KB is stored as a JSON document per user — normalizing
+The KB is stored as a JSON document per user — normalizing
 words/topics into tables is deferred until the FSRS rework changes the word
 schema anyway.
 
@@ -15,47 +13,48 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 import secrets
-import sqlite3
 import threading
 import time
 from typing import Any, Optional
 
-from config import DATA_DIR
+from psycopg import IntegrityError
+
+from database import database
 
 log = logging.getLogger(__name__)
 
-_DB_PATH = os.path.join(DATA_DIR, "veksha.db")
-_local = threading.local()
+_initialized = False
+_init_lock = threading.Lock()
 
 
-def _conn() -> sqlite3.Connection:
-    conn: sqlite3.Connection | None = getattr(_local, "conn", None)
-    if conn is None:
-        os.makedirs(os.path.dirname(_DB_PATH), exist_ok=True)
-        conn = sqlite3.connect(_DB_PATH, timeout=5.0)
-        conn.execute("PRAGMA journal_mode=WAL")
-        conn.execute("PRAGMA synchronous=NORMAL")
+def _conn():
+    global _initialized
+    if _initialized:
+        return database
+    with _init_lock:
+        if _initialized:
+            return database
+        conn = database
         conn.execute(
             """CREATE TABLE IF NOT EXISTS users (
                    username TEXT PRIMARY KEY,
                    token    TEXT UNIQUE NOT NULL,
-                   created  REAL NOT NULL
+                   created  DOUBLE PRECISION NOT NULL
                )"""
         )
         conn.execute(
             """CREATE TABLE IF NOT EXISTS kb (
                    username TEXT PRIMARY KEY,
                    data     TEXT NOT NULL,
-                   updated  REAL NOT NULL
+                   updated  DOUBLE PRECISION NOT NULL
                )"""
         )
         conn.execute(
             """CREATE TABLE IF NOT EXISTS chat_history (
                    username TEXT PRIMARY KEY,
                    data     TEXT NOT NULL,
-                   updated  REAL NOT NULL
+                   updated  DOUBLE PRECISION NOT NULL
                )"""
         )
         # External identities (Google, …) linked to local accounts. A user may
@@ -67,7 +66,7 @@ def _conn() -> sqlite3.Connection:
                    subject  TEXT NOT NULL,
                    email    TEXT NOT NULL DEFAULT '',
                    username TEXT NOT NULL,
-                   created  REAL NOT NULL,
+                   created  DOUBLE PRECISION NOT NULL,
                    PRIMARY KEY (provider, subject)
                )"""
         )
@@ -83,7 +82,7 @@ def _conn() -> sqlite3.Connection:
                    status   TEXT NOT NULL DEFAULT 'pending',
                    result   TEXT NOT NULL DEFAULT '',
                    error    TEXT NOT NULL DEFAULT '',
-                   created  REAL NOT NULL
+                   created  DOUBLE PRECISION NOT NULL
                )"""
         )
         # One row per review; the raw material for FSRS weight optimization
@@ -92,18 +91,18 @@ def _conn() -> sqlite3.Connection:
         # (NULL for the first review of a word).
         conn.execute(
             """CREATE TABLE IF NOT EXISTS review_log (
-                   id             INTEGER PRIMARY KEY AUTOINCREMENT,
+                   id             BIGSERIAL PRIMARY KEY,
                    username       TEXT NOT NULL,
                    word           TEXT NOT NULL,
-                   ts             REAL NOT NULL,
+                   ts             DOUBLE PRECISION NOT NULL,
                    rating         INTEGER NOT NULL,
                    outcome        TEXT NOT NULL,
                    task_type      TEXT NOT NULL DEFAULT '',
-                   elapsed_days   REAL NOT NULL,
-                   scheduled_days REAL NOT NULL,
-                   stability      REAL NOT NULL,
-                   difficulty     REAL NOT NULL,
-                   retrievability REAL
+                   elapsed_days   DOUBLE PRECISION NOT NULL,
+                   scheduled_days DOUBLE PRECISION NOT NULL,
+                   stability      DOUBLE PRECISION NOT NULL,
+                   difficulty     DOUBLE PRECISION NOT NULL,
+                   retrievability DOUBLE PRECISION
                )"""
         )
         conn.execute(
@@ -122,17 +121,14 @@ def _conn() -> sqlite3.Connection:
                    FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
                )"""
         )
-        settings_columns = {
-            row[1] for row in conn.execute("PRAGMA table_info(user_settings)").fetchall()
-        }
-        if "mining_same_level" not in settings_columns:
-            conn.execute(
-                "ALTER TABLE user_settings ADD COLUMN mining_same_level INTEGER NOT NULL DEFAULT 2"
-            )
-        if "mining_higher_level" not in settings_columns:
-            conn.execute(
-                "ALTER TABLE user_settings ADD COLUMN mining_higher_level INTEGER NOT NULL DEFAULT 1"
-            )
+        conn.execute(
+            "ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS "
+            "mining_same_level INTEGER NOT NULL DEFAULT 2"
+        )
+        conn.execute(
+            "ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS "
+            "mining_higher_level INTEGER NOT NULL DEFAULT 1"
+        )
         conn.execute(
             """CREATE TABLE IF NOT EXISTS user_languages (
                    username TEXT NOT NULL,
@@ -155,7 +151,7 @@ def _conn() -> sqlite3.Connection:
                    word      TEXT NOT NULL,
                    domain    TEXT NOT NULL,
                    count     INTEGER NOT NULL DEFAULT 0,
-                   last_seen REAL NOT NULL,
+                   last_seen DOUBLE PRECISION NOT NULL,
                    PRIMARY KEY (username, language, word, domain)
                )"""
         )
@@ -169,25 +165,24 @@ def _conn() -> sqlite3.Connection:
             """CREATE TABLE IF NOT EXISTS subscriptions (
                    username   TEXT PRIMARY KEY,
                    tier       TEXT NOT NULL,
-                   expires_at REAL NOT NULL,
+                   expires_at DOUBLE PRECISION NOT NULL,
                    features   TEXT NOT NULL DEFAULT '',
-                   updated    REAL NOT NULL,
+                   updated    DOUBLE PRECISION NOT NULL,
                    FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
                )"""
         )
-        subscription_columns = {
-            row[1] for row in conn.execute("PRAGMA table_info(subscriptions)").fetchall()
-        }
-        if "features" not in subscription_columns:
-            # Empty means the legacy Premium bundle (all paid features).
-            conn.execute("ALTER TABLE subscriptions ADD COLUMN features TEXT NOT NULL DEFAULT ''")
+        # Empty means the legacy Premium bundle (all paid features).
+        conn.execute(
+            "ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS "
+            "features TEXT NOT NULL DEFAULT ''"
+        )
         # Telegram accounts linked for billing: payments arriving from this
         # telegram_user_id credit the linked Veksha account.
         conn.execute(
             """CREATE TABLE IF NOT EXISTS telegram_links (
                    telegram_user_id INTEGER PRIMARY KEY,
                    username         TEXT NOT NULL,
-                   created          REAL NOT NULL
+                   created          DOUBLE PRECISION NOT NULL
                )"""
         )
         # Short-lived single-use codes carried in the bot deep link
@@ -196,20 +191,20 @@ def _conn() -> sqlite3.Connection:
             """CREATE TABLE IF NOT EXISTS telegram_link_codes (
                    code     TEXT PRIMARY KEY,
                    username TEXT NOT NULL,
-                   created  REAL NOT NULL
+                   created  DOUBLE PRECISION NOT NULL
                )"""
         )
         # Ledger of Telegram Stars payments; the UNIQUE charge id makes the
         # payment webhook idempotent (Telegram/bot may deliver twice).
         conn.execute(
             """CREATE TABLE IF NOT EXISTS star_payments (
-                   id                         INTEGER PRIMARY KEY AUTOINCREMENT,
+                   id                         BIGSERIAL PRIMARY KEY,
                    telegram_payment_charge_id TEXT UNIQUE NOT NULL,
                    telegram_user_id           INTEGER NOT NULL,
                    username                   TEXT NOT NULL,
                    plan_id                    TEXT NOT NULL,
                    stars_amount               INTEGER NOT NULL,
-                   ts                         REAL NOT NULL
+                   ts                         DOUBLE PRECISION NOT NULL
                )"""
         )
         # Manually-issued promo codes (e.g. testers, giveaways): redeeming one
@@ -220,26 +215,25 @@ def _conn() -> sqlite3.Connection:
         conn.execute(
             """CREATE TABLE IF NOT EXISTS promo_codes (
                    code            TEXT PRIMARY KEY,
-                   days            REAL NOT NULL,
+                   days            DOUBLE PRECISION NOT NULL,
                    max_redemptions INTEGER NOT NULL,
                    redemptions     INTEGER NOT NULL DEFAULT 0,
                    features        TEXT NOT NULL DEFAULT '',
-                   created         REAL NOT NULL,
+                   created         DOUBLE PRECISION NOT NULL,
                    note            TEXT NOT NULL DEFAULT ''
                )"""
         )
-        promo_columns = {
-            row[1] for row in conn.execute("PRAGMA table_info(promo_codes)").fetchall()
-        }
-        if "features" not in promo_columns:
-            conn.execute("ALTER TABLE promo_codes ADD COLUMN features TEXT NOT NULL DEFAULT ''")
+        conn.execute(
+            "ALTER TABLE promo_codes ADD COLUMN IF NOT EXISTS "
+            "features TEXT NOT NULL DEFAULT ''"
+        )
         # One row per (code, username): the primary key stops a user from
         # redeeming the same code twice.
         conn.execute(
             """CREATE TABLE IF NOT EXISTS promo_redemptions (
                    code        TEXT NOT NULL,
                    username    TEXT NOT NULL,
-                   redeemed_at REAL NOT NULL,
+                   redeemed_at DOUBLE PRECISION NOT NULL,
                    PRIMARY KEY (code, username)
                )"""
         )
@@ -249,12 +243,13 @@ def _conn() -> sqlite3.Connection:
             """CREATE TABLE IF NOT EXISTS feature_prices (
                    feature       TEXT PRIMARY KEY,
                    stars_monthly INTEGER NOT NULL CHECK(stars_monthly > 0),
-                   updated       REAL NOT NULL
+                   updated       DOUBLE PRECISION NOT NULL
                )"""
         )
         now = time.time()
         conn.executemany(
-            "INSERT OR IGNORE INTO feature_prices (feature, stars_monthly, updated) VALUES (?,?,?)",
+            "INSERT INTO feature_prices (feature, stars_monthly, updated) "
+            "VALUES (%s,%s,%s) ON CONFLICT (feature) DO NOTHING",
             [
                 ("grammar_lens", 40, now),
                 ("immersion", 35, now),
@@ -269,19 +264,18 @@ def _conn() -> sqlite3.Connection:
                    username         TEXT NOT NULL,
                    features         TEXT NOT NULL,
                    stars_amount     INTEGER NOT NULL,
-                   days             REAL NOT NULL,
+                   days             DOUBLE PRECISION NOT NULL,
                    telegram_user_id INTEGER,
                    paid             INTEGER NOT NULL DEFAULT 0,
-                   created          REAL NOT NULL
+                   created          DOUBLE PRECISION NOT NULL
                )"""
         )
-        conn.commit()
-        _local.conn = conn
-    return conn
+        _initialized = True
+    return database
 
 
 def healthcheck() -> None:
-    """Raise when the primary SQLite database cannot serve a trivial query."""
+    """Raise when PostgreSQL cannot serve a trivial query."""
     row = _conn().execute("SELECT 1").fetchone()
     if row != (1,):
         raise RuntimeError("database healthcheck returned an unexpected result")
@@ -295,16 +289,14 @@ def create_user(username: str) -> Optional[str]:
     """Register a user and return their bearer token, or None if the name is taken."""
     token = secrets.token_urlsafe(32)
     try:
-        # `with conn` commits on success and rolls back on exception — without
-        # the rollback a failed INSERT would keep the write transaction open
-        # and block every later write ("database is locked").
+        # The transaction commits on success and rolls back on exception.
         with _conn() as c:
             c.execute(
-                "INSERT INTO users (username, token, created) VALUES (?,?,?)",
+                "INSERT INTO users (username, token, created) VALUES (%s,%s,%s)",
                 (username, token, time.time()),
             )
         return token
-    except sqlite3.IntegrityError:
+    except IntegrityError:
         return None
 
 
@@ -312,18 +304,18 @@ def token_owner(token: str) -> Optional[str]:
     """Return the username owning this token, or None."""
     if not token:
         return None
-    row = _conn().execute("SELECT username FROM users WHERE token=?", (token,)).fetchone()
+    row = _conn().execute("SELECT username FROM users WHERE token=%s", (token,)).fetchone()
     return row[0] if row else None
 
 
 def user_exists(username: str) -> bool:
-    row = _conn().execute("SELECT 1 FROM users WHERE username=?", (username,)).fetchone()
+    row = _conn().execute("SELECT 1 FROM users WHERE username=%s", (username,)).fetchone()
     return row is not None
 
 
 def user_token(username: str) -> Optional[str]:
     """The bearer token of an existing user (re-issued at Google login)."""
-    row = _conn().execute("SELECT token FROM users WHERE username=?", (username,)).fetchone()
+    row = _conn().execute("SELECT token FROM users WHERE username=%s", (username,)).fetchone()
     return row[0] if row else None
 
 
@@ -342,7 +334,7 @@ def user_has_account_activity(username: str) -> bool:
     )
     conn = _conn()
     return any(
-        conn.execute(f"SELECT 1 FROM {table} WHERE {column}=? LIMIT 1", (username,)).fetchone()
+        conn.execute(f"SELECT 1 FROM {table} WHERE {column}=%s LIMIT 1", (username,)).fetchone()
         is not None
         for table, column in checks
     )
@@ -354,7 +346,7 @@ def user_has_account_activity(username: str) -> bool:
 
 def identity_owner(provider: str, subject: str) -> Optional[str]:
     row = _conn().execute(
-        "SELECT username FROM identities WHERE provider=? AND subject=?",
+        "SELECT username FROM identities WHERE provider=%s AND subject=%s",
         (provider, subject),
     ).fetchone()
     return row[0] if row else None
@@ -366,11 +358,11 @@ def identity_link(provider: str, subject: str, email: str, username: str) -> boo
     try:
         with _conn() as c:
             c.execute(
-                "INSERT INTO identities (provider, subject, email, username, created) VALUES (?,?,?,?,?)",
+                "INSERT INTO identities (provider, subject, email, username, created) VALUES (%s,%s,%s,%s,%s)",
                 (provider, subject, email, username, time.time()),
             )
         return True
-    except sqlite3.IntegrityError:
+    except IntegrityError:
         return False
 
 
@@ -384,8 +376,8 @@ def identity_reassign(
     """Move an identity from one exact owner to another, atomically."""
     with _conn() as c:
         cur = c.execute(
-            "UPDATE identities SET username=?, email=? "
-            "WHERE provider=? AND subject=? AND username=?",
+            "UPDATE identities SET username=%s, email=%s "
+            "WHERE provider=%s AND subject=%s AND username=%s",
             (to_username, email, provider, subject, from_username),
         )
     return cur.rowcount == 1
@@ -393,7 +385,7 @@ def identity_reassign(
 
 def identity_for_user(username: str, provider: str) -> Optional[dict]:
     row = _conn().execute(
-        "SELECT subject, email FROM identities WHERE provider=? AND username=?",
+        "SELECT subject, email FROM identities WHERE provider=%s AND username=%s",
         (provider, username),
     ).fetchone()
     return {"subject": row[0], "email": row[1]} if row else None
@@ -405,9 +397,9 @@ def identity_for_user(username: str, provider: str) -> Optional[dict]:
 
 def oauth_flow_create(state_key: str, poll_key: str, mode: str, username: Optional[str]) -> None:
     with _conn() as c:
-        c.execute("DELETE FROM google_oauth_flows WHERE created<?", (time.time() - 900,))
+        c.execute("DELETE FROM google_oauth_flows WHERE created<%s", (time.time() - 900,))
         c.execute(
-            "INSERT INTO google_oauth_flows (state_key, poll_key, mode, username, created) VALUES (?,?,?,?,?)",
+            "INSERT INTO google_oauth_flows (state_key, poll_key, mode, username, created) VALUES (%s,%s,%s,%s,%s)",
             (state_key, poll_key, mode, username, time.time()),
         )
 
@@ -415,7 +407,7 @@ def oauth_flow_create(state_key: str, poll_key: str, mode: str, username: Option
 def oauth_flow_get(state_key: str) -> Optional[dict]:
     row = _conn().execute(
         "SELECT mode, username, status, result, error, created "
-        "FROM google_oauth_flows WHERE state_key=?",
+        "FROM google_oauth_flows WHERE state_key=%s",
         (state_key,),
     ).fetchone()
     if row is None or row[5] < time.time() - 600:
@@ -432,8 +424,8 @@ def oauth_flow_finish(state_key: str, *, result: Optional[dict] = None, error: s
     payload = json.dumps(result, separators=(",", ":")) if result is not None else ""
     with _conn() as c:
         cur = c.execute(
-            "UPDATE google_oauth_flows SET status=?, result=?, error=? "
-            "WHERE state_key=? AND status='pending' AND created>=?",
+            "UPDATE google_oauth_flows SET status=%s, result=%s, error=%s "
+            "WHERE state_key=%s AND status='pending' AND created>=%s",
             (status, payload, error, state_key, time.time() - 600),
         )
     return cur.rowcount == 1
@@ -442,7 +434,7 @@ def oauth_flow_finish(state_key: str, *, result: Optional[dict] = None, error: s
 def oauth_flow_take(poll_key: str, mode: str, username: Optional[str] = None) -> Optional[dict]:
     """Read flow state; atomically delete and return a terminal result."""
     row = _conn().execute(
-        "SELECT state_key FROM google_oauth_flows WHERE poll_key=?", (poll_key,)
+        "SELECT state_key FROM google_oauth_flows WHERE poll_key=%s", (poll_key,)
     ).fetchone()
     if row is None:
         return None
@@ -456,7 +448,7 @@ def oauth_flow_take(poll_key: str, mode: str, username: Optional[str] = None) ->
         return {"status": "pending"}
     with _conn() as c:
         cur = c.execute(
-            "DELETE FROM google_oauth_flows WHERE state_key=? AND status=?",
+            "DELETE FROM google_oauth_flows WHERE state_key=%s AND status=%s",
             (state_key, flow["status"]),
         )
     if cur.rowcount != 1:
@@ -469,23 +461,23 @@ def oauth_flow_take(poll_key: str, mode: str, username: Optional[str] = None) ->
 def delete_user_data(username: str) -> None:
     """Wipe KB, chat history, review log and word frequency (keeps the account/token)."""
     with _conn() as c:
-        c.execute("DELETE FROM kb WHERE username=?", (username,))
-        c.execute("DELETE FROM chat_history WHERE username=?", (username,))
-        c.execute("DELETE FROM review_log WHERE username=?", (username,))
-        c.execute("DELETE FROM word_freq WHERE username=?", (username,))
+        c.execute("DELETE FROM kb WHERE username=%s", (username,))
+        c.execute("DELETE FROM chat_history WHERE username=%s", (username,))
+        c.execute("DELETE FROM review_log WHERE username=%s", (username,))
+        c.execute("DELETE FROM word_freq WHERE username=%s", (username,))
 
 
 def settings_get(username: str) -> Optional[dict]:
     row = _conn().execute(
         "SELECT display_name, native_lang, active_target_lang, reminder_level, overseer, "
         "mining_same_level, mining_higher_level "
-        "FROM user_settings WHERE username=?", (username,),
+        "FROM user_settings WHERE username=%s", (username,),
     ).fetchone()
     if row is None:
         return None
     languages = _conn().execute(
         "SELECT lang, level, goals, prompt FROM user_languages "
-        "WHERE username=? ORDER BY position", (username,),
+        "WHERE username=%s ORDER BY position", (username,),
     ).fetchall()
     return {
         "display_name": row[0],
@@ -505,17 +497,22 @@ def settings_get(username: str) -> Optional[dict]:
 def settings_set(username: str, settings: Any) -> None:
     with _conn() as c:
         c.execute(
-            "INSERT OR REPLACE INTO user_settings "
+            "INSERT INTO user_settings "
             "(username, display_name, native_lang, active_target_lang, reminder_level, overseer, "
-            "mining_same_level, mining_higher_level) VALUES (?,?,?,?,?,?,?,?)",
+            "mining_same_level, mining_higher_level) VALUES (%s,%s,%s,%s,%s,%s,%s,%s) "
+            "ON CONFLICT (username) DO UPDATE SET "
+            "display_name=excluded.display_name, native_lang=excluded.native_lang, "
+            "active_target_lang=excluded.active_target_lang, reminder_level=excluded.reminder_level, "
+            "overseer=excluded.overseer, mining_same_level=excluded.mining_same_level, "
+            "mining_higher_level=excluded.mining_higher_level",
             (username, settings.display_name, settings.native_lang, settings.target_lang,
              settings.reminder_level, int(settings.overseer),
              settings.mining_same_level_examples, settings.mining_higher_level_examples),
         )
-        c.execute("DELETE FROM user_languages WHERE username=?", (username,))
+        c.execute("DELETE FROM user_languages WHERE username=%s", (username,))
         c.executemany(
             "INSERT INTO user_languages (username, lang, level, goals, prompt, position) "
-            "VALUES (?,?,?,?,?,?)",
+            "VALUES (%s,%s,%s,%s,%s,%s)",
             [
                 (username, lang, prefs["level"], prefs.get("goals", ""), prefs.get("prompt", ""), position)
                 for position, (lang, prefs) in enumerate(settings.language_settings.items())
@@ -540,7 +537,7 @@ def purge_all_users() -> None:
 # ---------------------------------------------------------------------------
 
 def kb_get(username: str) -> Optional[dict]:
-    row = _conn().execute("SELECT data FROM kb WHERE username=?", (username,)).fetchone()
+    row = _conn().execute("SELECT data FROM kb WHERE username=%s", (username,)).fetchone()
     if row is None:
         return None
     try:
@@ -553,7 +550,8 @@ def kb_get(username: str) -> Optional[dict]:
 def kb_set(username: str, data: dict) -> None:
     with _conn() as c:
         c.execute(
-            "INSERT OR REPLACE INTO kb (username, data, updated) VALUES (?,?,?)",
+            "INSERT INTO kb (username, data, updated) VALUES (%s,%s,%s) "
+            "ON CONFLICT (username) DO UPDATE SET data=excluded.data, updated=excluded.updated",
             (username, json.dumps(data, ensure_ascii=False), time.time()),
         )
 
@@ -580,7 +578,7 @@ def review_log_add(
             """INSERT INTO review_log
                (username, word, ts, rating, outcome, task_type,
                 elapsed_days, scheduled_days, stability, difficulty, retrievability)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
+               VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
             (username, word, ts, rating, outcome, task_type,
              elapsed_days, scheduled_days, stability, difficulty, retrievability),
         )
@@ -591,13 +589,13 @@ def review_log_recent(username: str, word: Optional[str] = None, limit: int = 50
     sql = (
         "SELECT word, ts, rating, outcome, task_type, elapsed_days,"
         " scheduled_days, stability, difficulty, retrievability"
-        " FROM review_log WHERE username=?"
+        " FROM review_log WHERE username=%s"
     )
     args: list = [username]
     if word is not None:
-        sql += " AND word=?"
+        sql += " AND word=%s"
         args.append(word)
-    sql += " ORDER BY ts DESC LIMIT ?"
+    sql += " ORDER BY ts DESC LIMIT %s"
     args.append(max(1, min(int(limit), 500)))
 
     cols = ("word", "ts", "rating", "outcome", "task_type", "elapsed_days",
@@ -607,7 +605,7 @@ def review_log_recent(username: str, word: Optional[str] = None, limit: int = 50
 
 def review_log_counts(username: str) -> dict[str, int]:
     rows = _conn().execute(
-        "SELECT task_type, COUNT(*) FROM review_log WHERE username=? GROUP BY task_type",
+        "SELECT task_type, COUNT(*) FROM review_log WHERE username=%s GROUP BY task_type",
         (username,),
     ).fetchall()
     anki = sum(count for task_type, count in rows if task_type == "anki")
@@ -617,7 +615,7 @@ def review_log_counts(username: str) -> dict[str, int]:
 
 def review_log_delete_user(username: str) -> None:
     with _conn() as c:
-        c.execute("DELETE FROM review_log WHERE username=?", (username,))
+        c.execute("DELETE FROM review_log WHERE username=%s", (username,))
 
 
 # ---------------------------------------------------------------------------
@@ -632,9 +630,10 @@ def word_freq_bump_many(
     with _conn() as c:
         c.executemany(
             """INSERT INTO word_freq (username, language, word, domain, count, last_seen)
-               VALUES (?,?,?,?,?,?)
+               VALUES (%s,%s,%s,%s,%s,%s)
                ON CONFLICT (username, language, word, domain)
-               DO UPDATE SET count = count + excluded.count, last_seen = excluded.last_seen""",
+               DO UPDATE SET count = word_freq.count + excluded.count,
+                             last_seen = excluded.last_seen""",
             [(username, language, word, domain, n, ts) for word, n in counts.items()],
         )
 
@@ -643,17 +642,17 @@ def word_freq_top(username: str, language: str, limit: int) -> list[dict]:
     """Top words by total occurrences, each with its per-domain breakdown."""
     totals = _conn().execute(
         """SELECT word, SUM(count) AS total FROM word_freq
-           WHERE username=? AND language=? GROUP BY word ORDER BY total DESC LIMIT ?""",
+           WHERE username=%s AND language=%s GROUP BY word ORDER BY total DESC LIMIT %s""",
         (username, language, max(1, min(int(limit), 500))),
     ).fetchall()
     if not totals:
         return []
 
     words = [word for word, _ in totals]
-    placeholders = ",".join("?" for _ in words)
+    placeholders = ",".join("%s" for _ in words)
     domain_rows = _conn().execute(
         f"""SELECT word, domain, count FROM word_freq
-            WHERE username=? AND language=? AND word IN ({placeholders})""",
+            WHERE username=%s AND language=%s AND word IN ({placeholders})""",
         (username, language, *words),
     ).fetchall()
     domains_by_word: dict[str, dict[str, int]] = {}
@@ -672,7 +671,7 @@ def word_freq_top(username: str, language: str, limit: int) -> list[dict]:
 
 def subscription_get(username: str) -> Optional[dict]:
     row = _conn().execute(
-        "SELECT tier, expires_at, features FROM subscriptions WHERE username=?", (username,)
+        "SELECT tier, expires_at, features FROM subscriptions WHERE username=%s", (username,)
     ).fetchone()
     return {"tier": row[0], "expires_at": row[1], "features": row[2]} if row else None
 
@@ -697,8 +696,10 @@ def subscription_extend(
     encoded_features = "" if features is None else json.dumps(sorted(set(features)), separators=(",", ":"))
     with _conn() as c:
         c.execute(
-            "INSERT OR REPLACE INTO subscriptions (username, tier, expires_at, features, updated) "
-            "VALUES (?,?,?,?,?)",
+            "INSERT INTO subscriptions (username, tier, expires_at, features, updated) "
+            "VALUES (%s,%s,%s,%s,%s) ON CONFLICT (username) DO UPDATE SET "
+            "tier=excluded.tier, expires_at=excluded.expires_at, "
+            "features=excluded.features, updated=excluded.updated",
             (username, tier, expires_at, encoded_features, now),
         )
     return expires_at
@@ -709,8 +710,10 @@ def subscription_cancel(username: str) -> None:
     now = time.time()
     with _conn() as c:
         c.execute(
-            "INSERT OR REPLACE INTO subscriptions (username, tier, expires_at, features, updated) "
-            "VALUES (?,?,?,?,?)",
+            "INSERT INTO subscriptions (username, tier, expires_at, features, updated) "
+            "VALUES (%s,%s,%s,%s,%s) ON CONFLICT (username) DO UPDATE SET "
+            "tier=excluded.tier, expires_at=excluded.expires_at, "
+            "features=excluded.features, updated=excluded.updated",
             (username, "free", now, "[]", now),
         )
 
@@ -729,7 +732,9 @@ def feature_price_set(feature: str, stars_monthly: int) -> dict:
     now = time.time()
     with _conn() as c:
         c.execute(
-            "INSERT OR REPLACE INTO feature_prices (feature, stars_monthly, updated) VALUES (?,?,?)",
+            "INSERT INTO feature_prices (feature, stars_monthly, updated) VALUES (%s,%s,%s) "
+            "ON CONFLICT (feature) DO UPDATE SET "
+            "stars_monthly=excluded.stars_monthly, updated=excluded.updated",
             (feature, stars_monthly, now),
         )
     return {"feature": feature, "stars_monthly": stars_monthly, "updated": now}
@@ -743,10 +748,10 @@ def billing_checkout_create(
     days: float = 31,
 ) -> None:
     with _conn() as c:
-        c.execute("DELETE FROM billing_checkouts WHERE username=? AND paid=0", (username,))
+        c.execute("DELETE FROM billing_checkouts WHERE username=%s AND paid=0", (username,))
         c.execute(
             "INSERT INTO billing_checkouts "
-            "(code, username, features, stars_amount, days, created) VALUES (?,?,?,?,?,?)",
+            "(code, username, features, stars_amount, days, created) VALUES (%s,%s,%s,%s,%s,%s)",
             (code, username, json.dumps(sorted(set(features))), stars_amount, days, time.time()),
         )
 
@@ -754,7 +759,7 @@ def billing_checkout_create(
 def billing_checkout_get(code: str) -> Optional[dict]:
     row = _conn().execute(
         "SELECT username, features, stars_amount, days, telegram_user_id, paid, created "
-        "FROM billing_checkouts WHERE code=?",
+        "FROM billing_checkouts WHERE code=%s",
         (code,),
     ).fetchone()
     if not row:
@@ -774,8 +779,8 @@ def billing_checkout_get(code: str) -> Optional[dict]:
 def billing_checkout_link(code: str, telegram_user_id: int) -> Optional[dict]:
     with _conn() as c:
         cur = c.execute(
-            "UPDATE billing_checkouts SET telegram_user_id=? "
-            "WHERE code=? AND telegram_user_id IS NULL AND paid=0",
+            "UPDATE billing_checkouts SET telegram_user_id=%s "
+            "WHERE code=%s AND telegram_user_id IS NULL AND paid=0",
             (telegram_user_id, code),
         )
     return billing_checkout_get(code) if cur.rowcount == 1 else None
@@ -785,7 +790,7 @@ def billing_checkout_mark_paid(code: str, telegram_user_id: int) -> bool:
     with _conn() as c:
         cur = c.execute(
             "UPDATE billing_checkouts SET paid=1 "
-            "WHERE code=? AND telegram_user_id=? AND paid=0",
+            "WHERE code=%s AND telegram_user_id=%s AND paid=0",
             (code, telegram_user_id),
         )
     return cur.rowcount == 1
@@ -804,11 +809,11 @@ def promo_code_create(
             c.execute(
                 "INSERT INTO promo_codes "
                 "(code, days, max_redemptions, redemptions, features, created, note) "
-                "VALUES (?,?,?,0,?,?,?)",
+                "VALUES (%s,%s,%s,0,%s,%s,%s)",
                 (code, days, max_redemptions, json.dumps(features or []), time.time(), note),
             )
         return True
-    except sqlite3.IntegrityError:
+    except IntegrityError:
         return False
 
 
@@ -827,37 +832,37 @@ def promo_code_redeem(code: str, username: str) -> tuple[str, Optional[float]]:
     with _conn() as c:
         cur = c.execute(
             "UPDATE promo_codes SET redemptions = redemptions + 1 "
-            "WHERE code=? AND redemptions < max_redemptions",
+            "WHERE code=%s AND redemptions < max_redemptions",
             (code,),
         )
         if cur.rowcount == 0:
-            exists = c.execute("SELECT 1 FROM promo_codes WHERE code=?", (code,)).fetchone()
+            exists = c.execute("SELECT 1 FROM promo_codes WHERE code=%s", (code,)).fetchone()
             if not exists:
                 return "invalid", None
             # An exhausted code the user themselves redeemed should read as
             # "already redeemed", not "someone claimed it all".
             mine = c.execute(
-                "SELECT 1 FROM promo_redemptions WHERE code=? AND username=?",
+                "SELECT 1 FROM promo_redemptions WHERE code=%s AND username=%s",
                 (code, username),
             ).fetchone()
             return ("already_redeemed" if mine else "exhausted"), None
 
-        try:
-            c.execute(
-                "INSERT INTO promo_redemptions (code, username, redeemed_at) VALUES (?,?,?)",
-                (code, username, time.time()),
-            )
-        except sqlite3.IntegrityError:
+        claimed = c.execute(
+            "INSERT INTO promo_redemptions (code, username, redeemed_at) VALUES (%s,%s,%s) "
+            "ON CONFLICT (code, username) DO NOTHING",
+            (code, username, time.time()),
+        )
+        if claimed.rowcount == 0:
             # Already redeemed by this user — release the slot we just claimed.
-            c.execute("UPDATE promo_codes SET redemptions = redemptions - 1 WHERE code=?", (code,))
+            c.execute("UPDATE promo_codes SET redemptions = redemptions - 1 WHERE code=%s", (code,))
             return "already_redeemed", None
 
-        days = c.execute("SELECT days FROM promo_codes WHERE code=?", (code,)).fetchone()[0]
+        days = c.execute("SELECT days FROM promo_codes WHERE code=%s", (code,)).fetchone()[0]
     return "ok", days
 
 
 def promo_code_features(code: str) -> list[str]:
-    row = _conn().execute("SELECT features FROM promo_codes WHERE code=?", (code,)).fetchone()
+    row = _conn().execute("SELECT features FROM promo_codes WHERE code=%s", (code,)).fetchone()
     if not row or not row[0]:
         return []
     return json.loads(row[0])
@@ -867,7 +872,7 @@ def promo_codes_get(limit: int = 100) -> list[dict]:
     """Return recent promo codes for the authenticated admin dashboard."""
     rows = _conn().execute(
         "SELECT code, days, max_redemptions, redemptions, features, created, note "
-        "FROM promo_codes ORDER BY created DESC LIMIT ?",
+        "FROM promo_codes ORDER BY created DESC LIMIT %s",
         (max(1, min(limit, 500)),),
     ).fetchall()
     return [
@@ -887,9 +892,9 @@ def promo_codes_get(limit: int = 100) -> list[dict]:
 def telegram_link_code_create(username: str, code: str) -> None:
     with _conn() as c:
         # One outstanding code per user: a fresh request invalidates the old link.
-        c.execute("DELETE FROM telegram_link_codes WHERE username=?", (username,))
+        c.execute("DELETE FROM telegram_link_codes WHERE username=%s", (username,))
         c.execute(
-            "INSERT INTO telegram_link_codes (code, username, created) VALUES (?,?,?)",
+            "INSERT INTO telegram_link_codes (code, username, created) VALUES (%s,%s,%s)",
             (code, username, time.time()),
         )
 
@@ -899,11 +904,11 @@ def telegram_link_code_consume(code: str, max_age_seconds: float) -> Optional[st
     the code is unknown or older than `max_age_seconds`."""
     with _conn() as c:
         row = c.execute(
-            "SELECT username, created FROM telegram_link_codes WHERE code=?", (code,)
+            "SELECT username, created FROM telegram_link_codes WHERE code=%s", (code,)
         ).fetchone()
         if row is None:
             return None
-        c.execute("DELETE FROM telegram_link_codes WHERE code=?", (code,))
+        c.execute("DELETE FROM telegram_link_codes WHERE code=%s", (code,))
         if time.time() - row[1] > max_age_seconds:
             return None
         return row[0]
@@ -913,15 +918,16 @@ def telegram_link_set(telegram_user_id: int, username: str) -> None:
     """Bind a Telegram account to a user (rebinding overwrites)."""
     with _conn() as c:
         c.execute(
-            "INSERT OR REPLACE INTO telegram_links (telegram_user_id, username, created) "
-            "VALUES (?,?,?)",
+            "INSERT INTO telegram_links (telegram_user_id, username, created) "
+            "VALUES (%s,%s,%s) ON CONFLICT (telegram_user_id) DO UPDATE SET "
+            "username=excluded.username, created=excluded.created",
             (telegram_user_id, username, time.time()),
         )
 
 
 def telegram_link_owner(telegram_user_id: int) -> Optional[str]:
     row = _conn().execute(
-        "SELECT username FROM telegram_links WHERE telegram_user_id=?",
+        "SELECT username FROM telegram_links WHERE telegram_user_id=%s",
         (telegram_user_id,),
     ).fetchone()
     return row[0] if row else None
@@ -929,7 +935,7 @@ def telegram_link_owner(telegram_user_id: int) -> Optional[str]:
 
 def telegram_linked_user_ids(username: str) -> list[int]:
     rows = _conn().execute(
-        "SELECT telegram_user_id FROM telegram_links WHERE username=?", (username,)
+        "SELECT telegram_user_id FROM telegram_links WHERE username=%s", (username,)
     ).fetchall()
     return [row[0] for row in rows]
 
@@ -949,22 +955,22 @@ def star_payment_record(
                 """INSERT INTO star_payments
                    (telegram_payment_charge_id, telegram_user_id, username,
                     plan_id, stars_amount, ts)
-                   VALUES (?,?,?,?,?,?)""",
+                   VALUES (%s,%s,%s,%s,%s,%s)""",
                 (charge_id, telegram_user_id, username, plan_id, stars_amount, time.time()),
             )
         return True
-    except sqlite3.IntegrityError:
+    except IntegrityError:
         return False
 
 
 def star_payment_exists(charge_id: str) -> bool:
     return _conn().execute(
-        "SELECT 1 FROM star_payments WHERE telegram_payment_charge_id=?", (charge_id,)
+        "SELECT 1 FROM star_payments WHERE telegram_payment_charge_id=%s", (charge_id,)
     ).fetchone() is not None
 
 
 def history_get(username: str) -> list[dict]:
-    row = _conn().execute("SELECT data FROM chat_history WHERE username=?", (username,)).fetchone()
+    row = _conn().execute("SELECT data FROM chat_history WHERE username=%s", (username,)).fetchone()
     if row is None:
         return []
     try:
@@ -977,6 +983,7 @@ def history_get(username: str) -> list[dict]:
 def history_set(username: str, history: list[dict]) -> None:
     with _conn() as c:
         c.execute(
-            "INSERT OR REPLACE INTO chat_history (username, data, updated) VALUES (?,?,?)",
+            "INSERT INTO chat_history (username, data, updated) VALUES (%s,%s,%s) "
+            "ON CONFLICT (username) DO UPDATE SET data=excluded.data, updated=excluded.updated",
             (username, json.dumps(history, ensure_ascii=False), time.time()),
         )

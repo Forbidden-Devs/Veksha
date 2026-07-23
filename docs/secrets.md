@@ -9,9 +9,13 @@
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_OAUTH_REDIRECT_URI` — OAuth.
 - `TELEGRAM_BOT_USERNAME`, `TELEGRAM_BOT_WEBHOOK_SECRET` — интеграция с ботом.
 - `ADMIN_API_SECRET` — временная защита служебных backend endpoint.
-- `VEKSHA_DATA_DIR` — каталог persistent volume.
+- `DATABASE_URL` — подключение к PostgreSQL (при reference-подключении Railway
+  передаёт его из PostgreSQL service).
+- `VEKSHA_DATA_DIR` — каталог для runtime-файлов; persistent volume для БД
+  больше не нужен.
 - `CORS_ALLOW_ORIGINS` — разрешённые web origins.
-- `REDIS_URL` — необязательный кеш.
+- `REDIS_URL` — необязательный кеш коротких переводов; не содержит
+  пользовательские данные и не нужен для корректной работы.
 
 Runtime-секреты остаются в Railway. Они не дублируются в GitHub Actions.
 

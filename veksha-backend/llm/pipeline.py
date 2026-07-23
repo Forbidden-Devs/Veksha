@@ -306,7 +306,7 @@ async def update_knowledge_base(
     cached = await cache_get("topic", cache_key)
     if isinstance(cached, list) and cached:
         patches = [Patch.from_dict(d) for d in cached]
-        log.info("[update_knowledge_base] cache hit (sqlite) -> %d patch(es)", len(patches))
+        log.info("[update_knowledge_base] cache hit (postgres) -> %d patch(es)", len(patches))
         return patches
 
     system = _UPDATE_KB_SYSTEM.format(

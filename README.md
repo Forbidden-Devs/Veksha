@@ -8,7 +8,7 @@ usage patterns, and interview-style topics.
 ## Repository layout
 
 ```
-veksha-backend/    FastAPI backend: SQLite storage (users, KB), token auth,
+veksha-backend/    FastAPI backend: PostgreSQL storage (users, KB), token auth,
                     spaced repetition, LLM calls (OpenAI), training/lesson
                     WebSocket sessions, translation, immersion.
 veksha-extension/  Chrome + Firefox extension (MV3, React + TypeScript,
@@ -30,9 +30,11 @@ veksha-admin/      Internal billing dashboard: per-feature Stars prices and
 Backend:
 
 ```bash
+docker compose up -d postgres
 cd veksha-backend
 pip install -r requirements.txt
 export OPENAI_API_KEY="sk-..."   # required, never commit keys
+export DATABASE_URL="postgresql://veksha:veksha@localhost:5432/veksha"
 python main.py                    # http://127.0.0.1:8000, Swagger at /docs
 ```
 
@@ -51,7 +53,7 @@ Point the extension at your backend via `src/shared/config.ts`
 
 ## Architecture notes
 
-- User data lives in SQLite (`veksha-backend/data/veksha.db`); clients
+- User data lives in PostgreSQL; clients
   authenticate with a bearer token issued at registration
   (`POST /api/auth/register`).
 - All LLM calls live in `veksha-backend/llm/`; business logic that decides

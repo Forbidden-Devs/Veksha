@@ -1,10 +1,10 @@
 """Short one/two-word translation cache.
 
-Two layers, both keyed identically:
+Three layers, all keyed identically:
   * an always-on in-process LRU — works with zero setup, so repeated
     translations are instant even on local/dev where no Redis is running;
-  * Redis, used additionally when REDIS_URL is configured (shared across
-    workers and restarts in production).
+  * Redis, used when REDIS_URL is configured (fast and shared across workers);
+  * PostgreSQL, the always-on persistent fallback shared across deployments.
 
 Only one- and two-word selections are cached (see is_cacheable).
 """
@@ -126,31 +126,27 @@ async def get_translation(
         log.info("[translation_cache] hit (memory) key=%s", key)
         return mem
 
-    # L2 — SQLite (persistent across restarts, no server).
+    # L2 — Redis, if configured (fast and shared across workers).
+    client = await _get_redis()
+    if client is not None:
+        try:
+            cached = await client.get(key)
+            if cached:
+                result = json.loads(cached)
+                if isinstance(result, dict) and result.get("translation"):
+                    _mem_set(key, result)
+                    log.info("[translation_cache] hit (redis) key=%s", key)
+                    return result
+        except Exception as exc:
+            log.warning("[translation_cache] read failed: %s", exc)
+
+    # L3 — PostgreSQL (persistent, shared, and always available).
     db = await cache_get("tr", key)
     if isinstance(db, dict) and db.get("translation"):
         _mem_set(key, db)
-        log.info("[translation_cache] hit (sqlite) key=%s", key)
+        log.info("[translation_cache] hit (postgres) key=%s", key)
         return db
-
-    # L3 — Redis, if configured (shared across workers).
-    client = await _get_redis()
-    if client is None:
-        return None
-    try:
-        cached = await client.get(key)
-        if not cached:
-            return None
-        result = json.loads(cached)
-        if not isinstance(result, dict) or not result.get("translation"):
-            return None
-        _mem_set(key, result)
-        await cache_set("tr", key, result)
-        log.info("[translation_cache] hit (redis) key=%s", key)
-        return result
-    except Exception as exc:
-        log.warning("[translation_cache] read failed: %s", exc)
-        return None
+    return None
 
 
 async def set_translation(

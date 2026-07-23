@@ -2,7 +2,7 @@
 storage.py — user Knowledge Base storage.
 
 The KB (words, lesson topics, settings) is persisted as one JSON document per
-user in SQLite (see db.py); this module keeps the in-memory object model and
+user in PostgreSQL (see db.py); this module keeps the in-memory object model and
 the spaced-repetition primitives on top of it.
 
 Implements:

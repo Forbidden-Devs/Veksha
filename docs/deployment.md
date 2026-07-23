@@ -16,6 +16,7 @@ PR открываем на один "тикет".
 
 - GitHub — источник кода и проверок.
 - Railway project содержит production backend.
+- К backend подключён PostgreSQL service, передающий `DATABASE_URL`.
 - Backend подключён к ветке `master` и каталогу `/veksha-backend`.
 - Railway `Wait for CI` не начинает deploy, пока GitHub workflow на push не
   завершится успешно.
@@ -37,6 +38,16 @@ OpenAI, Google или Telegram и возвращает Git commit из
 2. `/healthz` возвращает HTTP 200 и `status: ok`;
 3. revision совпадает с ожидаемым commit SHA;
 4. в runtime logs нет повторяющихся ошибок запуска.
+
+Перед первым deploy PostgreSQL-версии остановить старый backend, выполнить
+`scripts/migrate_sqlite_to_postgres.py` против production `DATABASE_URL`,
+сверить количество строк и только затем переключать трафик. Скрипт можно
+запускать повторно: строки обновляются по первичным ключам.
+
+Redis не является обязательной частью production-схемы. Он ускоряет только
+повторные короткие переводы; сначала следует оценить cache hit rate и задержки
+PostgreSQL-кеша, а отдельный Redis service добавлять при нескольких backend
+replica или заметной нагрузке на этот endpoint.
 
 ## Telegram bot
 

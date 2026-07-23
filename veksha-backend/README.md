@@ -7,17 +7,21 @@ topic-lesson sessions, and page immersion.
 ## Running
 
 ```bash
+docker compose -f ../compose.yaml up -d postgres
 pip install -r requirements.txt
 export OPENAI_API_KEY="sk-..."    # required
+export DATABASE_URL="postgresql://veksha:veksha@localhost:5432/veksha"
 python main.py                     # or: uvicorn main:app --reload
 ```
 
 Listens on `127.0.0.1:8000` by default. Swagger UI: `http://127.0.0.1:8000/docs`.
 
+Required env vars: `OPENAI_API_KEY`, `DATABASE_URL`.
+
 Optional env vars: `OPENAI_MODEL`, `OPENAI_SMART_MODEL`, `REDIS_URL`
 (shared translation cache), `HOST`, `PORT`, `LOG_LEVEL`,
-`VEKSHA_DATA_DIR` (runtime data location — point at a persistent volume in
-production), `CORS_ALLOW_ORIGINS`, `VEKSHA_DEBUG_API`.
+`VEKSHA_DATA_DIR` (downloaded runtime files), `CORS_ALLOW_ORIGINS`,
+`VEKSHA_DEBUG_API`, `DATABASE_POOL_MIN_SIZE`, `DATABASE_POOL_MAX_SIZE`.
 
 Local runs grant premium-gated development features automatically, so dual
 subtitles, Grammar Lens, and immersion can be exercised without Telegram
@@ -57,9 +61,22 @@ Linking attaches a Google identity to an existing account (409 if it belongs
 to someone else). Without a Google link, a lost local token still means a new
 account.
 
-All user data (accounts, KBs, chat history) lives in SQLite at
-`data/veksha.db` (WAL mode). The KB is stored as one JSON document per user;
+All user data (accounts, KBs, chat history) lives in PostgreSQL. The KB is
+stored as one JSON document per user;
 normalizing into tables is deferred to the FSRS rework.
+
+To copy a previous SQLite installation, stop the backend and run:
+
+```bash
+export DATABASE_URL="postgresql://..."
+python scripts/migrate_sqlite_to_postgres.py --data-dir ./data
+```
+
+The reusable LLM cache also lives in PostgreSQL. Redis remains optional and is
+used only as an additional cache for one- and two-word translations. For local
+testing it can be enabled with
+`docker compose -f ../compose.yaml --profile cache up -d` and
+`REDIS_URL=redis://localhost:6379/0`.
 
 ## Subscriptions (Telegram Stars)
 
@@ -71,7 +88,7 @@ by the companion bot (`veksha-tgbot/`) in Telegram Stars and reported to
 idempotent by `telegram_payment_charge_id`). Accounts are bound to Telegram
 via a single-use deep-link code from `POST /api/billing/telegram/link`. Its
 `features` body locks a checkout snapshot and the sum of the per-feature
-monthly prices stored in SQLite before Telegram opens.
+monthly prices stored in PostgreSQL before Telegram opens.
 Configure `TELEGRAM_BOT_USERNAME` and `TELEGRAM_BOT_WEBHOOK_SECRET`; both
 empty disables billing (the link endpoint returns 503, everyone stays on the
 free tier).
@@ -102,7 +119,7 @@ curl -X PUT $API/api/billing/features/immersion/price \
 ```
 main.py               app entry point, routers, CORS, error handler
 config.py             env-based configuration
-db.py                 SQLite: users/tokens, KB documents, chat history, review log
+db.py                 PostgreSQL: users/tokens, KB documents, chat history, review log
 auth.py               bearer-token dependencies (HTTP + WebSocket)
 models.py             Word, Patch, UserSettings, LessonTopic/LessonBlock
 storage.py            per-user KB object model, spaced repetition primitives
@@ -116,7 +133,7 @@ i18n.py               UI/server strings + LLM-translated catalogues
 entitlements.py       subscription tiers, plans, feature gating (require_feature)
 llm/                  all OpenAI calls (pipeline, training, lesson,
                       selection, immersion, _base)
-db_cache.py           SQLite cache for reusable LLM outputs
+db_cache.py           PostgreSQL cache for reusable LLM outputs
 translation_cache.py  memory/Redis cache for short translations
 api/                  routers (one file per domain)
 ```

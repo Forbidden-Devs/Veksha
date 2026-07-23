@@ -6,7 +6,7 @@ api/vocab_frequency.py — "real browsing" personal frequency list.
   GET  /api/vocab_frequency/top   — the resulting personal frequency list,
   cross-referenced against the KB so each word is flagged known/unknown.
 
-Pure local computation (wordfreq tokenizing + SQLite counters) — no LLM
+Pure local computation (wordfreq tokenizing + PostgreSQL counters) — no LLM
 calls, unlike CI Meter/Grammar Lens.
 """
 from __future__ import annotations
