@@ -30,6 +30,7 @@ from api import i18n as api_i18n
 from api import immersion
 from api import privacy
 from api import grammar_lens
+from api import quizlet
 from api import subtitles as api_subtitles
 from api import translate
 from api import vocab_frequency
@@ -99,6 +100,7 @@ app.include_router(api_i18n.router)
 app.include_router(immersion.router)
 app.include_router(ci_meter.router)
 app.include_router(grammar_lens.router)
+app.include_router(quizlet.router)
 app.include_router(vocab_frequency.router)
 app.include_router(api_subtitles.router)
 app.include_router(privacy.router)

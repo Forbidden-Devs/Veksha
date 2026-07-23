@@ -263,6 +263,20 @@ def _conn():
                    created          DOUBLE PRECISION NOT NULL
                )"""
         )
+        # Quizlet exports tracking: records which words have been exported to Quizlet
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS quizlet_exports (
+                   id        BIGSERIAL PRIMARY KEY,
+                   username  TEXT NOT NULL,
+                   word      TEXT NOT NULL,
+                   exported_at DOUBLE PRECISION NOT NULL,
+                   FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE,
+                   UNIQUE(username, word)
+               )"""
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS ix_quizlet_exports_user ON quizlet_exports (username)"
+        )
         _initialized = True
     return database
 
@@ -958,3 +972,55 @@ def star_payment_exists(charge_id: str) -> bool:
     return _conn().execute(
         "SELECT 1 FROM star_payments WHERE telegram_payment_charge_id=%s", (charge_id,)
     ).fetchone() is not None
+def history_get(username: str) -> list[dict]:
+    row = _conn().execute("SELECT data FROM chat_history WHERE username=%s", (username,)).fetchone()
+    if row is None:
+        return []
+    try:
+        loaded: Any = json.loads(row[0])
+        return loaded if isinstance(loaded, list) else []
+    except Exception:
+        return []
+
+
+def history_set(username: str, history: list[dict]) -> None:
+    with _conn() as c:
+        c.execute(
+            "INSERT INTO chat_history (username, data, updated) VALUES (%s,%s,%s) "
+            "ON CONFLICT (username) DO UPDATE SET data=excluded.data, updated=excluded.updated",
+            (username, json.dumps(history, ensure_ascii=False), time.time()),
+        )
+
+
+# ---------------------------------------------------------------------------
+# Quizlet exports
+# ---------------------------------------------------------------------------
+
+def quizlet_export_mark(username: str, words: list[str]) -> None:
+    """Mark words as exported to Quizlet."""
+    if not words:
+        return
+    now = time.time()
+    with _conn() as c:
+        c.executemany(
+            "INSERT INTO quizlet_exports (username, word, exported_at) "
+            "VALUES (%s,%s,%s) ON CONFLICT (username, word) DO NOTHING",
+            [(username, word, now) for word in words],
+        )
+
+
+def quizlet_is_exported(username: str, word: str) -> bool:
+    """Check if a word has been exported to Quizlet."""
+    row = _conn().execute(
+        "SELECT 1 FROM quizlet_exports WHERE username=%s AND word=%s",
+        (username, word),
+    ).fetchone()
+    return row is not None
+
+
+def quizlet_get_exported_count(username: str) -> int:
+    """Get count of exported words."""
+    row = _conn().execute(
+        "SELECT COUNT(*) FROM quizlet_exports WHERE username=%s", (username,)
+    ).fetchone()
+    return row[0] if row else 0

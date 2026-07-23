@@ -38,6 +38,7 @@ const Icons = {
   grammar: <svg viewBox="0 0 24 24"><path d="M8 4H5v16h3M16 4h3v16h-3M10 8h4M10 12h4M10 16h4"/></svg>,
   dualSubtitles: <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 10h4M7 14h7M16 10h1M16 14h1"/></svg>,
   myWords: <svg viewBox="0 0 24 24"><path d="M4 19V6a2 2 0 0 1 2-2h11l3 3v12a1 1 0 0 1-1 1H6a2 2 0 0 1-2-2Z"/><path d="M8 9h8M8 13h5"/></svg>,
+  quizlet: <svg viewBox="0 0 24 24"><path d="M5 5h7v7H5V5zm7 0h7v7h-7V5zM5 12h7v7H5v-7zm7 0h7v7h-7v-7z"/></svg>,
   aiBlock: <svg viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.7 2.8 8.1 7 10 4.2-1.9 7-5.3 7-10V6l-7-3Z"/><path d="m8 16 8-8"/><circle cx="9" cy="9" r="1"/><circle cx="15" cy="15" r="1"/></svg>,
 };
 
@@ -406,6 +407,11 @@ export function HomeScreen() {
             <span className="m-feature-state"><i aria-hidden="true" />{aiBlocked ? t.ai_block_enabled : t.feature_disabled}</span>
           </button>
         )}
+
+        <button className="m-tile" onClick={() => navigateTo("quizlet")}>
+          <span className="m-tile-icon">{Icons.quizlet}</span>
+          <span className="m-tile-label">Quizlet</span>
+        </button>
 
         <button className="m-tile m-tile-stats" onClick={() => navigateTo("statistics")}>
           <span className="m-tile-icon">{Icons.stats}</span>
