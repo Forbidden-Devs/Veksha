@@ -183,11 +183,48 @@ export function HomeScreen() {
     }
   }
 
-  async function openImmersion() {
-    // Always let a user reach the screen to turn off a stale enabled setting;
-    // only entering the paid feature from the off state requires Premium.
-    if (immersionOn || await requirePremiumFeature("immersion", t.nav_immersion)) {
-      navigateTo("immersion");
+  async function toggleImmersion() {
+    const next = !immersionOn;
+    if (next && !(await requirePremiumFeature("immersion", t.nav_immersion))) return;
+    setImmersionOn(next);
+    if (next) setGrammarLensOn(false);
+    try {
+      await storageSet({
+        [CONFIG.STORAGE_KEY_IMMERSION]: next,
+        ...(next ? { [CONFIG.STORAGE_KEY_GRAMMAR_LENS]: false } : {}),
+      });
+    } catch {
+      setImmersionOn(!next);
+      if (next) setGrammarLensOn(grammarLensOn);
+      return;
+    }
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tab?.id) {
+        if (next) await chrome.tabs.sendMessage(tab.id, { type: "VEKSHA_TOGGLE_GRAMMAR_LENS", enabled: false });
+        await chrome.tabs.sendMessage(tab.id, { type: "VEKSHA_TOGGLE_IMMERSION", enabled: next });
+      }
+    } catch {
+      // Restricted pages apply the saved preference on the next regular page.
+    }
+  }
+
+  async function toggleVocabFrequency() {
+    const next = !vocabFreqOn;
+    setVocabFreqOn(next);
+    try {
+      await storageSet({ [CONFIG.STORAGE_KEY_VOCAB_FREQ]: next });
+    } catch {
+      setVocabFreqOn(!next);
+      return;
+    }
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tab?.id) {
+        await chrome.tabs.sendMessage(tab.id, { type: "VEKSHA_TOGGLE_VOCAB_FREQ", enabled: next });
+      }
+    } catch {
+      // Restricted pages apply the saved preference on the next regular page.
     }
   }
 
@@ -306,17 +343,28 @@ export function HomeScreen() {
           <span className="m-tile-label">{t.nav_training}</span>
         </button>
         {isExtension ? (
-          <button
-            className={`m-tile m-feature-tile ${aiBlocked ? "is-blocked" : immersionOn ? "is-on" : "is-off"}`}
-            onClick={openImmersion} disabled={aiBlocked}
-          >
-            <span className="m-tile-icon">{Icons.immersion}</span>
-            <span className="m-tile-label">{t.nav_immersion}</span>
-            <span className="m-feature-state">
-              <i aria-hidden="true" />
-              {aiBlocked ? t.feature_blocked : immersionOn ? t.feature_enabled : t.feature_disabled}
-            </span>
-          </button>
+          <div className="m-feature-guide-wrap">
+            <button
+              className={`m-tile m-feature-tile ${aiBlocked ? "is-blocked" : immersionOn ? "is-on" : "is-off"}`}
+              onClick={toggleImmersion}
+              disabled={aiBlocked}
+              aria-pressed={immersionOn}
+            >
+              <span className="m-tile-icon">{Icons.immersion}</span>
+              <span className="m-tile-label">{t.nav_immersion}</span>
+              <span className="m-feature-state">
+                <i aria-hidden="true" />
+                {aiBlocked ? t.feature_blocked : immersionOn ? t.feature_enabled : t.feature_disabled}
+              </span>
+            </button>
+            <button
+              type="button"
+              className="m-feature-guide-button"
+              aria-label={`${t.feature_guide_open}: ${t.nav_immersion}`}
+              title={t.feature_guide_open}
+              onClick={() => navigateTo("immersion")}
+            >?</button>
+          </div>
         ) : <div className="m-tile m-tile-ghost" aria-hidden="true" />}
         {isExtension && (
           <div className="m-feature-guide-wrap">
@@ -382,18 +430,28 @@ export function HomeScreen() {
           </div>
         )}
         {isExtension && (
-          <button
-            className={`m-tile m-feature-tile ${aiBlocked ? "is-blocked" : vocabFreqOn ? "is-on" : "is-off"}`}
-            onClick={() => navigateTo("myWords")}
-            disabled={aiBlocked}
-          >
-            <span className="m-tile-icon">{Icons.myWords}</span>
-            <span className="m-tile-label">{t.my_words_title}</span>
-            <span className="m-feature-state">
-              <i aria-hidden="true" />
-              {aiBlocked ? t.feature_blocked : vocabFreqOn ? t.feature_enabled : t.feature_disabled}
-            </span>
-          </button>
+          <div className="m-feature-guide-wrap">
+            <button
+              className={`m-tile m-feature-tile ${aiBlocked ? "is-blocked" : vocabFreqOn ? "is-on" : "is-off"}`}
+              onClick={toggleVocabFrequency}
+              disabled={aiBlocked}
+              aria-pressed={vocabFreqOn}
+            >
+              <span className="m-tile-icon">{Icons.myWords}</span>
+              <span className="m-tile-label">{t.my_words_title}</span>
+              <span className="m-feature-state">
+                <i aria-hidden="true" />
+                {aiBlocked ? t.feature_blocked : vocabFreqOn ? t.feature_enabled : t.feature_disabled}
+              </span>
+            </button>
+            <button
+              type="button"
+              className="m-feature-guide-button"
+              aria-label={`${t.feature_guide_open}: ${t.my_words_title}`}
+              title={t.feature_guide_open}
+              onClick={() => navigateTo("myWords")}
+            >?</button>
+          </div>
         )}
 
         {isExtension && (

@@ -116,6 +116,10 @@ class WordReviewRequest(BaseModel):
     rating: str
 
 
+class AddWordRequest(BaseModel):
+    word: str = Field(..., min_length=1, max_length=200)
+
+
 class SentenceMiningRequest(BaseModel):
     word: str = Field(..., min_length=1, max_length=200)
     force: bool = False
@@ -304,6 +308,49 @@ async def api_kb_words(username: CurrentUser) -> KBWordsResponse:
         )
         for w in words
     ])
+
+
+@router.post("/api/kb_word", response_model=WordEntryResponse)
+async def api_add_kb_word(req: AddWordRequest, username: CurrentUser) -> WordEntryResponse:
+    """Add a tracked word and synchronously populate its dictionary fields."""
+    storage = get_storage(username)
+    word = " ".join(req.word.split()).lower()
+    entry = storage.find_word(word)
+    created = entry is None
+    if created:
+        storage.apply_kb_changes([
+            Patch(type="add_word", value=word, context="", counter=0, known=False)
+        ])
+        entry = storage.find_word(word)
+    if entry is None:  # defensive: storage rejected an invalid patch
+        raise HTTPException(status_code=400, detail="Could not add word.")
+
+    if not entry.translation or not entry.transcription:
+        result = await llm.translate_selection(
+            entry.name,
+            storage.settings.target_lang,
+            storage.settings.native_lang,
+            level=storage.settings.english_level or "intermediate",
+        )
+        if not result.get("translation"):
+            if created:
+                storage.apply_kb_changes([Patch(type="delete_word", value=entry.name)])
+            raise HTTPException(status_code=502, detail="Could not generate dictionary details.")
+        entry.translation = result.get("translation", "")
+        entry.transcription = result.get("transcription", "")
+        storage.save()
+
+    return WordEntryResponse(
+        name=entry.name,
+        context=entry.context,
+        translation=entry.translation,
+        transcription=entry.transcription,
+        counter=entry.counter,
+        known=bool(entry.known),
+        next_review=entry.next_review,
+        added_at=entry.added_at,
+        sentence_mining=SentenceMiningResponse(**entry.sentence_mining) if entry.sentence_mining else None,
+    )
 
 
 @router.get("/api/kb_word_details", response_model=WordEntryResponse)

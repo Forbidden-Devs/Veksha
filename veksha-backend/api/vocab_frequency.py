@@ -42,6 +42,7 @@ class VocabFrequencyEntry(BaseModel):
     count: int
     domains: dict[str, int] = Field(default_factory=dict)
     known: bool = False
+    in_dictionary: bool = False
 
 
 class VocabFrequencyResponse(BaseModel):
@@ -73,7 +74,7 @@ async def api_vocab_frequency_top(username: CurrentUser, limit: int = _DEFAULT_L
     storage = get_storage(username)
     target = storage.settings.target_lang or "en"
 
-    known_overrides = {
+    dictionary_words = {
         w.name.strip().lower(): bool(w.known)
         for w in storage.words
         if w.language == target
@@ -85,7 +86,8 @@ async def api_vocab_frequency_top(username: CurrentUser, limit: int = _DEFAULT_L
             word=row["word"],
             count=row["count"],
             domains=row["domains"],
-            known=known_overrides.get(row["word"], False),
+            known=dictionary_words.get(row["word"], False),
+            in_dictionary=row["word"] in dictionary_words,
         )
         for row in rows
     ])
