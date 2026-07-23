@@ -3,24 +3,24 @@ import asyncio
 import os
 import sys
 from types import SimpleNamespace
+from typing import Any
 from unittest.mock import patch
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-import api.settings as settings_api  # noqa: E402
-from models import Word  # noqa: E402
 
 
 class MemoryStorage:
     def __init__(self):
         self.settings = SimpleNamespace(target_lang="en", native_lang="ru", english_level="a2")
-        self.words: list[Word] = []
+        self.words: list[Any] = []
 
     def find_word(self, name: str):
         normalized = name.strip().casefold()
         return next((word for word in self.words if word.name.casefold() == normalized), None)
 
     def apply_kb_changes(self, patches):
+        from models import Word
+
         for item in patches:
             if item.type == "add_word" and self.find_word(item.value) is None:
                 self.words.append(Word(name=item.value, language="en", counter=item.counter))
@@ -35,6 +35,11 @@ class MemoryStorage:
 
 
 def test_add_kb_word_populates_details_and_does_not_duplicate():
+    # Importing API modules during pytest collection loads config before
+    # test_billing can install its test secrets. Keep this import lazy so the
+    # whole backend suite remains independent of module collection order.
+    import api.settings as settings_api
+
     storage = MemoryStorage()
     calls = 0
 
