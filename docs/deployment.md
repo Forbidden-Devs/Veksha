@@ -79,6 +79,11 @@ Service должен собираться из корня репозитория
 Railway указываем config path `/veksha-web/railway.toml`. Публичный HTTPS origin
 добавляем в `CORS_ALLOW_ORIGINS` backend.
 
+Web service использует Docker builder: в корне монорепозитория нет
+`package.json`, поэтому автоматический Railpack provider не устанавливает
+Node/npm для build command. Возвращать web service на Railpack без корневого
+Node manifest нельзя.
+
 После deploy проверяем `/healthz`, вход через Google, быстрый перевод с
 появлением слова в словаре, тренировку, установку PWA и повторный запуск без
 сети (оболочка открывается, сетевые действия ожидаемо недоступны).

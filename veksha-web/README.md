@@ -43,5 +43,7 @@ the deployed web origin in the backend's `CORS_ALLOW_ORIGINS`.
 
 Use the repository root as the service source because the web build imports
 shared extension files. Point the service config at `/veksha-web/railway.toml`;
-its watch paths include both the web app and shared UI source. After assigning
-a public domain, add that exact origin to backend `CORS_ALLOW_ORIGINS`.
+its Docker build and watch paths include both the web app and shared UI source.
+The Docker builder is intentional: Railpack cannot infer a Node provider from
+the monorepo root, which has no root `package.json`. After assigning a public
+domain, add that exact origin to backend `CORS_ALLOW_ORIGINS`.
