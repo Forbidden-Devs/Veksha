@@ -14,7 +14,7 @@ def test_healthcheck_route_is_registered():
 
 
 def test_removed_chat_route_is_not_registered():
-    assert all(route.path != "/api/message" for route in main.app.routes)
+    assert all(getattr(route, "path", None) != "/api/message" for route in main.app.routes)
 
 
 def test_healthcheck_reports_running_revision(monkeypatch):
