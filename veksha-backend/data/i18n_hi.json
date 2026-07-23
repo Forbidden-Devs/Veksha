@@ -228,5 +228,6 @@
   "dictionary_sort_newest": "सबसे नए पहले",
   "dictionary_sort_oldest": "सबसे पुराने पहले",
   "dictionary_no_results": "कोई मेल खाने वाले शब्द नहीं मिले।",
-  "grammar_patterns_title": "संदर्भ में व्याकरण"
+  "grammar_patterns_title": "संदर्भ में व्याकरण",
+  "language_search_no_results": "कोई भाषा नहीं मिली। कोई दूसरा नाम आज़माएँ।"
 }

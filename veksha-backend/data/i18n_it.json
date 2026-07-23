@@ -233,5 +233,6 @@
   "dictionary_sort_newest": "Più recenti prima",
   "dictionary_sort_oldest": "Più vecchi prima",
   "dictionary_no_results": "Nessuna parola corrispondente trovata.",
-  "grammar_patterns_title": "Grammatica nel contesto"
+  "grammar_patterns_title": "Grammatica nel contesto",
+  "language_search_no_results": "Nessuna lingua trovata. Prova un altro nome."
 }

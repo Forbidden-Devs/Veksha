@@ -356,5 +356,6 @@
   "dictionary_sort_newest": "Les plus récents d’abord",
   "dictionary_sort_oldest": "Les plus anciens d’abord",
   "dictionary_no_results": "Aucun mot correspondant trouvé.",
-  "grammar_patterns_title": "Grammaire en contexte"
+  "grammar_patterns_title": "Grammaire en contexte",
+  "language_search_no_results": "Aucune langue trouvée. Essayez un autre nom."
 }

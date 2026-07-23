@@ -238,5 +238,6 @@
   "dictionary_sort_newest": "პირველად უახლესი",
   "dictionary_sort_oldest": "პირველად ძველი",
   "dictionary_no_results": "შესაბამისი სიტყვები ვერ მოიძებნა.",
-  "grammar_patterns_title": "გრამატიკა კონტექსტში"
+  "grammar_patterns_title": "გრამატიკა კონტექსტში",
+  "language_search_no_results": "ენა ვერ მოიძებნა. სცადეთ სხვა სახელი."
 }

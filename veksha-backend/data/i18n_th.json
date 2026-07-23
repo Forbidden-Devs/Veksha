@@ -230,5 +230,6 @@
   "dictionary_sort_newest": "ใหม่สุดก่อน",
   "dictionary_sort_oldest": "เก่าสุดก่อน",
   "dictionary_no_results": "ไม่พบคำที่ตรงกัน",
-  "grammar_patterns_title": "ไวยากรณ์ในบริบท"
+  "grammar_patterns_title": "ไวยากรณ์ในบริบท",
+  "language_search_no_results": "ไม่พบภาษา ลองใช้ชื่ออื่น"
 }

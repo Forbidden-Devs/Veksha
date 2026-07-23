@@ -33,6 +33,7 @@ export interface Strings {
   target_lang_title: string;
   target_lang_subtitle: string;
   target_lang_start: string;
+  language_search_no_results: string;
   // Onboarding
   onboarding_title: string;
   onboarding_subtitle: string;
@@ -412,6 +413,7 @@ export const EN: Strings = {
   target_lang_title: "What do you want to learn?",
   target_lang_subtitle: "Choose one or more languages you want to study",
   target_lang_start: "Let's start!",
+  language_search_no_results: "No languages found. Try another name.",
   onboarding_title: "And what's your name?",
   onboarding_subtitle: "Pick a name to keep your vocabulary and progress. You can change it later in Settings.",
   onboarding_name_placeholder: "Your name",

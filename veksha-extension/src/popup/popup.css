@@ -2872,62 +2872,64 @@ html, body, #root {
   flex: 1 1 0;
   min-height: 0;
   overflow-y: auto;
+  scrollbar-gutter: stable;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: minmax(48px, max-content);
+  align-content: start;
   gap: 7px;
   padding: 0 14px;
 }
 
 .lang-card {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 5px;
-  padding: 10px 4px;
+  justify-content: center;
+  min-width: 0;
+  min-height: 48px;
+  padding: 9px 10px;
   border: 1.5px solid var(--av-border);
   border-radius: 12px;
-  background: #fff;
+  background: var(--av-surface);
+  color: var(--av-ink);
   cursor: pointer;
-  transition: border-color 0.12s, background 0.12s;
+  transition: border-color 0.12s, background 0.12s, transform 0.12s;
   user-select: none;
 }
 
 .lang-card:hover {
-  border-color: #c4b5f0;
+  border-color: var(--av-accent);
   background: var(--av-accent-soft);
 }
 
 .lang-card--selected {
   border-color: var(--av-accent);
-  background: linear-gradient(135deg, #f0ecff 0%, #fde8f5 100%);
+  background: color-mix(in srgb, var(--av-accent) 14%, var(--av-surface));
+  box-shadow: inset 0 0 0 1px var(--av-accent);
 }
 
 .lang-card:active {
   transform: scale(0.96);
 }
 
-.lang-code {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  color: var(--av-accent);
-  background: var(--av-accent-soft);
-  border-radius: 5px;
-  padding: 2px 5px;
-  line-height: 1.4;
-}
-
-.lang-card--selected .lang-code {
-  background: var(--av-accent);
-  color: #fff;
-}
-
 .lang-card-name {
-  font-size: 11px;
+  width: 100%;
+  font-size: 12px;
+  font-weight: 600;
   color: var(--av-ink);
   text-align: center;
-  line-height: 1.2;
-  word-break: break-word;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.lang-pick-empty {
+  grid-column: 1 / -1;
+  align-self: start;
+  margin: 18px 0 0;
+  color: var(--av-muted);
+  font-size: 12px;
+  line-height: 1.45;
+  text-align: center;
 }
 
 .lang-pick-footer {

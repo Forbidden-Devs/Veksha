@@ -226,5 +226,6 @@
   "dictionary_sort_newest": "Πρώτα τα νεότερα",
   "dictionary_sort_oldest": "Πρώτα τα παλαιότερα",
   "dictionary_no_results": "Δεν βρέθηκαν αντίστοιχες λέξεις.",
-  "grammar_patterns_title": "Γραμματική στο πλαίσιο"
+  "grammar_patterns_title": "Γραμματική στο πλαίσιο",
+  "language_search_no_results": "Δεν βρέθηκαν γλώσσες. Δοκιμάστε άλλο όνομα."
 }

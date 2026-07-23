@@ -85,6 +85,7 @@
   "target_lang_title": "Что вы хотите изучать?",
   "target_lang_subtitle": "Выберите один или несколько языков для изучения",
   "target_lang_start": "Начнём!",
+  "language_search_no_results": "Языки не найдены. Попробуйте другое название.",
   "level_setup_title": "Почти готово!",
   "level_setup_subtitle": "Сообщите нам свой уровень, чтобы мы могли подобрать подходящие задания.",
   "level_setup_optional": "необязательно",

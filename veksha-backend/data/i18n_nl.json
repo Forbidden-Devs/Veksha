@@ -360,5 +360,6 @@
   "dictionary_sort_newest": "Nieuwste eerst",
   "dictionary_sort_oldest": "Oudste eerst",
   "dictionary_no_results": "Geen overeenkomende woorden gevonden.",
-  "grammar_patterns_title": "Grammatica in context"
+  "grammar_patterns_title": "Grammatica in context",
+  "language_search_no_results": "Geen talen gevonden. Probeer een andere naam."
 }

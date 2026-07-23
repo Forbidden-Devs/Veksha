@@ -227,5 +227,6 @@
   "dictionary_sort_newest": "Uusimmat ensin",
   "dictionary_sort_oldest": "Vanhimmat ensin",
   "dictionary_no_results": "Vastaavia sanoja ei löytynyt.",
-  "grammar_patterns_title": "Kielioppi kontekstissa"
+  "grammar_patterns_title": "Kielioppi kontekstissa",
+  "language_search_no_results": "Kieliä ei löytynyt. Kokeile toista nimeä."
 }

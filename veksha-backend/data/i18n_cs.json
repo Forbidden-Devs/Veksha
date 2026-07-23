@@ -230,5 +230,6 @@
   "dictionary_sort_newest": "Nejnovější první",
   "dictionary_sort_oldest": "Nejstarší první",
   "dictionary_no_results": "Nebylo nalezeno žádné odpovídající slovo.",
-  "grammar_patterns_title": "Gramatika v kontextu"
+  "grammar_patterns_title": "Gramatika v kontextu",
+  "language_search_no_results": "Nenalezeny žádné jazyky. Zkuste jiný název."
 }

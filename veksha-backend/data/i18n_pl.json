@@ -355,5 +355,6 @@
   "dictionary_sort_newest": "Najnowsze na górze",
   "dictionary_sort_oldest": "Najstarsze na górze",
   "dictionary_no_results": "Nie znaleziono pasujących słów.",
-  "grammar_patterns_title": "Gramatyka w kontekście"
+  "grammar_patterns_title": "Gramatyka w kontekście",
+  "language_search_no_results": "Nie znaleziono języków. Spróbuj innej nazwy."
 }

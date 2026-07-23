@@ -354,5 +354,6 @@
   "dictionary_sort_newest": "新しい順",
   "dictionary_sort_oldest": "古い順",
   "dictionary_no_results": "一致する単語が見つかりません。",
-  "grammar_patterns_title": "文脈で学ぶ文法"
+  "grammar_patterns_title": "文脈で学ぶ文法",
+  "language_search_no_results": "言語が見つかりませんでした。別の名前を試してください。"
 }

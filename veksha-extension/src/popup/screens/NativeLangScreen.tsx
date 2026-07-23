@@ -71,13 +71,16 @@ export function NativeLangScreen({ initialLang, onContinue }: { initialLang?: st
           <button
             key={lang.code}
             className={`lang-card${selected === lang.code ? " lang-card--selected" : ""}`}
+            aria-pressed={selected === lang.code}
             onClick={() => pick(lang.code)}
             type="button"
           >
-            <span className="lang-code">{lang.code.toUpperCase()}</span>
             <span className="lang-card-name">{lang.name}</span>
           </button>
         ))}
+        {visibleLanguages.length === 0 && (
+          <p className="lang-pick-empty">{t.language_search_no_results}</p>
+        )}
       </div>
 
       <div className="lang-pick-footer">
