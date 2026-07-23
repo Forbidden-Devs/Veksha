@@ -61,7 +61,7 @@ Linking attaches a Google identity to an existing account (409 if it belongs
 to someone else). Without a Google link, a lost local token still means a new
 account.
 
-All user data (accounts, KBs, chat history) lives in PostgreSQL. The KB is
+All user data (accounts and KBs) lives in PostgreSQL. The KB is
 stored as one JSON document per user;
 normalizing into tables is deferred to the FSRS rework.
 
@@ -119,19 +119,17 @@ curl -X PUT $API/api/billing/features/immersion/price \
 ```
 main.py               app entry point, routers, CORS, error handler
 config.py             env-based configuration
-db.py                 PostgreSQL: users/tokens, KB documents, chat history, review log
+db.py                 PostgreSQL: users/tokens, KB documents, review log
 auth.py               bearer-token dependencies (HTTP + WebSocket)
 models.py             Word, Patch, UserSettings, LessonTopic/LessonBlock
 storage.py            per-user KB object model, spaced repetition primitives
 fsrs.py               FSRS-4.5 scheduler (pure functions; default weights)
-session_state.py      assistant-chat history (context for the input processor)
-pipeline.py           /api/message flow: classify → answer or edit KB
 selection.py          selection translate → KB update
 training.py           word-training sessions (task generation, answer check)
 lesson.py             topic lessons: block generation/review, mastery
 i18n.py               UI/server strings + LLM-translated catalogues
 entitlements.py       subscription tiers, plans, feature gating (require_feature)
-llm/                  all OpenAI calls (pipeline, training, lesson,
+llm/                  all OpenAI calls (metadata, training, lesson,
                       selection, immersion, _base)
 db_cache.py           PostgreSQL cache for reusable LLM outputs
 translation_cache.py  memory/Redis cache for short translations
@@ -145,7 +143,6 @@ api/                  routers (one file per domain)
 | `POST /api/auth/register` | create account, returns bearer token |
 | `POST /api/auth/google/start`, `/api/auth/google/link/start` | start Google sign-in / identity link |
 | `GET /api/auth/google/callback`, `GET /api/auth/google/*/status/{flow_id}` | Google HTTPS callback / one-time result |
-| `POST /api/message` | assistant chat: answer questions or edit the KB |
 | `POST /api/translate`, `/api/quick_translate` | selection translation (+background KB update) |
 | `POST /api/explain` | expanded explanation for a selection |
 | `GET/POST /api/settings` | user settings |

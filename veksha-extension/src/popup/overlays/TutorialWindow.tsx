@@ -26,26 +26,18 @@ const SparkleIcon = () => (
 );
 
 // ---------------------------------------------------------------------------
-// Faithful popup chat replica — reuses the real chat classes, non-interactive.
+// Faithful translator replica — reuses the real translation classes, non-interactive.
 // ---------------------------------------------------------------------------
 
 type Bubble = { role: "user" | "bot"; text: string; translation?: boolean };
 
-function PhoneChat({ active, bubbles }: { active: "assistant" | "translator"; bubbles: Bubble[] }) {
+function PhoneTranslator({ bubbles }: { bubbles: Bubble[] }) {
   const t = useT();
   return (
     <div className="tut-phone">
       <section className="screen screen-chat">
         <header className="chat-header">
-          <div className="logo-badge logo-badge-sm">Ve</div>
-          <div className="chat-mode-tabs">
-            <button className={`chat-mode-tab${active === "assistant" ? " active" : ""}`} type="button">
-              {t.chat_mode_assistant ?? "Assistant"}
-            </button>
-            <button className={`chat-mode-tab${active === "translator" ? " active" : ""}`} type="button">
-              {t.chat_mode_translate ?? "Translate"}
-            </button>
-          </div>
+          <strong className="translator-heading">{t.chat_mode_translate}</strong>
           <button className="immersion-toggle" type="button">
             <SparkleIcon />
             <span className="immersion-toggle-label">{t.immersion_off}</span>
@@ -294,24 +286,10 @@ export function TutorialWindow({ username: _username, onClose }: { username: str
       ),
     },
     {
-      title: t.tutorial_s3_title,
-      body: t.tutorial_s3_body,
-      stage: (
-        <PhoneChat
-          active="assistant"
-          bubbles={[
-            { role: "user", text: "Find words worth learning on this page" },
-            { role: "bot", text: "I analyzed what you read and translated, and picked 5 useful words — added them to your vocabulary. Want a study topic built from them?" },
-          ]}
-        />
-      ),
-    },
-    {
       title: t.tutorial_s4_title,
       body: t.tutorial_s4_body,
       stage: (
-        <PhoneChat
-          active="translator"
+        <PhoneTranslator
           bubbles={[
             { role: "user", text: "serendipity" },
             { role: "bot", text: "счастливая случайность", translation: true },

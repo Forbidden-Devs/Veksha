@@ -26,7 +26,7 @@ router = APIRouter()
 
 @router.post("/api/debug/reset")
 async def api_debug_reset(username: CurrentUser) -> dict:
-    """Resets all user data: KB and chat history (the account/token survives)."""
+    """Resets all learning data while preserving the account and token."""
     drop_storage(username)
     db.delete_user_data(username)
     log.info("[debug/reset] user %r: data wiped", username)

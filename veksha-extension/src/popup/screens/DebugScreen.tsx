@@ -82,7 +82,7 @@ export function DebugScreen() {
   return (
     <section className="screen screen-settings">
       <header className="menu-header">
-        <button className="icon-btn" aria-label="Back" onClick={() => navigateTo("chat")}>
+        <button className="icon-btn" aria-label="Back" onClick={() => navigateTo("home")}>
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M15 18l-6-6 6-6" />
           </svg>

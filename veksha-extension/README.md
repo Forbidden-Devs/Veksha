@@ -72,7 +72,7 @@ src/background/    background (Chrome: service worker, Firefox: event page):
                    first-review nudge
 src/content/       selection translate popup, immersion mode, YouTube
                    subtitles integration, in-page reminder overlay
-src/popup/         popup app: chat (assistant/translator), topics, training
+src/popup/         popup app: translator, topics, training
                    and lesson overlays, statistics, settings, onboarding
 src/training/      standalone training page (full tab)
 src/lesson/        standalone lesson page (full tab)

@@ -46,8 +46,10 @@ def test_equal_to_english_is_flagged_until_confirmed():
 
 def test_public_catalog_strips_meta():
     merged = i18n.merge_translations(_full_catalog(), {KEY: EN})
+    merged["retired_feature"] = "stale cache value"
     public = i18n.public_catalog(merged)
     assert i18n._META_SAME_AS_EN not in public
+    assert "retired_feature" not in public
     assert public[KEY] == EN
 
 

@@ -2,8 +2,7 @@
 llm — all OpenAI API calls for Veksha.
 
 Organized by domain:
-  llm.pipeline   — input_processor, extract_metadata, update_knowledge_base,
-                    match_delete_candidate, unknown_message
+  llm.metadata   — extract_metadata
   llm.training   — check_synonym_appropriate, get_reverse_translations,
                     check_training_answer
   llm.lesson     — suggest_block_names, generate_block_content,
@@ -14,13 +13,7 @@ Organized by domain:
   llm.grammar_lens — analyze_grammar_block
   llm._base      — _call, helpers (private)
 """
-from llm.pipeline import (
-    input_processor,
-    extract_metadata,
-    update_knowledge_base,
-    match_delete_candidate,
-    unknown_message,
-)
+from llm.metadata import extract_metadata
 from llm.training import (
     check_synonym_appropriate,
     get_reverse_translations,
@@ -43,11 +36,7 @@ from llm.grammar_lens import analyze_grammar_block
 from llm.sentence_mining import generate_sentence_mining
 
 __all__ = [
-    "input_processor",
     "extract_metadata",
-    "update_knowledge_base",
-    "match_delete_candidate",
-    "unknown_message",
     "check_synonym_appropriate",
     "get_reverse_translations",
     "check_training_answer",

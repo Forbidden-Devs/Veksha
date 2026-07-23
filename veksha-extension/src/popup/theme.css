@@ -475,32 +475,10 @@ body,
   color: var(--m-fg) !important;
 }
 
-.chat-mode-tab {
-  background: transparent !important;
-  color: var(--m-dim) !important;
-  border: none !important;
-  text-transform: lowercase;
-  font-size: 17px !important;
-  font-weight: 300 !important;
-}
-
-.chat-mode-tab.active {
-  color: var(--m-fg) !important;
-  font-weight: 600 !important;
-}
-
 .chat-header {
   background: transparent !important;
   border-bottom: 1px solid var(--m-border) !important;
 }
-
-.chat-chip {
-  background: transparent !important;
-  color: var(--m-fg) !important;
-  border: 2px solid var(--m-border) !important;
-}
-
-.chat-chip:hover { border-color: var(--m-accent) !important; }
 
 /* cards / list rows on stats, topics, settings */
 .word-row, .word-list-item, .topic-row, .stat-card, .debug-info-block,
@@ -570,13 +548,7 @@ body,
 }
 
 /* menu book decoration and other pastel flourishes have no place in Metro */
-.menu-book-decoration, .help-bubble-icon { display: none !important; }
-
-.help-bubble {
-  background: var(--m-surface) !important;
-  color: var(--m-fg) !important;
-  border: 1px solid var(--m-border) !important;
-}
+.menu-book-decoration { display: none !important; }
 
 .toast {
   background: var(--m-surface-2) !important;
@@ -604,16 +576,6 @@ body,
 
 .onboarding-subtitle, .imm-modal-sub {
   color: var(--m-dim) !important;
-}
-
-/* chat mode tabs: Metro pivot — plain lowercase words side by side */
-.chat-mode-tabs {
-  background: transparent !important;
-  border: none !important;
-  padding: 0 !important;
-  display: flex;
-  flex-direction: row;
-  gap: 16px;
 }
 
 /* chat input row: dark bar, white field, accent send */
