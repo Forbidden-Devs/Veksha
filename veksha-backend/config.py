@@ -37,7 +37,7 @@ TELEGRAM_LINK_CODE_TTL_SECONDS = int(
     os.getenv("TELEGRAM_LINK_CODE_TTL_SECONDS", str(15 * 60))
 )
 
-# Shared secret for admin-only endpoints (currently: promo code creation).
+# Shared secret for billing-admin endpoints (catalog, prices, promo codes).
 # Sent as the X-Veksha-Admin-Secret header. Empty = admin endpoints disabled
 # (503) — set this in the server environment before minting promo codes.
 ADMIN_API_SECRET = os.getenv("ADMIN_API_SECRET", "")

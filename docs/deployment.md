@@ -21,6 +21,8 @@ PR открываем на один "тикет".
   завершится успешно.
 - Watch path `/veksha-backend/**` не позволяет изменениям других приложений
   перезапускать backend.
+- Telegram bot и внутренняя admin-панель разворачиваются отдельными Railway
+  services из `/veksha-tgbot` и `/veksha-admin`.
 
 ## Backend
 
@@ -35,6 +37,26 @@ OpenAI, Google или Telegram и возвращает Git commit из
 2. `/healthz` возвращает HTTP 200 и `status: ok`;
 3. revision совпадает с ожидаемым commit SHA;
 4. в runtime logs нет повторяющихся ошибок запуска.
+
+## Telegram bot
+
+Конфигурация находится в `veksha-tgbot/railway.toml`. Сервис использует long
+polling, поэтому для него должна быть настроена ровно одна replica. Railway
+проверяет `GET /healthz`; затем вручную проверяем `/start`, `/status` и тестовый
+инвойс с выбранным набором функций.
+
+Watch path: `/veksha-tgbot/**`. Обязательные переменные перечислены в
+`docs/secrets.md`.
+
+## Admin
+
+Конфигурация находится в `veksha-admin/railway.toml`. `VITE_BACKEND_URL`
+передаётся при сборке, а публичный домен admin необходимо добавить в
+`CORS_ALLOW_ORIGINS` backend. Railway проверяет `GET /healthz`.
+
+Watch path: `/veksha-admin/**`. После deploy проверяем вход, чтение цен,
+изменение одной цены с возвратом исходного значения и создание ограниченного
+тестового промокода.
 
 ## Откат
 

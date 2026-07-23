@@ -23,6 +23,7 @@ jobs:
       bot: ${{ steps.filter.outputs.bot }}
       extension: ${{ steps.filter.outputs.extension }}
       web: ${{ steps.filter.outputs.web }}
+      admin: ${{ steps.filter.outputs.admin }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -63,16 +64,19 @@ jobs:
           bot=false
           extension=false
           web=false
+          admin=false
 
           if [[ "$all" == true ]] || matches '^veksha-backend/'; then backend=true; fi
           if [[ "$all" == true ]] || matches '^veksha-tgbot/'; then bot=true; fi
           if [[ "$all" == true ]] || matches '^veksha-extension/'; then extension=true; fi
           if [[ "$all" == true ]] || matches '^veksha-web/|^veksha-extension/'; then web=true; fi
+          if [[ "$all" == true ]] || matches '^veksha-admin/|^veksha-backend/api/billing.py|^veksha-backend/db.py'; then admin=true; fi
 
           echo "backend=$backend" >> "$GITHUB_OUTPUT"
           echo "bot=$bot" >> "$GITHUB_OUTPUT"
           echo "extension=$extension" >> "$GITHUB_OUTPUT"
           echo "web=$web" >> "$GITHUB_OUTPUT"
+          echo "admin=$admin" >> "$GITHUB_OUTPUT"
 
   backend:
     name: Backend
@@ -110,10 +114,18 @@ jobs:
     with:
       target: web
 
+  admin:
+    name: Admin
+    needs: changes
+    if: needs.changes.outputs.admin == 'true'
+    uses: ./.github/workflows/_node-checks.yml
+    with:
+      target: admin
+
   ci:
     name: CI
     if: always()
-    needs: [changes, backend, bot, extension, web]
+    needs: [changes, backend, bot, extension, web, admin]
     runs-on: ubuntu-latest
     steps:
       - name: Verify required jobs
@@ -123,8 +135,9 @@ jobs:
           BOT_RESULT: ${{ needs.bot.result }}
           EXTENSION_RESULT: ${{ needs.extension.result }}
           WEB_RESULT: ${{ needs.web.result }}
+          ADMIN_RESULT: ${{ needs.admin.result }}
         run: |
-          for result in "$CHANGES_RESULT" "$BACKEND_RESULT" "$BOT_RESULT" "$EXTENSION_RESULT" "$WEB_RESULT"; do
+          for result in "$CHANGES_RESULT" "$BACKEND_RESULT" "$BOT_RESULT" "$EXTENSION_RESULT" "$WEB_RESULT" "$ADMIN_RESULT"; do
             if [[ "$result" != "success" && "$result" != "skipped" ]]; then
               echo "A required CI job finished with: $result"
               exit 1

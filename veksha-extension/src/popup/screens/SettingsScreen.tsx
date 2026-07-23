@@ -23,7 +23,7 @@ function detectNativeLang(): string {
 }
 
 export function SettingsScreen() {
-  const { username, settingsMode, navigateTo, setLangPair, signOut, targetLang: appTargetLang, nativeLang: appNativeLang } = useApp();
+  const { username, settingsMode, navigateTo, openSubscription, setLangPair, signOut, targetLang: appTargetLang, nativeLang: appNativeLang } = useApp();
   const { switchLanguage, translating } = useI18n();
   const t = useT();
 
@@ -37,6 +37,7 @@ export function SettingsScreen() {
   const [promoSubmitting, setPromoSubmitting] = useState(false);
   const [promoError, setPromoError] = useState<string | null>(null);
   const [promoSuccess, setPromoSuccess] = useState(false);
+  const [cancellingSubscription, setCancellingSubscription] = useState(false);
   const [level, setLevel] = useState("");
   const [goals, setGoals] = useState("");
   const [prompt, setPrompt] = useState("");
@@ -178,6 +179,18 @@ export function SettingsScreen() {
       setPromoError(t.settings_promo_error_generic);
     } finally {
       setPromoSubmitting(false);
+    }
+  }
+
+  async function handleCancelSubscription() {
+    if (!confirm(t.subscription_cancel_confirm)) return;
+    setCancellingSubscription(true);
+    try {
+      setBilling(await api.cancelSubscription());
+    } catch {
+      setError(t.subscription_cancel_error);
+    } finally {
+      setCancellingSubscription(false);
     }
   }
 
@@ -616,9 +629,23 @@ export function SettingsScreen() {
             {billing?.tier !== "premium" && (
               <span className="settings-toggle-desc">{t.settings_sub_desc}</span>
             )}
-            <button className="btn" type="button" disabled aria-disabled="true">
+            <button
+              className="btn"
+              type="button"
+              onClick={() => openSubscription({ mode: billing?.tier === "premium" ? "manage" : "new" })}
+            >
               {billing?.tier === "premium" ? t.settings_sub_manage : t.settings_sub_connect}
             </button>
+            {billing?.tier === "premium" && (
+              <button
+                className="btn btn-signout"
+                type="button"
+                disabled={cancellingSubscription}
+                onClick={handleCancelSubscription}
+              >
+                {cancellingSubscription ? t.app_loading : t.subscription_cancel}
+              </button>
+            )}
             <label className="field-label" htmlFor="settings-promo-code">{t.settings_promo_label}</label>
             <div className="settings-promo-row">
               <input

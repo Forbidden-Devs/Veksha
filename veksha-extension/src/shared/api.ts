@@ -221,10 +221,23 @@ export function getBillingStatus(): Promise<BillingStatus> {
   return _get("/api/billing/status");
 }
 
+export interface BillingFeature {
+  id: "grammar_lens" | "immersion" | "dual_subtitles";
+  stars_monthly: number;
+}
+
+export function getBillingFeatures(): Promise<BillingFeature[]> {
+  return _get("/api/billing/features");
+}
+
 /** Create a one-time deep link into the companion bot
  *  (t.me/<bot>?start=<code>) that binds this account to a Telegram user. */
-export function createTelegramBillingLink(): Promise<{ code: string; url: string }> {
-  return _post("/api/billing/telegram/link", {});
+export function createTelegramBillingLink(features: string[]): Promise<{ code: string; url: string }> {
+  return _post("/api/billing/telegram/link", { features });
+}
+
+export function cancelSubscription(): Promise<BillingStatus> {
+  return _delete("/api/billing/subscription");
 }
 
 export interface PromoRedeemResult {
