@@ -1,7 +1,6 @@
 /** Grammar Lens — inline, reversible grammatical-role highlighting. */
 import {
   analyzeGrammarLens,
-  type GrammarAnnotation,
   type GrammarBlockAnalysis,
   type GrammarRole,
   type GrammarSegment,
@@ -35,15 +34,21 @@ let scanning = false;
 let generation = 0;
 let processed = new WeakSet<Text>();
 let sessionCache = new Map<string, GrammarBlockAnalysis>();
-let visibleInsights = new Map<string, GrammarAnnotation>();
-let insightIds = new Map<string, string>();
-let insightSequence = 0;
 let observer: MutationObserver | null = null;
 let scanTimer: ReturnType<typeof setTimeout> | null = null;
 let legend: HTMLElement | null = null;
+let expanded = false;
+let lastAnalysis: { text: string; analysis: GrammarBlockAnalysis } | null = null;
+let analysisLoading = false;
+let analysisError: string | null = null;
+let analysisSequence = 0;
 
 export function initGrammarLens(value: GrammarLensDeps): void {
   deps = value;
+}
+
+export function isGrammarLensEnabled(): boolean {
+  return enabled;
 }
 
 export function setGrammarLensEnabled(on: boolean): void {
@@ -67,6 +72,11 @@ export function setGrammarLensEnabled(on: boolean): void {
     restoreAll();
     legend?.remove();
     legend = null;
+    expanded = false;
+    lastAnalysis = null;
+    analysisLoading = false;
+    analysisError = null;
+    analysisSequence += 1;
   }
 }
 
@@ -141,7 +151,6 @@ async function scan(): Promise<void> {
 
     if (!enabled || scanGeneration !== generation) return;
     withObserverPaused(() => ready.forEach(({ node, analysis }) => applyToNode(node, analysis)));
-    renderGrammarInsights();
     renderLegend(false);
   } catch (error) {
     console.debug("[grammar-lens] scan failed:", error);
@@ -169,30 +178,13 @@ function makeMarker(segment: GrammarSegment, insightLabels: string[]): HTMLEleme
   return marker;
 }
 
-function insightKey(annotation: GrammarAnnotation): string {
-  return `${annotation.category}\u0000${annotation.label}\u0000${annotation.text}`;
-}
-
-function registerInsight(annotation: GrammarAnnotation): string {
-  const key = insightKey(annotation);
-  let id = insightIds.get(key);
-  if (!id) {
-    id = `avgi-${++insightSequence}`;
-    insightIds.set(key, id);
-  }
-  visibleInsights.delete(key);
-  visibleInsights.set(key, annotation);
-  while (visibleInsights.size > 12) visibleInsights.delete(visibleInsights.keys().next().value!);
-  return id;
-}
-
 function applyToNode(node: Text, analysis: GrammarBlockAnalysis): void {
   const { segments, annotations = [] } = analysis;
   if (!node.isConnected || !node.parentNode || (!segments.length && !annotations.length)) return;
   const original = node.data;
   const annotationRanges = annotations.flatMap((annotation) => {
     const start = original.indexOf(annotation.text);
-    return start < 0 ? [] : [{ annotation, start, end: start + annotation.text.length, id: registerInsight(annotation) }];
+    return start < 0 ? [] : [{ annotation, start, end: start + annotation.text.length }];
   });
   const fragment = document.createDocumentFragment();
   let cursor = 0;
@@ -205,10 +197,7 @@ function applyToNode(node: Text, analysis: GrammarBlockAnalysis): void {
     const end = index + segment.text.length;
     const matchingInsights = annotationRanges.filter((item) => index < item.end && end > item.start);
     const marker = makeMarker(segment, matchingInsights.map((item) => item.annotation.label));
-    if (matchingInsights.length) {
-      marker.classList.add("av-grammar-has-insight");
-      marker.dataset.avGrammarAnnotation = matchingInsights.map((item) => item.id).join(" ");
-    }
+    if (matchingInsights.length) marker.classList.add("av-grammar-has-insight");
     fragment.appendChild(marker);
     cursor = end;
     changed = true;
@@ -234,9 +223,6 @@ function restoreAll(): void {
   });
   processed = new WeakSet<Text>();
   sessionCache = new Map();
-  visibleInsights = new Map();
-  insightIds = new Map();
-  insightSequence = 0;
 }
 
 function withObserverPaused(fn: () => void): void {
@@ -258,6 +244,16 @@ function renderLegend(loading: boolean): void {
     header.className = "veksha-grammar-legend-header";
     const title = document.createElement("strong");
     title.textContent = deps.t("grammar_lens_title", "Grammar Lens");
+    const buttons = document.createElement("div");
+    buttons.className = "veksha-grammar-legend-buttons";
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = "veksha-grammar-legend-toggle";
+    toggle.addEventListener("click", () => {
+      if (!expanded && !lastAnalysis && !analysisLoading && !analysisError) return;
+      expanded = !expanded;
+      syncLegendMode();
+    });
     const close = document.createElement("button");
     close.type = "button";
     close.textContent = "×";
@@ -266,7 +262,8 @@ function renderLegend(loading: boolean): void {
       void chrome.storage.local.set({ [CONFIG.STORAGE_KEY_GRAMMAR_LENS]: false });
       setGrammarLensEnabled(false);
     });
-    header.append(title, close);
+    buttons.append(toggle, close);
+    header.append(title, buttons);
 
     const items = document.createElement("div");
     items.className = "veksha-grammar-legend-items";
@@ -278,19 +275,20 @@ function renderLegend(loading: boolean): void {
       item.append(dot, document.createTextNode(roleLabel(role)));
       items.appendChild(item);
     }
+    const hint = document.createElement("div");
+    hint.className = "veksha-grammar-legend-hint";
+    hint.textContent = deps.t(
+      "grammar_hint_select",
+      "Select a sentence on the page and press the 🔍 button next to it for a detailed grammar analysis.",
+    );
+    const detail = document.createElement("section");
+    detail.className = "veksha-grammar-detail";
+    detail.hidden = true;
     const status = document.createElement("div");
     status.className = "veksha-grammar-legend-status";
-    const insights = document.createElement("section");
-    insights.className = "veksha-grammar-insights";
-    insights.hidden = true;
-    const insightsTitle = document.createElement("strong");
-    insightsTitle.textContent = deps.t("grammar_patterns_title", "Grammar in context");
-    const insightsList = document.createElement("div");
-    insightsList.className = "veksha-grammar-insights-list";
-    insights.append(insightsTitle, insightsList);
-    legend.append(header, items, insights, status);
+    legend.append(header, items, hint, detail, status);
     document.body.appendChild(legend);
-    renderGrammarInsights();
+    syncLegendMode();
   }
   const status = legend.querySelector<HTMLElement>(".veksha-grammar-legend-status");
   if (status) {
@@ -299,42 +297,154 @@ function renderLegend(loading: boolean): void {
   }
 }
 
-function focusInsight(id: string, focused: boolean): void {
-  document.querySelectorAll<HTMLElement>(".av-grammar[data-av-grammar-annotation]").forEach((marker) => {
-    const ids = marker.dataset.avGrammarAnnotation?.split(" ") ?? [];
-    if (ids.includes(id)) marker.classList.toggle("av-grammar-focus", focused);
-  });
+/** Reflect the expanded/collapsed state in the legend DOM. */
+function syncLegendMode(): void {
+  if (!legend) return;
+  const detail = legend.querySelector<HTMLElement>(".veksha-grammar-detail");
+  const hint = legend.querySelector<HTMLElement>(".veksha-grammar-legend-hint");
+  const toggle = legend.querySelector<HTMLButtonElement>(".veksha-grammar-legend-toggle");
+  const hasContent = Boolean(lastAnalysis) || analysisLoading || Boolean(analysisError);
+  if (!hasContent) expanded = false;
+  if (detail) detail.hidden = !expanded;
+  if (hint) hint.hidden = expanded;
+  if (toggle) {
+    toggle.textContent = expanded ? "–" : "+";
+    toggle.disabled = !expanded && !hasContent;
+    toggle.title = expanded
+      ? deps.t("grammar_lens_collapse", "Collapse the analysis")
+      : deps.t("grammar_lens_expand", "Show the last analysis");
+  }
 }
 
-function renderGrammarInsights(): void {
-  if (!legend) return;
-  const section = legend.querySelector<HTMLElement>(".veksha-grammar-insights");
-  const list = legend.querySelector<HTMLElement>(".veksha-grammar-insights-list");
-  if (!section || !list) return;
-  list.replaceChildren();
-  const entries = [...visibleInsights.entries()].slice(-8).reverse();
-  section.hidden = entries.length === 0;
-  for (const [key, annotation] of entries) {
-    const id = insightIds.get(key);
-    if (!id) continue;
-    const card = document.createElement("button");
-    card.type = "button";
-    card.className = "veksha-grammar-insight";
-    card.dataset.category = annotation.category;
-    const label = document.createElement("b");
-    label.textContent = annotation.label;
-    const quote = document.createElement("q");
-    quote.textContent = annotation.text.trim();
-    card.append(label, quote);
-    if (annotation.explanation) {
-      const explanation = document.createElement("span");
-      explanation.textContent = annotation.explanation;
-      card.appendChild(explanation);
-    }
-    card.addEventListener("mouseenter", () => focusInsight(id, true));
-    card.addEventListener("mouseleave", () => focusInsight(id, false));
-    card.addEventListener("focus", () => focusInsight(id, true));
-    card.addEventListener("blur", () => focusInsight(id, false));
-    list.appendChild(card);
+function renderDetail(): void {
+  const detail = legend?.querySelector<HTMLElement>(".veksha-grammar-detail");
+  if (!detail) return;
+  detail.replaceChildren();
+
+  if (analysisError) {
+    const error = document.createElement("div");
+    error.className = "veksha-grammar-detail-error";
+    error.textContent = analysisError;
+    detail.appendChild(error);
+    syncLegendMode();
+    return;
   }
+  if (analysisLoading) {
+    const loading = document.createElement("div");
+    loading.className = "veksha-grammar-detail-loading";
+    loading.textContent = deps.t("grammar_analysis_loading", "Analyzing the sentence…");
+    detail.appendChild(loading);
+    syncLegendMode();
+    return;
+  }
+  if (!lastAnalysis) {
+    syncLegendMode();
+    return;
+  }
+
+  const quote = document.createElement("q");
+  quote.className = "veksha-grammar-detail-quote";
+  quote.textContent = lastAnalysis.text;
+  detail.appendChild(quote);
+
+  const body = document.createElement("div");
+  body.className = "veksha-grammar-detail-body";
+  const { segments, annotations } = lastAnalysis.analysis;
+
+  if (segments.length) {
+    const rolesTitle = document.createElement("strong");
+    rolesTitle.textContent = deps.t("grammar_roles_title", "Sentence roles");
+    body.appendChild(rolesTitle);
+    for (const segment of segments) {
+      const row = document.createElement("div");
+      row.className = "veksha-grammar-detail-seg";
+      const dot = document.createElement("i");
+      dot.dataset.role = segment.role;
+      const copy = document.createElement("span");
+      const label = document.createElement("b");
+      label.textContent = roleLabel(segment.role);
+      copy.append(label, document.createTextNode(` — ${segment.text}`));
+      row.append(dot, copy);
+      if (segment.explanation) {
+        const explanation = document.createElement("small");
+        explanation.textContent = segment.explanation;
+        row.appendChild(explanation);
+      }
+      body.appendChild(row);
+    }
+  }
+
+  if (annotations.length) {
+    const patternsTitle = document.createElement("strong");
+    patternsTitle.textContent = deps.t("grammar_patterns_title", "Grammar in context");
+    body.appendChild(patternsTitle);
+    for (const annotation of annotations) {
+      const card = document.createElement("div");
+      card.className = "veksha-grammar-insight";
+      card.dataset.category = annotation.category;
+      const label = document.createElement("b");
+      label.textContent = annotation.label;
+      const cardQuote = document.createElement("q");
+      cardQuote.textContent = annotation.text.trim();
+      card.append(label, cardQuote);
+      if (annotation.explanation) {
+        const explanation = document.createElement("span");
+        explanation.textContent = annotation.explanation;
+        card.appendChild(explanation);
+      }
+      body.appendChild(card);
+    }
+  }
+
+  if (!segments.length && !annotations.length) {
+    const empty = document.createElement("div");
+    empty.className = "veksha-grammar-detail-loading";
+    empty.textContent = deps.t("grammar_analysis_empty", "No notable grammar found in this selection.");
+    body.appendChild(empty);
+  }
+
+  detail.appendChild(body);
+  syncLegendMode();
+}
+
+/** Detailed analysis of a user-selected sentence, shown in the legend panel. */
+export function analyzeGrammarSelection(rawText: string): void {
+  if (!enabled) return;
+  const text = rawText.trim().slice(0, 1000);
+  if (!text) return;
+  renderLegend(false);
+  const sequence = ++analysisSequence;
+  expanded = true;
+  analysisLoading = true;
+  analysisError = null;
+  renderDetail();
+
+  void (async () => {
+    try {
+      const username = await deps.getUsername().catch(() => null);
+      if (sequence !== analysisSequence) return;
+      if (!username) {
+        analysisLoading = false;
+        analysisError = deps.t("content_no_user", "Open the Veksha popup and enter your name first.");
+        renderDetail();
+        return;
+      }
+      let analysis = sessionCache.get(text) ?? null;
+      if (!analysis) {
+        const response = await analyzeGrammarLens([text]);
+        analysis = response.blocks[0] ?? { segments: [], annotations: [] };
+        sessionCache.set(text, analysis);
+      }
+      if (sequence !== analysisSequence) return;
+      analysisLoading = false;
+      lastAnalysis = { text, analysis };
+      renderDetail();
+    } catch (error) {
+      console.debug("[grammar-lens] selection analysis failed:", error);
+      if (sequence !== analysisSequence) return;
+      analysisLoading = false;
+      analysisError = deps.t("grammar_analysis_failed", "Could not analyze the selection. Try again.");
+      renderDetail();
+    }
+  })();
 }
