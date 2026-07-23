@@ -2,7 +2,7 @@
 
 The Veksha mobile study companion as an installable PWA: quick translation
 and word capture, vocabulary, spaced-repetition training, topic lessons,
-assistant, statistics, and settings. It reuses the extension's study screens
+statistics, and settings. It reuses the extension's study screens
 but provides its own responsive home screen and mobile navigation.
 
 The browser extension remains the capture surface (selection translate,

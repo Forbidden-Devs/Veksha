@@ -5,7 +5,6 @@ export const BACKEND_URL = CONFIG.BACKEND_URL;
 import type {
   KBSummaryData,
   LessonTopicSummary,
-  MessageResponse,
   RemindersData,
   SettingsData,
   TranslateResponse,
@@ -259,10 +258,6 @@ export function redeemPromoCode(code: string): Promise<PromoRedeemResult> {
 // ---------------------------------------------------------------------------
 // API calls (user derived from the bearer token server-side)
 // ---------------------------------------------------------------------------
-
-export function sendMessage(username: string, text: string): Promise<MessageResponse> {
-  return _post("/api/message", { text });
-}
 
 export function translate(
   username: string,

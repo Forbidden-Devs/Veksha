@@ -274,7 +274,7 @@ export function HomeScreen() {
         </div>
 
         <div className="web-action-grid">
-          <button onClick={() => navigateTo("chat")}><span>{Icons.dictionary}</span><strong>{t.nav_assistant}</strong><small>{t.sub_assistant}</small></button>
+          <button onClick={() => navigateTo("translator")}><span>{Icons.dictionary}</span><strong>{t.chat_mode_translate}</strong></button>
           <button onClick={() => navigateTo("topics")}><span>{Icons.topics}</span><strong>{t.nav_topics}</strong><small>{t.sub_topics}</small></button>
           <button onClick={() => navigateTo("statistics")}><span>{Icons.stats}</span><strong>{t.nav_stats}</strong></button>
           <button onClick={() => navigateTo("settings", { settingsMode: "menu" })}><span>{Icons.settings}</span><strong>{t.nav_settings}</strong></button>
