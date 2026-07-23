@@ -15,6 +15,21 @@
 
 Runtime-секреты остаются в Railway. Они не дублируются в GitHub Actions.
 
+## Railway: Telegram bot
+
+- `TELEGRAM_BOT_TOKEN` — токен от BotFather.
+- `VEKSHA_BACKEND_URL` — публичный HTTPS URL backend.
+- `VEKSHA_BOT_WEBHOOK_SECRET` — то же значение, что
+  `TELEGRAM_BOT_WEBHOOK_SECRET` backend.
+
+## Railway: admin
+
+- `VITE_BACKEND_URL` — HTTPS URL backend, встраивается на этапе сборки.
+
+Административный секрет не встраивается в admin bundle: сотрудник вводит
+значение `ADMIN_API_SECRET` при входе, после чего оно живёт только в текущей
+вкладке браузера.
+
 ## GitHub Environments
 
 Будущие credentials Chrome Web Store и Firefox AMO будут храниться только в

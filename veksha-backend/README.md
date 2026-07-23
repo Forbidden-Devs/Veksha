@@ -63,13 +63,15 @@ normalizing into tables is deferred to the FSRS rework.
 
 ## Subscriptions (Telegram Stars)
 
-Premium features (Grammar Lens, page immersion, dual subtitles — see
-`entitlements.py`) require an active subscription; gated endpoints return
+Paid features (Grammar Lens, page immersion, dual subtitles — see
+`entitlements.py`) can be purchased individually; gated endpoints return
 HTTP 402 with `detail.code = "subscription_required"`. Payments are collected
 by the companion bot (`veksha-tgbot/`) in Telegram Stars and reported to
 `POST /api/billing/telegram/webhook` (header `X-Veksha-Bot-Secret`,
 idempotent by `telegram_payment_charge_id`). Accounts are bound to Telegram
-via a single-use deep-link code from `POST /api/billing/telegram/link`.
+via a single-use deep-link code from `POST /api/billing/telegram/link`. Its
+`features` body locks a checkout snapshot and the sum of the per-feature
+monthly prices stored in SQLite before Telegram opens.
 Configure `TELEGRAM_BOT_USERNAME` and `TELEGRAM_BOT_WEBHOOK_SECRET`; both
 empty disables billing (the link endpoint returns 503, everyone stays on the
 free tier).
@@ -80,12 +82,20 @@ testers), mint a promo code with `ADMIN_API_SECRET` set and:
 ```
 curl -X POST $API/api/billing/promo/create \
   -H "X-Veksha-Admin-Secret: $ADMIN_API_SECRET" -H "Content-Type: application/json" \
-  -d '{"code": "BETA30", "days": 30, "max_redemptions": 20}'
+  -d '{"code": "BETA30", "days": 30, "max_redemptions": 20, "features": ["grammar_lens"]}'
 ```
 
 Users redeem it once each via `POST /api/billing/promo/redeem` (Bearer
-token, body `{"code": "..."}`) for `days` of Premium; without a code an
-account stays on the free tier.
+token, body `{"code": "..."}`) for `days` of the selected features. Omit
+`features` when creating a promo to grant all paid features.
+
+Change a monthly feature price for future checkouts with the admin endpoint:
+
+```
+curl -X PUT $API/api/billing/features/immersion/price \
+  -H "X-Veksha-Admin-Secret: $ADMIN_API_SECRET" -H "Content-Type: application/json" \
+  -d '{"stars_monthly": 35}'
+```
 
 ## Module map
 
@@ -130,10 +140,13 @@ api/                  routers (one file per domain)
 | `POST /api/immersion/analyze` | comprehensible-input page immersion (premium) |
 | `POST /api/subtitles/translate` | dual-subtitle line translation with word alignment (premium) |
 | `POST /api/subtitles/translate-batch` | contextual pretranslation of adjacent timed subtitle cues (premium) |
-| `GET /api/billing/status`, `POST /api/billing/telegram/link` | subscription status / bot deep link |
+| `GET /api/billing/status`, `GET /api/billing/features` | active selection / feature prices |
+| `POST /api/billing/telegram/link`, `DELETE /api/billing/subscription` | checkout deep link / cancel subscription |
 | `POST /api/billing/promo/redeem` | redeem a promo code for temporary Premium |
 | `GET /api/billing/plans`, `POST /api/billing/telegram/webhook` | companion-bot API (shared secret) |
 | `POST /api/billing/promo/create` | mint a promo code (admin shared secret) |
+| `GET /api/billing/admin/overview` | read feature prices and recent promo codes (admin shared secret) |
+| `PUT /api/billing/features/{feature}/price` | change a feature price (admin shared secret) |
 | `GET /api/i18n/{lang}`, `POST /api/i18n/translate` | UI string catalogues |
 | `POST /api/debug/*` | development helpers (reset, simulate, advance-day) |
 

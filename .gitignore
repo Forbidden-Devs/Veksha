@@ -22,6 +22,7 @@ node_modules/
 veksha-extension/dist/
 veksha-extension/artifacts/
 veksha-web/dist/
+veksha-admin/dist/
 veksha-web/public/source/
 *.zip
 

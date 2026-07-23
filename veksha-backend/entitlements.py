@@ -1,11 +1,10 @@
 """
 entitlements.py — subscription tiers, plans and feature gating.
 
-Single source of truth for what a paid subscription unlocks:
+Feature-gating rules for individually selectable paid functions:
 
   TIERS            — known tiers; "free" is implicit for everyone.
-  PREMIUM_FEATURES — feature flags granted by the premium tier. Features not
-                     listed here are available to every user.
+  PREMIUM_FEATURES — flags that require an active per-user selection.
   PLANS            — purchasable plans (Telegram Stars); the companion bot
                      fetches these via GET /api/billing/plans so prices live
                      only here.
@@ -19,6 +18,7 @@ A user without the feature gets HTTP 402 with detail.code
 """
 from __future__ import annotations
 
+import json
 import time
 
 from fastapi import Depends, HTTPException
@@ -84,13 +84,27 @@ def features_of(tier: str) -> list[str]:
     return sorted(PREMIUM_FEATURES) if tier == TIER_PREMIUM else []
 
 
+def features_of_user(username: str) -> list[str]:
+    """Active features, with empty legacy selections treated as full Premium."""
+    sub = db.subscription_get(username)
+    if not sub or sub["tier"] != TIER_PREMIUM or sub["expires_at"] <= time.time():
+        return []
+    encoded = sub.get("features", "")
+    if not encoded:
+        return sorted(PREMIUM_FEATURES)
+    try:
+        selected = json.loads(encoded)
+    except (TypeError, ValueError):
+        return sorted(PREMIUM_FEATURES)
+    return sorted(set(selected) & PREMIUM_FEATURES)
+
+
 def has_feature(username: str, feature: str) -> bool:
     if feature not in PREMIUM_FEATURES:
         return True
     if config.DEV_ALL_FEATURES:
         return True
-    tier, _ = subscription_of(username)
-    return tier == TIER_PREMIUM
+    return feature in features_of_user(username)
 
 
 def require_feature(feature: str):

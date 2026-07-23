@@ -6,6 +6,7 @@ webhook (`POST /api/billing/telegram/webhook`, header `X-Veksha-Bot-Secret`).
 
 All state (account links, subscriptions, payment ledger) lives in the
 backend; the bot is stateless and uses long polling — no public URL needed.
+It exposes `GET /healthz` on `PORT` for deployment readiness checks.
 
 ## Run
 
@@ -23,18 +24,28 @@ build the `t.me/<bot>?start=<code>` deep link) and
 
 ## Commands
 
-- `/start <code>` — link a Veksha account (deep link from the app's
-  Settings → Subscription)
-- `/plans` — plan buttons → Stars invoice (currency `XTR`)
+- `/start <code>` — link a Veksha account and immediately open the invoice
+  for the feature selection made in the extension
+- `/plans` — объясняет, как выбрать функции в Veksha
 - `/status` — current plan and expiry
 - `/paysupport` — refund/support info (required by Telegram for paid bots)
 
-Plans and prices are defined once in `veksha-backend/entitlements.py`
-(`PLANS`) and fetched by the bot via `GET /api/billing/plans`.
+Per-feature prices live in the backend database and are frozen in an opaque
+checkout before the deep link opens. Bot does not offer a separate bundle
+checkout: every new invoice is created only from the selection frozen by the
+backend.
+
+## Railway
+
+Create a service from `/veksha-tgbot` and use `veksha-tgbot/railway.toml`.
+Set `TELEGRAM_BOT_TOKEN`, `VEKSHA_BACKEND_URL` and
+`VEKSHA_BOT_WEBHOOK_SECRET`. Run exactly one replica: Telegram long polling
+must not be consumed concurrently by multiple bot instances.
 
 ## Payment flow
 
-1. `pre_checkout_query` — rejected unless the Telegram account is linked.
+1. `pre_checkout_query` — rejected unless the account, selected feature set,
+   and frozen Stars amount still match the backend checkout.
 2. `successful_payment` — webhook `{"event": "payment", ...}` with the
    `telegram_payment_charge_id`; the backend applies it idempotently and
    extends the subscription.

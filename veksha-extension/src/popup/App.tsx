@@ -19,6 +19,7 @@ import { NativeLangScreen } from "./screens/NativeLangScreen";
 import { OnboardingScreen } from "./screens/OnboardingScreen";
 import { SettingsScreen } from "./screens/SettingsScreen";
 import { StatisticsScreen } from "./screens/StatisticsScreen";
+import { SubscriptionScreen, type SubscriptionIntent } from "./screens/SubscriptionScreen";
 import { TargetLangScreen } from "./screens/TargetLangScreen";
 import { TopicsScreen } from "./screens/TopicsScreen";
 import { TourScreen } from "./screens/TourScreen";
@@ -75,6 +76,7 @@ interface AppCtx {
   openLessonPicker: () => void;
   openLesson: (topic: string) => void;
   requirePremiumFeature: (feature: PremiumFeature, featureName: string) => Promise<boolean>;
+  openSubscription: (intent?: SubscriptionIntent) => void;
   targetLang: string;
   nativeLang: string;
   setLangPair: (targetLang: string, nativeLang: string) => void;
@@ -162,9 +164,8 @@ export default function App() {
   const [reminderOpen, setReminderOpen] = useState<ReminderOverlay>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [billing, setBilling] = useState<api.BillingStatus | null>(null);
-  const [premiumPrompt, setPremiumPrompt] = useState<{ featureName: string } | null>(null);
-  const [premiumOpening, setPremiumOpening] = useState(false);
-  const [premiumError, setPremiumError] = useState<string | null>(null);
+  const [premiumPrompt, setPremiumPrompt] = useState<{ feature: PremiumFeature; featureName: string } | null>(null);
+  const [subscriptionIntent, setSubscriptionIntent] = useState<SubscriptionIntent>({ mode: "new" });
   // Help bubble — pops up on the chat screen, dismissed by any click outside it.
   const [helpVisible, setHelpVisible] = useState(true);
   const helpRef = useRef<HTMLDivElement>(null);
@@ -468,23 +469,15 @@ export default function App() {
       }
     }
     if (current.features.includes(feature)) return true;
-    setPremiumError(null);
-    setPremiumPrompt({ featureName });
+    setPremiumPrompt({ feature, featureName });
     return false;
   }, [billing]);
 
-  async function handlePremiumSubscribe() {
-    setPremiumOpening(true);
-    setPremiumError(null);
-    try {
-      const { url } = await api.createTelegramBillingLink();
-      window.open(url, "_blank", "noopener");
-    } catch {
-      setPremiumError(t.settings_sub_err);
-    } finally {
-      setPremiumOpening(false);
-    }
-  }
+  const openSubscription = useCallback((intent: SubscriptionIntent = { mode: "new" }) => {
+    setPremiumPrompt(null);
+    setSubscriptionIntent(intent);
+    setScreen("subscription");
+  }, []);
 
   const openReminder = useCallback(() => setReminderOpen("reminder"), []);
   const closeReminder = useCallback(() => setReminderOpen(null), []);
@@ -576,6 +569,7 @@ export default function App() {
     openLessonPicker,
     openLesson,
     requirePremiumFeature,
+    openSubscription,
     targetLang,
     nativeLang,
     setLangPair,
@@ -599,6 +593,7 @@ export default function App() {
     dictionary: { title: t.dictionary_title, sub: "" },
     immersion: { title: t.nav_immersion, sub: "" },
     settings: { title: t.nav_settings, sub: t.sub_settings },
+    subscription: { title: t.subscription_title, sub: "" },
     debug: { title: t.debug_title, sub: "" },
   };
   const meta = pageMeta[screen] ?? pageMeta.home;
@@ -609,7 +604,13 @@ export default function App() {
         <div className="shell-main">
           <div className="shell-topbar">
             {screen !== "home" && (
-              <button className="m-back" aria-label="Back" onClick={() => navigateTo("home")}>
+              <button
+                className="m-back"
+                aria-label="Back"
+                onClick={() => navigateTo(
+                  screen === "subscription" && subscriptionIntent.mode !== "add" ? "settings" : "home",
+                )}
+              >
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M19 12H5M12 19l-7-7 7-7" />
                 </svg>
@@ -633,6 +634,9 @@ export default function App() {
             {screen === "immersion" && <ImmersionScreen />}
             {screen === "myWords" && <MyWordsScreen />}
             {screen === "settings" && <SettingsScreen />}
+            {screen === "subscription" && (
+              <SubscriptionScreen intent={subscriptionIntent} onStatusChange={setBilling} />
+            )}
             {screen === "statistics" && <StatisticsScreen />}
             {screen === "debug" && __DEV_BUILD__ && <DebugScreen />}
           </div>
@@ -683,14 +687,15 @@ export default function App() {
               <p className="imm-modal-sub">
                 {t.premium_required_desc.replace("{feature}", premiumPrompt.featureName)}
               </p>
-              <p className="premium-modal-features">{t.settings_sub_desc}</p>
               <div className="premium-modal-actions">
-                <button className="btn btn-gradient" disabled={premiumOpening} onClick={handlePremiumSubscribe}>
-                  {t.settings_sub_connect}
+                <button
+                  className="btn btn-gradient"
+                  onClick={() => openSubscription({ mode: "add", feature: premiumPrompt.feature })}
+                >
+                  {t.common_yes}
                 </button>
-                <button className="btn" onClick={() => setPremiumPrompt(null)}>{t.imm_modal_ok}</button>
+                <button className="btn" onClick={() => setPremiumPrompt(null)}>{t.common_no}</button>
               </div>
-              {premiumError && <p className="onboarding-error">{premiumError}</p>}
             </div>
           </div>
         )}

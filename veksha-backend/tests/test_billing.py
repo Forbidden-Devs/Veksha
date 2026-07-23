@@ -184,6 +184,73 @@ def test_billing_status_endpoint():
     assert "grammar_lens" in out.features
 
 
+def test_feature_checkout_grants_only_selected_features():
+    username = _user("feature_checkout")
+    requested = ["grammar_lens", "dual_subtitles"]
+    link = asyncio.run(billing.api_billing_telegram_link(
+        username, billing.TelegramLinkRequest(features=requested),
+    ))
+    linked = _webhook({"event": "link", "code": link.code, "telegram_user_id": 777})
+    checkout = linked["checkout"]
+    assert set(checkout["features"]) == set(requested)
+    assert checkout["stars_amount"] == 65
+
+    precheckout = _webhook({
+        "event": "precheckout", "telegram_user_id": 777,
+        "plan_id": f"checkout:{link.code}", "stars_amount": 65,
+    })
+    assert precheckout["ok"] is True
+
+    paid = _webhook({
+        "event": "payment", "telegram_user_id": 777,
+        "telegram_payment_charge_id": "feature-charge-1",
+        "plan_id": f"checkout:{link.code}", "stars_amount": 65,
+    })
+    assert set(paid["features"]) == set(requested)
+    assert entitlements.has_feature(username, "grammar_lens") is True
+    assert entitlements.has_feature(username, "dual_subtitles") is True
+    assert entitlements.has_feature(username, "immersion") is False
+
+    # The same Telegram charge remains idempotent, while a second charge
+    # cannot replay an already completed checkout.
+    duplicate = _webhook({
+        "event": "payment", "telegram_user_id": 777,
+        "telegram_payment_charge_id": "feature-charge-1",
+        "plan_id": f"checkout:{link.code}", "stars_amount": 65,
+    })
+    assert duplicate["expires_at"] == paid["expires_at"]
+    try:
+        _webhook({
+            "event": "payment", "telegram_user_id": 777,
+            "telegram_payment_charge_id": "feature-charge-2",
+            "plan_id": f"checkout:{link.code}", "stars_amount": 65,
+        })
+        assert False, "expected completed checkout rejection"
+    except HTTPException as e:
+        assert e.status_code == 400
+
+
+def test_feature_prices_are_stored_and_admin_mutable():
+    catalog = asyncio.run(billing.api_billing_features(_user("catalog")))
+    assert {item.id: item.stars_monthly for item in catalog}["immersion"] == 35
+
+    changed = asyncio.run(billing.api_billing_feature_price_update(
+        "immersion", billing.FeaturePriceUpdateRequest(stars_monthly=37),
+        x_veksha_admin_secret=ADMIN_SECRET,
+    ))
+    assert changed["stars_monthly"] == 37
+    assert {row["feature"]: row["stars_monthly"] for row in db.feature_prices_get()}["immersion"] == 37
+    db.feature_price_set("immersion", 35)
+
+
+def test_subscription_can_be_cancelled():
+    username = _user("cancel")
+    db.subscription_extend(username, entitlements.TIER_PREMIUM, 31, ["immersion"])
+    assert entitlements.has_feature(username, "immersion") is True
+    out = asyncio.run(billing.api_billing_cancel(username))
+    assert out.tier == "free" and out.features == [] and out.expires_at is None
+
+
 # ---------------------------------------------------------------------------
 # Promo codes
 # ---------------------------------------------------------------------------
@@ -209,6 +276,16 @@ def test_promo_create_requires_admin_secret():
         assert e.status_code == 401
 
 
+def test_admin_overview_returns_prices_and_promos():
+    _create_promo("OVERVIEW", 14, max_redemptions=3)
+    out = asyncio.run(billing.api_billing_admin_overview(
+        x_veksha_admin_secret=ADMIN_SECRET,
+    ))
+    assert {row["feature"] for row in out["features"]} == entitlements.PREMIUM_FEATURES
+    promo = next(row for row in out["promos"] if row["code"] == "OVERVIEW")
+    assert promo["days"] == 14 and promo["max_redemptions"] == 3
+
+
 def test_promo_redeem_grants_premium_without_affecting_others():
     other = _user("promo_control")
     assert entitlements.subscription_of(other) == ("free", None)
@@ -226,6 +303,18 @@ def test_promo_redeem_grants_premium_without_affecting_others():
     # Untouched accounts stay on the free tier without a code.
     assert entitlements.subscription_of(other) == ("free", None)
 
+
+def test_promo_can_grant_selected_features_only():
+    username = _user("promo_features")
+    asyncio.run(billing.api_billing_promo_create(
+        billing.PromoCreateRequest(
+            code="GRAMMARONLY", days=10, features=["grammar_lens"],
+        ),
+        x_veksha_admin_secret=ADMIN_SECRET,
+    ))
+    out = _redeem_promo("GRAMMARONLY", username)
+    assert out.ok is True
+    assert entitlements.features_of_user(username) == ["grammar_lens"]
 
 def test_promo_redeem_is_single_use_per_account():
     _create_promo("ONETIME", 7, max_redemptions=5)
