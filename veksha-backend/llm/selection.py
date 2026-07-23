@@ -136,7 +136,7 @@ async def translate_selection(
 
 
 _EXPLAIN_SELECTION_SYSTEM = """\
-You are a language-learning assistant (user level: {level}).
+You are an expert language tutor (user level: {level}).
 
 The user selected the text: "{text}"
 Brief translation they already saw: "{translation}"

@@ -57,7 +57,6 @@ UI_STRINGS: dict[str, str] = {
     "chat_placeholder": "Write a message...",
     "chat_mode_training": "Training",
     "chat_mode_lesson": "Lesson",
-    "chat_mode_assistant": "Assistant",
     "chat_mode_translate": "Translate",
     "chat_explain": "More details",
     "chat_listen": "Listen",
@@ -291,25 +290,18 @@ BACKEND_STRINGS: dict[str, str] = {
     "train_limit_reached": "🏁 Training limit reached ({limit} words). Great job!",
     "train_all_done": "🎉 All words for today reviewed! Done: {n}.",
     "train_all_known": "✅ All words are already learned. Great job!",
-    "train_no_words": "📭 No words to train yet. Translate some text first or ask me to add words.",
+    "train_no_words": "📭 No words to train yet. Translate some text first.",
     "train_intro": "🏋️ <b>Training!</b>\n\n<i>(say 'stop' to quit at any time)</i>",
     "train_correct": "✅ Correct!",
     "train_incorrect": "❌ Incorrect.",
     "education_new_topic": "📚 New topic: <b>{name}</b>\n{desc}",
     "education_interrupted": "⏸ Lesson paused, see you next time!",
-    "education_no_topics": "📭 No lesson topics yet and I couldn't create one.\n\nTry saying: 'Let's study travel vocabulary'.",
-    "unknown_msg": "🤔 I didn't understand. Type a word or phrase — I'll translate it. Or say 'training' / 'lesson'.",
+    "education_no_topics": "📭 No lesson topics yet. Add one from the Topics screen.",
     "training_q_translation": "How do you translate the word **{word}**?",
     "training_q_reverse": "How do you say in English: **{word}**?",
     "training_q_synonym": "Name a synonym for **{word}** in English.",
     "training_q_example": "Write a sentence in English using the word **{word}**.",
     "lesson_no_blocks": "No available blocks for this topic.",
-    # edit_knowledge_base notifications
-    "edit_kb_words_added": "✅ Added {n} word(s) to your vocabulary.",
-    "edit_kb_topics_added": "📚 Added {n} lesson topic(s): {topics}.",
-    "edit_kb_word_not_found": "Could not find word \"{value}\" in your vocabulary.",
-    "edit_kb_topic_not_found": "Could not find topic \"{value}\".",
-    "edit_kb_word_known_not_found": "Could not find word \"{value}\" to mark as learned.",
 }
 
 # ---------------------------------------------------------------------------
@@ -355,7 +347,9 @@ def load_cached(lang: str) -> dict[str, str] | None:
         else:
             return None
     try:
-        return json.loads(path.read_text("utf-8"))
+        cached = json.loads(path.read_text("utf-8"))
+        current_keys = {*UI_STRINGS, *BACKEND_STRINGS, _META_SAME_AS_EN}
+        return {key: value for key, value in cached.items() if key in current_keys}
     except Exception:
         log.exception("[i18n] Failed to read cache for lang=%r", lang)
         return None
@@ -411,8 +405,9 @@ def merge_translations(cached: dict, translated: dict[str, str]) -> dict:
 
 
 def public_catalog(strings: dict) -> dict[str, str]:
-    """Catalogue as served to clients — meta entries stripped."""
-    return {k: v for k, v in strings.items() if not k.startswith("__")}
+    """Serve only current catalogue fields, never obsolete cached UI keys."""
+    current_keys = {*UI_STRINGS, *BACKEND_STRINGS}
+    return {key: value for key, value in strings.items() if key in current_keys}
 
 
 def get_string(key: str, native_lang: str, **kwargs: object) -> str:

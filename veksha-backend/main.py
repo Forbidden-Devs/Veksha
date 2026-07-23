@@ -2,7 +2,6 @@
 main.py — FastAPI app entry point for Veksha backend.
 
 Endpoints are split by domain into api/:
-  api/message.py    — /api/message
   api/translate.py  — /api/translate, /api/quick_translate, /api/explain
   api/settings.py   — /api/settings, /api/reminders, /api/kb_summary
   api/training.py   — /api/training/*
@@ -26,7 +25,7 @@ import db
 from api import auth as api_auth
 from api import billing
 from api import ci_meter
-from api import debug, lesson, message, settings, training
+from api import debug, lesson, settings, training
 from api import i18n as api_i18n
 from api import immersion
 from api import privacy
@@ -92,7 +91,6 @@ async def _unhandled(request: Request, exc: Exception):
 
 app.include_router(api_auth.router)
 app.include_router(billing.router)
-app.include_router(message.router)
 app.include_router(translate.router)
 app.include_router(settings.router)
 app.include_router(training.router)

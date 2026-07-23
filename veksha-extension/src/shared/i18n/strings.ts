@@ -61,7 +61,6 @@ export interface Strings {
   chat_placeholder: string;
   chat_mode_training: string;
   chat_mode_lesson: string;
-  chat_mode_assistant: string;
   chat_mode_translate: string;
   chat_explain: string;
   chat_listen: string;
@@ -279,8 +278,6 @@ export interface Strings {
   tutorial_s1_body: string;
   tutorial_s2_title: string;
   tutorial_s2_body: string;
-  tutorial_s3_title: string;
-  tutorial_s3_body: string;
   tutorial_s4_title: string;
   tutorial_s4_body: string;
   tutorial_train_title: string;
@@ -349,11 +346,6 @@ export interface Strings {
   tour_s7_step: string;
   tour_s7_title: string;
   tour_s7_text: string;
-  // Assistant default greeting + suggestion chips
-  chat_greeting: string;
-  chat_chip_topic: string;
-  chat_chip_words: string;
-  chat_chip_explain: string;
   // Immersion explainer modal (shown on enable until "I already know")
   imm_modal_title: string;
   imm_modal_sub: string;
@@ -366,19 +358,16 @@ export interface Strings {
   imm_modal_known: string;
   imm_modal_ok: string;
   // App shell (sidebar + topbar)
-  nav_assistant: string;
   nav_topics: string;
   nav_training: string;
   nav_immersion: string;
   nav_stats: string;
   nav_settings: string;
   topbar_train: string;
-  sub_assistant: string;
   sub_topics: string;
   sub_stats: string;
   sub_settings: string;
   sidebar_collected: string;  // placeholder: {n}
-  home_ask_placeholder: string;
   // PDF area translate (OCR)
   pdf_translate_region: string;
   pdf_region_hint: string;
@@ -468,7 +457,6 @@ export const EN: Strings = {
   chat_placeholder: "Write a message...",
   chat_mode_training: "Training",
   chat_mode_lesson: "Lesson",
-  chat_mode_assistant: "Assistant",
   chat_mode_translate: "Translate",
   chat_explain: "More details",
   chat_listen: "Listen",
@@ -679,8 +667,6 @@ export const EN: Strings = {
   tutorial_s1_body: "You read. You translate words you don't know. That's it. Behind the scenes Veksha remembers every word you look up, analyzes what you translate, and teaches it back to you at the right moment. Let's show you how.",
   tutorial_s2_title: "Translate anything, anywhere",
   tutorial_s2_body: "Select any word while you read and get its meaning instantly — right in context. There's even a special mode for YouTube subtitles, so you can learn straight from videos. This is the only step you do — and every word you look up is quietly saved to learn later.",
-  tutorial_s3_title: "An assistant that does the work for you",
-  tutorial_s3_body: "Veksha analyzes what you translate and look up — the words and patterns that actually matter for you. The assistant chat turns that into action: it suggests words worth learning, adds them to your vocabulary, and builds study topics. You don't put anything together; just ask, and it's done.",
   tutorial_s4_title: "A chat made only for translation",
   tutorial_s4_body: "When you want to translate freely, the dedicated translation chat is always there. Type a word, phrase, or sentence — get a clean, in-context answer. And every translation is remembered and analyzed, quietly becoming something to review later.",
   tutorial_train_title: "Your words come back when it counts",
@@ -747,10 +733,6 @@ export const EN: Strings = {
   tour_s7_step: "Done",
   tour_s7_title: "Use me|as your translator",
   tour_s7_text: "That's all you do. Everything else — remembering, reminding, training — I handle myself.",
-  chat_greeting: "Hi 👋 I can put together a study topic or toss in words for training. What shall we do?",
-  chat_chip_topic: "Build a marketing topic",
-  chat_chip_words: "Give me 6 words about coffee",
-  chat_chip_explain: "Explain the difference in/on/at",
   imm_modal_title: "Immersion mode is on",
   imm_modal_sub: "Some words on the pages you read are replaced with the language you're learning — right as you read.",
   imm_card1_title: "Only part of the text",
@@ -761,19 +743,16 @@ export const EN: Strings = {
   imm_card3_desc: "One step above what you already know — that's where language sticks.",
   imm_modal_known: "I already know",
   imm_modal_ok: "Got it",
-  nav_assistant: "Assistant",
   nav_topics: "Topics",
   nav_training: "Training",
   nav_immersion: "Immersion",
   nav_stats: "Statistics",
   nav_settings: "Settings",
   topbar_train: "Train",
-  sub_assistant: "Ask anything, translate, or generate words to learn",
   sub_topics: "Learn by topics — blocks with practice questions",
   sub_stats: "How much you've already remembered without writing",
   sub_settings: "Languages, level, reminders",
   sidebar_collected: "{n} words collected — no writing out",
-  home_ask_placeholder: "Ask or type anything…",
   pdf_translate_region: "Translate area",
   pdf_region_hint: "Drag to select an area, then click the icon",
   pdf_no_text: "No text recognized in this area.",

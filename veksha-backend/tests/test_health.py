@@ -13,6 +13,10 @@ def test_healthcheck_route_is_registered():
     assert any(route.path == "/healthz" for route in main.app.routes)
 
 
+def test_removed_chat_route_is_not_registered():
+    assert all(getattr(route, "path", None) != "/api/message" for route in main.app.routes)
+
+
 def test_healthcheck_reports_running_revision(monkeypatch):
     monkeypatch.setenv("RAILWAY_GIT_COMMIT_SHA", "test-revision")
     result = asyncio.run(main.healthz())

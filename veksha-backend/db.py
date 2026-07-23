@@ -1,4 +1,4 @@
-"""db.py — PostgreSQL storage for users, per-user KB, and chat history.
+"""db.py — PostgreSQL storage for users and per-user knowledge bases.
 
 The KB is stored as a JSON document per user — normalizing
 words/topics into tables is deferred until the FSRS rework changes the word
@@ -45,13 +45,6 @@ def _conn():
         )
         conn.execute(
             """CREATE TABLE IF NOT EXISTS kb (
-                   username TEXT PRIMARY KEY,
-                   data     TEXT NOT NULL,
-                   updated  DOUBLE PRECISION NOT NULL
-               )"""
-        )
-        conn.execute(
-            """CREATE TABLE IF NOT EXISTS chat_history (
                    username TEXT PRIMARY KEY,
                    data     TEXT NOT NULL,
                    updated  DOUBLE PRECISION NOT NULL
@@ -323,7 +316,6 @@ def user_has_account_activity(username: str) -> bool:
     """Whether an account has durable activity that must prevent automatic
     identity recovery/reassignment."""
     checks = (
-        ("chat_history", "username"),
         ("review_log", "username"),
         ("word_freq", "username"),
         ("user_languages", "username"),
@@ -459,10 +451,9 @@ def oauth_flow_take(poll_key: str, mode: str, username: Optional[str] = None) ->
 
 
 def delete_user_data(username: str) -> None:
-    """Wipe KB, chat history, review log and word frequency (keeps the account/token)."""
+    """Wipe KB, review log and word frequency (keeps the account/token)."""
     with _conn() as c:
         c.execute("DELETE FROM kb WHERE username=%s", (username,))
-        c.execute("DELETE FROM chat_history WHERE username=%s", (username,))
         c.execute("DELETE FROM review_log WHERE username=%s", (username,))
         c.execute("DELETE FROM word_freq WHERE username=%s", (username,))
 
@@ -524,7 +515,7 @@ def purge_all_users() -> None:
     """Destructively remove every account and all account-owned data."""
     with _conn() as c:
         for table in (
-            "google_oauth_flows", "identities", "review_log", "word_freq", "chat_history",
+            "google_oauth_flows", "identities", "review_log", "word_freq",
             "kb", "user_languages", "user_settings",
             "subscriptions", "telegram_links", "telegram_link_codes",
             "star_payments", "promo_redemptions", "promo_codes", "users",
@@ -533,7 +524,7 @@ def purge_all_users() -> None:
 
 
 # ---------------------------------------------------------------------------
-# KB / chat history documents
+# Knowledge-base documents
 # ---------------------------------------------------------------------------
 
 def kb_get(username: str) -> Optional[dict]:
@@ -967,23 +958,3 @@ def star_payment_exists(charge_id: str) -> bool:
     return _conn().execute(
         "SELECT 1 FROM star_payments WHERE telegram_payment_charge_id=%s", (charge_id,)
     ).fetchone() is not None
-
-
-def history_get(username: str) -> list[dict]:
-    row = _conn().execute("SELECT data FROM chat_history WHERE username=%s", (username,)).fetchone()
-    if row is None:
-        return []
-    try:
-        loaded: Any = json.loads(row[0])
-        return loaded if isinstance(loaded, list) else []
-    except Exception:
-        return []
-
-
-def history_set(username: str, history: list[dict]) -> None:
-    with _conn() as c:
-        c.execute(
-            "INSERT INTO chat_history (username, data, updated) VALUES (%s,%s,%s) "
-            "ON CONFLICT (username) DO UPDATE SET data=excluded.data, updated=excluded.updated",
-            (username, json.dumps(history, ensure_ascii=False), time.time()),
-        )

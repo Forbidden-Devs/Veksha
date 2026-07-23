@@ -3,11 +3,12 @@ llm/_base.py — base OpenAI HTTP client and shared helpers.
 """
 from __future__ import annotations
 
+import json
 import logging
 
 import aiohttp
 
-from config import OPENAI_API_KEY, OPENAI_MODEL, OPENAI_SMART_MODEL
+from config import OPENAI_API_KEY, OPENAI_MODEL
 
 log = logging.getLogger(__name__)
 
@@ -58,8 +59,7 @@ def _clean_json(raw: str) -> str:
     return raw.replace("```json", "").replace("```", "").strip()
 
 
-import json as _json
-_decoder = _json.JSONDecoder()
+_decoder = json.JSONDecoder()
 
 
 def _parse_json(raw: str) -> dict:

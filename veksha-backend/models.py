@@ -98,28 +98,6 @@ class Patch:
 
 
 # ---------------------------------------------------------------------------
-# Input Processor output (spec 3.1 / 3.4 — JSON schema)
-# ---------------------------------------------------------------------------
-
-Action = Optional[Literal["edit_knowledge_base"]]
-
-
-@dataclass
-class ProcessorResult:
-    action: Action
-    value: str              # user-facing reply
-    kb_request: str = ""   # for edit_knowledge_base: what to add/modify (passed to update_knowledge_base)
-
-    @staticmethod
-    def from_dict(d: dict) -> "ProcessorResult":
-        return ProcessorResult(
-            action=d.get("action"),
-            value=d.get("value", ""),
-            kb_request=d.get("kb_request", ""),
-        )
-
-
-# ---------------------------------------------------------------------------
 # UserSettings — user preferences (English level, goals, general prompt)
 # ---------------------------------------------------------------------------
 

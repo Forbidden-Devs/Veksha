@@ -9,7 +9,7 @@ import { LessonWindow } from "./overlays/LessonWindow";
 import { ReminderCard } from "./overlays/ReminderCard";
 import { TopicPickerOverlay } from "./overlays/TopicPickerOverlay";
 import { TrainingWindow } from "./overlays/TrainingWindow";
-import { ChatScreen } from "./screens/ChatScreen";
+import { TranslatorScreen } from "./screens/TranslatorScreen";
 import { HomeScreen } from "./screens/HomeScreen";
 import { ImmersionScreen } from "./screens/ImmersionScreen";
 import { DebugScreen } from "./screens/DebugScreen";
@@ -83,10 +83,6 @@ interface AppCtx {
   setLangPair: (targetLang: string, nativeLang: string) => void;
   /** Clear local credentials and return to onboarding (login/new profile). */
   signOut: () => Promise<void>;
-  /** Jump to the chat screen and send this text as the first message. */
-  sendToChat: (text: string) => void;
-  /** ChatScreen picks up a pending home-screen message (once). */
-  takePendingChat: () => string | null;
 }
 
 const AppContext = createContext<AppCtx | null>(null);
@@ -167,9 +163,6 @@ export default function App() {
   const [billing, setBilling] = useState<api.BillingStatus | null>(null);
   const [premiumPrompt, setPremiumPrompt] = useState<{ feature: PremiumFeature; featureName: string } | null>(null);
   const [subscriptionIntent, setSubscriptionIntent] = useState<SubscriptionIntent>({ mode: "new" });
-  // Help bubble — pops up on the chat screen, dismissed by any click outside it.
-  const [helpVisible, setHelpVisible] = useState(true);
-  const helpRef = useRef<HTMLDivElement>(null);
   const webShortcutHandled = useRef(false);
   const [initialRouteReady, setInitialRouteReady] = useState(false);
 
@@ -197,8 +190,6 @@ export default function App() {
   const [obStep, setObStep] = useState<ObStep>("native_lang");
   // Post-registration tour (8 animated scenes)
   const [showTour, setShowTour] = useState(false);
-  // Message typed on the home screen, delivered to ChatScreen on mount.
-  const pendingChatRef = useRef<string | null>(null);
   const [pendingNativeLang, setPendingNativeLang] = useState(detected);
   const [pendingUsername, setPendingUsername] = useState("");
   const [pendingDisplayName, setPendingDisplayName] = useState("");
@@ -321,7 +312,8 @@ export default function App() {
       } else if (saved) {
         // Reopened shortly after a focus-loss close — resume where they were.
         setSettingsMode(saved.settingsMode);
-        setScreen(saved.screen);
+        // Older builds persisted the former combined screen as "chat".
+        setScreen((saved.screen as string) === "chat" ? "translator" : saved.screen);
       } else {
         setScreen("home");
       }
@@ -459,18 +451,6 @@ export default function App() {
     setShowTour(isExtension); // the tour demonstrates extension-only capture features
   }
 
-  const startTour = useCallback(() => {
-    setHelpVisible(false);
-    setShowTour(true);
-  }, []);
-
-  // Any click that lands outside the help bubble dismisses it.
-  const handleAppClick = useCallback((e: React.MouseEvent) => {
-    if (helpRef.current && !helpRef.current.contains(e.target as Node)) {
-      setHelpVisible(false);
-    }
-  }, []);
-
   const navigateTo = useCallback((s: Screen, opts?: { settingsMode?: SettingsMode }) => {
     if (opts?.settingsMode) setSettingsMode(opts.settingsMode);
     setScreen(s);
@@ -605,20 +585,11 @@ export default function App() {
     nativeLang,
     setLangPair,
     signOut,
-    sendToChat: (text: string) => {
-      pendingChatRef.current = text;
-      navigateTo("chat");
-    },
-    takePendingChat: () => {
-      const text = pendingChatRef.current;
-      pendingChatRef.current = null;
-      return text;
-    },
   };
 
   const pageMeta: Record<string, { title: string; sub: string }> = {
     home: { title: "veksha", sub: "" },
-    chat: { title: t.nav_assistant, sub: t.sub_assistant },
+    translator: { title: t.chat_mode_translate, sub: "" },
     topics: { title: t.nav_topics, sub: t.sub_topics },
     statistics: { title: t.nav_stats, sub: t.sub_stats },
     dictionary: { title: t.dictionary_title, sub: "" },
@@ -631,7 +602,7 @@ export default function App() {
 
   return (
     <AppContext.Provider value={ctx}>
-      <div className={`app${isExtension ? "" : " app-web"}`} onClick={handleAppClick}>
+      <div className={`app${isExtension ? "" : " app-web"}`}>
         <div className="shell-main">
           <div className="shell-topbar">
             {screen !== "home" && (
@@ -659,7 +630,7 @@ export default function App() {
 
           <div className="shell-content">
             {screen === "home" && <HomeScreen />}
-            {screen === "chat" && <ChatScreen />}
+            {screen === "translator" && <TranslatorScreen />}
             {screen === "topics" && <TopicsScreen />}
             {screen === "dictionary" && <DictionaryScreen />}
             {screen === "immersion" && <ImmersionScreen />}
@@ -684,8 +655,8 @@ export default function App() {
             <button onClick={openTraining}>
               <span className="web-nav-practice" aria-hidden="true">↻</span><small>{t.nav_training}</small>
             </button>
-            <button className={screen === "chat" ? "is-active" : ""} onClick={() => navigateTo("chat")}>
-              <span aria-hidden="true">✦</span><small>{t.nav_assistant}</small>
+            <button className={screen === "translator" ? "is-active" : ""} onClick={() => navigateTo("translator")}>
+              <span aria-hidden="true">文</span><small>{t.chat_mode_translate}</small>
             </button>
             <button className={screen === "settings" ? "is-active" : ""} onClick={() => navigateTo("settings", { settingsMode: "menu" })}>
               <span aria-hidden="true">⚙</span><small>{t.nav_settings}</small>
@@ -694,21 +665,6 @@ export default function App() {
         )}
 
         {showTour && <TourScreen onFinish={() => setShowTour(false)} />}
-
-        {isExtension && screen === "chat" && helpVisible && !showTour && (
-          <div className="help-bubble" ref={helpRef}>
-            <div className="help-bubble-row">
-              <div className="help-bubble-icon">🪄</div>
-              <div className="help-bubble-text">
-                <strong className="help-bubble-title">{t.help_title}</strong>
-                <span className="help-bubble-sub">{t.help_body}</span>
-              </div>
-            </div>
-            <button className="btn btn-gradient help-bubble-btn" onClick={startTour}>
-              {t.help_start}
-            </button>
-          </div>
-        )}
 
         {reminderOpen === "reminder" && <ReminderCard />}
 

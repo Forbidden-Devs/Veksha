@@ -13,7 +13,7 @@ DATA_DIR: str = os.getenv(
 )
 
 # PostgreSQL is the durable store for accounts, learning state, billing data,
-# chat history, and reusable LLM output caches. Railway injects DATABASE_URL
+# review history and reusable LLM output caches. Railway injects DATABASE_URL
 # automatically when a PostgreSQL service is attached to the backend.
 DATABASE_URL = os.getenv("DATABASE_URL", "")
 DATABASE_POOL_MIN_SIZE = int(os.getenv("DATABASE_POOL_MIN_SIZE", "1"))
