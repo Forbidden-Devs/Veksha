@@ -284,6 +284,7 @@ def test_admin_overview_returns_prices_and_promos():
     assert {row["feature"] for row in out["features"]} == entitlements.PREMIUM_FEATURES
     promo = next(row for row in out["promos"] if row["code"] == "OVERVIEW")
     assert promo["days"] == 14 and promo["max_redemptions"] == 3
+    assert "all_time" in out["ai_usage"] and "users" in out["ai_usage"]
 
 
 def test_promo_redeem_grants_premium_without_affecting_others():

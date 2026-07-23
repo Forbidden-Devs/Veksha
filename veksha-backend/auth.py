@@ -14,6 +14,7 @@ from typing import Annotated, Optional
 from fastapi import Depends, Header, HTTPException, WebSocket
 
 import db
+from usage_context import set_usage_user
 
 log = logging.getLogger(__name__)
 
@@ -28,6 +29,7 @@ async def current_user(authorization: Optional[str] = Header(None)) -> str:
     username = db.token_owner(token)
     if username is None:
         raise HTTPException(status_code=401, detail="Invalid token.")
+    set_usage_user(username)
     return username
 
 
@@ -61,4 +63,5 @@ async def ws_current_user(websocket: WebSocket) -> Optional[str]:
         except Exception:
             pass
         return None
+    set_usage_user(username)
     return username

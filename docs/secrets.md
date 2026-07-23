@@ -9,6 +9,8 @@
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_OAUTH_REDIRECT_URI` — OAuth.
 - `TELEGRAM_BOT_USERNAME`, `TELEGRAM_BOT_WEBHOOK_SECRET` — интеграция с ботом.
 - `ADMIN_API_SECRET` — временная защита служебных backend endpoint.
+- `ADMIN_DATABASE_SECRET` — дополнительный секрет SQL-консоли админки. Должен
+  отличаться от `ADMIN_API_SECRET`; без него консоль отключена.
 - `DATABASE_URL` — подключение к PostgreSQL (при reference-подключении Railway
   передаёт его из PostgreSQL service).
 - `VEKSHA_DATA_DIR` — каталог для runtime-файлов; persistent volume для БД
@@ -32,7 +34,8 @@ Runtime-секреты остаются в Railway. Они не дублирую
 
 Административный секрет не встраивается в admin bundle: сотрудник вводит
 значение `ADMIN_API_SECRET` при входе, после чего оно живёт только в текущей
-вкладке браузера.
+вкладке браузера. `ADMIN_DATABASE_SECRET` также вводится вручную непосредственно
+перед диагностическим запросом и не сохраняется в bundle или браузерном хранилище.
 
 ## GitHub Environments
 

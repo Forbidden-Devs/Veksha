@@ -322,7 +322,7 @@ async def api_billing_telegram_webhook(
         )
         if applied:
             selected_features = plan.get("features")
-            expires_at = db.subscription_extend(
+            db.subscription_extend(
                 username, plan["tier"], plan["days"], selected_features,
             )
             if checkout_code:
@@ -367,6 +367,7 @@ async def api_billing_admin_overview(
     return {
         "features": db.feature_prices_get(),
         "promos": db.promo_codes_get(),
+        "ai_usage": db.ai_usage_stats(),
     }
 
 
