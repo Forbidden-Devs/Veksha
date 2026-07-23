@@ -24,6 +24,7 @@ import { SubscriptionScreen, type SubscriptionIntent } from "./screens/Subscript
 import { TargetLangScreen } from "./screens/TargetLangScreen";
 import { TopicsScreen } from "./screens/TopicsScreen";
 import { TourScreen } from "./screens/TourScreen";
+import { QuizletScreen } from "./screens/QuizletScreen";
 
 // ---------------------------------------------------------------------------
 // Content-script relay — sends a message, reinjecting the script if stale
@@ -669,6 +670,7 @@ export default function App() {
               <SubscriptionScreen intent={subscriptionIntent} onStatusChange={setBilling} />
             )}
             {screen === "statistics" && <StatisticsScreen />}
+            {screen === "quizlet" && <QuizletScreen />}
             {screen === "debug" && __DEV_BUILD__ && <DebugScreen />}
           </div>
         </div>

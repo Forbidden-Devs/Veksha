@@ -1,5 +1,7 @@
 import { CONFIG } from "./config";
 import { onStorageKeyChanged, runtimeSend, storageGet } from "./platform";
+
+export const BACKEND_URL = CONFIG.BACKEND_URL;
 import type {
   KBSummaryData,
   LessonTopicSummary,
@@ -508,4 +510,28 @@ export function getLessonTopics(username: string): Promise<{ topics: LessonTopic
 
 export function createLessonTopic(username: string, name: string): Promise<LessonTopicSummary> {
   return _post("/api/lesson-topics", { name });
+}
+
+// ---------------------------------------------------------------------------
+// Quizlet export
+// ---------------------------------------------------------------------------
+
+export interface QuizletExportStatus {
+  total_words: number;
+  exported_words: number;
+  unexported_words: number;
+  last_export_at?: number;
+}
+
+export function quizletExportStatus(username: string): Promise<QuizletExportStatus> {
+  return _get("/api/quizlet/export-status");
+}
+
+export function call(path: string, method: string, body: unknown, username: string): Promise<unknown> {
+  if (method === "GET") {
+    return _get(path);
+  } else if (method === "POST") {
+    return _post(path, body as Record<string, unknown>);
+  }
+  throw new Error(`Unsupported method: ${method}`);
 }
