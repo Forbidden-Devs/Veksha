@@ -239,6 +239,7 @@
   "dictionary_sort_oldest": "პირველად ძველი",
   "dictionary_no_results": "შესაბამისი სიტყვები ვერ მოიძებნა.",
   "grammar_patterns_title": "გრამატიკა კონტექსტში",
+  "language_search_no_results": "ენა ვერ მოიძებნა. სცადეთ სხვა სახელი.",
   "feature_guide_open": "როგორ მუშაობს",
   "feature_guide_close": "გასაგებია",
   "ci_meter_guide_title": "როგორ მუშაობს CI მეტრი",

@@ -229,6 +229,7 @@
   "dictionary_sort_oldest": "सबसे पुराने पहले",
   "dictionary_no_results": "कोई मेल खाने वाले शब्द नहीं मिले।",
   "grammar_patterns_title": "संदर्भ में व्याकरण",
+  "language_search_no_results": "कोई भाषा नहीं मिली। कोई दूसरा नाम आज़माएँ।",
   "feature_guide_open": "यह कैसे काम करता है",
   "feature_guide_close": "समझ गया",
   "ci_meter_guide_title": "CI मीटर कैसे काम करता है",

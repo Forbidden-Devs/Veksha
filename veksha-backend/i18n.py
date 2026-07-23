@@ -224,6 +224,7 @@ UI_STRINGS: dict[str, str] = {
     "target_lang_title": "What do you want to learn?",
     "target_lang_subtitle": "Choose one or more languages you want to study",
     "target_lang_start": "Let's start!",
+    "language_search_no_results": "No languages found. Try another name.",
     # Level setup (step 4 of onboarding)
     "level_setup_title": "Almost there!",
     "level_setup_subtitle": "Tell us your level so we can pick the right tasks for you.",

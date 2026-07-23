@@ -356,6 +356,7 @@
   "dictionary_sort_oldest": "Najstarsze na górze",
   "dictionary_no_results": "Nie znaleziono pasujących słów.",
   "grammar_patterns_title": "Gramatyka w kontekście",
+  "language_search_no_results": "Nie znaleziono języków. Spróbuj innej nazwy.",
   "feature_guide_open": "Jak to działa",
   "feature_guide_close": "Jasne",
   "ci_meter_guide_title": "Jak działa wskaźnik CI",

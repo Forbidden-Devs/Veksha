@@ -228,6 +228,7 @@
   "dictionary_sort_oldest": "En eski önce",
   "dictionary_no_results": "Eşleşen kelime bulunamadı.",
   "grammar_patterns_title": "Bağlamda dilbilgisi",
+  "language_search_no_results": "Dil bulunamadı. Farklı bir ad deneyin.",
   "feature_guide_open": "Nasıl çalışır",
   "feature_guide_close": "Anladım",
   "ci_meter_guide_title": "CI göstergesi nasıl çalışır",

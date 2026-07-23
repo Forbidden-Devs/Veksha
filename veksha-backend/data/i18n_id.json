@@ -234,6 +234,7 @@
   "dictionary_sort_oldest": "Terlama dulu",
   "dictionary_no_results": "Tidak ada kata yang cocok.",
   "grammar_patterns_title": "Tata bahasa dalam konteks",
+  "language_search_no_results": "Tidak ada bahasa ditemukan. Coba nama lain.",
   "feature_guide_open": "Cara kerjanya",
   "feature_guide_close": "Mengerti",
   "ci_meter_guide_title": "Cara kerja meter CI",

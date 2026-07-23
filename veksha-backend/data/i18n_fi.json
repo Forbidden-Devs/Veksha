@@ -228,6 +228,7 @@
   "dictionary_sort_oldest": "Vanhimmat ensin",
   "dictionary_no_results": "Vastaavia sanoja ei löytynyt.",
   "grammar_patterns_title": "Kielioppi kontekstissa",
+  "language_search_no_results": "Kieliä ei löytynyt. Kokeile toista nimeä.",
   "feature_guide_open": "Miten se toimii",
   "feature_guide_close": "Selvä",
   "ci_meter_guide_title": "Miten CI-mittari toimii",

@@ -377,6 +377,7 @@
   "dictionary_sort_oldest": "Älteste zuerst",
   "dictionary_no_results": "Keine passenden Wörter gefunden.",
   "grammar_patterns_title": "Grammatik im Kontext",
+  "language_search_no_results": "Keine Sprachen gefunden. Versuche einen anderen Namen.",
   "feature_guide_open": "So funktioniert’s",
   "feature_guide_close": "Verstanden",
   "ci_meter_guide_title": "So funktioniert der CI-Meter",

@@ -227,6 +227,7 @@
   "dictionary_sort_oldest": "Πρώτα τα παλαιότερα",
   "dictionary_no_results": "Δεν βρέθηκαν αντίστοιχες λέξεις.",
   "grammar_patterns_title": "Γραμματική στο πλαίσιο",
+  "language_search_no_results": "Δεν βρέθηκαν γλώσσες. Δοκιμάστε άλλο όνομα.",
   "feature_guide_open": "Πώς λειτουργεί",
   "feature_guide_close": "Το κατάλαβα",
   "ci_meter_guide_title": "Πώς λειτουργεί ο μετρητής CI",

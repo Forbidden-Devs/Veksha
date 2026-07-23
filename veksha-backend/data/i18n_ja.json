@@ -355,6 +355,7 @@
   "dictionary_sort_oldest": "古い順",
   "dictionary_no_results": "一致する単語が見つかりません。",
   "grammar_patterns_title": "文脈で学ぶ文法",
+  "language_search_no_results": "言語が見つかりませんでした。別の名前を試してください。",
   "feature_guide_open": "使い方",
   "feature_guide_close": "了解",
   "ci_meter_guide_title": "CIメーターの仕組み",

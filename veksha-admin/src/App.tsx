@@ -1,4 +1,4 @@
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useMemo, useState } from "react";
 import { AdminApiError, adminApi, type AdminOverview, type PromoDraft } from "./api";
 
 const FEATURE_NAMES: Record<string, string> = {
@@ -21,7 +21,7 @@ function readableError(error: unknown): string {
 }
 
 export default function App() {
-  const [secret, setSecret] = useState(() => sessionStorage.getItem("veksha-admin-secret") || "");
+  const [secret, setSecret] = useState("");
   const [overview, setOverview] = useState<AdminOverview | null>(null);
   const [prices, setPrices] = useState<Record<string, number>>({});
   const [promo, setPromo] = useState<PromoDraft>(emptyPromo);
@@ -33,19 +33,15 @@ export default function App() {
     setMessage("");
     try {
       const data = await adminApi.overview(authSecret);
-      sessionStorage.setItem("veksha-admin-secret", authSecret);
       setOverview(data);
       setPrices(Object.fromEntries(data.features.map((item) => [item.feature, item.stars_monthly])));
     } catch (error) {
-      sessionStorage.removeItem("veksha-admin-secret");
       setOverview(null);
       setMessage(readableError(error));
     } finally {
       setBusy(false);
     }
   }, []);
-
-  useEffect(() => { if (secret) void load(secret); }, []); // restore this tab's session once
 
   const monthlyTotal = useMemo(
     () => Object.values(prices).reduce((sum, price) => sum + (Number(price) || 0), 0),
@@ -89,7 +85,6 @@ export default function App() {
   }
 
   function signOut() {
-    sessionStorage.removeItem("veksha-admin-secret");
     setSecret("");
     setOverview(null);
     setMessage("");

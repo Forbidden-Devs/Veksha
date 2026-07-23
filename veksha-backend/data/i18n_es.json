@@ -355,6 +355,7 @@
   "dictionary_sort_oldest": "Más antiguas primero",
   "dictionary_no_results": "No se encontraron palabras coincidentes.",
   "grammar_patterns_title": "Gramática en contexto",
+  "language_search_no_results": "No se encontraron idiomas. Prueba con otro nombre.",
   "feature_guide_open": "Cómo funciona",
   "feature_guide_close": "Entendido",
   "ci_meter_guide_title": "Cómo funciona el medidor CI",

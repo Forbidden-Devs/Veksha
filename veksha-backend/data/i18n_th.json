@@ -231,6 +231,7 @@
   "dictionary_sort_oldest": "เก่าสุดก่อน",
   "dictionary_no_results": "ไม่พบคำที่ตรงกัน",
   "grammar_patterns_title": "ไวยากรณ์ในบริบท",
+  "language_search_no_results": "ไม่พบภาษา ลองใช้ชื่ออื่น",
   "feature_guide_open": "ทำงานอย่างไร",
   "feature_guide_close": "เข้าใจแล้ว",
   "ci_meter_guide_title": "CI meter ทำงานอย่างไร",

@@ -357,6 +357,7 @@
   "dictionary_sort_oldest": "Les plus anciens d’abord",
   "dictionary_no_results": "Aucun mot correspondant trouvé.",
   "grammar_patterns_title": "Grammaire en contexte",
+  "language_search_no_results": "Aucune langue trouvée. Essayez un autre nom.",
   "feature_guide_open": "Comment ça marche",
   "feature_guide_close": "Compris",
   "ci_meter_guide_title": "Comment fonctionne l’indicateur CI",

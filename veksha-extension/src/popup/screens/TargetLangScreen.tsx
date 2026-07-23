@@ -70,10 +70,12 @@ export function TargetLangScreen({
             )}
             type="button"
           >
-            <span className="lang-code">{lang.code.toUpperCase()}</span>
             <span className="lang-card-name">{lang.name}</span>
           </button>
         ))}
+        {visibleOptions.length === 0 && (
+          <p className="lang-pick-empty">{t.language_search_no_results}</p>
+        )}
       </div>
 
       <div className="lang-pick-footer">
