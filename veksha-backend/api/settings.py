@@ -11,6 +11,7 @@ api/settings.py — settings, reminders, and KB summary endpoints.
 from __future__ import annotations
 
 import logging
+import os
 import time
 
 from fastapi import APIRouter, HTTPException
@@ -21,6 +22,11 @@ import db
 from auth import CurrentUser
 from config import REMINDER_MIN_WORDS, REVIEW_WINDOW_HOURS, SCHEDULER_INTERVAL_MINUTES
 from cefr import BANDS, band_index, level_to_cefr
+from learning_core_v2.dictionary import DictionaryLookupRequest
+from learning_core_v2.lesson import TopicReviewPolicy
+from learning_core_v2_adapters.lesson import UserStorageLessonRepository
+from learning_core_v2_adapters.openai_responses import LanguageProviderError
+from learning_core_v2_adapters.runtime import build_dictionary_enrichment
 from models import VALID_ENGLISH_LEVELS, Patch, UserSettings
 from storage import UserStorage, get_storage
 
@@ -126,14 +132,45 @@ class SentenceMiningRequest(BaseModel):
 
 
 def _topic_needing_review(storage: UserStorage) -> str | None:
-    """First lesson topic with generated blocks that are not yet mastered."""
-    from lesson import MASTERY_THRESHOLD, _block_has_content
+    topics = UserStorageLessonRepository(storage).topics()
+    return TopicReviewPolicy().first_due(topics)
 
-    for topic in storage.lesson_topics:
-        ready = [b for b in topic.blocks if _block_has_content(b)]
-        if ready and any(b.mastery_score < MASTERY_THRESHOLD for b in ready):
-            return topic.name
-    return None
+
+def _dictionary_v2_enabled() -> bool:
+    return os.getenv("VEKSHA_CORE_V2_DICTIONARY_ENABLED", "0").lower() in {
+        "1",
+        "true",
+        "yes",
+    }
+
+
+async def _dictionary_details(storage: UserStorage, entry) -> dict[str, str]:
+    if not _dictionary_v2_enabled():
+        return await llm.translate_selection(
+            entry.name,
+            storage.settings.target_lang,
+            storage.settings.native_lang,
+            level=storage.settings.english_level or "intermediate",
+        )
+
+    try:
+        result = await build_dictionary_enrichment().execute(
+            DictionaryLookupRequest(
+                term=entry.name,
+                learning_language=storage.settings.target_lang,
+                native_language=storage.settings.native_lang,
+                proficiency=storage.settings.english_level or "intermediate",
+                context=entry.context or "",
+            )
+        )
+    except (LanguageProviderError, ValueError) as exc:
+        log.warning("core-v2 dictionary enrichment unavailable: %s", exc)
+        return {}
+    return {
+        "headword": result.headword,
+        "translation": result.translation,
+        "transcription": result.transcription,
+    }
 
 
 def _due_word_names(storage: UserStorage, limit: int = 8) -> list[str]:
@@ -326,12 +363,7 @@ async def api_add_kb_word(req: AddWordRequest, username: CurrentUser) -> WordEnt
         raise HTTPException(status_code=400, detail="Could not add word.")
 
     if not entry.translation or not entry.transcription:
-        result = await llm.translate_selection(
-            entry.name,
-            storage.settings.target_lang,
-            storage.settings.native_lang,
-            level=storage.settings.english_level or "intermediate",
-        )
+        result = await _dictionary_details(storage, entry)
         if not result.get("translation"):
             if created:
                 storage.apply_kb_changes([Patch(type="delete_word", value=entry.name)])
@@ -360,12 +392,9 @@ async def api_kb_word_details(word: str, username: CurrentUser) -> WordEntryResp
     if entry is None:
         raise HTTPException(status_code=404, detail="Word not found.")
     if not entry.translation or not entry.transcription:
-        result = await llm.translate_selection(
-            entry.name,
-            storage.settings.target_lang,
-            storage.settings.native_lang,
-            level=storage.settings.english_level or "intermediate",
-        )
+        result = await _dictionary_details(storage, entry)
+        if not result.get("translation"):
+            raise HTTPException(status_code=502, detail="Could not generate dictionary details.")
         entry.translation = result.get("translation", "")
         entry.transcription = result.get("transcription", "")
         storage.save()

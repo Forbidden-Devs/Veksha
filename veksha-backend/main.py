@@ -28,7 +28,6 @@ from api import billing
 from api import ci_meter
 from api import debug, settings
 from api import i18n as api_i18n
-from api import immersion
 from api import privacy
 from api import grammar_lens
 from api import quizlet
@@ -50,6 +49,11 @@ if os.getenv("VEKSHA_CORE_V2_LESSON_ENABLED", "0").lower() in {"1", "true", "yes
     from api import lesson_v2 as lesson
 else:
     from api import lesson
+
+if os.getenv("VEKSHA_CORE_V2_IMMERSION_ENABLED", "0").lower() in {"1", "true", "yes"}:
+    from api import immersion_v2 as immersion
+else:
+    from api import immersion
 
 logging.basicConfig(
     level=getattr(logging, LOG_LEVEL.upper(), logging.INFO),

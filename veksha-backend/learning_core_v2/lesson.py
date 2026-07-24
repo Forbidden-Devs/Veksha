@@ -127,6 +127,22 @@ class TopicSummary:
     last_reviewed_at: float | None
 
 
+class TopicReviewPolicy:
+    def __init__(self, target_mastery: float = 0.8) -> None:
+        if not 0.0 < target_mastery <= 1.0:
+            raise ValueError("target mastery must be between zero and one")
+        self._target_mastery = target_mastery
+
+    def needs_review(self, topic: LessonTopic) -> bool:
+        ready = [unit for unit in topic.units if unit.material is not None]
+        return bool(ready) and any(
+            unit.mastery < self._target_mastery for unit in ready
+        )
+
+    def first_due(self, topics: Sequence[LessonTopic]) -> str | None:
+        return next((topic.name for topic in topics if self.needs_review(topic)), None)
+
+
 class LessonAuthor(Protocol):
     async def propose_units(self, request: CurriculumRequest) -> Sequence[str]: ...
 

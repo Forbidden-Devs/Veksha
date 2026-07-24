@@ -5,10 +5,13 @@ from __future__ import annotations
 import logging
 import os
 from collections.abc import Mapping
+from functools import lru_cache
 from typing import Any
 
 import db
+from learning_core_v2.dictionary import EnrichDictionaryEntry
 from learning_core_v2.explanation import ExplainText
+from learning_core_v2.immersion import AnalyzeImmersion
 from learning_core_v2.lesson import (
     BuildLessonQuestion,
     CheckLessonAnswer,
@@ -20,6 +23,7 @@ from storage import UserStorage
 from usage_context import get_usage_user
 
 from .openai_responses import OpenAIResponsesLanguageProvider
+from .immersion import CachedImmersionProvider
 from .practice import RandomChoiceSource, UuidIdentifierSource
 from .vocabulary import UserStorageVocabularySink
 
@@ -62,6 +66,11 @@ def build_translate_text(storage: UserStorage) -> TranslateText:
     return TranslateText(provider, UserStorageVocabularySink(storage))
 
 
+def build_dictionary_enrichment() -> EnrichDictionaryEntry:
+    provider = _provider("VEKSHA_CORE_V2_DICTIONARY_MODEL", "gpt-5.6-luna")
+    return EnrichDictionaryEntry(provider)
+
+
 def build_explain_text() -> ExplainText:
     return ExplainText(_provider("VEKSHA_CORE_V2_TRANSLATION_MODEL", "gpt-5.6-luna"))
 
@@ -81,3 +90,9 @@ def build_lesson_services() -> tuple[
         BuildLessonQuestion(provider, UuidIdentifierSource()),
         CheckLessonAnswer(provider),
     )
+
+
+@lru_cache(maxsize=1)
+def build_immersion_analyzer() -> AnalyzeImmersion:
+    provider = _provider("VEKSHA_CORE_V2_IMMERSION_MODEL", "gpt-5.6-luna")
+    return AnalyzeImmersion(CachedImmersionProvider(provider))

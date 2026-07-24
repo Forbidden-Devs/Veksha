@@ -27,6 +27,11 @@ The independently rewritten translation core is disabled by default. Enable it
 with `VEKSHA_CORE_V2_TRANSLATION_ENABLED=1`; its model can be selected with
 `VEKSHA_CORE_V2_TRANSLATION_MODEL` (default `gpt-5.6-luna`).
 
+Dictionary-card enrichment for `/api/kb_word` and `/api/kb_word_details` is a
+separate rewritten use case. Enable it with
+`VEKSHA_CORE_V2_DICTIONARY_ENABLED=1` and select its model through
+`VEKSHA_CORE_V2_DICTIONARY_MODEL` (default `gpt-5.6-luna`).
+
 The rewritten training core is controlled independently with
 `VEKSHA_CORE_V2_TRAINING_ENABLED=1`. Its Responses API model is configured via
 `VEKSHA_CORE_V2_TRAINING_MODEL` (default `gpt-5.6-terra`).
@@ -37,6 +42,11 @@ The rewritten topic-lesson core keeps `/api/lesson-topics` and
 `VEKSHA_CORE_V2_LESSON_MODEL` (default `gpt-5.6-terra`). Existing lesson data
 is mapped at the storage boundary, so the flag can be rolled back without a
 data migration.
+
+The independently rewritten page-immersion analyzer is enabled with
+`VEKSHA_CORE_V2_IMMERSION_ENABLED=1`; its model is configured through
+`VEKSHA_CORE_V2_IMMERSION_MODEL` (default `gpt-5.6-luna`). The endpoint remains
+`POST /api/immersion/analyze`, including its existing premium entitlement.
 
 Local runs grant premium-gated development features automatically, so dual
 subtitles, Grammar Lens, and immersion can be exercised without Telegram

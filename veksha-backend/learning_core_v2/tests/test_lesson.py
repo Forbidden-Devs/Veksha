@@ -16,6 +16,7 @@ from learning_core_v2.lesson import (
     QuestionSchedule,
     RecordedAnswer,
     RecordLessonResults,
+    TopicReviewPolicy,
     create_topic,
     summarize_topic,
 )
@@ -174,6 +175,19 @@ def test_summary_counts_only_authored_units():
 
     assert summarize_topic(topic).unit_count == 1
     assert summarize_topic(topic).mastery == 0.8
+
+
+def test_review_policy_ignores_empty_topics_and_returns_first_due_topic():
+    material = LessonMaterial(
+        "Title", "Intro", (LessonSection("Rule", text="Explanation"),)
+    )
+    topics = [
+        LessonTopic("Empty"),
+        LessonTopic("Mastered", units=(LessonUnit("A", material, 0.9),)),
+        LessonTopic("Due", units=(LessonUnit("B", material, 0.4),)),
+    ]
+
+    assert TopicReviewPolicy().first_due(topics) == "Due"
 
 
 @pytest.mark.asyncio

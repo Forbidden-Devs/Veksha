@@ -14,12 +14,17 @@ import asyncio
 import logging
 
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel, Field
 
 import llm
 from auth import CurrentUser
 from cefr import LEVEL_TO_CEFR as _LEVEL_TO_CEFR
 from entitlements import require_feature
+from api.immersion_contract import (
+    ImmersionBlock,
+    ImmersionRequest,
+    ImmersionResponse,
+    ImmersionSentence,
+)
 from storage import get_storage
 
 log = logging.getLogger(__name__)
@@ -30,24 +35,6 @@ router = APIRouter()
 _MIN_BLOCK_CHARS = 30
 _MAX_BLOCKS = 60
 _CONCURRENCY = 6
-
-
-class ImmersionRequest(BaseModel):
-    blocks: list[str] = Field(default_factory=list)
-
-
-class ImmersionSentence(BaseModel):
-    text: str
-    cefr: str = ""
-    translation: str = ""
-
-
-class ImmersionBlock(BaseModel):
-    sentences: list[ImmersionSentence] = Field(default_factory=list)
-
-
-class ImmersionResponse(BaseModel):
-    blocks: list[ImmersionBlock]
 
 
 @router.post(

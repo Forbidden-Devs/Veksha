@@ -6,7 +6,9 @@ from typing import Any
 
 import pytest
 
+from learning_core_v2.dictionary import DictionaryLookupRequest
 from learning_core_v2.explanation import ExplanationRequest
+from learning_core_v2.immersion import BlockAnalysisRequest, ImmersionContext
 from learning_core_v2.lesson import (
     AnswerRequest as LessonAnswerRequest,
     CurriculumRequest,
@@ -96,6 +98,34 @@ async def test_translation_uses_responses_structured_output_contract():
     assert payload["text"]["format"]["strict"] is True
     assert json.loads(payload["input"])["text"] == "run"
     assert usage[0][0:2] == ("core_v2_translate", "test-model")
+
+
+@pytest.mark.asyncio
+async def test_dictionary_lookup_has_its_own_structured_contract():
+    transport = StubTransport(
+        completed_response(
+            {
+                "headword": "serendipity",
+                "translation": "счастливая случайность",
+                "transcription": "/ˌserənˈdɪpəti/",
+            }
+        )
+    )
+    provider = OpenAIResponsesLanguageProvider(
+        api_key="test-key", model="test-model", transport=transport
+    )
+
+    result = await provider.lookup_dictionary_entry(
+        DictionaryLookupRequest("serendipity", "en", "ru", "a2", "A discovery")
+    )
+
+    assert result.headword == "serendipity"
+    assert result.translation == "счастливая случайность"
+    payload = transport.calls[0]["payload"]
+    assert payload["text"]["format"]["name"] == "dictionary_entry"
+    sent = json.loads(payload["input"])
+    assert sent["term"] == "serendipity"
+    assert sent["context"] == "A discovery"
 
 
 @pytest.mark.asyncio
@@ -288,3 +318,36 @@ async def test_lesson_question_and_check_include_server_material():
     assert json.loads(check_transport.calls[0]["payload"]["input"])["learner_answer"] == (
         "Hello, I am Sam"
     )
+
+
+@pytest.mark.asyncio
+async def test_immersion_analysis_uses_exact_text_structured_contract():
+    transport = StubTransport(
+        completed_response(
+            {
+                "sentences": [
+                    {
+                        "text": "A useful sentence.",
+                        "cefr": "B1",
+                        "translation": "Полезное предложение.",
+                    }
+                ]
+            }
+        )
+    )
+    provider = OpenAIResponsesLanguageProvider(
+        api_key="test-key", model="test-model", transport=transport
+    )
+
+    result = await provider.analyze_block(
+        BlockAnalysisRequest(
+            "A useful sentence.", ImmersionContext("en", "ru", "B1")
+        )
+    )
+
+    assert result[0].translation == "Полезное предложение."
+    payload = transport.calls[0]["payload"]
+    assert payload["text"]["format"]["name"] == "immersion_analysis"
+    sent = json.loads(payload["input"])
+    assert sent["page_block"] == "A useful sentence."
+    assert sent["learner_cefr"] == "B1"
