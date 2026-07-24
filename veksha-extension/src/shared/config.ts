@@ -4,7 +4,7 @@ export const CONFIG = {
   // The standalone web build can point previews/staging at another backend
   // through VITE_BACKEND_URL. Extension builds keep their fixed dev/prod pair.
   BACKEND_URL: import.meta.env.VITE_BACKEND_URL
-    || (__DEV_BUILD__ ? "http://127.0.0.1:8000" : "https://veksha.app"),
+    || (__DEV_BUILD__ ? "http://127.0.0.1:8000" : "https://api.veksha.app"),
   // Public Google OAuth client id ("Web application" type). Authentication
   // itself runs through the backend HTTPS callback; this value only enables
   // the UI and must match the backend's GOOGLE_CLIENT_ID.

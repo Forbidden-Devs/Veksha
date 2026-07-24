@@ -23,7 +23,7 @@
     "contextMenus"
   ],
   "host_permissions": [
-    "https://veksha.app/*",
+    "https://api.veksha.app/*",
     "<all_urls>"
   ],
   "{{firefox}}.browser_specific_settings": {
