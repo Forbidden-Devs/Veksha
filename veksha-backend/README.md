@@ -23,6 +23,21 @@ Optional env vars: `OPENAI_MODEL`, `OPENAI_SMART_MODEL`, `REDIS_URL`
 `VEKSHA_DATA_DIR` (downloaded runtime files), `CORS_ALLOW_ORIGINS`,
 `VEKSHA_DEBUG_API`, `DATABASE_POOL_MIN_SIZE`, `DATABASE_POOL_MAX_SIZE`.
 
+The independently rewritten translation core is disabled by default. Enable it
+with `VEKSHA_CORE_V2_TRANSLATION_ENABLED=1`; its model can be selected with
+`VEKSHA_CORE_V2_TRANSLATION_MODEL` (default `gpt-5.6-luna`).
+
+The rewritten training core is controlled independently with
+`VEKSHA_CORE_V2_TRAINING_ENABLED=1`. Its Responses API model is configured via
+`VEKSHA_CORE_V2_TRAINING_MODEL` (default `gpt-5.6-terra`).
+
+The rewritten topic-lesson core keeps `/api/lesson-topics` and
+`/api/lesson/ws` unchanged and is enabled separately with
+`VEKSHA_CORE_V2_LESSON_ENABLED=1`. Select its model with
+`VEKSHA_CORE_V2_LESSON_MODEL` (default `gpt-5.6-terra`). Existing lesson data
+is mapped at the storage boundary, so the flag can be rolled back without a
+data migration.
+
 Local runs grant premium-gated development features automatically, so dual
 subtitles, Grammar Lens, and immersion can be exercised without Telegram
 billing. Set `VEKSHA_DEV_ALL_FEATURES=0` to test the real free-tier gates.

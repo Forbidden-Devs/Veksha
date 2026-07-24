@@ -14,11 +14,10 @@
   --vk-danger: #9f332d;
 }
 
-/* Light is also the fallback and the fixed tutorial appearance. */
+/* Light is also the fallback appearance. */
 :root,
 :root[data-veksha-theme="light"],
-html[data-vk-theme="light"],
-.tut-window[data-tutorial-palette="forest"] {
+html[data-vk-theme="light"] {
   color-scheme: light;
   --m-bg: var(--vk-paper);
   --m-surface: color-mix(in srgb, var(--vk-paper) 18%, white);
@@ -65,8 +64,7 @@ html[data-vk-theme="dark"] {
 }
 
 /* Compatibility aliases used by the older component stylesheet. */
-:root,
-.tut-window[data-tutorial-palette="forest"] {
+:root {
   --av-bg: var(--m-bg);
   --av-surface: var(--m-surface);
   --av-ink: var(--m-fg);

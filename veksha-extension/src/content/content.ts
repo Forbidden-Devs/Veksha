@@ -2,7 +2,7 @@ import { CONFIG } from "../shared/config";
 import { LANGUAGES } from "../shared/languages";
 import { quickTranslate, explain, getSettings } from "../shared/api";
 import { canSpeak, speakText } from "../shared/speech";
-import { showTrainingOverlay, showLessonOverlay, showTopicPickerOverlay, showTutorialOverlay } from "./overlay";
+import { showTrainingOverlay, showLessonOverlay, showTopicPickerOverlay } from "./overlay";
 import { initYouTubeStudy, YT_STUDY_GUARD_SELECTOR } from "./youtube";
 import { initImmersion, setImmersionEnabled } from "./immersion";
 import { initCiMeter, setCiMeterEnabled } from "./cimeter";
@@ -832,8 +832,6 @@ chrome.runtime.onMessage.addListener((msg: Record<string, unknown>) => {
     showTrainingOverlay(msg.username);
   } else if (msg.type === "VEKSHA_OPEN_LESSON_PICKER" && typeof msg.username === "string") {
     showTopicPickerOverlay(msg.username);
-  } else if (msg.type === "VEKSHA_OPEN_TUTORIAL" && typeof msg.username === "string") {
-    showTutorialOverlay(msg.username);
   } else if (
     msg.type === "VEKSHA_OPEN_LESSON" &&
     typeof msg.username === "string" &&

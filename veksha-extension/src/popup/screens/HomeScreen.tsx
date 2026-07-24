@@ -253,8 +253,8 @@ export function HomeScreen() {
       <section className="screen screen-home web-home">
         <div className="web-home-hero">
           <div className="web-home-kicker">{languageName} · {targetLang.toUpperCase()}</div>
-          <h1>{t.tour_s0_title.replace("|", " ")}</h1>
-          <p>{t.tutorial_s4_body}</p>
+          <h1>{t.home_hero_title.replace("|", " ")}</h1>
+          <p>{t.home_translation_body}</p>
           <form className="web-quick-add" onSubmit={handleQuickTranslate}>
             <input
               type="text"
@@ -272,7 +272,7 @@ export function HomeScreen() {
           </form>
           {quickResult && (
             <button className="web-quick-result" type="button" onClick={() => navigateTo("dictionary")}>
-              <span>{quickResult}</span><small>{t.tour_saved}</small>
+              <span>{quickResult}</span><small>{t.home_quick_saved}</small>
             </button>
           )}
           {quickError && <p className="web-quick-error">Translation unavailable. Try again.</p>}

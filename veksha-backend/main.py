@@ -26,16 +26,30 @@ from api import auth as api_auth
 from api import admin
 from api import billing
 from api import ci_meter
-from api import debug, lesson, settings, training
+from api import debug, settings
 from api import i18n as api_i18n
 from api import immersion
 from api import privacy
 from api import grammar_lens
 from api import quizlet
 from api import subtitles as api_subtitles
-from api import translate
 from api import vocab_frequency
 from config import CORS_ALLOW_ORIGINS, DEBUG_API, HOST, LOG_LEVEL, PORT, RELOAD
+
+if os.getenv("VEKSHA_CORE_V2_TRANSLATION_ENABLED", "0").lower() in {"1", "true", "yes"}:
+    from api import translate_v2 as translate
+else:
+    from api import translate
+
+if os.getenv("VEKSHA_CORE_V2_TRAINING_ENABLED", "0").lower() in {"1", "true", "yes"}:
+    from api import training_v2 as training
+else:
+    from api import training
+
+if os.getenv("VEKSHA_CORE_V2_LESSON_ENABLED", "0").lower() in {"1", "true", "yes"}:
+    from api import lesson_v2 as lesson
+else:
+    from api import lesson
 
 logging.basicConfig(
     level=getattr(logging, LOG_LEVEL.upper(), logging.INFO),

@@ -284,83 +284,11 @@ export interface Strings {
   topics_blocks: string;      // placeholder: {n}
   topics_placeholder: string;
   topics_add: string;
-  // First-run tutorial
-  tutorial_skip: string;
-  tutorial_back: string;
-  tutorial_next: string;
-  tutorial_start: string;
-  tutorial_s1_title: string;
-  tutorial_s1_body: string;
-  tutorial_s2_title: string;
-  tutorial_s2_body: string;
-  tutorial_s4_title: string;
-  tutorial_s4_body: string;
-  tutorial_train_title: string;
-  tutorial_train_body: string;
-  tutorial_imm_title: string;
-  tutorial_imm_lead: string;
-  tutorial_imm_heading: string;
-  tutorial_imm_p1_term: string;
-  tutorial_imm_p1_desc: string;
-  tutorial_imm_p2_term: string;
-  tutorial_imm_p2_desc: string;
-  tutorial_imm_p3_term: string;
-  tutorial_imm_p3_desc: string;
-  tutorial_imm_p4_term: string;
-  tutorial_imm_p4_desc: string;
-  tutorial_s7_title: string;
-  tutorial_s7_body: string;
-  tutorial_s8_title: string;
-  tutorial_s8_body: string;
-  help_title: string;
-  help_body: string;
-  help_start: string;
-  // Post-registration tour (8 animated scenes). Titles use "|" to split the
-  // gradient-accented second line.
-  tour_skip: string;
-  tour_back: string;
-  tour_next: string;
-  tour_next_first: string;
-  tour_start: string;
-  tour_replay: string;
-  tour_kb: string;
-  tour_saved: string;
-  tour_region_tag: string;
-  tour_tt_title: string;
-  tour_tt_sub: string;
-  tour_q_badge: string;
-  tour_q_ctx: string;
-  tour_q_fb: string;
-  tour_s0_step: string;
-  tour_s0_title: string;
-  tour_s0_text: string;
-  tour_s1_step: string;
-  tour_s1_title: string;
-  tour_s1_text: string;
-  tour_s1_tag: string;
-  tour_s2_step: string;
-  tour_s2_title: string;
-  tour_s2_text: string;
-  tour_s2_tag: string;
-  tour_s3_step: string;
-  tour_s3_title: string;
-  tour_s3_text: string;
-  tour_s3_tag: string;
-  tour_s4_step: string;
-  tour_s4_title: string;
-  tour_s4_text: string;
-  tour_s4_tag: string;
-  tour_s5_step: string;
-  tour_s5_title: string;
-  tour_s5_text: string;
-  tour_s5_tag: string;
-  tour_s6_step: string;
-  tour_s6_title: string;
-  tour_s6_text: string;
-  tour_s6_tag: string;
-  tour_s7_step: string;
-  tour_s7_title: string;
-  tour_s7_text: string;
+  // Shared copy retained by setup and the web home screen.
+  common_back: string;
+  home_translation_body: string;
+  home_quick_saved: string;
+  home_hero_title: string;
   // Immersion explainer modal (shown on enable until "I already know")
   imm_modal_title: string;
   imm_modal_sub: string;
@@ -689,80 +617,10 @@ export const EN: Strings = {
   topics_blocks: "{n} block(s)",
   topics_placeholder: "e.g. Tenses, Medical terminology…",
   topics_add: "Add",
-  tutorial_skip: "Skip",
-  tutorial_back: "Back",
-  tutorial_next: "Next",
-  tutorial_start: "Start reading",
-  tutorial_s1_title: "Just translate. Veksha does the learning.",
-  tutorial_s1_body: "You read. You translate words you don't know. That's it. Behind the scenes Veksha remembers every word you look up, analyzes what you translate, and teaches it back to you at the right moment. Let's show you how.",
-  tutorial_s2_title: "Translate anything, anywhere",
-  tutorial_s2_body: "Select any word while you read and get its meaning instantly — right in context. There's even a special mode for YouTube subtitles, so you can learn straight from videos. This is the only step you do — and every word you look up is quietly saved to learn later.",
-  tutorial_s4_title: "A chat made only for translation",
-  tutorial_s4_body: "When you want to translate freely, the dedicated translation chat is always there. Type a word, phrase, or sentence — get a clean, in-context answer. And every translation is remembered and analyzed, quietly becoming something to review later.",
-  tutorial_train_title: "Your words come back when it counts",
-  tutorial_train_body: "Every word you translate is saved and tracked for you. Training brings each one back with spaced repetition — right before you'd forget it — so it actually sticks. No flashcards to make: Veksha already knows which words you need and exactly when.",
-  tutorial_imm_title: "One tap into immersion",
-  tutorial_imm_lead: "Veksha replaces part of the sentences and words you read with their version in the language you're learning. Only a portion of the text is swapped — right where it sits — so the page stays easy to read while new language slips in naturally.",
-  tutorial_imm_heading: "What immersion actually does",
-  tutorial_imm_p1_term: "Only part of the text",
-  tutorial_imm_p1_desc: "Veksha swaps in just some phrases — not the whole page — so reading stays natural while new language slips in.",
-  tutorial_imm_p2_term: "Comprehensible input",
-  tutorial_imm_p2_desc: "You already understand the rest, so each translated bit clicks from context instead of rote memorization.",
-  tutorial_imm_p3_term: "Tuned to your level (i + 1)",
-  tutorial_imm_p3_desc: "What gets translated sits just one step above what you know — the sweet spot where a language truly sticks.",
-  tutorial_imm_p4_term: "Adaptive, in the background",
-  tutorial_imm_p4_desc: "It leans on the words you've saved and how well you know them, growing bolder as you improve — while you just keep reading.",
-  tutorial_s7_title: "You translate. Veksha teaches.",
-  tutorial_s7_body: "That's the whole idea. Everything you look up is remembered, analyzed, and brought back at the right moment. Start reading — Veksha handles the rest.",
-  tutorial_s8_title: "Go deep on any topic",
-  tutorial_s8_body: "Open the menu to add a topic — “Tenses”, “Medical terminology”, anything — or pick one that's ready. Veksha builds a structured lesson from it: clear blocks you move through at your own pace, with hands-on practice questions checked in real time.",
-  help_title: "Need a hand?",
-  help_body: "Take a quick tour of Veksha",
-  help_start: "Start tour",
-  tour_skip: "Skip",
-  tour_back: "Back",
-  tour_next: "Next",
-  tour_next_first: "Show me how it works",
-  tour_start: "Start →",
-  tour_replay: "↻ replay animation",
-  tour_kb: "Knowledge base",
-  tour_saved: "✓ saved for review",
-  tour_region_tag: "Select an area to translate",
-  tour_tt_title: "Time to review!",
-  tour_tt_sub: "5 words are ready for training",
-  tour_q_badge: "Reverse translation",
-  tour_q_ctx: "You saw it in the video: majestic fjords — now say it in the language you're learning.",
-  tour_q_fb: "✓ Correct! The word moves into long-term memory.",
-  tour_s0_step: "Welcome",
-  tour_s0_title: "Remember words,|without writing them out",
-  tour_s0_text: "You simply use a handy translator — Veksha makes sure you remember everything.",
-  tour_s1_step: "Step 1 · Text",
-  tour_s1_title: "Select text —|it's already yours",
-  tour_s1_text: "Select it like ordinary text — the contextual translator appears instantly. And the word quietly flies into your knowledge base for review.",
-  tour_s1_tag: "🚀 Flies to the base automatically",
-  tour_s2_step: "Step 2 · Smart pick",
-  tour_s2_title: "Select a paragraph —|we keep only the hard part",
-  tour_s2_text: "From a big text Veksha pulls out the words that match your level. Easy ones are skipped, hard ones are saved.",
-  tour_s2_tag: "🎯 Words at your level",
-  tour_s3_step: "Step 3 · YouTube",
-  tour_s3_title: "Watch a video —|translate the subtitles",
-  tour_s3_text: "Tap a word right in the subtitles. It gets translated and lands in your base — same as when reading.",
-  tour_s3_tag: "▶ Works in subtitles",
-  tour_s4_step: "Step 4 · Documents",
-  tour_s4_title: "Even in PDF —|via the menu",
-  tour_s4_text: "Select text, right-click → “Translate in Veksha”. Works even in documents and books.",
-  tour_s4_tag: "📄 An item in the context menu",
-  tour_s5_step: "Step 5 · Images",
-  tour_s5_title: "Text on a picture?|Select the area",
-  tour_s5_text: "Draw a box right over the image — Veksha reads the text and translates it. Posters, memes, screenshots.",
-  tour_s5_tag: "🖼️ Area selection over a photo",
-  tour_s6_step: "Step 6 · Review",
-  tour_s6_title: "And then —|it reminds you itself",
-  tour_s6_text: "At the right moment Veksha calls you to a short training and asks exactly what you translated.",
-  tour_s6_tag: "🔁 Brings words back at the right moment",
-  tour_s7_step: "Done",
-  tour_s7_title: "Use me|as your translator",
-  tour_s7_text: "That's all you do. Everything else — remembering, reminding, training — I handle myself.",
+  common_back: "Back",
+  home_translation_body: "When you want to translate freely, the dedicated translation chat is always there. Type a word, phrase, or sentence — get a clean, in-context answer. And every translation is remembered and analyzed, quietly becoming something to review later.",
+  home_quick_saved: "✓ saved for review",
+  home_hero_title: "Remember words,|without writing them out",
   imm_modal_title: "Immersion mode is on",
   imm_modal_sub: "Some words on the pages you read are replaced with the language you're learning — right as you read.",
   imm_card1_title: "Only part of the text",
