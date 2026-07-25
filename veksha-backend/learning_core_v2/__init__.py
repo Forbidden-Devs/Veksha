@@ -33,6 +33,11 @@ from .practice import (
     PracticeTask,
     PracticeWord,
 )
+from .sentence_mining import (
+    BuildSentenceMiningCard,
+    SentenceMiningCard,
+    SentenceMiningRequest,
+)
 from .translation import (
     TextTranslation,
     TranslateText,
@@ -68,6 +73,9 @@ __all__ = [
     "PracticeQueue",
     "PracticeTask",
     "PracticeWord",
+    "BuildSentenceMiningCard",
+    "SentenceMiningCard",
+    "SentenceMiningRequest",
     "TextTranslation",
     "TranslateText",
     "TranslationRequest",

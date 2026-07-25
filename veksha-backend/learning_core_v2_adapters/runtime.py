@@ -18,6 +18,7 @@ from learning_core_v2.lesson import (
     PrepareLesson,
 )
 from learning_core_v2.practice import BuildPracticeTask, CheckPracticeAnswer
+from learning_core_v2.sentence_mining import BuildSentenceMiningCard
 from learning_core_v2.translation import TranslateText
 from storage import UserStorage
 from usage_context import get_usage_user
@@ -69,6 +70,11 @@ def build_translate_text(storage: UserStorage) -> TranslateText:
 def build_dictionary_enrichment() -> EnrichDictionaryEntry:
     provider = _provider("VEKSHA_CORE_V2_DICTIONARY_MODEL", "gpt-5.6-luna")
     return EnrichDictionaryEntry(provider)
+
+
+def build_sentence_mining() -> BuildSentenceMiningCard:
+    provider = _provider("VEKSHA_CORE_V2_SENTENCE_MINING_MODEL", "gpt-5.6-luna")
+    return BuildSentenceMiningCard(provider)
 
 
 def build_explain_text() -> ExplainText:

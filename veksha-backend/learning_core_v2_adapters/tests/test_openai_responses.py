@@ -25,6 +25,7 @@ from learning_core_v2.practice import (
     PracticeWord,
     TaskDraftRequest,
 )
+from learning_core_v2.sentence_mining import SentenceMiningRequest
 from learning_core_v2.translation import TranslationRequest
 from learning_core_v2_adapters.openai_responses import (
     LanguageProviderError,
@@ -351,3 +352,39 @@ async def test_immersion_analysis_uses_exact_text_structured_contract():
     sent = json.loads(payload["input"])
     assert sent["page_block"] == "A useful sentence."
     assert sent["learner_cefr"] == "B1"
+
+
+@pytest.mark.asyncio
+async def test_sentence_mining_uses_level_and_count_structured_contract():
+    transport = StubTransport(
+        completed_response(
+            {
+                "examples": [
+                    {
+                        "sentence": "I make coffee.",
+                        "translation": "Я готовлю кофе.",
+                        "cefr": "A2",
+                    }
+                ],
+                "mnemonic": "Remember make.",
+                "collocations": [
+                    {"text": "make progress", "translation": "добиваться прогресса"}
+                ],
+            }
+        )
+    )
+    provider = OpenAIResponsesLanguageProvider(
+        api_key="test-key", model="test-model", transport=transport
+    )
+    request = SentenceMiningRequest(
+        "make", "делать", "I make coffee.", "en", "ru", "A2", "B1", 2, 1
+    )
+
+    result = await provider.build_sentence_mining_card(request)
+
+    assert result.examples[0].cefr == "A2"
+    payload = transport.calls[0]["payload"]
+    assert payload["text"]["format"]["name"] == "sentence_mining_card"
+    sent = json.loads(payload["input"])
+    assert sent["learner_example_count"] == 2
+    assert sent["stretch_example_count"] == 1

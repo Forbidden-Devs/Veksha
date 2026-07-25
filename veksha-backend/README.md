@@ -32,6 +32,10 @@ separate rewritten use case. Enable it with
 `VEKSHA_CORE_V2_DICTIONARY_ENABLED=1` and select its model through
 `VEKSHA_CORE_V2_DICTIONARY_MODEL` (default `gpt-5.6-luna`).
 
+Sentence Mining cards for `/api/kb_word_mine` are independently controlled by
+`VEKSHA_CORE_V2_SENTENCE_MINING_ENABLED=1`. Configure their model with
+`VEKSHA_CORE_V2_SENTENCE_MINING_MODEL` (default `gpt-5.6-luna`).
+
 The rewritten training core is controlled independently with
 `VEKSHA_CORE_V2_TRAINING_ENABLED=1`. Its Responses API model is configured via
 `VEKSHA_CORE_V2_TRAINING_MODEL` (default `gpt-5.6-terra`).
