@@ -11,6 +11,8 @@ COPY veksha-web ./veksha-web
 COPY veksha-extension/src ./veksha-extension/src
 COPY veksha-extension/source/back.png ./veksha-extension/source/back.png
 
+ARG VITE_BACKEND_URL=https://api.veksha.app
+ENV VITE_BACKEND_URL=$VITE_BACKEND_URL
 RUN npm --prefix veksha-web run build
 
 FROM node:22-alpine AS runtime
