@@ -4,7 +4,7 @@ import { LANGUAGES } from "../languages";
 import { storageGet, storageSet } from "../platform";
 import { EN, type Strings } from "./strings";
 
-const CACHE_PREFIX = "vk_i18n_";
+const CACHE_PREFIX = "vk_i18n_v3_";
 const CURRENT_LANG_KEY = "vk_i18n_current";
 
 /** Browser UI language if we support it, otherwise "en". Used on first launch

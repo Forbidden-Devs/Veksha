@@ -76,27 +76,36 @@ export interface Strings {
   ci_meter_verdict_too_easy: string;
   ci_meter_verdict_too_hard: string;
   ci_meter_verdict_close: string;
+  reading_coach_projection: string;
+  reading_coach_obstacles: string;
+  reading_coach_learning: string;
+  reading_coach_inbox: string;
+  reading_coach_prepare: string;
+  reading_coach_preparing: string;
+  reading_coach_added: string;
+  reading_coach_failed: string;
+  reading_coach_ready: string;
   feature_guide_open: string;
   feature_guide_close: string;
-  ci_meter_guide_title: string;
-  ci_meter_guide_intro: string;
-  ci_meter_guide_step_1: string;
-  ci_meter_guide_step_2: string;
-  ci_meter_guide_step_3: string;
-  ci_meter_guide_tip: string;
+  reading_coach_guide_title: string;
+  reading_coach_guide_intro: string;
+  reading_coach_guide_step_1: string;
+  reading_coach_guide_step_2: string;
+  reading_coach_guide_step_3: string;
+  reading_coach_guide_tip: string;
   dual_subtitles_guide_title: string;
   dual_subtitles_guide_intro: string;
   dual_subtitles_guide_step_1: string;
   dual_subtitles_guide_step_2: string;
   dual_subtitles_guide_step_3: string;
   dual_subtitles_guide_tip: string;
-  grammar_lens_title: string;
-  grammar_lens_on: string;
-  grammar_lens_off: string;
-  grammar_lens_loading: string;
-  grammar_lens_disable: string;
-  grammar_lens_collapse: string;
-  grammar_lens_expand: string;
+  grammar_memory_title: string;
+  grammar_memory_on: string;
+  grammar_memory_off: string;
+  grammar_memory_scanning: string;
+  grammar_memory_disable: string;
+  grammar_memory_collapse: string;
+  grammar_memory_expand: string;
   grammar_hint_select: string;
   grammar_analyze_selection: string;
   grammar_analysis_loading: string;
@@ -104,6 +113,18 @@ export interface Strings {
   grammar_analysis_empty: string;
   grammar_roles_title: string;
   grammar_patterns_title: string;
+  grammar_memory_patterns: string;
+  grammar_memory_loading: string;
+  grammar_memory_empty: string;
+  grammar_memory_seen: string;
+  grammar_memory_mastered: string;
+  grammar_memory_reopen: string;
+  grammar_memory_guide_title: string;
+  grammar_memory_guide_intro: string;
+  grammar_memory_guide_step_1: string;
+  grammar_memory_guide_step_2: string;
+  grammar_memory_guide_step_3: string;
+  grammar_memory_guide_tip: string;
   grammar_role_subject: string;
   grammar_role_verb: string;
   grammar_role_object: string;
@@ -121,6 +142,13 @@ export interface Strings {
   my_words_add: string;
   my_words_added: string;
   my_words_add_error: string;
+  vocabulary_inbox_title: string;
+  vocabulary_inbox_empty: string;
+  vocabulary_inbox_seen: string;
+  vocabulary_inbox_learn: string;
+  vocabulary_inbox_known: string;
+  vocabulary_inbox_ignore: string;
+  vocabulary_inbox_error: string;
   my_words_guide_step_1: string;
   my_words_guide_step_2: string;
   my_words_guide_step_3: string;
@@ -288,6 +316,7 @@ export interface Strings {
   common_back: string;
   home_translation_body: string;
   home_quick_saved: string;
+  home_quick_suggested: string;
   home_hero_title: string;
   // Immersion explainer modal (shown on enable until "I already know")
   imm_modal_title: string;
@@ -406,8 +435,8 @@ export const EN: Strings = {
   immersion_on: "Immersion on",
   immersion_off: "Immerse page",
   immersion_hint: "Sprinkle level-appropriate sentences in your target language right into the pages you read.",
-  ci_meter_on: "CI meter on",
-  ci_meter_off: "CI meter",
+  ci_meter_on: "Reading Coach on",
+  ci_meter_off: "Reading Coach",
   ci_meter_loading: "Checking readability…",
   ci_meter_refine: "Refine with AI",
   ci_meter_badge_known: "{pct}% known · {cefr}",
@@ -415,27 +444,36 @@ export const EN: Strings = {
   ci_meter_verdict_too_easy: "You know this well already — good for fluency practice, but little new vocabulary.",
   ci_meter_verdict_too_hard: "This may be too difficult right now — expect to look up a lot of words.",
   ci_meter_verdict_close: "Close to your level.",
+  reading_coach_projection: "Learn these words: {before}% → {after}% coverage",
+  reading_coach_obstacles: "Words blocking this page",
+  reading_coach_learning: "learning",
+  reading_coach_inbox: "in inbox",
+  reading_coach_prepare: "Prepare selected words",
+  reading_coach_preparing: "Preparing…",
+  reading_coach_added: "{n} word(s) added to your Inbox",
+  reading_coach_failed: "Could not prepare words",
+  reading_coach_ready: "No high-impact blockers found. Start reading!",
   feature_guide_open: "How it works",
   feature_guide_close: "Got it",
-  ci_meter_guide_title: "How the CI meter works",
-  ci_meter_guide_intro: "The CI meter quickly checks whether a page is comfortable and useful for your current language level.",
-  ci_meter_guide_step_1: "Open an article in the language you're learning, then turn on the CI meter from Veksha.",
-  ci_meter_guide_step_2: "A badge appears on the page with the percentage of familiar vocabulary and the estimated CEFR level.",
-  ci_meter_guide_step_3: "Open the badge to see the verdict: green is ideal i+1 material, blue is easy, yellow is close to your level, and red may be too hard.",
-  ci_meter_guide_tip: "Choose “Refine with AI” inside the badge when you want a more contextual difficulty estimate.",
+  reading_coach_guide_title: "How Reading Coach works",
+  reading_coach_guide_intro: "Reading Coach checks a page against the words you know and helps you prepare before you start reading.",
+  reading_coach_guide_step_1: "Open an article in the language you're learning, then turn on Reading Coach from Veksha.",
+  reading_coach_guide_step_2: "Open the page badge to see your current coverage, the most important unfamiliar words, and the projected coverage after learning them.",
+  reading_coach_guide_step_3: "Select the useful blockers and prepare them. Veksha adds enriched suggestions to your Vocabulary Inbox for review.",
+  reading_coach_guide_tip: "Words already being learned or waiting in your Inbox are marked and won't be added twice.",
   dual_subtitles_guide_title: "How dual subtitles work",
   dual_subtitles_guide_intro: "Dual subtitles add a translation above the original captions while you watch YouTube.",
   dual_subtitles_guide_step_1: "Open a YouTube video and turn on its original captions.",
   dual_subtitles_guide_step_2: "Turn on Dual subtitles in Veksha. The translated line appears above the original one.",
   dual_subtitles_guide_step_3: "Use the globe button beside the captions to hide or show the translation without leaving the video.",
   dual_subtitles_guide_tip: "Hover over a word in the original captions to highlight the matching word in the translation.",
-  grammar_lens_title: "Grammar Lens",
-  grammar_lens_on: "Grammar Lens on",
-  grammar_lens_off: "Grammar Lens",
-  grammar_lens_loading: "Analyzing visible text…",
-  grammar_lens_disable: "Turn off Grammar Lens",
-  grammar_lens_collapse: "Collapse the analysis",
-  grammar_lens_expand: "Show the last analysis",
+  grammar_memory_title: "Grammar Memory",
+  grammar_memory_on: "Grammar Memory on",
+  grammar_memory_off: "Grammar Memory",
+  grammar_memory_scanning: "Analyzing visible text…",
+  grammar_memory_disable: "Turn off Grammar Memory",
+  grammar_memory_collapse: "Collapse the analysis",
+  grammar_memory_expand: "Show grammar memory",
   grammar_hint_select: "Select a sentence on the page and press the 🔍 button next to it for a detailed grammar analysis.",
   grammar_analyze_selection: "Analyze the grammar of the selection",
   grammar_analysis_loading: "Analyzing the sentence…",
@@ -443,6 +481,18 @@ export const EN: Strings = {
   grammar_analysis_empty: "No notable grammar found in this selection.",
   grammar_roles_title: "Sentence roles",
   grammar_patterns_title: "Grammar in context",
+  grammar_memory_patterns: "Your grammar memory",
+  grammar_memory_loading: "Loading saved patterns…",
+  grammar_memory_empty: "Patterns found while you read will collect here.",
+  grammar_memory_seen: "Seen {n}×",
+  grammar_memory_mastered: "Mark as mastered",
+  grammar_memory_reopen: "Study again",
+  grammar_memory_guide_title: "How Grammar Memory works",
+  grammar_memory_guide_intro: "Grammar Memory turns patterns you encounter while reading into a personal, reusable collection.",
+  grammar_memory_guide_step_1: "Turn on Grammar Memory while reading in your learning language. Veksha highlights sentence roles and detects useful constructions.",
+  grammar_memory_guide_step_2: "Open the page panel to see saved patterns, explanations, real examples, and how often each pattern has appeared.",
+  grammar_memory_guide_step_3: "Mark a pattern as mastered when it feels familiar. You can return it to learning at any time.",
+  grammar_memory_guide_tip: "Select a sentence and use the grammar action to add a focused example to your memory.",
   grammar_role_subject: "Subject",
   grammar_role_verb: "Verb",
   grammar_role_object: "Object",
@@ -460,6 +510,13 @@ export const EN: Strings = {
   my_words_add: "Add to dictionary",
   my_words_added: "Added to dictionary",
   my_words_add_error: "Could not add the word. Try again.",
+  vocabulary_inbox_title: "From your translations",
+  vocabulary_inbox_empty: "New vocabulary suggestions will appear here.",
+  vocabulary_inbox_seen: "Seen {n}×",
+  vocabulary_inbox_learn: "Learn",
+  vocabulary_inbox_known: "I know it",
+  vocabulary_inbox_ignore: "Ignore",
+  vocabulary_inbox_error: "Could not update this suggestion. Try again.",
   my_words_guide_step_1: "Open your word list and turn tracking on there. Veksha counts words only on pages in your target language.",
   my_words_guide_step_2: "As you browse, a personal frequency list grows automatically and shows where each word appeared most often.",
   my_words_guide_step_3: "Add an unfamiliar word to your dictionary with one click, then practise it in training.",
@@ -514,7 +571,7 @@ export const EN: Strings = {
   subscription_intro_new: "All paid features are selected. Turn off anything you don't need — the total updates immediately.",
   subscription_intro_manage: "Your active features are selected. Adjust the set and continue to confirm the new subscription.",
   subscription_intro_add: "The requested feature and your current features are selected. Review the total before paying.",
-  subscription_grammar_desc: "Analyzes grammar patterns directly in the text you're reading.",
+  subscription_grammar_desc: "Collects grammar patterns and real examples from the texts you read.",
   subscription_monthly: "/ month",
   subscription_total: "Total",
   subscription_continue: "Continue to payment",
@@ -618,8 +675,9 @@ export const EN: Strings = {
   topics_placeholder: "e.g. Tenses, Medical terminology…",
   topics_add: "Add",
   common_back: "Back",
-  home_translation_body: "When you want to translate freely, the dedicated translation chat is always there. Type a word, phrase, or sentence — get a clean, in-context answer. And every translation is remembered and analyzed, quietly becoming something to review later.",
+  home_translation_body: "Translate a word, phrase, or sentence and get a clean, in-context answer. Useful vocabulary goes to your inbox, so you decide what is worth learning.",
   home_quick_saved: "✓ saved for review",
+  home_quick_suggested: "Review vocabulary suggestions →",
   home_hero_title: "Remember words,|without writing them out",
   imm_modal_title: "Immersion mode is on",
   imm_modal_sub: "Some words on the pages you read are replaced with the language you're learning — right as you read.",

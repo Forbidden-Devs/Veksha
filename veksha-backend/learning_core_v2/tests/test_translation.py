@@ -58,7 +58,13 @@ async def test_records_a_normalized_lexical_lookup():
     vocabulary = RecordingVocabulary()
 
     result = await TranslateText(provider, vocabulary).execute(
-        TranslationRequest("  Running  ", "auto", "ru", "intermediate")
+        TranslationRequest(
+            "  Running  ",
+            "auto",
+            "ru",
+            "intermediate",
+            source_url="https://example.test/story",
+        )
     )
 
     assert result.translation == "бежать"
@@ -72,6 +78,8 @@ async def test_records_a_normalized_lexical_lookup():
             is_lexical_unit=True,
             dictionary_form="run",
             transcription="rʌn",
+            source_url="https://example.test/story",
+            target_language="ru",
         )
     ]
 

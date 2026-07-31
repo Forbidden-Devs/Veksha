@@ -3,7 +3,11 @@
 from __future__ import annotations
 
 import logging
+import time
+import uuid
+from collections.abc import Callable
 
+from learning_core_v2.acquisition import SuggestVocabulary, VocabularyProposal
 from learning_core_v2.phrase_mining import MinePhraseVocabulary, PhraseMiningRequest
 from learning_core_v2.translation import VocabularyObservation
 from models import Patch
@@ -130,3 +134,129 @@ class UserStorageVocabularySink:
             word.translation = candidate.translation
             word.transcription = candidate.transcription
         self._storage.save()
+
+
+class UserStorageVocabularyInboxSink:
+    """Store translation observations as suggestions awaiting a user decision."""
+
+    def __init__(
+        self,
+        storage: UserStorage,
+        *,
+        phrase_miner: MinePhraseVocabulary | None = None,
+        clock: Callable[[], float] = time.time,
+        identifier: Callable[[], str] = lambda: str(uuid.uuid4()),
+    ) -> None:
+        self._storage = storage
+        self._phrase_miner = phrase_miner
+        self._clock = clock
+        self._identifier = identifier
+        self._suggest = SuggestVocabulary()
+
+    async def observe(self, observation: VocabularyObservation) -> None:
+        learning_language = _language_base(self._storage.settings.target_lang)
+        observation = _learning_observation(observation, learning_language)
+        if observation is None:
+            return
+        observed_language = _language_base(observation.source_language)
+
+        proposals: list[VocabularyProposal] = []
+        if observation.is_lexical_unit:
+            term = observation.dictionary_form.strip()
+            if term:
+                proposals.append(
+                    VocabularyProposal(
+                        term=term,
+                        language=observed_language,
+                        translation=observation.translation,
+                        transcription=observation.transcription,
+                        context=observation.source_text,
+                        source_url=observation.source_url,
+                    )
+                )
+        elif self._phrase_miner is not None:
+            proposals.extend(await self._mine_phrase(observation))
+
+        changed = False
+        for proposal in proposals:
+            if self._storage.find_word(proposal.term) is not None:
+                continue
+            try:
+                updated = self._suggest.execute(
+                    self._storage.vocabulary_inbox,
+                    proposal,
+                    item_id=self._identifier(),
+                    observed_at=self._clock(),
+                )
+            except ValueError:
+                log.warning("discarding invalid vocabulary inbox proposal")
+                continue
+            self._storage.vocabulary_inbox = list(updated)
+            changed = True
+        if changed:
+            self._storage.save()
+
+    async def _mine_phrase(
+        self, observation: VocabularyObservation
+    ) -> list[VocabularyProposal]:
+        try:
+            candidates = await self._phrase_miner.execute(
+                PhraseMiningRequest(
+                    source_text=observation.source_text,
+                    translated_text=observation.translation,
+                    learning_language=self._storage.settings.target_lang,
+                    native_language=(
+                        getattr(self._storage.settings, "native_lang", "en") or "en"
+                    ),
+                    proficiency=(
+                        getattr(
+                            self._storage.settings,
+                            "english_level",
+                            "intermediate",
+                        )
+                        or "intermediate"
+                    ),
+                    existing_terms=tuple(
+                        word.name for word in self._storage.words
+                    ),
+                )
+            )
+        except Exception:
+            log.exception("core-v2 phrase mining failed; translation remains available")
+            return []
+        return [
+            VocabularyProposal(
+                term=candidate.term,
+                language=observation.source_language,
+                translation=candidate.translation,
+                transcription=candidate.transcription,
+                context=candidate.context,
+                source_url=observation.source_url,
+            )
+            for candidate in candidates
+        ]
+
+
+def _learning_observation(
+    observation: VocabularyObservation,
+    learning_language: str,
+) -> VocabularyObservation | None:
+    source_language = _language_base(observation.source_language)
+    if source_language and source_language != "auto" and source_language == learning_language:
+        return observation
+
+    target_language = _language_base(observation.target_language)
+    if target_language != learning_language:
+        return None
+    return VocabularyObservation(
+        source_text=observation.translation,
+        translation=observation.source_text,
+        source_language=target_language,
+        target_language=source_language,
+        is_lexical_unit=observation.is_lexical_unit,
+        dictionary_form=(
+            observation.translation if observation.is_lexical_unit else ""
+        ),
+        transcription="",
+        source_url=observation.source_url,
+    )

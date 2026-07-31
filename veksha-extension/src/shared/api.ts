@@ -280,16 +280,53 @@ export async function quickTranslate(
   sourceLang: string,
   targetLang: string,
   bidirectional = false,
+  sourceUrl = "",
 ): Promise<TranslateResponse> {
   const resp = await _post<TranslateResponse>(
     "/api/quick_translate",
-    { text, source_lang: sourceLang, target_lang: targetLang, bidirectional },
+    {
+      text,
+      source_lang: sourceLang,
+      target_lang: targetLang,
+      bidirectional,
+      source_url: sourceUrl,
+    },
     15_000
   );
   // Every translation quietly saves a word — tell the background so it can
   // schedule the "first review" nudge after the first few words.
-  runtimeSend({ type: "VEKSHA_WORD_SAVED" });
+  if (resp.vocabulary_mode !== "suggested") {
+    runtimeSend({ type: "VEKSHA_WORD_SAVED" });
+  }
   return resp;
+}
+
+export interface VocabularyInboxItem {
+  item_id: string;
+  term: string;
+  language: string;
+  translation: string;
+  transcription: string;
+  encounter_count: number;
+  latest_context: string;
+  latest_source_url: string;
+  last_seen_at: number;
+}
+
+export function getVocabularyInbox(): Promise<{ items: VocabularyInboxItem[] }> {
+  return _get("/api/vocabulary-inbox");
+}
+
+export async function decideVocabularyInboxItem(
+  itemId: string,
+  decision: "learn" | "known" | "ignore",
+): Promise<{ item_id: string; status: "learning" | "known" | "ignored" }> {
+  const result = await _post<{ item_id: string; status: "learning" | "known" | "ignored" }>(
+    `/api/vocabulary-inbox/${encodeURIComponent(itemId)}/decision`,
+    { decision },
+  );
+  if (decision === "learn") runtimeSend({ type: "VEKSHA_WORD_SAVED" });
+  return result;
 }
 
 export interface ImmersionSentence {
@@ -318,6 +355,41 @@ export function analyzeCiMeter(text: string, refine = false): Promise<CiMeterRes
   return _post("/api/ci_meter/analyze", { text, refine }, 20_000);
 }
 
+export interface ReadingCoachObstacle {
+  term: string;
+  occurrences: number;
+  cefr: string;
+  knowledge: "known" | "learning" | "suggested" | "ignored" | "unseen";
+  reason: "learning" | "already_suggested" | "above_level" | "frequent";
+}
+
+export interface ReadingCoachResult {
+  known_pct: number;
+  projected_known_pct: number;
+  cefr: string;
+  user_level: string;
+  verdict: CiMeterResult["verdict"];
+  confidence: "low" | "high";
+  unique_terms: number;
+  obstacles: ReadingCoachObstacle[];
+}
+
+export function analyzeReadingCoach(text: string): Promise<ReadingCoachResult> {
+  return _post("/api/reading-coach/analyze", { text }, 20_000);
+}
+
+export function prepareReadingCoach(
+  text: string,
+  terms: string[],
+  sourceUrl: string,
+): Promise<{ added: number; skipped: number }> {
+  return _post("/api/reading-coach/prepare", {
+    text,
+    terms,
+    source_url: sourceUrl,
+  }, 45_000);
+}
+
 export type GrammarRole = "subject" | "verb" | "object" | "place" | "time" | "modifier";
 
 export interface GrammarSegment {
@@ -344,9 +416,39 @@ export interface GrammarBlockAnalysis {
 }
 
 export function analyzeGrammarLens(
-  blocks: string[]
-): Promise<{ blocks: GrammarBlockAnalysis[] }> {
-  return _post("/api/grammar-lens/analyze", { blocks }, 45_000);
+  blocks: string[],
+  sourceUrl = "",
+): Promise<{ blocks: GrammarBlockAnalysis[]; remembered: number }> {
+  return _post("/api/grammar-lens/analyze", { blocks, source_url: sourceUrl }, 45_000);
+}
+
+export interface GrammarMemoryEncounter {
+  example: string;
+  source_url: string;
+  observed_at: number;
+}
+
+export interface GrammarMemoryItem {
+  item_id: string;
+  category: GrammarCategory;
+  label: string;
+  explanation: string;
+  status: "learning" | "mastered";
+  seen_count: number;
+  first_seen_at: number;
+  last_seen_at: number;
+  encounters: GrammarMemoryEncounter[];
+}
+
+export function getGrammarMemory(): Promise<{ items: GrammarMemoryItem[] }> {
+  return _get("/api/grammar-memory");
+}
+
+export function setGrammarMemoryStatus(
+  itemId: string,
+  status: "learning" | "mastered",
+): Promise<GrammarMemoryItem> {
+  return _post(`/api/grammar-memory/${encodeURIComponent(itemId)}/status`, { status });
 }
 
 export interface VocabFrequencyEntry {

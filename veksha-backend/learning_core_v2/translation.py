@@ -13,6 +13,7 @@ class TranslationRequest:
     target_language: str
     proficiency: str
     bidirectional: bool = False
+    source_url: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -41,6 +42,8 @@ class VocabularyObservation:
     is_lexical_unit: bool
     dictionary_form: str
     transcription: str
+    source_url: str = ""
+    target_language: str = ""
 
 
 class TranslationProvider(Protocol):
@@ -75,6 +78,7 @@ class TranslateText:
             target_language=request.target_language.strip(),
             proficiency=request.proficiency.strip(),
             bidirectional=request.bidirectional,
+            source_url=request.source_url.strip()[:2000],
         )
         translated = await self._provider.translate(normalized_request)
         translated_text = translated.text.strip()
@@ -103,6 +107,8 @@ class TranslateText:
                     is_lexical_unit=translated.is_lexical_unit,
                     dictionary_form=dictionary_form,
                     transcription=result.transcription,
+                    source_url=normalized_request.source_url,
+                    target_language=normalized_request.target_language,
                 )
             )
 

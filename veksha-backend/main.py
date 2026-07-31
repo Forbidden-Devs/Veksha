@@ -29,10 +29,12 @@ from api import ci_meter
 from api import debug, settings
 from api import i18n as api_i18n
 from api import privacy
+from api import reading_coach
 from api import grammar_lens
 from api import quizlet
 from api import subtitles as api_subtitles
 from api import vocab_frequency
+from api import vocabulary_inbox
 from config import CORS_ALLOW_ORIGINS, DEBUG_API, HOST, LOG_LEVEL, PORT, RELOAD
 
 if os.getenv("VEKSHA_CORE_V2_TRANSLATION_ENABLED", "0").lower() in {"1", "true", "yes"}:
@@ -122,8 +124,10 @@ app.include_router(ci_meter.router)
 app.include_router(grammar_lens.router)
 app.include_router(quizlet.router)
 app.include_router(vocab_frequency.router)
+app.include_router(vocabulary_inbox.router)
 app.include_router(api_subtitles.router)
 app.include_router(privacy.router)
+app.include_router(reading_coach.router)
 if DEBUG_API:
     app.include_router(debug.router)
     log.warning("Debug API is enabled (/api/debug/*) — do not use in production.")

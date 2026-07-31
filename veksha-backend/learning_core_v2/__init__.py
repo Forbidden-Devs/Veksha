@@ -1,5 +1,12 @@
 """Independent replacement for Veksha's learning domain."""
 
+from .acquisition import (
+    DecideVocabulary,
+    LexicalItem,
+    SuggestVocabulary,
+    VocabularyEncounter,
+    VocabularyProposal,
+)
 from .dictionary import (
     DictionaryDetails,
     DictionaryLookupRequest,
@@ -11,6 +18,13 @@ from .immersion import (
     ImmersionBlock,
     ImmersionContext,
     ImmersionSentence,
+)
+from .grammar_memory import (
+    GrammarEncounter,
+    GrammarMemoryItem,
+    GrammarObservation,
+    RememberGrammar,
+    SetGrammarStatus,
 )
 from .lesson import (
     BuildLessonQuestion,
@@ -38,6 +52,12 @@ from .practice import (
     PracticeTask,
     PracticeWord,
 )
+from .reading_coach import (
+    AssessReading,
+    ReadingAssessment,
+    ReadingObstacle,
+    ReadingToken,
+)
 from .sentence_mining import (
     BuildSentenceMiningCard,
     SentenceMiningCard,
@@ -51,6 +71,11 @@ from .translation import (
 )
 
 __all__ = [
+    "DecideVocabulary",
+    "LexicalItem",
+    "SuggestVocabulary",
+    "VocabularyEncounter",
+    "VocabularyProposal",
     "DictionaryDetails",
     "DictionaryLookupRequest",
     "EnrichDictionaryEntry",
@@ -61,6 +86,11 @@ __all__ = [
     "ImmersionBlock",
     "ImmersionContext",
     "ImmersionSentence",
+    "GrammarEncounter",
+    "GrammarMemoryItem",
+    "GrammarObservation",
+    "RememberGrammar",
+    "SetGrammarStatus",
     "BuildLessonQuestion",
     "CheckLessonAnswer",
     "LearnerProfile",
@@ -81,6 +111,10 @@ __all__ = [
     "PracticeQueue",
     "PracticeTask",
     "PracticeWord",
+    "AssessReading",
+    "ReadingAssessment",
+    "ReadingObstacle",
+    "ReadingToken",
     "BuildSentenceMiningCard",
     "SentenceMiningCard",
     "SentenceMiningRequest",

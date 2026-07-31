@@ -54,7 +54,7 @@ export function SubscriptionScreen({
   );
 
   function titleFor(feature: PaidFeature): string {
-    if (feature === "grammar_lens") return t.grammar_lens_title;
+    if (feature === "grammar_lens") return t.grammar_memory_title;
     if (feature === "immersion") return t.nav_immersion;
     return t.settings_dual_subtitles;
   }

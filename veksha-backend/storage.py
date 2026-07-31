@@ -29,9 +29,96 @@ from config import (
     FSRS_MIN_INTERVAL_DAYS,
     REVIEW_WINDOW_HOURS,
 )
+from learning_core_v2.acquisition import LexicalItem, VocabularyEncounter
+from learning_core_v2.grammar_memory import GrammarEncounter, GrammarMemoryItem
 from models import LessonTopic, Patch, UserSettings, Word
 
 log = logging.getLogger(__name__)
+
+
+def _inbox_item_from_dict(data: dict) -> LexicalItem:
+    return LexicalItem(
+        item_id=str(data.get("item_id", "")),
+        term=str(data.get("term", "")),
+        language=str(data.get("language", "")),
+        translation=str(data.get("translation", "")),
+        transcription=str(data.get("transcription", "")),
+        status=str(data.get("status", "suggested")),
+        encounters=tuple(
+            VocabularyEncounter(
+                context=str(encounter.get("context", "")),
+                source_url=str(encounter.get("source_url", "")),
+                observed_at=float(encounter.get("observed_at", 0.0) or 0.0),
+            )
+            for encounter in data.get("encounters", [])
+            if isinstance(encounter, dict)
+        ),
+    )
+
+
+def _inbox_item_to_dict(item: LexicalItem) -> dict:
+    return {
+        "item_id": item.item_id,
+        "term": item.term,
+        "language": item.language,
+        "translation": item.translation,
+        "transcription": item.transcription,
+        "status": item.status,
+        "encounters": [
+            {
+                "context": encounter.context,
+                "source_url": encounter.source_url,
+                "observed_at": encounter.observed_at,
+            }
+            for encounter in item.encounters
+        ],
+    }
+
+
+def _grammar_item_from_dict(data: dict) -> GrammarMemoryItem:
+    status = str(data.get("status", "learning"))
+    return GrammarMemoryItem(
+        item_id=str(data.get("item_id", "")),
+        language=str(data.get("language", "")),
+        category=str(data.get("category", "")),
+        label=str(data.get("label", "")),
+        explanation=str(data.get("explanation", "")),
+        status=status if status in {"learning", "mastered"} else "learning",
+        seen_count=max(1, int(data.get("seen_count", 1) or 1)),
+        first_seen_at=float(data.get("first_seen_at", 0.0) or 0.0),
+        last_seen_at=float(data.get("last_seen_at", 0.0) or 0.0),
+        encounters=tuple(
+            GrammarEncounter(
+                example=str(encounter.get("example", "")),
+                source_url=str(encounter.get("source_url", "")),
+                observed_at=float(encounter.get("observed_at", 0.0) or 0.0),
+            )
+            for encounter in data.get("encounters", [])
+            if isinstance(encounter, dict)
+        ),
+    )
+
+
+def _grammar_item_to_dict(item: GrammarMemoryItem) -> dict:
+    return {
+        "item_id": item.item_id,
+        "language": item.language,
+        "category": item.category,
+        "label": item.label,
+        "explanation": item.explanation,
+        "status": item.status,
+        "seen_count": item.seen_count,
+        "first_seen_at": item.first_seen_at,
+        "last_seen_at": item.last_seen_at,
+        "encounters": [
+            {
+                "example": encounter.example,
+                "source_url": encounter.source_url,
+                "observed_at": encounter.observed_at,
+            }
+            for encounter in item.encounters
+        ],
+    }
 
 
 def _is_due(word: Word, now: float) -> bool:
@@ -72,6 +159,8 @@ class UserStorage:
     username: str
     words: list[Word] = field(default_factory=list)
     lesson_topics: list[LessonTopic] = field(default_factory=list)
+    vocabulary_inbox: list[LexicalItem] = field(default_factory=list)
+    grammar_memory: list[GrammarMemoryItem] = field(default_factory=list)
     settings: UserSettings = field(default_factory=UserSettings)
 
     # ------------------------------------------------------------------
@@ -96,6 +185,16 @@ class UserStorage:
             username=username,
             words=words,
             lesson_topics=[LessonTopic.from_dict(t) for t in data.get("lesson_topics", [])],
+            vocabulary_inbox=[
+                _inbox_item_from_dict(item)
+                for item in data.get("vocabulary_inbox", [])
+                if isinstance(item, dict)
+            ],
+            grammar_memory=[
+                _grammar_item_from_dict(item)
+                for item in data.get("grammar_memory", [])
+                if isinstance(item, dict)
+            ],
             settings=UserSettings(**(db.settings_get(username) or {})),
         )
         log.info(
@@ -108,6 +207,12 @@ class UserStorage:
         db.kb_set(self.username, {
             "words": [w.to_dict() for w in self.words],
             "lesson_topics": [t.to_dict() for t in self.lesson_topics],
+            "vocabulary_inbox": [
+                _inbox_item_to_dict(item) for item in self.vocabulary_inbox
+            ],
+            "grammar_memory": [
+                _grammar_item_to_dict(item) for item in self.grammar_memory
+            ],
         })
         db.settings_set(self.username, self.settings)
         log.debug(

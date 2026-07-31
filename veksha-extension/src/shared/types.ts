@@ -17,6 +17,7 @@ export interface TranslateResponse {
   detected_source_lang: string | null;
   single: boolean;
   normalized_text: string;
+  vocabulary_mode?: "saved" | "suggested";
 }
 
 export interface SettingsData {

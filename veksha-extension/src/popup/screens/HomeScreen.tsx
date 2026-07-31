@@ -55,9 +55,10 @@ export function HomeScreen() {
   const [activeUrl, setActiveUrl] = useState("");
   const [aiBlocklist, setAiBlocklist] = useState<AiBlocklist>({ sites: [], pages: [], allowedPages: [] });
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
-  const [featureGuide, setFeatureGuide] = useState<"immersion" | "ci_meter" | "dual_subtitles" | "my_words" | null>(null);
+  const [featureGuide, setFeatureGuide] = useState<"immersion" | "ci_meter" | "dual_subtitles" | "grammar_memory" | "my_words" | null>(null);
   const [quickText, setQuickText] = useState("");
   const [quickResult, setQuickResult] = useState<string | null>(null);
+  const [quickVocabularyMode, setQuickVocabularyMode] = useState<"saved" | "suggested">("saved");
   const [quickLoading, setQuickLoading] = useState(false);
   const [quickError, setQuickError] = useState(false);
   const aiBlockAvailable = pageKey(activeUrl) !== null;
@@ -88,6 +89,7 @@ export function HomeScreen() {
     try {
       const result = await api.quickTranslate(username, text, nativeLang, targetLang, true);
       setQuickResult(result.translation);
+      setQuickVocabularyMode(result.vocabulary_mode ?? "saved");
       const [kb, reminders] = await Promise.all([
         api.getKbSummary(username),
         api.getReminders(username),
@@ -165,7 +167,7 @@ export function HomeScreen() {
 
   async function toggleGrammarLens() {
     const next = !grammarLensOn;
-    if (next && !(await requirePremiumFeature("grammar_lens", t.grammar_lens_title))) return;
+    if (next && !(await requirePremiumFeature("grammar_lens", t.grammar_memory_title))) return;
     setGrammarLensOn(next);
     if (next) setImmersionOn(false);
     await storageSet({
@@ -271,8 +273,17 @@ export function HomeScreen() {
             </button>
           </form>
           {quickResult && (
-            <button className="web-quick-result" type="button" onClick={() => navigateTo("dictionary")}>
-              <span>{quickResult}</span><small>{t.home_quick_saved}</small>
+            <button
+              className="web-quick-result"
+              type="button"
+              onClick={() => navigateTo(quickVocabularyMode === "suggested" ? "myWords" : "dictionary")}
+            >
+              <span>{quickResult}</span>
+              <small>
+                {quickVocabularyMode === "suggested"
+                  ? t.home_quick_suggested
+                  : t.home_quick_saved}
+              </small>
             </button>
           )}
           {quickError && <p className="web-quick-error">Translation unavailable. Try again.</p>}
@@ -372,19 +383,28 @@ export function HomeScreen() {
           </div>
         )}
         {isExtension && (
-          <button
-            className={`m-tile m-feature-tile ${aiBlocked ? "is-blocked" : grammarLensOn ? "is-on" : "is-off"}`}
-            onClick={toggleGrammarLens}
-            disabled={aiBlocked}
-            aria-pressed={grammarLensOn}
-          >
-            <span className="m-tile-icon">{Icons.grammar}</span>
-            <span className="m-tile-label">{t.grammar_lens_title}</span>
-            <span className="m-feature-state">
-              <i aria-hidden="true" />
-              {aiBlocked ? t.feature_blocked : grammarLensOn ? t.feature_enabled : t.feature_disabled}
-            </span>
-          </button>
+          <div className="m-feature-guide-wrap">
+            <button
+              className={`m-tile m-feature-tile ${aiBlocked ? "is-blocked" : grammarLensOn ? "is-on" : "is-off"}`}
+              onClick={toggleGrammarLens}
+              disabled={aiBlocked}
+              aria-pressed={grammarLensOn}
+            >
+              <span className="m-tile-icon">{Icons.grammar}</span>
+              <span className="m-tile-label">{t.grammar_memory_title}</span>
+              <span className="m-feature-state">
+                <i aria-hidden="true" />
+                {aiBlocked ? t.feature_blocked : grammarLensOn ? t.feature_enabled : t.feature_disabled}
+              </span>
+            </button>
+            <button
+              type="button"
+              className="m-feature-guide-button"
+              aria-label={`${t.feature_guide_open}: ${t.grammar_memory_title}`}
+              title={t.feature_guide_open}
+              onClick={() => setFeatureGuide("grammar_memory")}
+            >?</button>
+          </div>
         )}
         {isExtension && (
           <div className="m-feature-guide-wrap">
@@ -492,6 +512,8 @@ export function HomeScreen() {
             <span className="feature-guide-icon" aria-hidden="true">
               {featureGuide === "ci_meter"
                 ? Icons.ciMeter
+                : featureGuide === "grammar_memory"
+                  ? Icons.grammar
                 : featureGuide === "dual_subtitles"
                   ? Icons.dualSubtitles
                   : featureGuide === "immersion"
@@ -500,7 +522,9 @@ export function HomeScreen() {
             </span>
             <h2 id="feature-guide-title">
               {featureGuide === "ci_meter"
-                ? t.ci_meter_guide_title
+                ? t.reading_coach_guide_title
+                : featureGuide === "grammar_memory"
+                  ? t.grammar_memory_guide_title
                 : featureGuide === "dual_subtitles"
                   ? t.dual_subtitles_guide_title
                   : featureGuide === "immersion"
@@ -509,7 +533,9 @@ export function HomeScreen() {
             </h2>
             <p className="feature-guide-intro">
               {featureGuide === "ci_meter"
-                ? t.ci_meter_guide_intro
+                ? t.reading_coach_guide_intro
+                : featureGuide === "grammar_memory"
+                  ? t.grammar_memory_guide_intro
                 : featureGuide === "dual_subtitles"
                   ? t.dual_subtitles_guide_intro
                   : featureGuide === "immersion"
@@ -518,7 +544,9 @@ export function HomeScreen() {
             </p>
             <ol>
               {(featureGuide === "ci_meter"
-                ? [t.ci_meter_guide_step_1, t.ci_meter_guide_step_2, t.ci_meter_guide_step_3]
+                ? [t.reading_coach_guide_step_1, t.reading_coach_guide_step_2, t.reading_coach_guide_step_3]
+                : featureGuide === "grammar_memory"
+                  ? [t.grammar_memory_guide_step_1, t.grammar_memory_guide_step_2, t.grammar_memory_guide_step_3]
                 : featureGuide === "dual_subtitles"
                   ? [t.dual_subtitles_guide_step_1, t.dual_subtitles_guide_step_2, t.dual_subtitles_guide_step_3]
                   : featureGuide === "immersion"
@@ -532,7 +560,9 @@ export function HomeScreen() {
             </ol>
             <p className="feature-guide-tip">
               {featureGuide === "ci_meter"
-                ? t.ci_meter_guide_tip
+                ? t.reading_coach_guide_tip
+                : featureGuide === "grammar_memory"
+                  ? t.grammar_memory_guide_tip
                 : featureGuide === "dual_subtitles"
                   ? t.dual_subtitles_guide_tip
                   : featureGuide === "immersion"

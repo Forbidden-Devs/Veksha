@@ -41,6 +41,13 @@ Vocabulary extraction from translated multi-word selections is enabled with
 model is selected by `VEKSHA_CORE_V2_PHRASE_MINING_MODEL` (default
 `gpt-5.6-luna`).
 
+To make vocabulary acquisition learner-controlled, enable
+`VEKSHA_CORE_V2_VOCABULARY_INBOX_ENABLED=1` together with translation v2.
+Single-word lookups and phrase-mining candidates then go to the vocabulary
+inbox instead of directly entering the review queue. The learner must choose
+Learn, Known, or Ignore in My Words. Source URLs are stored without query
+parameters or fragments.
+
 The rewritten training core is controlled independently with
 `VEKSHA_CORE_V2_TRAINING_ENABLED=1`. Its Responses API model is configured via
 `VEKSHA_CORE_V2_TRAINING_MODEL` (default `gpt-5.6-terra`).
@@ -58,7 +65,7 @@ The independently rewritten page-immersion analyzer is enabled with
 `POST /api/immersion/analyze`, including its existing premium entitlement.
 
 Local runs grant premium-gated development features automatically, so dual
-subtitles, Grammar Lens, and immersion can be exercised without Telegram
+subtitles, Grammar Memory, and immersion can be exercised without Telegram
 billing. Set `VEKSHA_DEV_ALL_FEATURES=0` to test the real free-tier gates.
 
 Google login additionally requires a **Web application** OAuth client and:
@@ -114,7 +121,7 @@ testing it can be enabled with
 
 ## Subscriptions (Telegram Stars)
 
-Paid features (Grammar Lens, page immersion, dual subtitles — see
+Paid features (Grammar Memory, page immersion, dual subtitles — see
 `entitlements.py`) can be purchased individually; gated endpoints return
 HTTP 402 with `detail.code = "subscription_required"`. Payments are collected
 by the companion bot (`veksha-tgbot/`) in Telegram Stars and reported to

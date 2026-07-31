@@ -1291,6 +1291,96 @@ html, body, #root {
   padding-inline: 0;
 }
 
+.vocabulary-inbox {
+  flex: 0 0 auto;
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: var(--m-surface);
+}
+
+.vocabulary-inbox-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vocabulary-inbox-heading h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.vocabulary-inbox-heading span {
+  min-width: 20px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  color: white;
+  background: var(--av-gradient);
+  font-size: 10px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.vocabulary-inbox-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--av-border);
+}
+
+.vocabulary-inbox-copy {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.vocabulary-inbox-term {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.vocabulary-inbox-term span,
+.vocabulary-inbox-copy small {
+  color: var(--m-dim);
+  font-size: 10.5px;
+}
+
+.vocabulary-inbox-translation {
+  font-size: 12.5px;
+}
+
+.vocabulary-inbox-context {
+  overflow: hidden;
+  color: var(--m-dim);
+  font-size: 11px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vocabulary-inbox-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vocabulary-inbox-actions .btn {
+  min-height: 32px;
+  padding: 6px 10px;
+  font-size: 11px;
+}
+
+.vocabulary-inbox-ignore {
+  border: 0;
+  color: var(--m-dim);
+  background: transparent;
+  font-size: 11px;
+  cursor: pointer;
+}
+
 .my-words-intro {
   flex: 0 0 auto;
   display: grid;

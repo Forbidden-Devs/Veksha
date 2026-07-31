@@ -77,7 +77,7 @@ document.addEventListener("mousemove", (e) => { lastMouse = { x: e.clientX, y: e
 document.addEventListener("contextmenu", (e) => { lastMouse = { x: e.clientX, y: e.clientY }; }, { capture: true });
 
 // ---------------------------------------------------------------------------
-// i18n — loaded from chrome.storage.local (key: av_i18n_{lang})
+// i18n — loaded from the versioned popup catalogue cache.
 // ---------------------------------------------------------------------------
 
 let i18nStrings: Record<string, string> = {};
@@ -89,8 +89,8 @@ function t(key: string, fallback: string): string {
 async function loadI18n(lang: string): Promise<void> {
   if (!lang || lang === "en") { i18nStrings = {}; return; }
   try {
-    const stored = await chrome.storage.local.get([`vk_i18n_${lang}`]);
-    i18nStrings = (stored[`vk_i18n_${lang}`] as Record<string, string> | undefined) ?? {};
+    const stored = await chrome.storage.local.get([`vk_i18n_v3_${lang}`]);
+    i18nStrings = (stored[`vk_i18n_v3_${lang}`] as Record<string, string> | undefined) ?? {};
   } catch { i18nStrings = {}; }
 }
 
@@ -699,7 +699,14 @@ async function requestTranslation(
   }
 
   try {
-    const response = await quickTranslate(username, text, sourceLang, targetLang);
+    const response = await quickTranslate(
+      username,
+      text,
+      sourceLang,
+      targetLang,
+      false,
+      location.href,
+    );
     if (requestId !== translationRequestId) return;
     resultBox.classList.remove("veksha-result--loading");
     resultBox.textContent = response.translation || "(empty)";
@@ -1136,11 +1143,25 @@ function luminance(rgb: string): number {
 /** Bidirectional translate: foreign → native; but if the source turns out to be
  *  the user's native language, translate into the studied language instead. */
 async function smartTranslate(username: string, text: string): Promise<string> {
-  const first = await quickTranslate(username, text, "auto", nativeLang || state.targetLang);
+  const first = await quickTranslate(
+    username,
+    text,
+    "auto",
+    nativeLang || state.targetLang,
+    false,
+    location.href,
+  );
   const det = (first.detected_source_lang || "").toLowerCase();
   if (det && studiedLang && det === (nativeLang || "").toLowerCase() &&
       studiedLang.toLowerCase() !== (nativeLang || "").toLowerCase()) {
-    const second = await quickTranslate(username, text, "auto", studiedLang);
+    const second = await quickTranslate(
+      username,
+      text,
+      "auto",
+      studiedLang,
+      false,
+      location.href,
+    );
     return second.translation || text;
   }
   return first.translation || text;

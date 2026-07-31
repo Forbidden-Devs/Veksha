@@ -602,7 +602,14 @@ async function runTranslation(
     return;
   }
   try {
-    const resp = await quickTranslate(username, text, deps.state.sourceLang, deps.state.targetLang);
+    const resp = await quickTranslate(
+      username,
+      text,
+      deps.state.sourceLang,
+      deps.state.targetLang,
+      false,
+      location.href,
+    );
     if (id !== reqId || !popupEl) return;
     out.classList.remove("av-yt-loading");
     out.textContent = resp.translation || "—";

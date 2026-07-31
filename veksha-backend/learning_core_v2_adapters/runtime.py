@@ -20,14 +20,18 @@ from learning_core_v2.lesson import (
 from learning_core_v2.phrase_mining import MinePhraseVocabulary
 from learning_core_v2.practice import BuildPracticeTask, CheckPracticeAnswer
 from learning_core_v2.sentence_mining import BuildSentenceMiningCard
-from learning_core_v2.translation import TranslateText
+from learning_core_v2.translation import TranslateText, VocabularySink
 from storage import UserStorage
 from usage_context import get_usage_user
 
 from .openai_responses import OpenAIResponsesLanguageProvider
 from .immersion import CachedImmersionProvider
 from .practice import RandomChoiceSource, UuidIdentifierSource
-from .vocabulary import CollectingVocabularySink, UserStorageVocabularySink
+from .vocabulary import (
+    CollectingVocabularySink,
+    UserStorageVocabularyInboxSink,
+    UserStorageVocabularySink,
+)
 
 
 log = logging.getLogger(__name__)
@@ -63,7 +67,7 @@ def _provider(model_variable: str, default_model: str) -> OpenAIResponsesLanguag
     )
 
 
-def _vocabulary_sink(storage: UserStorage) -> UserStorageVocabularySink:
+def _phrase_miner() -> MinePhraseVocabulary | None:
     phrase_miner = None
     if os.getenv("VEKSHA_CORE_V2_PHRASE_MINING_ENABLED", "0").lower() in {
         "1",
@@ -73,6 +77,17 @@ def _vocabulary_sink(storage: UserStorage) -> UserStorageVocabularySink:
         phrase_miner = MinePhraseVocabulary(
             _provider("VEKSHA_CORE_V2_PHRASE_MINING_MODEL", "gpt-5.6-luna")
         )
+    return phrase_miner
+
+
+def _vocabulary_sink(storage: UserStorage) -> VocabularySink:
+    phrase_miner = _phrase_miner()
+    if os.getenv("VEKSHA_CORE_V2_VOCABULARY_INBOX_ENABLED", "0").lower() in {
+        "1",
+        "true",
+        "yes",
+    }:
+        return UserStorageVocabularyInboxSink(storage, phrase_miner=phrase_miner)
     return UserStorageVocabularySink(storage, phrase_miner=phrase_miner)
 
 
@@ -83,7 +98,7 @@ def build_translate_text(storage: UserStorage) -> TranslateText:
 
 def build_deferred_translate_text(
     storage: UserStorage,
-) -> tuple[TranslateText, CollectingVocabularySink, UserStorageVocabularySink]:
+) -> tuple[TranslateText, CollectingVocabularySink, VocabularySink]:
     provider = _provider("VEKSHA_CORE_V2_TRANSLATION_MODEL", "gpt-5.6-luna")
     collector = CollectingVocabularySink()
     return TranslateText(provider, collector), collector, _vocabulary_sink(storage)

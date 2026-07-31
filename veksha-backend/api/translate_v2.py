@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import logging
+import os
+from typing import Literal
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel, Field
@@ -28,6 +30,7 @@ class TranslateRequest(BaseModel):
     source_lang: str = "auto"
     target_lang: str = "ru"
     bidirectional: bool = False
+    source_url: str = Field("", max_length=2000)
 
 
 class TranslateResponse(BaseModel):
@@ -35,6 +38,7 @@ class TranslateResponse(BaseModel):
     detected_source_lang: str | None = None
     single: bool
     normalized_text: str = ""
+    vocabulary_mode: Literal["saved", "suggested"] = "saved"
 
 
 class ExplainRequest(BaseModel):
@@ -60,6 +64,7 @@ async def _execute_translation(req: TranslateRequest, storage, service) -> Trans
                 target_language=target_language,
                 proficiency=storage.settings.english_level or "intermediate",
                 bidirectional=req.bidirectional,
+                source_url=req.source_url,
             )
         )
     except ValueError as exc:
@@ -73,6 +78,12 @@ async def _execute_translation(req: TranslateRequest, storage, service) -> Trans
         detected_source_lang=result.detected_source_language,
         single=result.is_lexical_unit,
         normalized_text=result.dictionary_form,
+        vocabulary_mode=(
+            "suggested"
+            if os.getenv("VEKSHA_CORE_V2_VOCABULARY_INBOX_ENABLED", "0").lower()
+            in {"1", "true", "yes"}
+            else "saved"
+        ),
     )
 
 
