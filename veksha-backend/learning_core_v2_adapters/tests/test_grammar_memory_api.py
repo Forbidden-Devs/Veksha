@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 import pytest
 
 from api import grammar_lens as grammar_api
+from learning_core_v2.grammar_analysis import GrammarAnalysis, GrammarAnnotation
 
 
 @dataclass
@@ -26,21 +27,21 @@ class Storage:
 async def test_analysis_remembers_grounded_grammar_pattern(monkeypatch):
     storage = Storage()
 
-    async def analyze(_text, _native_language, _level):
-        return {
-            "segments": [],
-            "annotations": [
-                {
-                    "text": "has finished",
-                    "category": "tense_aspect",
-                    "label": "Present perfect",
-                    "explanation": "Links the past to now.",
-                }
-            ],
-        }
+    class Analyzer:
+        async def execute(self, _request):
+            return GrammarAnalysis(
+                annotations=(
+                    GrammarAnnotation(
+                        "has finished",
+                        "tense_aspect",
+                        "Present perfect",
+                        "Links the past to now.",
+                    ),
+                )
+            )
 
     monkeypatch.setattr(grammar_api, "get_storage", lambda _username: storage)
-    monkeypatch.setattr(grammar_api, "analyze_grammar_block", analyze)
+    monkeypatch.setattr(grammar_api, "build_grammar_analyzer", Analyzer)
 
     response = await grammar_api.api_grammar_lens_analyze(
         grammar_api.GrammarLensRequest(

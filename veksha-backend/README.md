@@ -60,6 +60,12 @@ its model is configured through
 `VEKSHA_CORE_V2_IMMERSION_MODEL` (default `gpt-5.6-luna`). The endpoint remains
 `POST /api/immersion/analyze`, including its existing premium entitlement.
 
+Grammar Memory analysis is independently implemented and grounds every segment
+and annotation in the submitted text before saving examples. Its model is
+selected through `VEKSHA_CORE_V2_GRAMMAR_MODEL` (default `gpt-5.6-luna`). The
+existing `POST /api/grammar-lens/analyze` route and `grammar_lens` entitlement
+remain compatible.
+
 Local runs grant premium-gated development features automatically, so dual
 subtitles, Grammar Memory, and immersion can be exercised without Telegram
 billing. Set `VEKSHA_DEV_ALL_FEATURES=0` to test the real free-tier gates.
@@ -165,7 +171,7 @@ learning_core_v2/     independent domain use cases
 learning_core_v2_adapters/ HTTP/storage/LLM adapters for the new core
 i18n.py               UI/server strings + LLM-translated catalogues
 entitlements.py       subscription tiers, plans, feature gating (require_feature)
-llm/                  remaining legacy Grammar Memory/subtitle/i18n adapters
+llm/                  remaining legacy subtitle/i18n adapters
 db_cache.py           temporary cache used by those remaining adapters
 api/                  routers (one file per domain)
 ```

@@ -26,6 +26,16 @@ from .grammar_memory import (
     RememberGrammar,
     SetGrammarStatus,
 )
+from .grammar_analysis import (
+    AnalyzeGrammar,
+    GrammarAnalysis,
+    GrammarAnalysisDraft,
+    GrammarAnalysisRequest,
+    GrammarAnnotation,
+    GrammarAnnotationDraft,
+    GrammarSegment,
+    GrammarSegmentDraft,
+)
 from .lesson import (
     BuildLessonQuestion,
     CheckLessonAnswer,
@@ -91,6 +101,14 @@ __all__ = [
     "GrammarObservation",
     "RememberGrammar",
     "SetGrammarStatus",
+    "AnalyzeGrammar",
+    "GrammarAnalysis",
+    "GrammarAnalysisDraft",
+    "GrammarAnalysisRequest",
+    "GrammarAnnotation",
+    "GrammarAnnotationDraft",
+    "GrammarSegment",
+    "GrammarSegmentDraft",
     "BuildLessonQuestion",
     "CheckLessonAnswer",
     "LearnerProfile",

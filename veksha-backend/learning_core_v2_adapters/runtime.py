@@ -11,6 +11,7 @@ from typing import Any
 import db
 from learning_core_v2.dictionary import EnrichDictionaryEntry
 from learning_core_v2.explanation import ExplainText
+from learning_core_v2.grammar_analysis import AnalyzeGrammar
 from learning_core_v2.immersion import AnalyzeImmersion
 from learning_core_v2.lesson import (
     BuildLessonQuestion,
@@ -26,6 +27,7 @@ from usage_context import get_usage_user
 
 from .openai_responses import OpenAIResponsesLanguageProvider
 from .immersion import CachedImmersionProvider
+from .grammar import CachedGrammarProvider
 from .practice import RandomChoiceSource, UuidIdentifierSource
 from .vocabulary import (
     CollectingVocabularySink,
@@ -107,6 +109,12 @@ def build_sentence_mining() -> BuildSentenceMiningCard:
 
 def build_explain_text() -> ExplainText:
     return ExplainText(_provider("VEKSHA_CORE_V2_TRANSLATION_MODEL", "gpt-5.6-luna"))
+
+
+@lru_cache(maxsize=1)
+def build_grammar_analyzer() -> AnalyzeGrammar:
+    provider = _provider("VEKSHA_CORE_V2_GRAMMAR_MODEL", "gpt-5.6-luna")
+    return AnalyzeGrammar(CachedGrammarProvider(provider))
 
 
 def build_practice_services() -> tuple[BuildPracticeTask, CheckPracticeAnswer]:

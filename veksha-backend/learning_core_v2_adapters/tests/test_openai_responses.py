@@ -8,6 +8,7 @@ import pytest
 
 from learning_core_v2.dictionary import DictionaryLookupRequest
 from learning_core_v2.explanation import ExplanationRequest
+from learning_core_v2.grammar_analysis import GrammarAnalysisRequest
 from learning_core_v2.immersion import BlockAnalysisRequest, ImmersionContext
 from learning_core_v2.lesson import (
     AnswerRequest as LessonAnswerRequest,
@@ -353,6 +354,46 @@ async def test_immersion_analysis_uses_exact_text_structured_contract():
     sent = json.loads(payload["input"])
     assert sent["page_block"] == "A useful sentence."
     assert sent["learner_cefr"] == "B1"
+
+
+@pytest.mark.asyncio
+async def test_grammar_memory_uses_grounded_structured_contract():
+    transport = StubTransport(
+        completed_response(
+            {
+                "segments": [
+                    {"text": "She", "role": "subject", "explanation": "кто"},
+                    {
+                        "text": "has arrived",
+                        "role": "verb",
+                        "explanation": "сказуемое",
+                    },
+                ],
+                "annotations": [
+                    {
+                        "text": "has arrived",
+                        "category": "tense_aspect",
+                        "label": "Present Perfect",
+                        "explanation": "Результат важен сейчас.",
+                    }
+                ],
+            }
+        )
+    )
+    provider = OpenAIResponsesLanguageProvider(
+        api_key="test-key", model="test-model", transport=transport
+    )
+
+    result = await provider.analyze_grammar(
+        GrammarAnalysisRequest("She has arrived.", "ru", "b1")
+    )
+
+    assert result.annotations[0].category == "tense_aspect"
+    payload = transport.calls[0]["payload"]
+    assert payload["text"]["format"]["name"] == "grammar_memory_analysis"
+    sent = json.loads(payload["input"])
+    assert sent["page_text"] == "She has arrived."
+    assert sent["native_language"] == "ru"
 
 
 @pytest.mark.asyncio

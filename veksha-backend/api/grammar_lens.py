@@ -10,13 +10,15 @@ from pydantic import BaseModel, Field
 
 from auth import CurrentUser
 from entitlements import require_feature
+from learning_core_v2.grammar_analysis import GrammarAnalysisRequest
 from learning_core_v2.grammar_memory import (
     GrammarMemoryItem,
     GrammarObservation,
     RememberGrammar,
     SetGrammarStatus,
 )
-from llm.grammar_lens import analyze_grammar_block
+from learning_core_v2_adapters.openai_responses import LanguageProviderError
+from learning_core_v2_adapters.runtime import build_grammar_analyzer
 from storage import get_storage
 
 router = APIRouter()
@@ -94,17 +96,38 @@ async def api_grammar_lens_analyze(
     settings = storage.settings
     native_lang = settings.native_lang or "en"
     learner_level = settings.english_level or "unknown"
+    analyzer = build_grammar_analyzer()
     semaphore = asyncio.Semaphore(_CONCURRENCY)
 
     async def run(text: str) -> GrammarBlock:
         if len((text or "").strip()) < _MIN_BLOCK_CHARS:
             return GrammarBlock()
         text = text[:_MAX_BLOCK_CHARS]
-        async with semaphore:
-            analysis = await analyze_grammar_block(text, native_lang, learner_level)
+        try:
+            async with semaphore:
+                analysis = await analyzer.execute(
+                    GrammarAnalysisRequest(text, native_lang, learner_level)
+                )
+        except (LanguageProviderError, ValueError):
+            return GrammarBlock()
         return GrammarBlock(
-            segments=[GrammarSegment(**item) for item in analysis["segments"]],
-            annotations=[GrammarAnnotation(**item) for item in analysis["annotations"]],
+            segments=[
+                GrammarSegment(
+                    text=item.text,
+                    role=item.role,
+                    explanation=item.explanation,
+                )
+                for item in analysis.segments
+            ],
+            annotations=[
+                GrammarAnnotation(
+                    text=item.text,
+                    category=item.category,
+                    label=item.label,
+                    explanation=item.explanation,
+                )
+                for item in analysis.annotations
+            ],
         )
 
     source_blocks = req.blocks[:_MAX_BLOCKS]
