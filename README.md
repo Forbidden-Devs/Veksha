@@ -27,29 +27,33 @@ veksha-admin/      Internal billing dashboard: per-feature Stars prices and
 
 ## Quick start
 
-Backend:
+The complete local stack is built and started with Docker:
 
 ```bash
-docker compose up -d postgres
-cd veksha-backend
-pip install -r requirements.txt
-export OPENAI_API_KEY="sk-..."   # required, never commit keys
-export DATABASE_URL="postgresql://veksha:veksha@localhost:5432/veksha"
-python main.py                    # http://127.0.0.1:8000, Swagger at /docs
+cp .env.example .env             # add OPENAI_API_KEY for LLM features
+docker compose up --build
 ```
 
-Extension (requires Node.js):
+This starts PostgreSQL, Redis, the backend, the PWA and the admin panel. It also
+builds both browser extensions into `veksha-extension/dist/` without requiring
+Python or Node.js on the host.
+
+- PWA: http://localhost:3000
+- Backend and Swagger: http://localhost:8000 and http://localhost:8000/docs
+- Admin: http://localhost:4173 (default local secret: `local-admin-secret`)
+- Chrome extension: `veksha-extension/dist/chrome`
+- Firefox extension: `veksha-extension/dist/firefox/manifest.json`
+
+The Telegram bot needs real credentials and is opt-in:
 
 ```bash
-cd veksha-extension
-npm install
-npm run build                     # both browsers; or build:chrome / build:firefox
-# Chrome:  chrome://extensions → Developer mode → Load unpacked → veksha-extension/dist/chrome
-# Firefox: about:debugging#/runtime/this-firefox → Load Temporary Add-on → dist/firefox/manifest.json
+docker compose --profile telegram up --build
 ```
 
-Point the extension at your backend via `src/shared/config.ts`
-(`BACKEND_URL`).
+Set `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME` and
+`VEKSHA_BOT_WEBHOOK_SECRET` in `.env` first. Stop the stack with
+`docker compose down`; add `--volumes` only when you intentionally want to
+delete the local PostgreSQL and Redis data.
 
 ## Architecture notes
 

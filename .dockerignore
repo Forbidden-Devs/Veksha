@@ -1,7 +1,13 @@
 .git
+.github
+.env
+.env.*
+!.env.example
 **/node_modules
 **/dist
-**/.dev-profiles
+**/.venv
 **/__pycache__
-**/.pytest_cache
-**/.DS_Store
+**/*.pyc
+veksha-extension/artifacts
+veksha-extension/.dev-profiles
+veksha-backend/local_models

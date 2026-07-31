@@ -6,7 +6,7 @@ services:
       POSTGRES_USER: veksha
       POSTGRES_PASSWORD: veksha
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U veksha -d veksha"]
       interval: 2s
@@ -17,12 +17,116 @@ services:
 
   redis:
     image: redis:8-alpine
-    profiles: ["cache"]
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     command: ["redis-server", "--appendonly", "yes"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
     volumes:
       - veksha-redis:/data
+
+  backend:
+    build:
+      context: ./veksha-backend
+    environment:
+      DATABASE_URL: postgresql://veksha:veksha@postgres:5432/veksha
+      REDIS_URL: redis://redis:6379/0
+      HOST: 0.0.0.0
+      PORT: 8000
+      CORS_ALLOW_ORIGINS: http://localhost:3000,http://localhost:4173
+      VEKSHA_DEBUG_API: ${VEKSHA_DEBUG_API:-1}
+      VEKSHA_DEV_ALL_FEATURES: ${VEKSHA_DEV_ALL_FEATURES:-1}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-5.4-mini}
+      OPENAI_SMART_MODEL: ${OPENAI_SMART_MODEL:-gpt-4.1}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_OAUTH_REDIRECT_URI: ${GOOGLE_OAUTH_REDIRECT_URI:-}
+      TELEGRAM_BOT_USERNAME: ${TELEGRAM_BOT_USERNAME:-}
+      TELEGRAM_BOT_WEBHOOK_SECRET: ${VEKSHA_BOT_WEBHOOK_SECRET:-}
+      ADMIN_API_SECRET: ${ADMIN_API_SECRET:-local-admin-secret}
+      ADMIN_DATABASE_SECRET: ${ADMIN_DATABASE_SECRET:-local-database-secret}
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz')"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+
+  web:
+    build:
+      context: .
+      dockerfile: veksha-web/Dockerfile
+      args:
+        VITE_BACKEND_URL: ${VITE_BACKEND_URL:-http://localhost:8000}
+    environment:
+      PORT: 3000
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  admin:
+    build:
+      context: ./veksha-admin
+      args:
+        VITE_BACKEND_URL: ${VITE_BACKEND_URL:-http://localhost:8000}
+    environment:
+      PORT: 4173
+    ports:
+      - "127.0.0.1:4173:4173"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:4173/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  extension-build:
+    build:
+      context: ./veksha-extension
+      args:
+        VITE_BACKEND_URL: ${VITE_BACKEND_URL:-http://localhost:8000}
+    volumes:
+      - ./veksha-extension/dist:/output
+
+  tgbot:
+    profiles: ["telegram"]
+    build:
+      context: ./veksha-tgbot
+    environment:
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      VEKSHA_BACKEND_URL: http://backend:8000
+      VEKSHA_BOT_WEBHOOK_SECRET: ${VEKSHA_BOT_WEBHOOK_SECRET:-}
+      PORT: 8080
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/healthz')"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
 volumes:
   veksha-postgres:
