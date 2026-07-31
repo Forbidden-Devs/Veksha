@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-import os
 from typing import Literal
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException
@@ -78,12 +77,7 @@ async def _execute_translation(req: TranslateRequest, storage, service) -> Trans
         detected_source_lang=result.detected_source_language,
         single=result.is_lexical_unit,
         normalized_text=result.dictionary_form,
-        vocabulary_mode=(
-            "suggested"
-            if os.getenv("VEKSHA_CORE_V2_VOCABULARY_INBOX_ENABLED", "0").lower()
-            in {"1", "true", "yes"}
-            else "saved"
-        ),
+        vocabulary_mode="suggested",
     )
 
 

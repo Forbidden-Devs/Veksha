@@ -342,19 +342,6 @@ export function analyzeImmersion(
   return _post("/api/immersion/analyze", { blocks }, 45_000);
 }
 
-export interface CiMeterResult {
-  known_pct: number;
-  cefr: string;
-  user_level: string;
-  verdict: "ideal" | "too_easy" | "too_hard" | "close";
-  source: "local" | "llm";
-  confidence: "low" | "high";
-}
-
-export function analyzeCiMeter(text: string, refine = false): Promise<CiMeterResult> {
-  return _post("/api/ci_meter/analyze", { text, refine }, 20_000);
-}
-
 export interface ReadingCoachObstacle {
   term: string;
   occurrences: number;
@@ -368,7 +355,7 @@ export interface ReadingCoachResult {
   projected_known_pct: number;
   cefr: string;
   user_level: string;
-  verdict: CiMeterResult["verdict"];
+  verdict: "ideal" | "too_easy" | "too_hard" | "close";
   confidence: "low" | "high";
   unique_terms: number;
   obstacles: ReadingCoachObstacle[];

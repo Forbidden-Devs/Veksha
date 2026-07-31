@@ -25,37 +25,20 @@ import db
 from api import auth as api_auth
 from api import admin
 from api import billing
-from api import ci_meter
 from api import debug, settings
+from api import immersion_v2 as immersion
 from api import i18n as api_i18n
+from api import lesson_v2 as lesson
 from api import privacy
 from api import reading_coach
 from api import grammar_lens
 from api import quizlet
 from api import subtitles as api_subtitles
+from api import training_v2 as training
+from api import translate_v2 as translate
 from api import vocab_frequency
 from api import vocabulary_inbox
 from config import CORS_ALLOW_ORIGINS, DEBUG_API, HOST, LOG_LEVEL, PORT, RELOAD
-
-if os.getenv("VEKSHA_CORE_V2_TRANSLATION_ENABLED", "0").lower() in {"1", "true", "yes"}:
-    from api import translate_v2 as translate
-else:
-    from api import translate
-
-if os.getenv("VEKSHA_CORE_V2_TRAINING_ENABLED", "0").lower() in {"1", "true", "yes"}:
-    from api import training_v2 as training
-else:
-    from api import training
-
-if os.getenv("VEKSHA_CORE_V2_LESSON_ENABLED", "0").lower() in {"1", "true", "yes"}:
-    from api import lesson_v2 as lesson
-else:
-    from api import lesson
-
-if os.getenv("VEKSHA_CORE_V2_IMMERSION_ENABLED", "0").lower() in {"1", "true", "yes"}:
-    from api import immersion_v2 as immersion
-else:
-    from api import immersion
 
 logging.basicConfig(
     level=getattr(logging, LOG_LEVEL.upper(), logging.INFO),
@@ -120,7 +103,6 @@ app.include_router(training.router)
 app.include_router(lesson.router)
 app.include_router(api_i18n.router)
 app.include_router(immersion.router)
-app.include_router(ci_meter.router)
 app.include_router(grammar_lens.router)
 app.include_router(quizlet.router)
 app.include_router(vocab_frequency.router)

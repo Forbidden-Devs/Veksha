@@ -63,13 +63,7 @@ async def test_add_word_uses_v2_enrichment_and_keeps_public_response(monkeypatch
     storage = FakeStorage()
     service = RecordingEnrichment()
     monkeypatch.setattr(settings, "get_storage", lambda _username: storage)
-    monkeypatch.setattr(settings, "_dictionary_v2_enabled", lambda: True)
     monkeypatch.setattr(settings, "build_dictionary_enrichment", lambda: service)
-
-    async def forbidden_legacy_call(*_args, **_kwargs):
-        raise AssertionError("legacy dictionary lookup was called")
-
-    monkeypatch.setattr(settings.llm, "translate_selection", forbidden_legacy_call)
 
     response = await settings.api_add_kb_word(
         settings.AddWordRequest(word="  Serendipity  "), "tester"
@@ -97,7 +91,6 @@ class FailingEnrichment:
 async def test_new_word_is_rolled_back_when_v2_enrichment_fails(monkeypatch):
     storage = FakeStorage()
     monkeypatch.setattr(settings, "get_storage", lambda _username: storage)
-    monkeypatch.setattr(settings, "_dictionary_v2_enabled", lambda: True)
     monkeypatch.setattr(
         settings, "build_dictionary_enrichment", lambda: FailingEnrichment()
     )

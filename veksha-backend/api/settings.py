@@ -11,13 +11,11 @@ api/settings.py — settings, reminders, and KB summary endpoints.
 from __future__ import annotations
 
 import logging
-import os
 import time
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-import llm
 import db
 from auth import CurrentUser
 from config import REMINDER_MIN_WORDS, REVIEW_WINDOW_HOURS, SCHEDULER_INTERVAL_MINUTES
@@ -140,23 +138,7 @@ def _topic_needing_review(storage: UserStorage) -> str | None:
     return TopicReviewPolicy().first_due(topics)
 
 
-def _dictionary_v2_enabled() -> bool:
-    return os.getenv("VEKSHA_CORE_V2_DICTIONARY_ENABLED", "0").lower() in {
-        "1",
-        "true",
-        "yes",
-    }
-
-
 async def _dictionary_details(storage: UserStorage, entry) -> dict[str, str]:
-    if not _dictionary_v2_enabled():
-        return await llm.translate_selection(
-            entry.name,
-            storage.settings.target_lang,
-            storage.settings.native_lang,
-            level=storage.settings.english_level or "intermediate",
-        )
-
     try:
         result = await build_dictionary_enrichment().execute(
             DictionaryLookupRequest(
@@ -177,14 +159,6 @@ async def _dictionary_details(storage: UserStorage, entry) -> dict[str, str]:
     }
 
 
-def _sentence_mining_v2_enabled() -> bool:
-    return os.getenv("VEKSHA_CORE_V2_SENTENCE_MINING_ENABLED", "0").lower() in {
-        "1",
-        "true",
-        "yes",
-    }
-
-
 async def _sentence_mining_card(
     storage: UserStorage,
     entry,
@@ -194,19 +168,6 @@ async def _sentence_mining_card(
     same_count: int,
     higher_count: int,
 ) -> dict:
-    if not _sentence_mining_v2_enabled():
-        return await llm.generate_sentence_mining(
-            word=entry.name,
-            translation=entry.translation,
-            context=entry.context,
-            target_lang=storage.settings.target_lang,
-            native_lang=storage.settings.native_lang,
-            level=level,
-            higher_level=higher_level,
-            same_count=same_count,
-            higher_count=higher_count,
-        )
-
     try:
         card = await build_sentence_mining().execute(
             MiningCoreRequest(

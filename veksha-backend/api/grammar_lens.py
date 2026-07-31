@@ -8,7 +8,6 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
-import llm
 from auth import CurrentUser
 from entitlements import require_feature
 from learning_core_v2.grammar_memory import (
@@ -17,6 +16,7 @@ from learning_core_v2.grammar_memory import (
     RememberGrammar,
     SetGrammarStatus,
 )
+from llm.grammar_lens import analyze_grammar_block
 from storage import get_storage
 
 router = APIRouter()
@@ -101,7 +101,7 @@ async def api_grammar_lens_analyze(
             return GrammarBlock()
         text = text[:_MAX_BLOCK_CHARS]
         async with semaphore:
-            analysis = await llm.analyze_grammar_block(text, native_lang, learner_level)
+            analysis = await analyze_grammar_block(text, native_lang, learner_level)
         return GrammarBlock(
             segments=[GrammarSegment(**item) for item in analysis["segments"]],
             annotations=[GrammarAnnotation(**item) for item in analysis["annotations"]],

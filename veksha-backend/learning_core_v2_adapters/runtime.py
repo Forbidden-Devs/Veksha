@@ -30,7 +30,6 @@ from .practice import RandomChoiceSource, UuidIdentifierSource
 from .vocabulary import (
     CollectingVocabularySink,
     UserStorageVocabularyInboxSink,
-    UserStorageVocabularySink,
 )
 
 
@@ -68,27 +67,19 @@ def _provider(model_variable: str, default_model: str) -> OpenAIResponsesLanguag
 
 
 def _phrase_miner() -> MinePhraseVocabulary | None:
-    phrase_miner = None
-    if os.getenv("VEKSHA_CORE_V2_PHRASE_MINING_ENABLED", "0").lower() in {
+    if os.getenv("VEKSHA_PHRASE_MINING_ENABLED", "1").lower() not in {
         "1",
         "true",
         "yes",
     }:
-        phrase_miner = MinePhraseVocabulary(
-            _provider("VEKSHA_CORE_V2_PHRASE_MINING_MODEL", "gpt-5.6-luna")
-        )
-    return phrase_miner
+        return None
+    return MinePhraseVocabulary(
+        _provider("VEKSHA_CORE_V2_PHRASE_MINING_MODEL", "gpt-5.6-luna")
+    )
 
 
 def _vocabulary_sink(storage: UserStorage) -> VocabularySink:
-    phrase_miner = _phrase_miner()
-    if os.getenv("VEKSHA_CORE_V2_VOCABULARY_INBOX_ENABLED", "0").lower() in {
-        "1",
-        "true",
-        "yes",
-    }:
-        return UserStorageVocabularyInboxSink(storage, phrase_miner=phrase_miner)
-    return UserStorageVocabularySink(storage, phrase_miner=phrase_miner)
+    return UserStorageVocabularyInboxSink(storage, phrase_miner=_phrase_miner())
 
 
 def build_translate_text(storage: UserStorage) -> TranslateText:

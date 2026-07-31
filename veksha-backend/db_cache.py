@@ -1,11 +1,9 @@
 """db_cache.py — persistent PostgreSQL cache for reusable LLM outputs.
 
 A single namespaced key->JSON table that survives restarts and is shared by all
-users on this backend instance. Used as the durable layer for:
-
-  ns="tr"      — short translations (under translation_cache's memory/Redis layers)
-  ns="explain" — "Break down" / explanation popups
-  ns="topic"   — generated topic vocabulary (reused across users)
+users on this backend instance. It remains only for the legacy subtitle and
+Grammar Memory analysis adapters and will disappear when those adapters move
+to the new provider boundary.
 
 Blocking calls are run in a threadpool via asyncio.to_thread so they never stall
 the event loop.

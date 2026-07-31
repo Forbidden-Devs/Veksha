@@ -40,7 +40,7 @@ async def test_analysis_remembers_grounded_grammar_pattern(monkeypatch):
         }
 
     monkeypatch.setattr(grammar_api, "get_storage", lambda _username: storage)
-    monkeypatch.setattr(grammar_api.llm, "analyze_grammar_block", analyze)
+    monkeypatch.setattr(grammar_api, "analyze_grammar_block", analyze)
 
     response = await grammar_api.api_grammar_lens_analyze(
         grammar_api.GrammarLensRequest(

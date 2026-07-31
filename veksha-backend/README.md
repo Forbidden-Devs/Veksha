@@ -23,44 +23,40 @@ Optional env vars: `OPENAI_MODEL`, `OPENAI_SMART_MODEL`, `REDIS_URL`
 `VEKSHA_DATA_DIR` (downloaded runtime files), `CORS_ALLOW_ORIGINS`,
 `VEKSHA_DEBUG_API`, `DATABASE_POOL_MIN_SIZE`, `DATABASE_POOL_MAX_SIZE`.
 
-The independently rewritten translation core is disabled by default. Enable it
-with `VEKSHA_CORE_V2_TRANSLATION_ENABLED=1`; its model can be selected with
+The independently rewritten translation core is the only translation
+implementation. Its model can be selected with
 `VEKSHA_CORE_V2_TRANSLATION_MODEL` (default `gpt-5.6-luna`).
 
-Dictionary-card enrichment for `/api/kb_word` and `/api/kb_word_details` is a
-separate rewritten use case. Enable it with
-`VEKSHA_CORE_V2_DICTIONARY_ENABLED=1` and select its model through
+Dictionary-card enrichment for `/api/kb_word` and `/api/kb_word_details` uses
+the rewritten use case. Select its model through
 `VEKSHA_CORE_V2_DICTIONARY_MODEL` (default `gpt-5.6-luna`).
 
-Sentence Mining cards for `/api/kb_word_mine` are independently controlled by
-`VEKSHA_CORE_V2_SENTENCE_MINING_ENABLED=1`. Configure their model with
+Sentence Mining cards for `/api/kb_word_mine` always use the new core. Configure
+their model with
 `VEKSHA_CORE_V2_SENTENCE_MINING_MODEL` (default `gpt-5.6-luna`).
 
-Vocabulary extraction from translated multi-word selections is enabled with
-`VEKSHA_CORE_V2_PHRASE_MINING_ENABLED=1` while translation v2 is active. Its
-model is selected by `VEKSHA_CORE_V2_PHRASE_MINING_MODEL` (default
-`gpt-5.6-luna`).
+Vocabulary extraction from translated multi-word selections is enabled by
+default. `VEKSHA_PHRASE_MINING_ENABLED=0` is an operational cost-control switch;
+it does not select a legacy implementation. The model is selected by
+`VEKSHA_CORE_V2_PHRASE_MINING_MODEL` (default `gpt-5.6-luna`).
 
-To make vocabulary acquisition learner-controlled, enable
-`VEKSHA_CORE_V2_VOCABULARY_INBOX_ENABLED=1` together with translation v2.
-Single-word lookups and phrase-mining candidates then go to the vocabulary
+Vocabulary acquisition is learner-controlled. Single-word lookups and
+phrase-mining candidates go to the vocabulary
 inbox instead of directly entering the review queue. The learner must choose
 Learn, Known, or Ignore in My Words. Source URLs are stored without query
 parameters or fragments.
 
-The rewritten training core is controlled independently with
-`VEKSHA_CORE_V2_TRAINING_ENABLED=1`. Its Responses API model is configured via
+The rewritten training core is the only training implementation. Its Responses
+API model is configured via
 `VEKSHA_CORE_V2_TRAINING_MODEL` (default `gpt-5.6-terra`).
 
 The rewritten topic-lesson core keeps `/api/lesson-topics` and
-`/api/lesson/ws` unchanged and is enabled separately with
-`VEKSHA_CORE_V2_LESSON_ENABLED=1`. Select its model with
+`/api/lesson/ws` unchanged. Select its model with
 `VEKSHA_CORE_V2_LESSON_MODEL` (default `gpt-5.6-terra`). Existing lesson data
-is mapped at the storage boundary, so the flag can be rolled back without a
-data migration.
+is mapped at the storage boundary.
 
-The independently rewritten page-immersion analyzer is enabled with
-`VEKSHA_CORE_V2_IMMERSION_ENABLED=1`; its model is configured through
+The independently rewritten page-immersion analyzer is the only implementation;
+its model is configured through
 `VEKSHA_CORE_V2_IMMERSION_MODEL` (default `gpt-5.6-luna`). The endpoint remains
 `POST /api/immersion/analyze`, including its existing premium entitlement.
 
@@ -162,18 +158,15 @@ main.py               app entry point, routers, CORS, error handler
 config.py             env-based configuration
 db.py                 PostgreSQL: users/tokens, KB documents, review log
 auth.py               bearer-token dependencies (HTTP + WebSocket)
-models.py             Word, Patch, UserSettings, LessonTopic/LessonBlock
-storage.py            per-user KB object model, spaced repetition primitives
+models.py             transitional persisted Word/UserSettings/lesson records
+storage.py            adapters for the versioned user knowledge document
 fsrs.py               FSRS-4.5 scheduler (pure functions; default weights)
-selection.py          selection translate → KB update
-training.py           word-training sessions (task generation, answer check)
-lesson.py             topic lessons: block generation/review, mastery
+learning_core_v2/     independent domain use cases
+learning_core_v2_adapters/ HTTP/storage/LLM adapters for the new core
 i18n.py               UI/server strings + LLM-translated catalogues
 entitlements.py       subscription tiers, plans, feature gating (require_feature)
-llm/                  all OpenAI calls (metadata, training, lesson,
-                      selection, immersion, _base)
-db_cache.py           PostgreSQL cache for reusable LLM outputs
-translation_cache.py  memory/Redis cache for short translations
+llm/                  remaining legacy Grammar Memory/subtitle/i18n adapters
+db_cache.py           temporary cache used by those remaining adapters
 api/                  routers (one file per domain)
 ```
 

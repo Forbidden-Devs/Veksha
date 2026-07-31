@@ -93,7 +93,6 @@ async def test_quick_translate_defers_vocabulary_work(monkeypatch):
     target = RecordingVocabularyTarget()
     service = CollectingTranslationService(collector)
     background_tasks = BackgroundTasks()
-    monkeypatch.setenv("VEKSHA_CORE_V2_VOCABULARY_INBOX_ENABLED", "1")
     monkeypatch.setattr(translate_v2, "get_storage", lambda _username: storage)
     monkeypatch.setattr(
         translate_v2,

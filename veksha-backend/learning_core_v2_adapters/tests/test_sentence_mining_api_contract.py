@@ -67,13 +67,7 @@ async def test_endpoint_uses_v2_card_and_reuses_matching_configuration(monkeypat
     storage = FakeStorage()
     builder = RecordingBuilder()
     monkeypatch.setattr(settings, "get_storage", lambda _username: storage)
-    monkeypatch.setattr(settings, "_sentence_mining_v2_enabled", lambda: True)
     monkeypatch.setattr(settings, "build_sentence_mining", lambda: builder)
-
-    async def forbidden_legacy_call(**_kwargs):
-        raise AssertionError("legacy sentence mining was called")
-
-    monkeypatch.setattr(settings.llm, "generate_sentence_mining", forbidden_legacy_call)
 
     first = await settings.api_mine_kb_word(
         settings.SentenceMiningRequest(word="make"), "tester"
@@ -96,7 +90,6 @@ async def test_force_regenerates_existing_v2_card(monkeypatch):
     storage = FakeStorage()
     builder = RecordingBuilder()
     monkeypatch.setattr(settings, "get_storage", lambda _username: storage)
-    monkeypatch.setattr(settings, "_sentence_mining_v2_enabled", lambda: True)
     monkeypatch.setattr(settings, "build_sentence_mining", lambda: builder)
 
     await settings.api_mine_kb_word(
