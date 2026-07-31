@@ -17,6 +17,7 @@ from learning_core_v2.lesson import (
     CheckLessonAnswer,
     PrepareLesson,
 )
+from learning_core_v2.phrase_mining import MinePhraseVocabulary
 from learning_core_v2.practice import BuildPracticeTask, CheckPracticeAnswer
 from learning_core_v2.sentence_mining import BuildSentenceMiningCard
 from learning_core_v2.translation import TranslateText
@@ -26,7 +27,7 @@ from usage_context import get_usage_user
 from .openai_responses import OpenAIResponsesLanguageProvider
 from .immersion import CachedImmersionProvider
 from .practice import RandomChoiceSource, UuidIdentifierSource
-from .vocabulary import UserStorageVocabularySink
+from .vocabulary import CollectingVocabularySink, UserStorageVocabularySink
 
 
 log = logging.getLogger(__name__)
@@ -62,9 +63,30 @@ def _provider(model_variable: str, default_model: str) -> OpenAIResponsesLanguag
     )
 
 
+def _vocabulary_sink(storage: UserStorage) -> UserStorageVocabularySink:
+    phrase_miner = None
+    if os.getenv("VEKSHA_CORE_V2_PHRASE_MINING_ENABLED", "0").lower() in {
+        "1",
+        "true",
+        "yes",
+    }:
+        phrase_miner = MinePhraseVocabulary(
+            _provider("VEKSHA_CORE_V2_PHRASE_MINING_MODEL", "gpt-5.6-luna")
+        )
+    return UserStorageVocabularySink(storage, phrase_miner=phrase_miner)
+
+
 def build_translate_text(storage: UserStorage) -> TranslateText:
     provider = _provider("VEKSHA_CORE_V2_TRANSLATION_MODEL", "gpt-5.6-luna")
-    return TranslateText(provider, UserStorageVocabularySink(storage))
+    return TranslateText(provider, _vocabulary_sink(storage))
+
+
+def build_deferred_translate_text(
+    storage: UserStorage,
+) -> tuple[TranslateText, CollectingVocabularySink, UserStorageVocabularySink]:
+    provider = _provider("VEKSHA_CORE_V2_TRANSLATION_MODEL", "gpt-5.6-luna")
+    collector = CollectingVocabularySink()
+    return TranslateText(provider, collector), collector, _vocabulary_sink(storage)
 
 
 def build_dictionary_enrichment() -> EnrichDictionaryEntry:

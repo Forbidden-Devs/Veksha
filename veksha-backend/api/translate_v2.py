@@ -4,14 +4,18 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel, Field
 
 from auth import CurrentUser
 from learning_core_v2.explanation import ExplanationRequest
 from learning_core_v2.translation import TranslationRequest
 from learning_core_v2_adapters.openai_responses import LanguageProviderError
-from learning_core_v2_adapters.runtime import build_explain_text, build_translate_text
+from learning_core_v2_adapters.runtime import (
+    build_deferred_translate_text,
+    build_explain_text,
+    build_translate_text,
+)
 from storage import get_storage
 
 
@@ -42,9 +46,7 @@ class ExplainResponse(BaseModel):
     explanation: str
 
 
-async def _translate(req: TranslateRequest, username: str) -> TranslateResponse:
-    storage = get_storage(username)
-    service = build_translate_text(storage)
+async def _execute_translation(req: TranslateRequest, storage, service) -> TranslateResponse:
     source_language = req.source_lang
     target_language = req.target_lang
     if req.bidirectional:
@@ -74,14 +76,28 @@ async def _translate(req: TranslateRequest, username: str) -> TranslateResponse:
     )
 
 
+async def _translate(req: TranslateRequest, username: str) -> TranslateResponse:
+    storage = get_storage(username)
+    return await _execute_translation(req, storage, build_translate_text(storage))
+
+
 @router.post("/api/translate", response_model=TranslateResponse)
 async def api_translate(req: TranslateRequest, username: CurrentUser) -> TranslateResponse:
     return await _translate(req, username)
 
 
 @router.post("/api/quick_translate", response_model=TranslateResponse)
-async def api_quick_translate(req: TranslateRequest, username: CurrentUser) -> TranslateResponse:
-    return await _translate(req, username)
+async def api_quick_translate(
+    req: TranslateRequest,
+    username: CurrentUser,
+    background_tasks: BackgroundTasks,
+) -> TranslateResponse:
+    storage = get_storage(username)
+    service, collector, target = build_deferred_translate_text(storage)
+    response = await _execute_translation(req, storage, service)
+    for observation in collector.observations:
+        background_tasks.add_task(target.observe, observation)
+    return response
 
 
 @router.post("/api/explain", response_model=ExplainResponse)

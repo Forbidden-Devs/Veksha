@@ -24,6 +24,11 @@ from .lesson import (
     RecordLessonResults,
     TopicReviewPolicy,
 )
+from .phrase_mining import (
+    MinePhraseVocabulary,
+    PhraseMiningRequest,
+    VocabularyCandidate,
+)
 from .practice import (
     AnswerCheckRequest,
     AnswerEvaluation,
@@ -66,6 +71,9 @@ __all__ = [
     "QuestionSchedule",
     "RecordLessonResults",
     "TopicReviewPolicy",
+    "MinePhraseVocabulary",
+    "PhraseMiningRequest",
+    "VocabularyCandidate",
     "AnswerCheckRequest",
     "AnswerEvaluation",
     "BuildPracticeTask",

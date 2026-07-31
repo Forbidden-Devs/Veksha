@@ -19,6 +19,7 @@ from learning_core_v2.lesson import (
     MaterialRequest,
     QuestionRequest,
 )
+from learning_core_v2.phrase_mining import PhraseMiningRequest
 from learning_core_v2.practice import (
     AnswerCheckRequest,
     PracticeTask,
@@ -388,3 +389,42 @@ async def test_sentence_mining_uses_level_and_count_structured_contract():
     sent = json.loads(payload["input"])
     assert sent["learner_example_count"] == 2
     assert sent["stretch_example_count"] == 1
+
+
+@pytest.mark.asyncio
+async def test_phrase_mining_returns_structured_dictionary_candidates():
+    transport = StubTransport(
+        completed_response(
+            {
+                "candidates": [
+                    {
+                        "term": "come across",
+                        "translation": "случайно найти",
+                        "transcription": "/kʌm əˈkrɒs/",
+                        "context": "came across",
+                    }
+                ]
+            }
+        )
+    )
+    provider = OpenAIResponsesLanguageProvider(
+        api_key="test-key", model="test-model", transport=transport
+    )
+    request = PhraseMiningRequest(
+        "She came across an old photograph.",
+        "Она случайно нашла старую фотографию.",
+        "en",
+        "ru",
+        "b1",
+        ("photograph",),
+        3,
+    )
+
+    result = await provider.extract_vocabulary(request)
+
+    assert result[0].term == "come across"
+    payload = transport.calls[0]["payload"]
+    assert payload["text"]["format"]["name"] == "phrase_vocabulary_candidates"
+    sent = json.loads(payload["input"])
+    assert sent["existing_terms"] == ["photograph"]
+    assert sent["maximum_candidates"] == 3
