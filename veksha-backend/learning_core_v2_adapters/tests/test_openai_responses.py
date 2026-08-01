@@ -6,6 +6,10 @@ from typing import Any
 
 import pytest
 
+from learning_core_v2.catalog_translation import (
+    CatalogEntry,
+    CatalogTranslationRequest,
+)
 from learning_core_v2.dictionary import DictionaryLookupRequest
 from learning_core_v2.explanation import ExplanationRequest
 from learning_core_v2.grammar_analysis import GrammarAnalysisRequest
@@ -28,6 +32,7 @@ from learning_core_v2.practice import (
     TaskDraftRequest,
 )
 from learning_core_v2.sentence_mining import SentenceMiningRequest
+from learning_core_v2.subtitles import SubtitleTranslationRequest
 from learning_core_v2.translation import TranslationRequest
 from learning_core_v2_adapters.openai_responses import (
     LanguageProviderError,
@@ -394,6 +399,60 @@ async def test_grammar_memory_uses_grounded_structured_contract():
     sent = json.loads(payload["input"])
     assert sent["page_text"] == "She has arrived."
     assert sent["native_language"] == "ru"
+
+
+@pytest.mark.asyncio
+async def test_subtitles_use_indexed_structured_contract():
+    transport = StubTransport(
+        completed_response(
+            {
+                "lines": [
+                    {
+                        "index": 0,
+                        "translation_tokens": ["Привет!"],
+                        "alignment": [
+                            {"source_indices": [0], "translation_indices": [0]}
+                        ],
+                        "detected_source_language": "en",
+                    }
+                ]
+            }
+        )
+    )
+    provider = OpenAIResponsesLanguageProvider(
+        api_key="test-key", model="test-model", transport=transport
+    )
+
+    result = await provider.translate_subtitles(
+        SubtitleTranslationRequest((("Hello!",),), "auto", "ru")
+    )
+
+    assert result[0].translation_tokens == ("Привет!",)
+    assert result[0].alignment[0].source_indices == (0,)
+    payload = transport.calls[0]["payload"]
+    assert payload["text"]["format"]["name"] == "subtitle_translation"
+    assert json.loads(payload["input"])["lines"][0]["tokens"] == ["Hello!"]
+
+
+@pytest.mark.asyncio
+async def test_catalog_translation_uses_key_enum():
+    transport = StubTransport(
+        completed_response(
+            {"translations": [{"key": "welcome", "value": "Добро пожаловать"}]}
+        )
+    )
+    provider = OpenAIResponsesLanguageProvider(
+        api_key="test-key", model="test-model", transport=transport
+    )
+
+    result = await provider.translate_catalog(
+        CatalogTranslationRequest((CatalogEntry("welcome", "Welcome"),), "ru")
+    )
+
+    assert result[0].value == "Добро пожаловать"
+    schema = transport.calls[0]["payload"]["text"]["format"]["schema"]
+    key_schema = schema["properties"]["translations"]["items"]["properties"]["key"]
+    assert key_schema["enum"] == ["welcome"]
 
 
 @pytest.mark.asyncio

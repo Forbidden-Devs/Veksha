@@ -7,6 +7,11 @@ from .acquisition import (
     VocabularyEncounter,
     VocabularyProposal,
 )
+from .catalog_translation import (
+    CatalogEntry,
+    CatalogTranslationRequest,
+    TranslateCatalog,
+)
 from .dictionary import (
     DictionaryDetails,
     DictionaryLookupRequest,
@@ -73,6 +78,13 @@ from .sentence_mining import (
     SentenceMiningCard,
     SentenceMiningRequest,
 )
+from .subtitles import (
+    Alignment,
+    SubtitleBatchTranslation,
+    SubtitleLineTranslation,
+    SubtitleTranslationRequest,
+    TranslateSubtitles,
+)
 from .translation import (
     TextTranslation,
     TranslateText,
@@ -86,6 +98,9 @@ __all__ = [
     "SuggestVocabulary",
     "VocabularyEncounter",
     "VocabularyProposal",
+    "CatalogEntry",
+    "CatalogTranslationRequest",
+    "TranslateCatalog",
     "DictionaryDetails",
     "DictionaryLookupRequest",
     "EnrichDictionaryEntry",
@@ -136,6 +151,11 @@ __all__ = [
     "BuildSentenceMiningCard",
     "SentenceMiningCard",
     "SentenceMiningRequest",
+    "Alignment",
+    "SubtitleBatchTranslation",
+    "SubtitleLineTranslation",
+    "SubtitleTranslationRequest",
+    "TranslateSubtitles",
     "TextTranslation",
     "TranslateText",
     "TranslationRequest",

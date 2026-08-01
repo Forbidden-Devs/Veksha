@@ -15,7 +15,8 @@ from pydantic import BaseModel, Field
 
 from auth import CurrentUser
 from entitlements import require_feature
-from llm.subtitles import translate_subtitle_batch, translate_subtitle_line
+from learning_core_v2.subtitles import SubtitleTranslationRequest
+from learning_core_v2_adapters.runtime import build_subtitle_translator
 
 log = logging.getLogger(__name__)
 
@@ -65,11 +66,15 @@ async def api_subtitles_translate(
     if not tokens:
         raise HTTPException(status_code=400, detail="tokens must not be empty")
     try:
-        result = await translate_subtitle_line(tokens, req.source_lang, req.target_lang)
+        result = await build_subtitle_translator().execute(
+            SubtitleTranslationRequest(
+                (tuple(tokens),), req.source_lang, req.target_lang
+            )
+        )
     except Exception as err:
         log.warning("[subtitles] translate failed for user %r: %s", username, err)
         raise HTTPException(status_code=502, detail="Subtitle translation failed.")
-    return SubtitleTranslateResponse(**result)
+    return _response(result.lines[0])
 
 
 @router.post(
@@ -89,10 +94,27 @@ async def api_subtitles_translate_batch(
     if any(len(line) > MAX_TOKENS for line in lines):
         raise HTTPException(status_code=400, detail=f"each line may contain at most {MAX_TOKENS} tokens")
     try:
-        results = await translate_subtitle_batch(lines, req.source_lang, req.target_lang)
+        result = await build_subtitle_translator().execute(
+            SubtitleTranslationRequest(
+                tuple(tuple(line) for line in lines), req.source_lang, req.target_lang
+            )
+        )
     except Exception as err:
         log.warning("[subtitles] batch translate failed for user %r: %s", username, err)
         raise HTTPException(status_code=502, detail="Subtitle batch translation failed.")
     return SubtitleBatchTranslateResponse(
-        lines=[SubtitleTranslateResponse(**result) for result in results],
+        lines=[_response(line) for line in result.lines],
+    )
+
+
+def _response(line) -> SubtitleTranslateResponse:
+    return SubtitleTranslateResponse(
+        translation_tokens=list(line.translation_tokens),
+        alignment=[
+            AlignmentGroup(
+                src=list(group.source_indices), dst=list(group.translation_indices)
+            )
+            for group in line.alignment
+        ],
+        detected_source_lang=line.detected_source_language,
     )

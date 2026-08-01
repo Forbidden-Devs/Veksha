@@ -9,6 +9,7 @@ from functools import lru_cache
 from typing import Any
 
 import db
+from learning_core_v2.catalog_translation import TranslateCatalog
 from learning_core_v2.dictionary import EnrichDictionaryEntry
 from learning_core_v2.explanation import ExplainText
 from learning_core_v2.grammar_analysis import AnalyzeGrammar
@@ -21,6 +22,7 @@ from learning_core_v2.lesson import (
 from learning_core_v2.phrase_mining import MinePhraseVocabulary
 from learning_core_v2.practice import BuildPracticeTask, CheckPracticeAnswer
 from learning_core_v2.sentence_mining import BuildSentenceMiningCard
+from learning_core_v2.subtitles import TranslateSubtitles
 from learning_core_v2.translation import TranslateText, VocabularySink
 from storage import UserStorage
 from usage_context import get_usage_user
@@ -29,6 +31,7 @@ from .openai_responses import OpenAIResponsesLanguageProvider
 from .immersion import CachedImmersionProvider
 from .grammar import CachedGrammarProvider
 from .practice import RandomChoiceSource, UuidIdentifierSource
+from .subtitles import CachedSubtitleTranslator
 from .vocabulary import (
     CollectingVocabularySink,
     UserStorageVocabularyInboxSink,
@@ -115,6 +118,18 @@ def build_explain_text() -> ExplainText:
 def build_grammar_analyzer() -> AnalyzeGrammar:
     provider = _provider("VEKSHA_CORE_V2_GRAMMAR_MODEL", "gpt-5.6-luna")
     return AnalyzeGrammar(CachedGrammarProvider(provider))
+
+
+@lru_cache(maxsize=1)
+def build_subtitle_translator() -> CachedSubtitleTranslator:
+    provider = _provider("VEKSHA_CORE_V2_SUBTITLES_MODEL", "gpt-5.6-luna")
+    return CachedSubtitleTranslator(TranslateSubtitles(provider))
+
+
+@lru_cache(maxsize=1)
+def build_catalog_translator() -> TranslateCatalog:
+    provider = _provider("VEKSHA_CORE_V2_I18N_MODEL", "gpt-5.6-luna")
+    return TranslateCatalog(provider)
 
 
 def build_practice_services() -> tuple[BuildPracticeTask, CheckPracticeAnswer]:

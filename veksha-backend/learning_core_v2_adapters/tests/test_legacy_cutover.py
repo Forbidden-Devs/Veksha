@@ -43,6 +43,9 @@ def test_migration_flags_and_legacy_entrypoints_are_gone():
         "lesson.py",
         "local_translate.py",
         "translation_cache.py",
+        "db_cache.py",
+        "llm/_base.py",
         "llm/grammar_lens.py",
+        "llm/subtitles.py",
     ]
     assert all(not (BACKEND / relative).exists() for relative in removed)

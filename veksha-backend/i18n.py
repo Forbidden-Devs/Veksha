@@ -16,6 +16,10 @@ import logging
 from pathlib import Path
 
 import config
+from learning_core_v2.catalog_translation import (
+    CatalogEntry,
+    CatalogTranslationRequest,
+)
 
 log = logging.getLogger(__name__)
 
@@ -482,32 +486,19 @@ def get_string(key: str, native_lang: str, **kwargs: object) -> str:
 # ---------------------------------------------------------------------------
 
 async def _translate_batch(keys: list[str], values: list[str], lang: str) -> dict[str, str]:
-    from llm._base import _call as _llm_call  # local import — avoids module-level circular dependency
-
-    pairs = "\n".join(f'"{k}": "{v}"' for k, v in zip(keys, values))
-    system = (
-        f"You are a professional UI/UX and app translator. "
-        f"Translate the following English strings into {lang}. "
-        f"Return ONLY a valid JSON object with the exact same keys and translated values. "
-        f"Rules: keep placeholders {{n}}, {{items}}, {{name}}, {{desc}}, {{limit}} exactly as-is; "
-        f"use natural friendly tone; keep labels short; "
-        f"do NOT translate: Veksha, AI, KB, e.g., A1, B1, B2, C1, C2."
-    )
-    user = f"Translate to {lang}:\n{{{{\n{pairs}\n}}}}"
+    from learning_core_v2_adapters.runtime import build_catalog_translator
 
     try:
-        raw = await _llm_call(
-            system=system,
-            user=user,
-            max_tokens=1500,
-            temp=0.1,
-            json_mode=True,
-            call_name=f"i18n_{lang}",
+        return await build_catalog_translator().execute(
+            CatalogTranslationRequest(
+                tuple(
+                    CatalogEntry(key, value)
+                    for key, value in zip(keys, values, strict=True)
+                ),
+                lang,
+            )
         )
-        data = json.loads(raw)
-        return {k: str(v) for k, v in data.items() if k in keys}
     except Exception as err:
-        # llm._base already logged the full request failure; one line is enough here.
         log.warning("[i18n] batch translate failed for lang=%r: %s", lang, err)
         return {}
 

@@ -55,9 +55,6 @@ ADMIN_DATABASE_SECRET = os.getenv("ADMIN_DATABASE_SECRET", "")
 # Optional Redis cache for one- and two-word translations.
 # Leave REDIS_URL empty to run without caching.
 REDIS_URL = os.getenv("REDIS_URL", "")
-TRANSLATION_CACHE_TTL_SECONDS = int(
-    os.getenv("TRANSLATION_CACHE_TTL_SECONDS", str(30 * 24 * 60 * 60))
-)
 
 # Log level: DEBUG (includes full LLM request texts), INFO (default)
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")

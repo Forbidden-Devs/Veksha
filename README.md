@@ -60,9 +60,10 @@ delete the local PostgreSQL and Redis data.
 - User data lives in PostgreSQL; clients
   authenticate with a bearer token issued at registration
   (`POST /api/auth/register`).
-- All LLM calls live in `veksha-backend/llm/`; business logic that decides
-  *when* to call them lives in `pipeline.py`, `training.py`, `lesson.py`,
-  `selection.py`.
+- Learning behavior lives in the transport-independent
+  `veksha-backend/learning_core_v2/` package. OpenAI Responses API, storage,
+  caching, and HTTP composition live in `learning_core_v2_adapters/` and
+  `api/`; there is no parallel legacy LLM implementation.
 - Trainings and lessons run over WebSocket (`/api/training/ws`,
   `/api/lesson/ws`); everything else is plain HTTP (see
   `veksha-backend/README.md` for the endpoint list).
