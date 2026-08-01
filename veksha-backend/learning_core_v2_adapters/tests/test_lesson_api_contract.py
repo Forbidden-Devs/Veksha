@@ -35,6 +35,11 @@ class FakeSettings:
 @dataclass
 class FakeStorage:
     settings: FakeSettings
+    lessons: object | None = None
+    saves: int = 0
+
+    def save(self):
+        self.saves += 1
 
 
 class FakeWebSocket:
@@ -59,7 +64,7 @@ class FakeRepository:
     def find(self, _name):
         return self.topic
 
-    def save(self, topic):
+    def put(self, topic):
         self.topic = topic
         self.saved.append(topic)
 
@@ -116,10 +121,9 @@ async def test_websocket_uses_server_question_and_unit_when_checking(monkeypatch
 
     monkeypatch.setattr(lesson_v2, "ws_current_user", authenticated)
     monkeypatch.setattr(
-        lesson_v2, "get_storage", lambda _username: FakeStorage(FakeSettings())
-    )
-    monkeypatch.setattr(
-        lesson_v2, "UserStorageLessonRepository", lambda _storage: repository
+        lesson_v2,
+        "get_storage",
+        lambda _username: FakeStorage(FakeSettings(), repository),
     )
     monkeypatch.setattr(
         lesson_v2,

@@ -6,9 +6,9 @@ import pytest
 from fastapi import HTTPException
 
 from api import settings
-from learning_core_v2.acquisition import LexicalItem
 from learning_core_v2.dictionary import DictionaryDetails
 from learning_core_v2_adapters.openai_responses import LanguageProviderError
+from repositories.lexicon import LexiconRepository
 
 
 @dataclass
@@ -21,14 +21,8 @@ class FakeSettings:
 @dataclass
 class FakeStorage:
     settings: FakeSettings = field(default_factory=FakeSettings)
-    lexical_items: list[LexicalItem] = field(default_factory=list)
+    lexicon: LexiconRepository = field(default_factory=lambda: LexiconRepository("tester"))
     saves: int = 0
-
-    def find_lexical_item_by_term(self, name):
-        key = name.strip().casefold()
-        return next(
-            (item for item in self.lexical_items if item.term.casefold() == key), None
-        )
 
     def save(self):
         self.saves += 1
@@ -88,4 +82,4 @@ async def test_new_word_is_rolled_back_when_v2_enrichment_fails(monkeypatch):
         )
 
     assert caught.value.status_code == 502
-    assert storage.lexical_items == []
+    assert storage.lexicon.all() == ()

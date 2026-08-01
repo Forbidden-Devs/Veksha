@@ -11,7 +11,7 @@ from pydantic import BaseModel
 
 from auth import CurrentUser
 from learning_core_v2.acquisition import DecideVocabulary, LexicalItem
-from storage import UserStorage, get_storage
+from storage import get_storage
 
 
 router = APIRouter()
@@ -57,26 +57,11 @@ def _response(item: LexicalItem) -> InboxItemResponse:
     )
 
 
-def _find_item(storage: UserStorage, item_id: str) -> tuple[int, LexicalItem] | None:
-    return next(
-        (
-            (index, item)
-            for index, item in enumerate(storage.lexical_items)
-            if item.item_id == item_id
-        ),
-        None,
-    )
-
-
 @router.get("/api/vocabulary-inbox", response_model=InboxResponse)
 async def vocabulary_inbox(username: CurrentUser) -> InboxResponse:
     storage = get_storage(username)
     language = storage.settings.target_lang.lower().replace("_", "-")
-    pending = [
-        item
-        for item in storage.lexical_items
-        if item.status == "suggested" and item.language == language
-    ]
+    pending = list(storage.lexicon.pending(language))
     pending.sort(
         key=lambda item: item.encounters[-1].observed_at if item.encounters else 0.0,
         reverse=True,
@@ -96,10 +81,9 @@ async def decide_vocabulary_inbox_item(
     if not item_id or len(item_id) > 100:
         raise HTTPException(status_code=422, detail="Invalid vocabulary item id.")
     storage = get_storage(username)
-    found = _find_item(storage, item_id)
-    if found is None:
+    item = storage.lexicon.find(item_id)
+    if item is None:
         raise HTTPException(status_code=404, detail="Vocabulary suggestion not found.")
-    index, item = found
     try:
         decided = DecideVocabulary().execute(item, req.decision)
     except ValueError as exc:
@@ -111,6 +95,6 @@ async def decide_vocabulary_inbox_item(
             schedule=replace(decided.schedule, added_at=time.time()),
         )
 
-    storage.lexical_items[index] = decided
+    storage.lexicon.replace(decided)
     storage.save()
     return InboxDecisionResponse(item_id=item.item_id, status=decided.status)

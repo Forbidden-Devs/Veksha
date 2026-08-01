@@ -5,20 +5,15 @@ import sys
 from types import SimpleNamespace
 from unittest.mock import patch
 
+from repositories.lexicon import LexiconRepository
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 class MemoryStorage:
     def __init__(self):
         self.settings = SimpleNamespace(target_lang="en", native_lang="ru", english_level="a2")
-        self.lexical_items = []
-
-    def find_lexical_item_by_term(self, name: str):
-        normalized = name.strip().casefold()
-        return next(
-            (item for item in self.lexical_items if item.term.casefold() == normalized),
-            None,
-        )
+        self.lexicon = LexiconRepository("test-user")
 
     def save(self):
         pass
@@ -61,7 +56,7 @@ def test_add_kb_word_populates_details_and_does_not_duplicate():
     assert first.transcription == "/ˌserənˈdɪpəti/"
     assert second == first
     assert calls == 1
-    assert [item.term for item in storage.lexical_items].count("serendipity") == 1
+    assert [item.term for item in storage.lexicon.all()].count("serendipity") == 1
 
 
 if __name__ == "__main__":

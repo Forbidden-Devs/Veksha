@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import db  # noqa: E402
 import fsrs  # noqa: E402
-from models import Patch  # noqa: E402
+from learning_core_v2.acquisition import LexicalItem, ReviewSchedule, lexical_item_id  # noqa: E402
 from storage import UserStorage  # noqa: E402
 
 USER = "fsrs_test_user"
@@ -61,12 +61,23 @@ def test_retrievability():
 def test_review_flow_and_log():
     db.create_user(USER)
     u = UserStorage(username=USER)
-    u.apply_kb_changes([Patch(type="add_word", value="hazelnut", counter=0, known=False)])
-    item = u.find_lexical_item_by_term("hazelnut")
+    now = time.time()
+    u.lexicon.append(
+        LexicalItem(
+            item_id=lexical_item_id("hazelnut", "en", ""),
+            term="hazelnut",
+            language="en",
+            translation="",
+            status="learning",
+            schedule=ReviewSchedule(review_count=0, added_at=now),
+        )
+    )
+    item = u.lexicon.find_active_term("hazelnut", "en")
+    assert item is not None
     assert item.schedule.stability == 0.0 and item.schedule.review_count == 0
     assert item.schedule.added_at > 0
 
-    item = u.apply_review_result(item, "correct", task_type="translation")
+    item = u.lexicon.apply_review_result(item, "correct", task_type="translation")
     assert item.schedule.stability > 0 and item.schedule.review_count == 1
     assert item.schedule.next_review_at > time.time()
 
@@ -79,12 +90,12 @@ def test_review_flow_and_log():
             next_review_at=item.schedule.next_review_at - 5 * 86400,
         ),
     )
-    u.replace_lexical_item(item)
-    item = u.apply_review_result(item, "incorrect", task_type="translation")
+    u.lexicon.replace(item)
+    item = u.lexicon.apply_review_result(item, "incorrect", task_type="translation")
     assert item.schedule.lapses == 1
 
     # Garbage outcome is not a review.
-    item = u.apply_review_result(item, "garbage")
+    item = u.lexicon.apply_review_result(item, "garbage")
     assert item.schedule.review_count == 2
 
     rows = db.review_log_recent(USER)
@@ -103,9 +114,9 @@ def test_review_flow_and_log():
             item.schedule, next_review_at=time.time() - 10 * 86400
         ),
     )
-    u.replace_lexical_item(item)
-    assert u.due_count() == 1
-    flagged = u.apply_overdue_decay()
+    u.lexicon.replace(item)
+    assert u.lexicon.due_count() == 1
+    flagged = u.lexicon.apply_overdue_decay()
     assert flagged[0].schedule.delayed and len(flagged) == 1
 
 

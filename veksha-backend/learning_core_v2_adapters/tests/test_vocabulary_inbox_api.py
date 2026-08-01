@@ -5,6 +5,7 @@ from fastapi import HTTPException
 
 from api import vocabulary_inbox as inbox_api
 from learning_core_v2.acquisition import LexicalItem, VocabularyEncounter
+from repositories.lexicon import LexiconRepository
 
 
 @dataclass
@@ -15,7 +16,7 @@ class FakeSettings:
 @dataclass
 class FakeStorage:
     settings: FakeSettings = field(default_factory=FakeSettings)
-    lexical_items: list[LexicalItem] = field(default_factory=list)
+    lexicon: LexiconRepository = field(default_factory=lambda: LexiconRepository("tester"))
     saves: int = 0
 
     def save(self):
@@ -37,11 +38,11 @@ def item(item_id="one", status="suggested"):
 @pytest.mark.asyncio
 async def test_lists_only_pending_items_for_the_active_language(monkeypatch):
     storage = FakeStorage(
-        lexical_items=[
+        lexicon=LexiconRepository("tester", [
             item(),
             item("ignored", "ignored"),
             LexicalItem("other", "hola", "es", "привет"),
-        ]
+        ])
     )
     monkeypatch.setattr(inbox_api, "get_storage", lambda _username: storage)
 
@@ -53,7 +54,7 @@ async def test_lists_only_pending_items_for_the_active_language(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_learn_moves_the_suggestion_into_the_training_pool(monkeypatch):
-    storage = FakeStorage(lexical_items=[item()])
+    storage = FakeStorage(lexicon=LexiconRepository("tester", [item()]))
     monkeypatch.setattr(inbox_api, "get_storage", lambda _username: storage)
 
     response = await inbox_api.decide_vocabulary_inbox_item(
@@ -61,14 +62,14 @@ async def test_learn_moves_the_suggestion_into_the_training_pool(monkeypatch):
     )
 
     assert response.status == "learning"
-    assert storage.lexical_items[0].translation == "случайно найти"
-    assert storage.lexical_items[0].status == "learning"
-    assert storage.lexical_items[0].schedule.added_at > 0
+    assert storage.lexicon.all()[0].translation == "случайно найти"
+    assert storage.lexicon.all()[0].status == "learning"
+    assert storage.lexicon.all()[0].schedule.added_at > 0
 
 
 @pytest.mark.asyncio
 async def test_known_records_knowledge_without_adding_a_review(monkeypatch):
-    storage = FakeStorage(lexical_items=[item()])
+    storage = FakeStorage(lexicon=LexiconRepository("tester", [item()]))
     monkeypatch.setattr(inbox_api, "get_storage", lambda _username: storage)
 
     response = await inbox_api.decide_vocabulary_inbox_item(
@@ -76,12 +77,12 @@ async def test_known_records_knowledge_without_adding_a_review(monkeypatch):
     )
 
     assert response.status == "known"
-    assert storage.lexical_items[0].status == "known"
+    assert storage.lexicon.all()[0].status == "known"
 
 
 @pytest.mark.asyncio
 async def test_decided_item_cannot_be_decided_twice(monkeypatch):
-    storage = FakeStorage(lexical_items=[item(status="ignored")])
+    storage = FakeStorage(lexicon=LexiconRepository("tester", [item(status="ignored")]))
     monkeypatch.setattr(inbox_api, "get_storage", lambda _username: storage)
 
     with pytest.raises(HTTPException) as raised:
@@ -95,10 +96,10 @@ async def test_decided_item_cannot_be_decided_twice(monkeypatch):
 @pytest.mark.asyncio
 async def test_another_sense_keeps_its_own_training_unit(monkeypatch):
     storage = FakeStorage(
-        lexical_items=[
+        lexicon=LexiconRepository("tester", [
             LexicalItem("first", "bank", "en", "банк", status="learning"),
             LexicalItem("second", "bank", "en", "берег"),
-        ],
+        ]),
     )
     monkeypatch.setattr(inbox_api, "get_storage", lambda _username: storage)
 
@@ -106,7 +107,7 @@ async def test_another_sense_keeps_its_own_training_unit(monkeypatch):
         "second", inbox_api.InboxDecisionRequest(decision="learn"), "tester"
     )
 
-    assert [(item.item_id, item.translation, item.status) for item in storage.lexical_items] == [
+    assert [(item.item_id, item.translation, item.status) for item in storage.lexicon.all()] == [
         ("first", "банк", "learning"),
         ("second", "берег", "learning"),
     ]

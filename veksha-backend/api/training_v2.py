@@ -15,7 +15,7 @@ from auth import CurrentUser, ws_current_user
 from config import REVIEW_WINDOW_HOURS
 from learning_core_v2.practice import AnswerCheckRequest, PracticeQueue, PracticeTask
 from learning_core_v2_adapters.openai_responses import LanguageProviderError
-from learning_core_v2_adapters.practice import UserStoragePracticeRepository
+from learning_core_v2_adapters.practice import LexiconPracticeRepository
 from learning_core_v2_adapters.runtime import build_practice_services
 from storage import get_storage
 
@@ -62,7 +62,7 @@ def _queue() -> PracticeQueue:
 @router.get("/api/training/init", response_model=TrainingInitResponse)
 async def training_init(username: CurrentUser) -> TrainingInitResponse:
     storage = get_storage(username)
-    repository = UserStoragePracticeRepository(storage)
+    repository = LexiconPracticeRepository(storage.lexicon, storage.save)
     available = _queue().available(
         repository.items(),
         learning_language=storage.settings.target_lang,
@@ -75,7 +75,8 @@ async def training_init(username: CurrentUser) -> TrainingInitResponse:
 async def training_validate(
     req: TrainingValidateRequest, username: CurrentUser
 ) -> TrainingValidateResponse:
-    repository = UserStoragePracticeRepository(get_storage(username))
+    storage = get_storage(username)
+    repository = LexiconPracticeRepository(storage.lexicon, storage.save)
     return TrainingValidateResponse(
         valid=[item_id for item_id in req.item_ids if repository.contains(item_id)]
     )
@@ -101,7 +102,7 @@ async def training_ws(websocket: WebSocket) -> None:
         return
 
     storage = get_storage(username)
-    repository = UserStoragePracticeRepository(storage)
+    repository = LexiconPracticeRepository(storage.lexicon, storage.save)
     task_builder, answer_checker = build_practice_services()
     queue = _queue()
     proficiency = storage.settings.english_level or "intermediate"

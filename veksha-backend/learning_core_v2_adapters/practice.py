@@ -6,11 +6,11 @@ import random
 import uuid
 from collections.abc import Sequence
 from dataclasses import replace
-from typing import TypeVar
+from typing import Callable, TypeVar
 
 from learning_core_v2.acquisition import LexicalItem
 from learning_core_v2.practice import AnswerEvaluation, TaskKind
-from storage import UserStorage
+from repositories.lexicon import LexiconRepository
 
 
 T = TypeVar("T")
@@ -31,28 +31,33 @@ class UuidIdentifierSource:
         return str(uuid.uuid4())
 
 
-class UserStoragePracticeRepository:
-    def __init__(self, storage: UserStorage) -> None:
-        self._storage = storage
+class LexiconPracticeRepository:
+    def __init__(
+        self,
+        lexicon: LexiconRepository,
+        commit: Callable[[], None],
+    ) -> None:
+        self._lexicon = lexicon
+        self._commit = commit
 
     def items(self) -> tuple[LexicalItem, ...]:
-        return tuple(self._storage.lexical_items)
+        return self._lexicon.all()
 
     def contains(self, item_id: str) -> bool:
-        return self._storage.find_lexical_item(item_id) is not None
+        return self._lexicon.find(item_id) is not None
 
     def mark_known(self, item_id: str) -> bool:
-        item = self._storage.find_lexical_item(item_id)
+        item = self._lexicon.find(item_id)
         if item is None:
             return False
-        self._storage.replace_lexical_item(
+        self._lexicon.replace(
             replace(
                 item,
                 status="known",
                 schedule=replace(item.schedule, delayed=False),
             )
         )
-        self._storage.save()
+        self._commit()
         return True
 
     def apply_evaluation(
@@ -63,11 +68,11 @@ class UserStoragePracticeRepository:
     ) -> bool:
         if not evaluation.should_update_schedule:
             return False
-        item = self._storage.find_lexical_item(item_id)
+        item = self._lexicon.find(item_id)
         if item is None:
             return False
-        self._storage.apply_review_result(
+        self._lexicon.apply_review_result(
             item, evaluation.outcome, task_type=task_kind
         )
-        self._storage.save()
+        self._commit()
         return True

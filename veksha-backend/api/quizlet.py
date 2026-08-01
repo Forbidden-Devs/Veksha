@@ -53,7 +53,7 @@ async def api_quizlet_export(username: CurrentUser) -> StreamingResponse:
     # Get words not yet exported
     unexported_words = [
         item
-        for item in storage.lexical_items
+        for item in storage.lexicon.all()
         if item.language == storage.settings.target_lang
         and item.status in {"learning", "known"}
         and not db.quizlet_is_exported(username, item.item_id)
@@ -100,7 +100,7 @@ async def api_quizlet_export_all(username: CurrentUser) -> StreamingResponse:
     # Get all words of target language
     words = [
         item
-        for item in storage.lexical_items
+        for item in storage.lexicon.all()
         if item.language == storage.settings.target_lang
         and item.status in {"learning", "known"}
     ]
@@ -145,7 +145,7 @@ async def api_quizlet_export_status(username: CurrentUser) -> ExportStatusRespon
     # Count words by language
     target_words = [
         item
-        for item in storage.lexical_items
+        for item in storage.lexicon.all()
         if item.language == storage.settings.target_lang
         and item.status in {"learning", "known"}
     ]
@@ -197,7 +197,7 @@ async def api_quizlet_import(file: UploadFile = File(...), username: CurrentUser
             )
 
         imported: list[LexicalItem] = []
-        existing_ids = {item.item_id for item in storage.lexical_items}
+        existing_ids = {item.item_id for item in storage.lexicon.all()}
 
         for row_num, row in enumerate(reader, start=2):  # start=2 because header is row 1
             try:
@@ -244,7 +244,7 @@ async def api_quizlet_import(file: UploadFile = File(...), username: CurrentUser
 
         # Apply all patches at once
         if imported:
-            storage.lexical_items.extend(imported)
+            storage.lexicon.extend(imported)
             storage.save()
 
         # Mark imported words as exported to prevent re-exporting

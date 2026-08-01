@@ -39,21 +39,26 @@ async def api_debug_simulate_training(username: CurrentUser) -> dict:
     """Apply a successful training result to up to 15 random active words and one topic."""
     storage = get_storage(username)
     active_items = [
-        item for item in storage.lexical_items if item.status == "learning"
+        item for item in storage.lexicon.all() if item.status == "learning"
     ]
     selected_items = random.sample(active_items, min(15, len(active_items)))
     for item in selected_items:
-        storage.apply_review_result(item, "correct", task_type="debug_simulate")
+        storage.lexicon.apply_review_result(item, "correct", task_type="debug_simulate")
 
-    topic_names = sorted(t.name for t in storage.lesson_topics)
+    topic_names = sorted(t.name for t in storage.lessons.topics())
     topic_name = random.choice(topic_names) if topic_names else None
     if topic_name:
-        lesson_topic = storage.find_lesson_topic(topic_name)
+        lesson_topic = storage.lessons.find(topic_name)
         if lesson_topic:
-            lesson_topic.last_reviewed = time.time()
-            if lesson_topic.blocks:
-                block = random.choice(lesson_topic.blocks)
-                block.mastery_score = min(1.0, block.mastery_score * 0.4 + 0.6)
+            units = list(lesson_topic.units)
+            if units:
+                index = random.randrange(len(units))
+                units[index] = replace(
+                    units[index], mastery=min(1.0, units[index].mastery * 0.4 + 0.6)
+                )
+            storage.lessons.put(
+                replace(lesson_topic, units=tuple(units), last_reviewed_at=time.time())
+            )
 
     storage.save()
     log.info(
@@ -74,10 +79,10 @@ async def api_debug_advance_day(username: CurrentUser) -> dict:
 
     storage = get_storage(username)
     shifted = 0
-    for item in tuple(storage.lexical_items):
+    for item in storage.lexicon.all():
         schedule = item.schedule
         if schedule.next_review_at:
-            storage.replace_lexical_item(
+            storage.lexicon.replace(
                 replace(
                     item,
                     schedule=replace(
@@ -94,8 +99,9 @@ async def api_debug_advance_day(username: CurrentUser) -> dict:
             shifted += 1
     storage.save()
 
-    storage.apply_overdue_decay()
-    due_words = storage.due_count()
+    if storage.lexicon.apply_overdue_decay():
+        storage.save()
+    due_words = storage.lexicon.due_count()
     due_word_names = _due_word_names(storage)
     due_topic = _topic_needing_review(storage)
     reminder = {

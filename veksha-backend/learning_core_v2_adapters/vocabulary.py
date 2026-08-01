@@ -9,7 +9,8 @@ from collections.abc import Callable
 from learning_core_v2.acquisition import SuggestVocabulary, VocabularyProposal
 from learning_core_v2.phrase_mining import MinePhraseVocabulary, PhraseMiningRequest
 from learning_core_v2.translation import VocabularyObservation
-from storage import UserStorage
+from models import UserSettings
+from repositories.lexicon import LexiconRepository
 
 
 log = logging.getLogger(__name__)
@@ -29,23 +30,27 @@ class CollectingVocabularySink:
         self.observations.append(observation)
 
 
-class UserStorageVocabularyInboxSink:
+class LexiconVocabularyInboxSink:
     """Store translation observations as suggestions awaiting a user decision."""
 
     def __init__(
         self,
-        storage: UserStorage,
+        lexicon: LexiconRepository,
+        settings: UserSettings,
+        commit: Callable[[], None],
         *,
         phrase_miner: MinePhraseVocabulary | None = None,
         clock: Callable[[], float] = time.time,
     ) -> None:
-        self._storage = storage
+        self._lexicon = lexicon
+        self._settings = settings
+        self._commit = commit
         self._phrase_miner = phrase_miner
         self._clock = clock
         self._suggest = SuggestVocabulary()
 
     async def observe(self, observation: VocabularyObservation) -> None:
-        learning_language = _language_base(self._storage.settings.target_lang)
+        learning_language = _language_base(self._settings.target_lang)
         observation = _learning_observation(observation, learning_language)
         if observation is None:
             return
@@ -72,17 +77,17 @@ class UserStorageVocabularyInboxSink:
         for proposal in proposals:
             try:
                 updated = self._suggest.execute(
-                    self._storage.lexical_items,
+                    self._lexicon.all(),
                     proposal,
                     observed_at=self._clock(),
                 )
             except ValueError:
                 log.warning("discarding invalid vocabulary inbox proposal")
                 continue
-            self._storage.lexical_items = list(updated)
+            self._lexicon.replace_all(updated)
             changed = True
         if changed:
-            self._storage.save()
+            self._commit()
 
     async def _mine_phrase(
         self, observation: VocabularyObservation
@@ -92,20 +97,20 @@ class UserStorageVocabularyInboxSink:
                 PhraseMiningRequest(
                     source_text=observation.source_text,
                     translated_text=observation.translation,
-                    learning_language=self._storage.settings.target_lang,
+                    learning_language=self._settings.target_lang,
                     native_language=(
-                        getattr(self._storage.settings, "native_lang", "en") or "en"
+                        getattr(self._settings, "native_lang", "en") or "en"
                     ),
                     proficiency=(
                         getattr(
-                            self._storage.settings,
+                            self._settings,
                             "english_level",
                             "intermediate",
                         )
                         or "intermediate"
                     ),
                     existing_terms=tuple(
-                        item.term for item in self._storage.lexical_items
+                        item.term for item in self._lexicon.all()
                     ),
                 )
             )

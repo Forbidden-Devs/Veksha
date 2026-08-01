@@ -1,8 +1,9 @@
-"""Persistence mapping between lesson core v2 and the existing user document."""
+"""Repository and persistence mapping for lesson core v2."""
 
 from __future__ import annotations
 
 import json
+from collections.abc import Iterable
 from typing import Any
 
 from learning_core_v2.lesson import (
@@ -16,40 +17,59 @@ from learning_core_v2.lesson import (
 from models import LessonBlock as StoredBlock
 from models import LessonQA as StoredAttempt
 from models import LessonTopic as StoredTopic
-from storage import UserStorage
 
 
 _OUTCOMES = {"correct", "vague", "incorrect", "garbage"}
 
 
-class UserStorageLessonRepository:
-    def __init__(self, storage: UserStorage) -> None:
-        self._storage = storage
+class LessonRepository:
+    def __init__(self, topics: Iterable[LessonTopic] = ()) -> None:
+        self._topics = list(topics)
+
+    @classmethod
+    def from_document(cls, values: object) -> "LessonRepository":
+        if not isinstance(values, list):
+            return cls()
+        return cls(
+            _to_domain(StoredTopic.from_dict(value))
+            for value in values
+            if isinstance(value, dict)
+        )
+
+    def to_document(self) -> list[dict]:
+        return [_to_storage(topic).to_dict() for topic in self._topics]
 
     def topics(self) -> tuple[LessonTopic, ...]:
-        return tuple(_to_domain(topic) for topic in self._storage.lesson_topics)
+        return tuple(self._topics)
 
     def find(self, name: str) -> LessonTopic | None:
-        stored = self._storage.find_lesson_topic(name)
-        return _to_domain(stored) if stored is not None else None
+        key = _normalize(name)
+        return next((topic for topic in self._topics if _normalize(topic.name) == key), None)
 
     def get_or_create(self, name: str) -> LessonTopic:
         existing = self.find(name)
         if existing is not None:
             return existing
         topic = create_topic(name)
-        self.save(topic)
+        self.put(topic)
         return topic
 
-    def save(self, topic: LessonTopic) -> None:
-        stored = _to_storage(topic)
-        current = self._storage.find_lesson_topic(topic.name)
+    def put(self, topic: LessonTopic) -> None:
+        current = self.find(topic.name)
         if current is None:
-            self._storage.lesson_topics.append(stored)
+            self._topics.append(topic)
         else:
-            index = self._storage.lesson_topics.index(current)
-            self._storage.lesson_topics[index] = stored
-        self._storage.save()
+            self._topics[self._topics.index(current)] = topic
+
+    def remove(self, name: str) -> bool:
+        topic = self.find(name)
+        if topic is None:
+            return False
+        self._topics.remove(topic)
+        return True
+
+    def __len__(self) -> int:
+        return len(self._topics)
 
 
 def material_to_dict(material: LessonMaterial) -> dict[str, Any]:
@@ -69,6 +89,10 @@ def material_to_dict(material: LessonMaterial) -> dict[str, Any]:
     }
 
 
+def _normalize(value: str) -> str:
+    return " ".join(value.strip().casefold().split())
+
+
 def _to_domain(topic: StoredTopic) -> LessonTopic:
     return LessonTopic(
         name=topic.name,
@@ -79,15 +103,16 @@ def _to_domain(topic: StoredTopic) -> LessonTopic:
 
 
 def _unit_to_domain(block: StoredBlock) -> LessonUnit:
-    attempts = []
-    for item in block.history:
-        if item.outcome in _OUTCOMES and item.question.strip():
-            attempts.append(LessonAttempt(item.question, item.outcome))
+    attempts = tuple(
+        LessonAttempt(item.question, item.outcome)
+        for item in block.history
+        if item.outcome in _OUTCOMES and item.question.strip()
+    )
     return LessonUnit(
         name=block.name,
         material=_parse_material(block.content_json),
         mastery=max(0.0, min(1.0, float(block.mastery_score))),
-        history=tuple(attempts),
+        history=attempts,
     )
 
 
@@ -101,36 +126,30 @@ def _parse_material(raw: str) -> LessonMaterial | None:
     if not isinstance(data, dict) or data.get("__skipped__"):
         return None
     title = data.get("title")
-    if not isinstance(title, str) or not title.strip():
-        return None
     sections_data = data.get("sections")
-    if not isinstance(sections_data, list):
+    if not isinstance(title, str) or not title.strip() or not isinstance(sections_data, list):
         return None
-    sections: list[LessonSection] = []
-    for value in sections_data:
-        if not isinstance(value, dict) or not isinstance(value.get("header"), str):
-            continue
-        raw_items = value.get("items")
-        items = (
-            tuple(str(item) for item in raw_items)
-            if isinstance(raw_items, list)
-            else ()
+    sections = tuple(
+        LessonSection(
+            header=value["header"],
+            icon=str(value.get("icon") or ""),
+            items=(
+                tuple(str(item) for item in value.get("items", []))
+                if isinstance(value.get("items"), list)
+                else ()
+            ),
+            text=str(value.get("text") or ""),
+            highlight=bool(value.get("highlight", False)),
         )
-        sections.append(
-            LessonSection(
-                header=value["header"],
-                icon=str(value.get("icon") or ""),
-                items=items,
-                text=str(value.get("text") or ""),
-                highlight=bool(value.get("highlight", False)),
-            )
-        )
+        for value in sections_data
+        if isinstance(value, dict) and isinstance(value.get("header"), str)
+    )
     if not sections:
         return None
     return LessonMaterial(
         title=title,
         intro=str(data.get("intro") or ""),
-        sections=tuple(sections),
+        sections=sections,
     )
 
 

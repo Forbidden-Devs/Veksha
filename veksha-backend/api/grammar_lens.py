@@ -132,7 +132,7 @@ async def api_grammar_lens_analyze(
 
     source_blocks = req.blocks[:_MAX_BLOCKS]
     blocks = await asyncio.gather(*(run(text) for text in source_blocks))
-    memory = list(storage.grammar_memory)
+    memory = list(storage.grammar.all())
     remember = RememberGrammar()
     observed_at = time.time()
     for source, block in zip(source_blocks, blocks, strict=True):
@@ -156,8 +156,8 @@ async def api_grammar_lens_analyze(
                 )
             except ValueError:
                 continue
-    if memory != storage.grammar_memory:
-        storage.grammar_memory = memory
+    if memory != list(storage.grammar.all()):
+        storage.grammar.replace_all(memory)
         storage.save()
     return GrammarLensResponse(blocks=list(blocks), remembered=len(memory))
 
@@ -171,7 +171,7 @@ async def api_grammar_memory(username: CurrentUser) -> GrammarMemoryResponse:
     storage = get_storage(username)
     language = storage.settings.target_lang or "en"
     items = sorted(
-        (item for item in storage.grammar_memory if item.language == language),
+        storage.grammar.for_language(language),
         key=lambda item: (item.status == "mastered", -item.last_seen_at, -item.seen_count),
     )
     return GrammarMemoryResponse(items=[_memory_response(item) for item in items])
@@ -188,14 +188,11 @@ async def api_grammar_memory_status(
     username: CurrentUser,
 ) -> GrammarMemoryItemResponse:
     storage = get_storage(username)
-    index = next(
-        (index for index, item in enumerate(storage.grammar_memory) if item.item_id == item_id),
-        None,
-    )
-    if index is None:
+    item = storage.grammar.find(item_id)
+    if item is None:
         raise HTTPException(status_code=404, detail="Grammar memory item not found")
-    updated = SetGrammarStatus().execute(storage.grammar_memory[index], req.status)
-    storage.grammar_memory[index] = updated
+    updated = SetGrammarStatus().execute(item, req.status)
+    storage.grammar.replace(updated)
     storage.save()
     return _memory_response(updated)
 

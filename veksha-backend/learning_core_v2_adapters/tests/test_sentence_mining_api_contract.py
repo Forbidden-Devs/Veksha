@@ -11,6 +11,7 @@ from learning_core_v2.sentence_mining import (
     MiningExample,
     SentenceMiningCard,
 )
+from repositories.lexicon import LexiconRepository
 
 
 @dataclass
@@ -25,7 +26,7 @@ class FakeSettings:
 class FakeStorage:
     def __init__(self):
         self.settings = FakeSettings()
-        self.item = LexicalItem(
+        item = LexicalItem(
             item_id="sense-make",
             term="make",
             language="en",
@@ -33,13 +34,8 @@ class FakeStorage:
             status="learning",
             encounters=(VocabularyEncounter("I make coffee."),),
         )
+        self.lexicon = LexiconRepository("tester", [item])
         self.saves = 0
-
-    def find_lexical_item(self, item_id):
-        return self.item if item_id == self.item.item_id else None
-
-    def replace_lexical_item(self, item):
-        self.item = item
 
     def save(self):
         self.saves += 1

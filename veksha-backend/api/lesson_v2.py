@@ -23,12 +23,9 @@ from learning_core_v2.lesson import (
     create_topic,
     summarize_topic,
 )
-from learning_core_v2_adapters.lesson import (
-    UserStorageLessonRepository,
-    material_to_dict,
-)
 from learning_core_v2_adapters.openai_responses import LanguageProviderError
 from learning_core_v2_adapters.runtime import build_lesson_services
+from repositories.lessons import material_to_dict
 from storage import get_storage
 
 
@@ -64,7 +61,7 @@ def _summary(topic: LessonTopic) -> LessonTopicSummary:
 
 @router.get("/api/lesson-topics", response_model=LessonTopicsResponse)
 async def api_get_lesson_topics(username: CurrentUser) -> LessonTopicsResponse:
-    repository = UserStorageLessonRepository(get_storage(username))
+    repository = get_storage(username).lessons
     return LessonTopicsResponse(topics=[_summary(topic) for topic in repository.topics()])
 
 
@@ -72,14 +69,16 @@ async def api_get_lesson_topics(username: CurrentUser) -> LessonTopicsResponse:
 async def api_create_lesson_topic(
     req: CreateLessonTopicRequest, username: CurrentUser
 ) -> LessonTopicSummary:
-    repository = UserStorageLessonRepository(get_storage(username))
+    storage = get_storage(username)
+    repository = storage.lessons
     topic = repository.find(req.name)
     if topic is None:
         try:
             topic = create_topic(req.name)
         except ValueError as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
-        repository.save(topic)
+        repository.put(topic)
+        storage.save()
     return _summary(topic)
 
 
@@ -99,7 +98,7 @@ async def lesson_ws(websocket: WebSocket) -> None:
         return
 
     storage = get_storage(username)
-    repository = UserStorageLessonRepository(storage)
+    repository = storage.lessons
     profile = _profile(storage)
     preparer, question_builder, answer_checker = build_lesson_services()
     schedule = QuestionSchedule(QUESTION_COUNT)
@@ -119,7 +118,8 @@ async def lesson_ws(websocket: WebSocket) -> None:
         if topic is None or not answers_by_unit:
             return
         topic = recorder.execute(topic, answers_by_unit, reviewed_at=time.time())
-        repository.save(topic)
+        repository.put(topic)
+        storage.save()
         answers_by_unit = {}
 
     try:
@@ -160,7 +160,8 @@ async def lesson_ws(websocket: WebSocket) -> None:
                     continue
 
                 topic = prepared.topic
-                repository.save(topic)
+                repository.put(topic)
+                storage.save()
                 session_units = {unit.name: unit for unit in prepared.units}
                 question_plan = schedule.arrange(prepared.units)
                 plan_index = 0

@@ -6,7 +6,8 @@ import pytest
 
 from learning_core_v2.phrase_mining import VocabularyCandidate
 from learning_core_v2.translation import VocabularyObservation
-from learning_core_v2_adapters.vocabulary import UserStorageVocabularyInboxSink
+from learning_core_v2_adapters.vocabulary import LexiconVocabularyInboxSink
+from repositories.lexicon import LexiconRepository
 
 
 @dataclass
@@ -20,7 +21,7 @@ class FakeSettings:
 class FakeStorage:
     settings: FakeSettings = field(default_factory=FakeSettings)
     saves: int = 0
-    lexical_items: list = field(default_factory=list)
+    lexicon: LexiconRepository = field(default_factory=lambda: LexiconRepository("tester"))
 
     def save(self):
         self.saves += 1
@@ -58,8 +59,8 @@ class StubPhraseMiner:
 @pytest.mark.asyncio
 async def test_inbox_sink_suggests_a_word_without_adding_it_to_training():
     storage = FakeStorage()
-    sink = UserStorageVocabularyInboxSink(
-        storage,
+    sink = LexiconVocabularyInboxSink(
+        storage.lexicon, storage.settings, storage.save,
         clock=lambda: 42.0,
     )
 
@@ -67,8 +68,8 @@ async def test_inbox_sink_suggests_a_word_without_adding_it_to_training():
         observation(source_url="https://example.test/article")
     )
 
-    assert storage.lexical_items[0].term == "run"
-    assert storage.lexical_items[0].encounters[0].source_url == (
+    assert storage.lexicon.all()[0].term == "run"
+    assert storage.lexicon.all()[0].encounters[0].source_url == (
         "https://example.test/article"
     )
 
@@ -76,8 +77,8 @@ async def test_inbox_sink_suggests_a_word_without_adding_it_to_training():
 @pytest.mark.asyncio
 async def test_inbox_sink_keeps_phrase_candidates_out_of_training():
     storage = FakeStorage()
-    sink = UserStorageVocabularyInboxSink(
-        storage,
+    sink = LexiconVocabularyInboxSink(
+        storage.lexicon, storage.settings, storage.save,
         phrase_miner=StubPhraseMiner(),
         clock=lambda: 42.0,
     )
@@ -91,15 +92,15 @@ async def test_inbox_sink_keeps_phrase_candidates_out_of_training():
         )
     )
 
-    assert storage.lexical_items[0].term == "come across"
-    assert storage.lexical_items[0].status == "suggested"
+    assert storage.lexicon.all()[0].term == "come across"
+    assert storage.lexicon.all()[0].status == "suggested"
 
 
 @pytest.mark.asyncio
 async def test_inbox_reverses_a_native_to_learning_language_lookup():
     storage = FakeStorage()
-    sink = UserStorageVocabularyInboxSink(
-        storage,
+    sink = LexiconVocabularyInboxSink(
+        storage.lexicon, storage.settings, storage.save,
         clock=lambda: 42.0,
     )
 
@@ -114,6 +115,6 @@ async def test_inbox_reverses_a_native_to_learning_language_lookup():
         )
     )
 
-    assert storage.lexical_items[0].term == "bank"
-    assert storage.lexical_items[0].translation == "берег"
-    assert storage.lexical_items[0].transcription == ""
+    assert storage.lexicon.all()[0].term == "bank"
+    assert storage.lexicon.all()[0].translation == "берег"
+    assert storage.lexicon.all()[0].transcription == ""

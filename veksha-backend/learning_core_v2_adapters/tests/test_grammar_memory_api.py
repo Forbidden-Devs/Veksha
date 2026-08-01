@@ -4,6 +4,7 @@ import pytest
 
 from api import grammar_lens as grammar_api
 from learning_core_v2.grammar_analysis import GrammarAnalysis, GrammarAnnotation
+from repositories.grammar_memory import GrammarMemoryRepository
 
 
 @dataclass
@@ -16,7 +17,7 @@ class Settings:
 @dataclass
 class Storage:
     settings: Settings = field(default_factory=Settings)
-    grammar_memory: list = field(default_factory=list)
+    grammar: GrammarMemoryRepository = field(default_factory=GrammarMemoryRepository)
     saves: int = 0
 
     def save(self):
@@ -52,8 +53,8 @@ async def test_analysis_remembers_grounded_grammar_pattern(monkeypatch):
     )
 
     assert response.remembered == 1
-    assert storage.grammar_memory[0].seen_count == 1
-    assert storage.grammar_memory[0].encounters[0].source_url == (
+    assert storage.grammar.all()[0].seen_count == 1
+    assert storage.grammar.all()[0].encounters[0].source_url == (
         "https://example.test/story"
     )
     assert storage.saves == 1
@@ -62,7 +63,7 @@ async def test_analysis_remembers_grounded_grammar_pattern(monkeypatch):
 @pytest.mark.asyncio
 async def test_memory_status_can_be_changed(monkeypatch):
     storage = Storage()
-    storage.grammar_memory = list(
+    storage.grammar.replace_all(
         grammar_api.RememberGrammar().execute(
             [],
             grammar_api.GrammarObservation(
@@ -85,5 +86,5 @@ async def test_memory_status_can_be_changed(monkeypatch):
     )
 
     assert response.status == "mastered"
-    assert storage.grammar_memory[0].status == "mastered"
+    assert storage.grammar.all()[0].status == "mastered"
     assert storage.saves == 1

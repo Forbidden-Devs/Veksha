@@ -34,7 +34,7 @@ from .practice import RandomChoiceSource, UuidIdentifierSource
 from .subtitles import CachedSubtitleTranslator
 from .vocabulary import (
     CollectingVocabularySink,
-    UserStorageVocabularyInboxSink,
+    LexiconVocabularyInboxSink,
 )
 
 
@@ -84,7 +84,12 @@ def _phrase_miner() -> MinePhraseVocabulary | None:
 
 
 def _vocabulary_sink(storage: UserStorage) -> VocabularySink:
-    return UserStorageVocabularyInboxSink(storage, phrase_miner=_phrase_miner())
+    return LexiconVocabularyInboxSink(
+        storage.lexicon,
+        storage.settings,
+        storage.save,
+        phrase_miner=_phrase_miner(),
+    )
 
 
 def build_translate_text(storage: UserStorage) -> TranslateText:

@@ -63,7 +63,7 @@ class PrepareReadingResponse(BaseModel):
 def _knowledge(storage, term: str, language: str) -> str:
     statuses = {
         item.status
-        for item in storage.lexical_items
+        for item in storage.lexicon.all()
         if item.language == language
         and item.term.strip().casefold() == term.casefold()
     }
@@ -156,10 +156,10 @@ async def prepare_reading(req: PrepareReadingRequest, username: CurrentUser) -> 
     for term, detail in zip(eligible, details, strict=True):
         if detail is None:
             continue
-        before = len(storage.lexical_items)
-        storage.lexical_items = list(
+        before = len(storage.lexicon)
+        storage.lexicon.replace_all(
             suggest.execute(
-                storage.lexical_items,
+                storage.lexicon.all(),
                 VocabularyProposal(
                     term=detail.headword or term,
                     language=language,
@@ -171,7 +171,7 @@ async def prepare_reading(req: PrepareReadingRequest, username: CurrentUser) -> 
                 observed_at=time.time(),
             )
         )
-        if len(storage.lexical_items) > before:
+        if len(storage.lexicon) > before:
             added += 1
     if added:
         storage.save()

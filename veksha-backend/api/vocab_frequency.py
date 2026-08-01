@@ -75,7 +75,7 @@ async def api_vocab_frequency_top(username: CurrentUser, limit: int = _DEFAULT_L
     target = storage.settings.target_lang or "en"
 
     dictionary_words: dict[str, bool] = {}
-    for item in storage.lexical_items:
+    for item in storage.lexicon.all():
         if item.language != target or item.status not in {"learning", "known"}:
             continue
         term = item.term.strip().lower()

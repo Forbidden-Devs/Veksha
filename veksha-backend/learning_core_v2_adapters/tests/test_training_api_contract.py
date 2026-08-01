@@ -30,6 +30,10 @@ class FakeSettings:
 @dataclass
 class FakeStorage:
     settings: FakeSettings
+    lexicon: object | None = None
+
+    def save(self):
+        pass
 
 
 class FakeWebSocket:
@@ -113,7 +117,9 @@ async def test_websocket_ignores_client_word_and_question_when_checking(monkeypa
         training_v2, "get_storage", lambda _username: FakeStorage(FakeSettings())
     )
     monkeypatch.setattr(
-        training_v2, "UserStoragePracticeRepository", lambda _storage: repository
+        training_v2,
+        "LexiconPracticeRepository",
+        lambda _lexicon, _commit: repository,
     )
     monkeypatch.setattr(
         training_v2,

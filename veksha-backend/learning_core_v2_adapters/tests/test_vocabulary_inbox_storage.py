@@ -5,6 +5,7 @@ from learning_core_v2.acquisition import (
 )
 from learning_core_v2.grammar_memory import GrammarEncounter, GrammarMemoryItem
 from models import UserSettings
+from repositories import GrammarMemoryRepository, LexiconRepository
 from storage import UserStorage
 
 
@@ -14,7 +15,7 @@ def test_lexical_items_round_trip_with_independent_schedules(monkeypatch):
     monkeypatch.setattr("storage.db.settings_set", lambda _username, _settings: None)
     source = UserStorage(
         username="tester",
-        lexical_items=[
+        lexicon=LexiconRepository("tester", [
             LexicalItem(
                 "item-1",
                 "come across",
@@ -32,7 +33,7 @@ def test_lexical_items_round_trip_with_independent_schedules(monkeypatch):
                     review_count=3, next_review_at=99, stability=4.2
                 ),
             )
-        ],
+        ]),
         settings=UserSettings(),
     )
 
@@ -42,7 +43,7 @@ def test_lexical_items_round_trip_with_independent_schedules(monkeypatch):
 
     loaded = UserStorage.load("tester")
 
-    assert loaded.lexical_items == source.lexical_items
+    assert loaded.lexicon.all() == source.lexicon.all()
     assert "words" not in stored
     assert "vocabulary_inbox" not in stored
 
@@ -87,12 +88,12 @@ def test_legacy_word_schedule_is_cloned_to_each_known_sense(monkeypatch):
 
     loaded = UserStorage.load("tester")
 
-    assert [item.item_id for item in loaded.lexical_items] == [
+    assert [item.item_id for item in loaded.lexicon.all()] == [
         "bank-finance",
         "bank-river",
     ]
-    assert [item.schedule.review_count for item in loaded.lexical_items] == [4, 4]
-    assert loaded.lexical_items[0].schedule is not loaded.lexical_items[1].schedule
+    assert [item.schedule.review_count for item in loaded.lexicon.all()] == [4, 4]
+    assert loaded.lexicon.all()[0].schedule is not loaded.lexicon.all()[1].schedule
     assert stored["schema_version"] == 2
     assert "words" not in stored
 
@@ -103,7 +104,7 @@ def test_grammar_memory_round_trips_in_the_user_document(monkeypatch):
     monkeypatch.setattr("storage.db.settings_set", lambda _username, _settings: None)
     source = UserStorage(
         username="tester",
-        grammar_memory=[
+        grammar=GrammarMemoryRepository([
             GrammarMemoryItem(
                 item_id="pattern-1",
                 language="en",
@@ -121,7 +122,7 @@ def test_grammar_memory_round_trips_in_the_user_document(monkeypatch):
                     ),
                 ),
             )
-        ],
+        ]),
         settings=UserSettings(),
     )
 
@@ -131,4 +132,4 @@ def test_grammar_memory_round_trips_in_the_user_document(monkeypatch):
 
     loaded = UserStorage.load("tester")
 
-    assert loaded.grammar_memory == source.grammar_memory
+    assert loaded.grammar.all() == source.grammar.all()

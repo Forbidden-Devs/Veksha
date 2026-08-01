@@ -6,44 +6,8 @@ All models are dataclasses with to_dict/from_dict for JSON serialization
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field, asdict
-from typing import Literal, Optional, Union
-
-
-# ---------------------------------------------------------------------------
-# Patch (spec 3.4) — patch format for apply_kb_changes
-# ---------------------------------------------------------------------------
-
-PatchType = Literal[
-    "add_word",
-    "delete_word",
-    "add_topic",
-    "delete_topic",
-    "mark_known",       # special case "word learned" (spec 3.4)
-]
-
-
-@dataclass
-class Patch:
-    type: PatchType
-    value: str
-    # Extra fields for add_word — populated by code or LLM
-    context: str = ""
-    counter: int = -1
-    known: Union[bool, str] = False
-
-    def to_dict(self) -> dict:
-        return asdict(self)
-
-    @staticmethod
-    def from_dict(d: dict) -> "Patch":
-        return Patch(
-            type=d["type"],
-            value=d["value"],
-            context=d.get("context", ""),
-            counter=d.get("counter", -1),
-            known=d.get("known", False),
-        )
+from dataclasses import dataclass, field
+from typing import Literal, Optional
 
 
 # ---------------------------------------------------------------------------

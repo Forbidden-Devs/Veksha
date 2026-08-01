@@ -5,6 +5,7 @@ import pytest
 from api import reading_coach as coach_api
 from learning_core_v2.acquisition import LexicalItem
 from learning_core_v2.dictionary import DictionaryDetails
+from repositories.lexicon import LexiconRepository
 
 
 @dataclass
@@ -17,7 +18,7 @@ class Settings:
 @dataclass
 class Storage:
     settings: Settings = field(default_factory=Settings)
-    lexical_items: list = field(default_factory=list)
+    lexicon: LexiconRepository = field(default_factory=lambda: LexiconRepository("tester"))
     saves: int = 0
 
     def save(self):
@@ -31,10 +32,10 @@ class DictionaryService:
 
 def test_knowledge_aggregates_multiple_senses_without_order_dependence():
     storage = Storage(
-        lexical_items=[
+        lexicon=LexiconRepository("tester", [
             LexicalItem("known-bank", "bank", "en", "банк", status="known"),
             LexicalItem("new-bank", "bank", "en", "берег", status="suggested"),
-        ]
+        ])
     )
 
     assert coach_api._knowledge(storage, "bank", "en") == "known"
@@ -77,8 +78,8 @@ async def test_prepare_adds_only_terms_grounded_in_the_page(monkeypatch):
     )
 
     assert response.added == 1
-    assert storage.lexical_items[0].term == "photosynthesis"
-    assert storage.lexical_items[0].encounters[0].source_url == (
+    assert storage.lexicon.all()[0].term == "photosynthesis"
+    assert storage.lexicon.all()[0].encounters[0].source_url == (
         "https://example.test/article"
     )
     assert storage.saves == 1
