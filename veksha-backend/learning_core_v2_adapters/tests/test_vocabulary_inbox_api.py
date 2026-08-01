@@ -13,25 +13,10 @@ class FakeSettings:
 
 
 @dataclass
-class FakeWord:
-    name: str
-    translation: str = ""
-    transcription: str = ""
-    known: bool = False
-
-
-@dataclass
 class FakeStorage:
     settings: FakeSettings = field(default_factory=FakeSettings)
-    vocabulary_inbox: list[LexicalItem] = field(default_factory=list)
-    words: list[FakeWord] = field(default_factory=list)
+    lexical_items: list[LexicalItem] = field(default_factory=list)
     saves: int = 0
-
-    def find_word(self, name):
-        return next(
-            (item for item in self.words if item.name.casefold() == name.casefold()),
-            None,
-        )
 
     def save(self):
         self.saves += 1
@@ -52,7 +37,7 @@ def item(item_id="one", status="suggested"):
 @pytest.mark.asyncio
 async def test_lists_only_pending_items_for_the_active_language(monkeypatch):
     storage = FakeStorage(
-        vocabulary_inbox=[
+        lexical_items=[
             item(),
             item("ignored", "ignored"),
             LexicalItem("other", "hola", "es", "привет"),
@@ -68,7 +53,7 @@ async def test_lists_only_pending_items_for_the_active_language(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_learn_moves_the_suggestion_into_the_training_pool(monkeypatch):
-    storage = FakeStorage(vocabulary_inbox=[item()])
+    storage = FakeStorage(lexical_items=[item()])
     monkeypatch.setattr(inbox_api, "get_storage", lambda _username: storage)
 
     response = await inbox_api.decide_vocabulary_inbox_item(
@@ -76,13 +61,14 @@ async def test_learn_moves_the_suggestion_into_the_training_pool(monkeypatch):
     )
 
     assert response.status == "learning"
-    assert storage.words[0].translation == "случайно найти"
-    assert storage.words[0].known is False
+    assert storage.lexical_items[0].translation == "случайно найти"
+    assert storage.lexical_items[0].status == "learning"
+    assert storage.lexical_items[0].schedule.added_at > 0
 
 
 @pytest.mark.asyncio
 async def test_known_records_knowledge_without_adding_a_review(monkeypatch):
-    storage = FakeStorage(vocabulary_inbox=[item()])
+    storage = FakeStorage(lexical_items=[item()])
     monkeypatch.setattr(inbox_api, "get_storage", lambda _username: storage)
 
     response = await inbox_api.decide_vocabulary_inbox_item(
@@ -90,12 +76,12 @@ async def test_known_records_knowledge_without_adding_a_review(monkeypatch):
     )
 
     assert response.status == "known"
-    assert storage.words[0].known is True
+    assert storage.lexical_items[0].status == "known"
 
 
 @pytest.mark.asyncio
 async def test_decided_item_cannot_be_decided_twice(monkeypatch):
-    storage = FakeStorage(vocabulary_inbox=[item(status="ignored")])
+    storage = FakeStorage(lexical_items=[item(status="ignored")])
     monkeypatch.setattr(inbox_api, "get_storage", lambda _username: storage)
 
     with pytest.raises(HTTPException) as raised:
@@ -107,12 +93,12 @@ async def test_decided_item_cannot_be_decided_twice(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_another_sense_extends_instead_of_overwriting_the_active_card(monkeypatch):
+async def test_another_sense_keeps_its_own_training_unit(monkeypatch):
     storage = FakeStorage(
-        vocabulary_inbox=[
+        lexical_items=[
+            LexicalItem("first", "bank", "en", "банк", status="learning"),
             LexicalItem("second", "bank", "en", "берег"),
         ],
-        words=[FakeWord("bank", translation="банк")],
     )
     monkeypatch.setattr(inbox_api, "get_storage", lambda _username: storage)
 
@@ -120,4 +106,7 @@ async def test_another_sense_extends_instead_of_overwriting_the_active_card(monk
         "second", inbox_api.InboxDecisionRequest(decision="learn"), "tester"
     )
 
-    assert storage.words[0].translation == "банк · берег"
+    assert [(item.item_id, item.translation, item.status) for item in storage.lexical_items] == [
+        ("first", "банк", "learning"),
+        ("second", "берег", "learning"),
+    ]

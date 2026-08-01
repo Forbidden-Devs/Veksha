@@ -2,13 +2,17 @@
 
 from __future__ import annotations
 
+import unicodedata
+import uuid
 from dataclasses import dataclass, replace
+from typing import Any
 from typing import Literal, Sequence
 from urllib.parse import urlsplit, urlunsplit
 
 
 InboxStatus = Literal["suggested", "learning", "known", "ignored"]
 InboxDecision = Literal["learn", "known", "ignore"]
+_LEXICAL_ITEM_NAMESPACE = uuid.UUID("fcb92bea-5440-526f-a4a2-d84256efc943")
 
 
 @dataclass(frozen=True, slots=True)
@@ -16,6 +20,18 @@ class VocabularyEncounter:
     context: str
     source_url: str = ""
     observed_at: float = 0.0
+
+
+@dataclass(frozen=True, slots=True)
+class ReviewSchedule:
+    review_count: int = -1
+    next_review_at: float = 0.0
+    added_at: float = 0.0
+    delayed: bool = False
+    stability: float = 0.0
+    difficulty: float = 0.0
+    last_review_at: float = 0.0
+    lapses: int = 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -27,6 +43,13 @@ class LexicalItem:
     transcription: str = ""
     status: InboxStatus = "suggested"
     encounters: tuple[VocabularyEncounter, ...] = ()
+    schedule: ReviewSchedule = ReviewSchedule()
+    extra_data: str = ""
+    sentence_mining: dict[str, Any] | None = None
+
+    @property
+    def latest_context(self) -> str:
+        return self.encounters[-1].context if self.encounters else ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -52,7 +75,6 @@ class SuggestVocabulary:
         items: Sequence[LexicalItem],
         proposal: VocabularyProposal,
         *,
-        item_id: str,
         observed_at: float,
     ) -> tuple[LexicalItem, ...]:
         normalized = _normalize_proposal(proposal)
@@ -82,13 +104,14 @@ class SuggestVocabulary:
             )
             return tuple(updated)
 
-        clean_id = item_id.strip()
-        if not clean_id:
-            raise ValueError("vocabulary proposal requires an item id")
         return (
             *updated,
             LexicalItem(
-                item_id=clean_id,
+                item_id=lexical_item_id(
+                    normalized.term,
+                    normalized.language,
+                    normalized.translation,
+                ),
                 term=normalized.term,
                 language=normalized.language,
                 translation=normalized.translation,
@@ -138,6 +161,15 @@ def _sense_key(term: str, language: str, translation: str) -> tuple[str, str, st
         language.strip().lower().replace("_", "-"),
         " ".join(translation.split()).casefold(),
     )
+
+
+def lexical_item_id(term: str, language: str, translation: str) -> str:
+    """Return the stable identifier for one normalized lexical sense."""
+    key = _sense_key(term, language, translation)
+    canonical = "\x1f".join(
+        unicodedata.normalize("NFKC", part) for part in key
+    )
+    return str(uuid.uuid5(_LEXICAL_ITEM_NAMESPACE, canonical))
 
 
 def _clean_source_url(value: str) -> str:

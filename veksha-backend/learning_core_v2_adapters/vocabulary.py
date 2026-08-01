@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 import time
-import uuid
 from collections.abc import Callable
 
 from learning_core_v2.acquisition import SuggestVocabulary, VocabularyProposal
@@ -39,12 +38,10 @@ class UserStorageVocabularyInboxSink:
         *,
         phrase_miner: MinePhraseVocabulary | None = None,
         clock: Callable[[], float] = time.time,
-        identifier: Callable[[], str] = lambda: str(uuid.uuid4()),
     ) -> None:
         self._storage = storage
         self._phrase_miner = phrase_miner
         self._clock = clock
-        self._identifier = identifier
         self._suggest = SuggestVocabulary()
 
     async def observe(self, observation: VocabularyObservation) -> None:
@@ -73,19 +70,16 @@ class UserStorageVocabularyInboxSink:
 
         changed = False
         for proposal in proposals:
-            if self._storage.find_word(proposal.term) is not None:
-                continue
             try:
                 updated = self._suggest.execute(
-                    self._storage.vocabulary_inbox,
+                    self._storage.lexical_items,
                     proposal,
-                    item_id=self._identifier(),
                     observed_at=self._clock(),
                 )
             except ValueError:
                 log.warning("discarding invalid vocabulary inbox proposal")
                 continue
-            self._storage.vocabulary_inbox = list(updated)
+            self._storage.lexical_items = list(updated)
             changed = True
         if changed:
             self._storage.save()
@@ -111,7 +105,7 @@ class UserStorageVocabularyInboxSink:
                         or "intermediate"
                     ),
                     existing_terms=tuple(
-                        word.name for word in self._storage.words
+                        item.term for item in self._storage.lexical_items
                     ),
                 )
             )

@@ -49,27 +49,27 @@ export function DictionaryScreen() {
     setSearchQuery(trimmed.length >= 3 ? trimmed : "");
   }
 
-  function remove(word: string) {
-    if (selectedWord === word) setSelectedWord(null);
-    setWords((current) => current?.filter((entry) => entry.name !== word) ?? current);
-    api.deleteKbWord(username, word).catch(() => {
+  function remove(itemId: string) {
+    if (selectedWord === itemId) setSelectedWord(null);
+    setWords((current) => current?.filter((entry) => entry.item_id !== itemId) ?? current);
+    api.deleteKbWord(username, itemId).catch(() => {
       api.getKbWords(username).then((result) => setWords(result.words)).catch(() => {});
     });
   }
 
   function updateWord(updated: WordEntry) {
-    setWords((current) => current?.map((entry) => entry.name === updated.name ? updated : entry) ?? current);
+    setWords((current) => current?.map((entry) => entry.item_id === updated.item_id ? updated : entry) ?? current);
   }
 
   async function openMiningCard(word: WordEntry, force = false) {
     const request = ++miningRequest.current;
-    setSelectedWord(word.name);
-    setMiningWord(word.name);
+    setSelectedWord(word.item_id);
+    setMiningWord(word.item_id);
     setMiningError(null);
     try {
-      const details = await api.getKbWordDetails(username, word.name);
+      const details = await api.getKbWordDetails(username, word.item_id);
       updateWord(details);
-      const mined = await api.mineKbWord(username, word.name, force);
+      const mined = await api.mineKbWord(username, word.item_id, force);
       updateWord(mined);
     } catch {
       if (request === miningRequest.current) setMiningError(t.sentence_mining_error);
@@ -81,7 +81,7 @@ export function DictionaryScreen() {
   async function startCards() {
     if (!words?.length) return;
     const complete = await Promise.all(words.map((word) =>
-      word.translation ? Promise.resolve(word) : api.getKbWordDetails(username, word.name).catch(() => word)
+      word.translation ? Promise.resolve(word) : api.getKbWordDetails(username, word.item_id).catch(() => word)
     ));
     setWords(complete);
     setCardsOpen(true);
@@ -126,9 +126,9 @@ export function DictionaryScreen() {
         {words?.length === 0 && <p className="word-list-placeholder">{t.topics_empty}</p>}
         {!!words?.length && visibleWords?.length === 0 && <p className="word-list-placeholder">{t.dictionary_no_results}</p>}
         {visibleWords?.map((word) => {
-          const isSelected = selectedWord === word.name;
+          const isSelected = selectedWord === word.item_id;
           return (
-            <div key={word.name} className={`word-list-item dictionary-word-card${isSelected ? " is-open" : ""}`}>
+            <div key={word.item_id} className={`word-list-item dictionary-word-card${isSelected ? " is-open" : ""}`}>
               <div
                 className="dictionary-word"
                 onClick={() => isSelected ? setSelectedWord(null) : void openMiningCard(word)}
@@ -139,21 +139,21 @@ export function DictionaryScreen() {
                 <div className="dictionary-word-actions">
                   <button type="button" className="icon-btn" onClick={(event) => { event.stopPropagation(); void openMiningCard(word); }} aria-label={t.sentence_mining_title}>✨</button>
                   <button type="button" className="icon-btn" onClick={(event) => { event.stopPropagation(); speakText(word.name, targetLang); }} aria-label={t.chat_listen}>🔊</button>
-                  <button type="button" className="icon-btn" onClick={(event) => { event.stopPropagation(); remove(word.name); }} aria-label="Delete">🗑️</button>
+                  <button type="button" className="icon-btn" onClick={(event) => { event.stopPropagation(); remove(word.item_id); }} aria-label="Delete">🗑️</button>
                 </div>
               </div>
               {isSelected && (
                 <div className="sentence-mining-card">
                   <div className="sentence-mining-header">
                     <strong>{t.sentence_mining_title}</strong>
-                    {word.sentence_mining && miningWord !== word.name && (
+                    {word.sentence_mining && miningWord !== word.item_id && (
                       <button type="button" onClick={() => void openMiningCard(word, true)}>
                         ↻ {t.sentence_mining_regenerate}
                       </button>
                     )}
                   </div>
-                  {miningWord === word.name && <p className="sentence-mining-loading">✨ {t.sentence_mining_loading}</p>}
-                  {miningError && miningWord !== word.name && <p className="onboarding-error">{miningError}</p>}
+                  {miningWord === word.item_id && <p className="sentence-mining-loading">✨ {t.sentence_mining_loading}</p>}
+                  {miningError && miningWord !== word.item_id && <p className="onboarding-error">{miningError}</p>}
                   {word.sentence_mining && (
                     <>
                       <section>

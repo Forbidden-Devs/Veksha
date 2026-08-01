@@ -5,7 +5,8 @@ import pytest
 from fastapi import WebSocketDisconnect
 
 from api import training_v2
-from learning_core_v2.practice import AnswerEvaluation, PracticeTask, PracticeWord
+from learning_core_v2.acquisition import LexicalItem
+from learning_core_v2.practice import AnswerEvaluation, PracticeTask
 
 
 def test_training_v2_preserves_public_paths():
@@ -49,8 +50,12 @@ class FakeRepository:
     def __init__(self):
         self.applied = []
 
-    def words(self):
-        return [PracticeWord("run", "en", translation="бежать")]
+    def items(self):
+        return [
+            LexicalItem(
+                "item-run", "run", "en", "бежать", status="learning"
+            )
+        ]
 
     def apply_evaluation(self, word, evaluation, kind):
         self.applied.append((word, evaluation.outcome, kind))
@@ -61,14 +66,15 @@ class FakeRepository:
 
 
 class FakeBuilder:
-    async def execute(self, word, **_settings):
+    async def execute(self, item, **_settings):
         return PracticeTask(
             "task-1",
-            word.text,
-            word.context,
+            item.item_id,
+            item.term,
+            item.latest_context,
             "translation",
             "Переведите слово run",
-            word.review_count,
+            item.schedule.review_count,
             "Recall",
         )
 
@@ -119,5 +125,6 @@ async def test_websocket_ignores_client_word_and_question_when_checking(monkeypa
 
     assert checker.requests[0].task.word == "run"
     assert checker.requests[0].task.question == "Переведите слово run"
-    assert repository.applied == [("run", "correct", "translation")]
+    assert repository.applied == [("item-run", "correct", "translation")]
     assert [message["type"] for message in socket.sent] == ["task", "result"]
+    assert socket.sent[0]["item_id"] == "item-run"

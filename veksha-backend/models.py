@@ -7,58 +7,7 @@ All models are dataclasses with to_dict/from_dict for JSON serialization
 from __future__ import annotations
 
 from dataclasses import dataclass, field, asdict
-from typing import Any, Literal, Optional, Union
-
-
-# ---------------------------------------------------------------------------
-# Word (spec 2.1)
-# ---------------------------------------------------------------------------
-
-@dataclass
-class Word:
-    name: str                              # word or phrase
-    language: str = ""                     # target language this word belongs to
-    context: str = ""                      # context from the source text (empty if none)
-    translation: str = ""                  # saved dictionary translation
-    transcription: str = ""                # IPA or readable phonetic transcription
-    counter: int = -1                      # -1 = new (not reviewed yet); otherwise number of reviews
-    known: Union[bool, str] = False        # True/False or string explaining what user doesn't know
-    delayed: bool = False                  # delayed — priority +1 in next training session
-    next_review: float = 0.0               # timestamp of next review
-    added_at: float = 0.0                  # timestamp when the word entered the vocabulary
-    extra_data: str = ""                   # translation/example shown on incorrect answer
-    sentence_mining: dict[str, Any] = field(default_factory=dict)
-    # FSRS memory state (see fsrs.py); stability == 0.0 means "no state yet",
-    # the first review initializes it. Existing pre-FSRS words migrate the
-    # same way: their fixed-interval history is simply not counted.
-    stability: float = 0.0                 # S: interval in days at 90% recall
-    difficulty: float = 0.0                # D: 1..10
-    last_review: float = 0.0               # timestamp of the latest review
-    lapses: int = 0                        # number of Again (incorrect) reviews
-
-    def to_dict(self) -> dict:
-        return asdict(self)
-
-    @staticmethod
-    def from_dict(d: dict) -> "Word":
-        return Word(
-            name=d["name"],
-            language=d.get("language", ""),
-            context=d.get("context", ""),
-            translation=d.get("translation", ""),
-            transcription=d.get("transcription", ""),
-            counter=d.get("counter", -1),
-            known=d.get("known", False),
-            delayed=d.get("delayed", False),
-            next_review=d.get("next_review", 0.0),
-            added_at=d.get("added_at", 0.0),
-            extra_data=d.get("extra_data", ""),
-            sentence_mining=d.get("sentence_mining", {}) or {},
-            stability=d.get("stability", 0.0),
-            difficulty=d.get("difficulty", 0.0),
-            last_review=d.get("last_review", 0.0),
-            lapses=d.get("lapses", 0),
-        )
+from typing import Literal, Optional, Union
 
 
 # ---------------------------------------------------------------------------

@@ -30,7 +30,7 @@ class TrainingInitResponse(BaseModel):
 
 
 class TrainingValidateRequest(BaseModel):
-    word_names: list[str]
+    item_ids: list[str]
 
 
 class TrainingValidateResponse(BaseModel):
@@ -38,6 +38,7 @@ class TrainingValidateResponse(BaseModel):
 
 
 class ReviewLogEntry(BaseModel):
+    item_id: str | None = None
     word: str
     ts: float
     rating: int
@@ -63,7 +64,7 @@ async def training_init(username: CurrentUser) -> TrainingInitResponse:
     storage = get_storage(username)
     repository = UserStoragePracticeRepository(storage)
     available = _queue().available(
-        repository.words(),
+        repository.items(),
         learning_language=storage.settings.target_lang,
         now=time.time(),
     )
@@ -76,15 +77,20 @@ async def training_validate(
 ) -> TrainingValidateResponse:
     repository = UserStoragePracticeRepository(get_storage(username))
     return TrainingValidateResponse(
-        valid=[name for name in req.word_names if repository.contains(name)]
+        valid=[item_id for item_id in req.item_ids if repository.contains(item_id)]
     )
 
 
 @router.get("/api/training/review_log", response_model=ReviewLogResponse)
 async def training_review_log(
-    username: CurrentUser, word: Optional[str] = None, limit: int = 50
+    username: CurrentUser,
+    word: Optional[str] = None,
+    item_id: Optional[str] = None,
+    limit: int = 50,
 ) -> ReviewLogResponse:
-    rows = db.review_log_recent(username, word=word, limit=limit)
+    rows = db.review_log_recent(
+        username, word=word, lexical_item_id=item_id, limit=limit
+    )
     return ReviewLogResponse(reviews=[ReviewLogEntry(**row) for row in rows])
 
 
@@ -101,7 +107,7 @@ async def training_ws(websocket: WebSocket) -> None:
     proficiency = storage.settings.english_level or "intermediate"
     native_language = storage.settings.native_lang or "en"
     learning_language = storage.settings.target_lang or "en"
-    used_words: set[str] = set()
+    used_items: set[str] = set()
     active_tasks: dict[str, PracticeTask] = {}
     generated_tasks = 0
 
@@ -116,27 +122,27 @@ async def training_ws(websocket: WebSocket) -> None:
 
             message_type = message.get("type")
             if message_type == "init":
-                used_words.update(str(value) for value in message.get("exclude", []))
+                used_items.update(str(value) for value in message.get("exclude", []))
 
             elif message_type == "request_task":
                 if generated_tasks >= MAX_SESSION_TASKS:
                     await websocket.send_json({"type": "done"})
                     continue
                 available = queue.available(
-                    repository.words(),
+                    repository.items(),
                     learning_language=learning_language,
                     now=time.time(),
-                    excluded=used_words,
+                    excluded=used_items,
                 )
                 if not available:
                     await websocket.send_json({"type": "done"})
                     continue
 
-                word = available[0]
-                used_words.add(word.text)
+                item = available[0]
+                used_items.add(item.item_id)
                 try:
                     task = await task_builder.execute(
-                        word,
+                        item,
                         proficiency=proficiency,
                         native_language=native_language,
                         learning_language=learning_language,
@@ -154,6 +160,7 @@ async def training_ws(websocket: WebSocket) -> None:
                     {
                         "type": "task",
                         "task_id": task.task_id,
+                        "item_id": task.item_id,
                         "word": task.word,
                         "context": task.context,
                         "task_type": task.kind,
@@ -165,13 +172,13 @@ async def training_ws(websocket: WebSocket) -> None:
                 )
 
             elif message_type == "mark_known":
-                word_text = str(message.get("word", ""))
-                if repository.mark_known(word_text):
-                    used_words.add(word_text)
+                item_id = str(message.get("item_id", ""))
+                if repository.mark_known(item_id):
+                    used_items.add(item_id)
                     active_tasks = {
                         task_id: task
                         for task_id, task in active_tasks.items()
-                        if task.word.casefold() != word_text.casefold()
+                        if task.item_id != item_id
                     }
 
             elif message_type == "answer":
@@ -201,7 +208,7 @@ async def training_ws(websocket: WebSocket) -> None:
                     continue
 
                 if evaluation.should_update_schedule:
-                    repository.apply_evaluation(task.word, evaluation, task.kind)
+                    repository.apply_evaluation(task.item_id, evaluation, task.kind)
                     active_tasks.pop(task_id, None)
                 await websocket.send_json(
                     {

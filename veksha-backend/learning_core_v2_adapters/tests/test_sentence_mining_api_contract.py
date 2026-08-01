@@ -5,12 +5,12 @@ from dataclasses import dataclass
 import pytest
 
 from api import settings
+from learning_core_v2.acquisition import LexicalItem, VocabularyEncounter
 from learning_core_v2.sentence_mining import (
     MiningCollocation,
     MiningExample,
     SentenceMiningCard,
 )
-from models import Word
 
 
 @dataclass
@@ -25,16 +25,21 @@ class FakeSettings:
 class FakeStorage:
     def __init__(self):
         self.settings = FakeSettings()
-        self.word = Word(
-            name="make",
+        self.item = LexicalItem(
+            item_id="sense-make",
+            term="make",
             language="en",
             translation="делать",
-            context="I make coffee.",
+            status="learning",
+            encounters=(VocabularyEncounter("I make coffee."),),
         )
         self.saves = 0
 
-    def find_word(self, name):
-        return self.word if name.casefold() == self.word.name.casefold() else None
+    def find_lexical_item(self, item_id):
+        return self.item if item_id == self.item.item_id else None
+
+    def replace_lexical_item(self, item):
+        self.item = item
 
     def save(self):
         self.saves += 1
@@ -70,10 +75,10 @@ async def test_endpoint_uses_v2_card_and_reuses_matching_configuration(monkeypat
     monkeypatch.setattr(settings, "build_sentence_mining", lambda: builder)
 
     first = await settings.api_mine_kb_word(
-        settings.SentenceMiningRequest(word="make"), "tester"
+        settings.SentenceMiningRequest(item_id="sense-make"), "tester"
     )
     second = await settings.api_mine_kb_word(
-        settings.SentenceMiningRequest(word="make"), "tester"
+        settings.SentenceMiningRequest(item_id="sense-make"), "tester"
     )
 
     assert builder.requests[0].learner_cefr == "A2"
@@ -93,10 +98,10 @@ async def test_force_regenerates_existing_v2_card(monkeypatch):
     monkeypatch.setattr(settings, "build_sentence_mining", lambda: builder)
 
     await settings.api_mine_kb_word(
-        settings.SentenceMiningRequest(word="make"), "tester"
+        settings.SentenceMiningRequest(item_id="sense-make"), "tester"
     )
     await settings.api_mine_kb_word(
-        settings.SentenceMiningRequest(word="make", force=True), "tester"
+        settings.SentenceMiningRequest(item_id="sense-make", force=True), "tester"
     )
 
     assert len(builder.requests) == 2

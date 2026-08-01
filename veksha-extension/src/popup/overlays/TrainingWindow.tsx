@@ -96,6 +96,7 @@ export function TrainingWindow({ username, onClose }: { username: string; onClos
     if (msg.type === "task") {
       const task: TrainingTask = {
         task_id: msg.task_id as string,
+        item_id: msg.item_id as string,
         word: msg.word as string,
         context: (msg.context as string) ?? "",
         task_type: msg.task_type as TrainingTask["task_type"],
@@ -176,7 +177,7 @@ export function TrainingWindow({ username, onClose }: { username: string; onClos
     if (!currentTask) return;
     const ws = wsRef.current;
     if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({ type: "mark_known", word: currentTask.word }));
+      ws.send(JSON.stringify({ type: "mark_known", item_id: currentTask.item_id }));
     }
     const newTarget = Math.max(0, targetRef.current - 1);
     targetRef.current = newTarget;

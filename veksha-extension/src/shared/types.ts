@@ -69,6 +69,7 @@ export type TrainingOutcome = "correct" | "incorrect" | "vague" | "garbage";
 
 export interface TrainingTask {
   task_id: string;
+  item_id: string;
   word: string;
   context: string;
   task_type: TaskType;
@@ -108,6 +109,7 @@ export interface LessonBlock {
 }
 
 export interface WordEntry {
+  item_id: string;
   name: string;
   context: string;
   translation: string;

@@ -5,26 +5,16 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal, Protocol, Sequence, TypeVar
 
+from .acquisition import LexicalItem
+
 
 TaskKind = Literal["translation", "synonym", "example", "reverse_translation"]
 Outcome = Literal["correct", "vague", "incorrect", "garbage"]
 
 
 @dataclass(frozen=True, slots=True)
-class PracticeWord:
-    text: str
-    language: str
-    context: str = ""
-    translation: str = ""
-    review_count: int = -1
-    next_review_at: float = 0.0
-    added_at: float = 0.0
-    known: bool = False
-
-
-@dataclass(frozen=True, slots=True)
 class TaskDraftRequest:
-    word: PracticeWord
+    item: LexicalItem
     kind: TaskKind
     proficiency: str
     native_language: str
@@ -41,6 +31,7 @@ class TaskDraft:
 @dataclass(frozen=True, slots=True)
 class PracticeTask:
     task_id: str
+    item_id: str
     word: str
     context: str
     kind: TaskKind
@@ -94,31 +85,44 @@ class PracticeQueue:
 
     def available(
         self,
-        words: Sequence[PracticeWord],
+        items: Sequence[LexicalItem],
         *,
         learning_language: str,
         now: float,
         excluded: set[str] | None = None,
-    ) -> list[PracticeWord]:
-        excluded_keys = {value.casefold() for value in (excluded or set())}
+    ) -> list[LexicalItem]:
+        excluded_ids = excluded or set()
         language = _language_base(learning_language)
         horizon = now + self._review_horizon_seconds
 
         active = [
-            word
-            for word in words
-            if not word.known
-            and word.text.casefold() not in excluded_keys
-            and _language_base(word.language) == language
+            item
+            for item in items
+            if item.status == "learning"
+            and item.item_id not in excluded_ids
+            and _language_base(item.language) == language
         ]
         due = [
-            word
-            for word in active
-            if word.review_count >= 0 and word.next_review_at <= horizon
+            item
+            for item in active
+            if item.schedule.review_count >= 0
+            and item.schedule.next_review_at <= horizon
         ]
-        new = [word for word in active if word.review_count < 0]
-        due.sort(key=lambda word: (word.next_review_at, word.text.casefold()))
-        new.sort(key=lambda word: (word.added_at, word.text.casefold()))
+        new = [item for item in active if item.schedule.review_count < 0]
+        due.sort(
+            key=lambda item: (
+                item.schedule.next_review_at,
+                item.term.casefold(),
+                item.item_id,
+            )
+        )
+        new.sort(
+            key=lambda item: (
+                item.schedule.added_at,
+                item.term.casefold(),
+                item.item_id,
+            )
+        )
         return due + new
 
 
@@ -135,19 +139,19 @@ class BuildPracticeTask:
 
     async def execute(
         self,
-        word: PracticeWord,
+        item: LexicalItem,
         *,
         proficiency: str,
         native_language: str,
         learning_language: str,
     ) -> PracticeTask:
         kinds: list[TaskKind] = ["translation", "synonym", "example"]
-        if word.translation.strip():
+        if item.translation.strip():
             kinds.append("reverse_translation")
         kind = self._choices.choose(kinds)
         draft = await self._provider.draft_task(
             TaskDraftRequest(
-                word=word,
+                item=item,
                 kind=kind,
                 proficiency=proficiency,
                 native_language=native_language,
@@ -159,11 +163,12 @@ class BuildPracticeTask:
             raise ValueError("practice provider returned an empty question")
         return PracticeTask(
             task_id=self._identifiers.new(),
-            word=word.text,
-            context=word.context,
+            item_id=item.item_id,
+            word=item.term,
+            context=item.latest_context,
             kind=kind,
             question=question,
-            review_count=word.review_count,
+            review_count=item.schedule.review_count,
             skill=draft.skill.strip(),
             reverse_text=draft.reverse_text.strip(),
         )

@@ -13,10 +13,9 @@ Implements:
 from __future__ import annotations
 
 import logging
-import random
 import re
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime
 from typing import Optional
 
@@ -29,21 +28,32 @@ from config import (
     FSRS_MIN_INTERVAL_DAYS,
     REVIEW_WINDOW_HOURS,
 )
-from learning_core_v2.acquisition import LexicalItem, VocabularyEncounter
+from learning_core_v2.acquisition import (
+    LexicalItem,
+    ReviewSchedule,
+    VocabularyEncounter,
+    lexical_item_id,
+)
 from learning_core_v2.grammar_memory import GrammarEncounter, GrammarMemoryItem
-from models import LessonTopic, Patch, UserSettings, Word
+from models import LessonTopic, Patch, UserSettings
 
 log = logging.getLogger(__name__)
 
 
-def _inbox_item_from_dict(data: dict) -> LexicalItem:
+def _lexical_item_from_dict(data: dict) -> LexicalItem:
+    status = str(data.get("status", "suggested"))
+    term = str(data.get("term", ""))
+    language = str(data.get("language", ""))
+    translation = str(data.get("translation", ""))
+    schedule_data = data.get("schedule") or {}
     return LexicalItem(
-        item_id=str(data.get("item_id", "")),
-        term=str(data.get("term", "")),
-        language=str(data.get("language", "")),
-        translation=str(data.get("translation", "")),
+        item_id=str(data.get("item_id", ""))
+        or lexical_item_id(term, language, translation),
+        term=term,
+        language=language,
+        translation=translation,
         transcription=str(data.get("transcription", "")),
-        status=str(data.get("status", "suggested")),
+        status=status if status in {"suggested", "learning", "known", "ignored"} else "suggested",
         encounters=tuple(
             VocabularyEncounter(
                 context=str(encounter.get("context", "")),
@@ -53,10 +63,27 @@ def _inbox_item_from_dict(data: dict) -> LexicalItem:
             for encounter in data.get("encounters", [])
             if isinstance(encounter, dict)
         ),
+        schedule=ReviewSchedule(
+            review_count=int(schedule_data.get("review_count", -1)),
+            next_review_at=float(schedule_data.get("next_review_at", 0.0) or 0.0),
+            added_at=float(schedule_data.get("added_at", 0.0) or 0.0),
+            delayed=bool(schedule_data.get("delayed", False)),
+            stability=float(schedule_data.get("stability", 0.0) or 0.0),
+            difficulty=float(schedule_data.get("difficulty", 0.0) or 0.0),
+            last_review_at=float(schedule_data.get("last_review_at", 0.0) or 0.0),
+            lapses=max(0, int(schedule_data.get("lapses", 0) or 0)),
+        ),
+        extra_data=str(data.get("extra_data", "")),
+        sentence_mining=(
+            data.get("sentence_mining")
+            if isinstance(data.get("sentence_mining"), dict)
+            and data.get("sentence_mining")
+            else None
+        ),
     )
 
 
-def _inbox_item_to_dict(item: LexicalItem) -> dict:
+def _lexical_item_to_dict(item: LexicalItem) -> dict:
     return {
         "item_id": item.item_id,
         "term": item.term,
@@ -72,7 +99,122 @@ def _inbox_item_to_dict(item: LexicalItem) -> dict:
             }
             for encounter in item.encounters
         ],
+        "schedule": {
+            "review_count": item.schedule.review_count,
+            "next_review_at": item.schedule.next_review_at,
+            "added_at": item.schedule.added_at,
+            "delayed": item.schedule.delayed,
+            "stability": item.schedule.stability,
+            "difficulty": item.schedule.difficulty,
+            "last_review_at": item.schedule.last_review_at,
+            "lapses": item.schedule.lapses,
+        },
+        "extra_data": item.extra_data,
+        "sentence_mining": item.sentence_mining or {},
     }
+
+
+def _legacy_schedule(data: dict, index: int) -> ReviewSchedule:
+    return ReviewSchedule(
+        review_count=int(data.get("counter", -1)),
+        next_review_at=float(data.get("next_review", 0.0) or 0.0),
+        added_at=float(data.get("added_at", 0.0) or index + 1),
+        delayed=bool(data.get("delayed", False)),
+        stability=float(data.get("stability", 0.0) or 0.0),
+        difficulty=float(data.get("difficulty", 0.0) or 0.0),
+        last_review_at=float(data.get("last_review", 0.0) or 0.0),
+        lapses=max(0, int(data.get("lapses", 0) or 0)),
+    )
+
+
+def _migrate_legacy_lexical_items(
+    data: dict, default_language: str = ""
+) -> list[LexicalItem]:
+    inbox = [
+        _lexical_item_from_dict(item)
+        for item in data.get("vocabulary_inbox", [])
+        if isinstance(item, dict)
+    ]
+    words = [item for item in data.get("words", []) if isinstance(item, dict)]
+    matched_words: set[int] = set()
+    migrated: list[LexicalItem] = []
+
+    for item in inbox:
+        match = next(
+            (
+                (index, word)
+                for index, word in enumerate(words)
+                if _normalize(str(word.get("name", ""))) == _normalize(item.term)
+                and (
+                    str(word.get("language", "")) or default_language
+                ).lower().replace("_", "-")
+                == item.language.lower().replace("_", "-")
+            ),
+            None,
+        )
+        if match is None or item.status not in {"learning", "known"}:
+            migrated.append(item)
+            continue
+        index, word = match
+        matched_words.add(index)
+        encounters = item.encounters
+        context = str(word.get("context", ""))
+        if context and not encounters:
+            encounters = (
+                VocabularyEncounter(
+                    context=context,
+                    observed_at=float(word.get("added_at", 0.0) or index + 1),
+                ),
+            )
+        migrated.append(
+            replace(
+                item,
+                schedule=_legacy_schedule(word, index),
+                encounters=encounters,
+                extra_data=str(word.get("extra_data", "")),
+                sentence_mining=(
+                    word.get("sentence_mining")
+                    if isinstance(word.get("sentence_mining"), dict)
+                    and word.get("sentence_mining")
+                    else None
+                ),
+            )
+        )
+
+    for index, word in enumerate(words):
+        if index in matched_words:
+            continue
+        term = str(word.get("name", ""))
+        language = str(word.get("language", "")) or default_language
+        translation = str(word.get("translation", ""))
+        context = str(word.get("context", ""))
+        migrated.append(
+            LexicalItem(
+                item_id=lexical_item_id(term, language, translation),
+                term=term,
+                language=language,
+                translation=translation,
+                transcription=str(word.get("transcription", "")),
+                status="known" if bool(word.get("known", False)) else "learning",
+                encounters=(
+                    VocabularyEncounter(
+                        context=context,
+                        observed_at=float(word.get("added_at", 0.0) or index + 1),
+                    ),
+                )
+                if context
+                else (),
+                schedule=_legacy_schedule(word, index),
+                extra_data=str(word.get("extra_data", "")),
+                sentence_mining=(
+                    word.get("sentence_mining")
+                    if isinstance(word.get("sentence_mining"), dict)
+                    and word.get("sentence_mining")
+                    else None
+                ),
+            )
+        )
+    return migrated
 
 
 def _grammar_item_from_dict(data: dict) -> GrammarMemoryItem:
@@ -121,10 +263,13 @@ def _grammar_item_to_dict(item: GrammarMemoryItem) -> dict:
     }
 
 
-def _is_due(word: Word, now: float) -> bool:
+def _is_due(item: LexicalItem, now: float) -> bool:
     """A reviewed word is due once next_review is within the look-ahead window
     (or already overdue — FSRS folds lateness into the next interval)."""
-    return word.counter >= 0 and word.next_review - now <= REVIEW_WINDOW_HOURS * 3600
+    return (
+        item.schedule.review_count >= 0
+        and item.schedule.next_review_at - now <= REVIEW_WINDOW_HOURS * 3600
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -157,9 +302,8 @@ def _similar(a: str, b: str) -> bool:
 @dataclass
 class UserStorage:
     username: str
-    words: list[Word] = field(default_factory=list)
+    lexical_items: list[LexicalItem] = field(default_factory=list)
     lesson_topics: list[LessonTopic] = field(default_factory=list)
-    vocabulary_inbox: list[LexicalItem] = field(default_factory=list)
     grammar_memory: list[GrammarMemoryItem] = field(default_factory=list)
     settings: UserSettings = field(default_factory=UserSettings)
 
@@ -170,66 +314,88 @@ class UserStorage:
     @classmethod
     def load(cls, username: str) -> "UserStorage":
         data = db.kb_get(username)
+        settings = UserSettings(**(db.settings_get(username) or {}))
         if data is None:
             log.info("[storage] no KB for user %r, starting empty", username)
-            return cls(username=username, settings=UserSettings(**(db.settings_get(username) or {})))
+            return cls(username=username, settings=settings)
 
-        words = [Word.from_dict(w) for w in data.get("words", [])]
-        # Older KB documents predate `added_at`. Their list order is the only
-        # surviving insertion-order signal, so preserve it with stable values.
-        for index, word in enumerate(words):
-            if word.added_at <= 0:
-                word.added_at = float(index + 1)
+        migrated = "lexical_items" not in data
+        lexical_items = (
+            _migrate_legacy_lexical_items(data, settings.target_lang)
+            if migrated
+            else [
+                _lexical_item_from_dict(item)
+                for item in data.get("lexical_items", [])
+                if isinstance(item, dict)
+            ]
+        )
 
         storage = cls(
             username=username,
-            words=words,
+            lexical_items=lexical_items,
             lesson_topics=[LessonTopic.from_dict(t) for t in data.get("lesson_topics", [])],
-            vocabulary_inbox=[
-                _inbox_item_from_dict(item)
-                for item in data.get("vocabulary_inbox", [])
-                if isinstance(item, dict)
-            ],
             grammar_memory=[
                 _grammar_item_from_dict(item)
                 for item in data.get("grammar_memory", [])
                 if isinstance(item, dict)
             ],
-            settings=UserSettings(**(db.settings_get(username) or {})),
+            settings=settings,
         )
         log.info(
-            "[storage] loaded KB for user %r: %d words, %d topics, onboarded=%s",
-            username, len(storage.words), len(storage.lesson_topics), storage.settings.is_onboarded(),
+            "[storage] loaded KB for user %r: %d lexical items, %d topics, onboarded=%s",
+            username,
+            len(storage.lexical_items),
+            len(storage.lesson_topics),
+            storage.settings.is_onboarded(),
         )
+        if migrated:
+            log.info("[storage] migrating legacy words for user %r to LexicalItem v2", username)
+            storage.save()
         return storage
 
     def save(self) -> None:
         db.kb_set(self.username, {
-            "words": [w.to_dict() for w in self.words],
-            "lesson_topics": [t.to_dict() for t in self.lesson_topics],
-            "vocabulary_inbox": [
-                _inbox_item_to_dict(item) for item in self.vocabulary_inbox
+            "schema_version": 2,
+            "lexical_items": [
+                _lexical_item_to_dict(item) for item in self.lexical_items
             ],
+            "lesson_topics": [t.to_dict() for t in self.lesson_topics],
             "grammar_memory": [
                 _grammar_item_to_dict(item) for item in self.grammar_memory
             ],
         })
         db.settings_set(self.username, self.settings)
         log.debug(
-            "[storage] saved KB for user %r: %d words, %d topics",
-            self.username, len(self.words), len(self.lesson_topics),
+            "[storage] saved KB for user %r: %d lexical items, %d topics",
+            self.username, len(self.lexical_items), len(self.lesson_topics),
         )
 
     # ------------------------------------------------------------------
     # Word / topic search
     # ------------------------------------------------------------------
 
-    def find_word(self, name: str) -> Optional[Word]:
-        n = _normalize(name)
-        for w in self.words:
-            if w.language == self.settings.target_lang and _normalize(w.name) == n:
-                return w
+    def find_lexical_item(self, item_id: str) -> Optional[LexicalItem]:
+        return next(
+            (item for item in self.lexical_items if item.item_id == item_id), None
+        )
+
+    def find_lexical_item_by_term(self, term: str) -> Optional[LexicalItem]:
+        normalized = _normalize(term)
+        for item in self.lexical_items:
+            if (
+                item.language == self.settings.target_lang
+                and _normalize(item.term) == normalized
+                and item.status in {"learning", "known"}
+            ):
+                return item
         return None
+
+    def delete_lexical_item(self, item_id: str) -> bool:
+        item = self.find_lexical_item(item_id)
+        if item is None:
+            return False
+        self.lexical_items.remove(item)
+        return True
 
     def find_lesson_topic(self, name: str) -> Optional[LessonTopic]:
         n = _normalize(name)
@@ -238,9 +404,9 @@ class UserStorage:
                 return t
         return None
 
-    def candidates_for_delete_word(self, query: str) -> list[Word]:
+    def candidates_for_delete_word(self, query: str) -> list[LexicalItem]:
         """Spec 3.4: algorithmically filtered 'similar' words — LLM candidate set."""
-        return [w for w in self.words if _similar(w.name, query)]
+        return [item for item in self.lexical_items if _similar(item.term, query)]
 
     def candidates_for_delete_topic(self, query: str) -> list[LessonTopic]:
         return [t for t in self.lesson_topics if _similar(t.name, query)]
@@ -301,33 +467,42 @@ class UserStorage:
         return notes
 
     def _add_word(self, patch: Patch) -> bool:
-        existing = self.find_word(patch.value)
+        existing = self.find_lexical_item_by_term(patch.value)
         if existing is not None:
             # Word already in KB — no duplicates (spec 3.1: "only if not already in KB")
             return False
         next_review = 0.0
         if patch.counter >= 0:
             next_review = time.time() + FIRST_REVIEW_DELAY_DAYS * 24 * 3600
-        self.words.append(
-            Word(
-                name=patch.value,
+        added_at = time.time()
+        self.lexical_items.append(
+            LexicalItem(
+                item_id=lexical_item_id(
+                    patch.value, self.settings.target_lang, ""
+                ),
+                term=patch.value,
                 language=self.settings.target_lang,
-                context=patch.context,
-                counter=patch.counter,
-                known=patch.known,
-                delayed=False,
-                next_review=next_review,
-                added_at=time.time(),
-                extra_data="",
+                translation="",
+                status="known" if bool(patch.known) else "learning",
+                encounters=(
+                    VocabularyEncounter(context=patch.context, observed_at=added_at),
+                )
+                if patch.context
+                else (),
+                schedule=ReviewSchedule(
+                    review_count=patch.counter,
+                    next_review_at=next_review,
+                    added_at=added_at,
+                ),
             )
         )
         return True
 
     def _delete_word(self, query: str) -> bool:
-        w = self.find_word(query)
-        if w is None:
+        item = self.find_lexical_item_by_term(query)
+        if item is None:
             return False
-        self.words.remove(w)
+        self.lexical_items.remove(item)
         return True
 
     def _add_topic(self, patch: Patch) -> bool:
@@ -348,63 +523,43 @@ class UserStorage:
         Special case "word learned" (spec 3.4): marks known=True and removes
         the word from the collect_train_word pool without deleting it from KB.
         """
-        w = self.find_word(query)
-        if w is None:
+        item = self.find_lexical_item_by_term(query)
+        if item is None:
             return False
-        w.known = True
-        w.delayed = False
-        # collect_train_word only picks words with known == False
+        self.replace_lexical_item(
+            replace(
+                item,
+                status="known",
+                schedule=replace(item.schedule, delayed=False),
+            )
+        )
         return True
 
-    # ------------------------------------------------------------------
-    # collect_train_word (spec 4.1.1, FSRS scheduling — see fsrs.py)
-    # ------------------------------------------------------------------
-
-    def collect_train_word(self) -> Optional[Word]:
-        """
-        Deterministic word selection for training:
-          1. Pool = words with known == False that are due (next_review within
-             the look-ahead window or overdue).
-             If no such pool — pool = words with known == False and counter == -1
-             ("new" words, not yet introduced to rotation).
-          2. Base weight 1, delayed=True → weight 2.
-          3. Weighted random selection.
-
-        Returns None if KB has no suitable words
-        (spec 6, p.4 — empty-KB handling is delegated to caller).
-        """
-        now = time.time()
-
-        active = [w for w in self.words if w.known is False or w.known == ""]
-
-        pool = [w for w in active if _is_due(w, now)]
-        pool_kind = "due (within review window)"
-        if not pool:
-            pool = [w for w in active if w.counter == -1]
-            pool_kind = "counter==-1 (new words, fallback)"
-
-        if not pool:
-            log.info("[collect_train_word] user %r: pool empty (active=%d) -> None", self.username, len(active))
-            return None
-
-        weights = [2 if w.delayed else 1 for w in pool]
-        chosen = random.choices(pool, weights=weights, k=1)[0]
-        log.info(
-            "[collect_train_word] user %r: pool=%s (size=%d) -> chosen=%r (counter=%d delayed=%s next_review=%s)",
-            self.username, pool_kind, len(pool), chosen.name, chosen.counter, chosen.delayed,
-            datetime.fromtimestamp(chosen.next_review).isoformat() if chosen.next_review else "(none)",
+    def replace_lexical_item(self, updated: LexicalItem) -> None:
+        index = next(
+            (
+                index
+                for index, item in enumerate(self.lexical_items)
+                if item.item_id == updated.item_id
+            ),
+            None,
         )
-        return chosen
+        if index is None:
+            raise ValueError("lexical item not found")
+        self.lexical_items[index] = updated
 
     def due_count(self) -> int:
-        """Number of words ready for review right now (used by reminder scheduler)."""
+        """Number of lexical senses ready for review right now."""
         now = time.time()
         return sum(
-            1 for w in self.words
-            if (w.known is False or w.known == "") and _is_due(w, now)
+            1
+            for item in self.lexical_items
+            if item.status == "learning" and _is_due(item, now)
         )
 
-    def apply_review_result(self, word: Word, outcome: str, task_type: str = "") -> None:
+    def apply_review_result(
+        self, item: LexicalItem, outcome: str, task_type: str = ""
+    ) -> LexicalItem:
         """
         Update the word's FSRS memory state after a review and append a row to
         the review log:
@@ -419,17 +574,22 @@ class UserStorage:
         rating = fsrs.outcome_to_rating(outcome)
         if rating is None:
             log.info(
-                "[apply_review_result] user %r: word=%r outcome=%r is not a review, skipping",
-                self.username, word.name, outcome,
+                "[apply_review_result] user %r: item=%r outcome=%r is not a review, skipping",
+                self.username, item.item_id, outcome,
             )
-            return
+            return item
 
         now = time.time()
-        if word.stability > 0 and word.last_review > 0:
-            elapsed_days = max(0.0, (now - word.last_review) / 86400)
-            retrievability: Optional[float] = fsrs.retrievability(elapsed_days, word.stability)
+        schedule = item.schedule
+        if schedule.stability > 0 and schedule.last_review_at > 0:
+            elapsed_days = max(0.0, (now - schedule.last_review_at) / 86400)
+            retrievability: Optional[float] = fsrs.retrievability(
+                elapsed_days, schedule.stability
+            )
             state = fsrs.review(
-                fsrs.MemoryState(word.stability, word.difficulty), rating, elapsed_days,
+                fsrs.MemoryState(schedule.stability, schedule.difficulty),
+                rating,
+                elapsed_days,
             )
         else:
             elapsed_days = 0.0
@@ -441,76 +601,95 @@ class UserStorage:
             FSRS_MAX_INTERVAL_DAYS,
         )
 
-        word.stability = state.stability
-        word.difficulty = state.difficulty
-        word.counter = max(word.counter + 1, 1)  # turn -1 into 1
-        if rating == fsrs.AGAIN:
-            word.lapses += 1
-        word.delayed = False
-        word.last_review = now
-        word.next_review = now + interval_days * 86400
+        updated = replace(
+            item,
+            schedule=ReviewSchedule(
+                review_count=max(schedule.review_count + 1, 1),
+                next_review_at=now + interval_days * 86400,
+                added_at=schedule.added_at,
+                delayed=False,
+                stability=state.stability,
+                difficulty=state.difficulty,
+                last_review_at=now,
+                lapses=schedule.lapses + (1 if rating == fsrs.AGAIN else 0),
+            ),
+        )
+        self.replace_lexical_item(updated)
 
         db.review_log_add(
             username=self.username,
-            word=word.name,
+            lexical_item_id=item.item_id,
+            word=item.term,
             ts=now,
             rating=rating,
             outcome=outcome,
             task_type=task_type,
             elapsed_days=elapsed_days,
             scheduled_days=interval_days,
-            stability=word.stability,
-            difficulty=word.difficulty,
+            stability=updated.schedule.stability,
+            difficulty=updated.schedule.difficulty,
             retrievability=retrievability,
         )
         log.info(
-            "[apply_review_result] user %r: word=%r outcome=%s rating=%d -> S=%.2f D=%.2f "
+            "[apply_review_result] user %r: item=%s term=%r outcome=%s rating=%d -> S=%.2f D=%.2f "
             "R=%s next_review=%s (+%.2fd)",
-            self.username, word.name, outcome, rating, word.stability, word.difficulty,
+            self.username,
+            item.item_id,
+            item.term,
+            outcome,
+            rating,
+            updated.schedule.stability,
+            updated.schedule.difficulty,
             f"{retrievability:.2f}" if retrievability is not None else "-",
-            datetime.fromtimestamp(word.next_review).isoformat(), interval_days,
+            datetime.fromtimestamp(updated.schedule.next_review_at).isoformat(),
+            interval_days,
         )
+        return updated
 
-    def apply_overdue_decay(self) -> list[Word]:
+    def apply_overdue_decay(self) -> list[LexicalItem]:
         """
-        Flag words overdue by more than REVIEW_WINDOW_HOURS as delayed=True so
-        they get double weight in collect_train_word. Unlike the pre-FSRS
-        version this does not touch counter or next_review: lateness is folded
-        into the next interval by FSRS itself (low retrievability at review).
+        Flag senses overdue by more than REVIEW_WINDOW_HOURS. This does not
+        change their review count or due timestamp: FSRS folds lateness into
+        the next interval through lower retrievability at review time.
 
-        Returns the list of newly flagged words (for logging / notifications).
+        Returns the newly flagged lexical items for logging and reminders.
         """
         now = time.time()
         window_seconds = REVIEW_WINDOW_HOURS * 3600
-        affected: list[Word] = []
+        affected: list[LexicalItem] = []
 
-        for w in self.words:
-            if (w.known is False or w.known == "") and w.counter >= 0 and not w.delayed:
-                if now - w.next_review > window_seconds:
-                    w.delayed = True
-                    affected.append(w)
-                    log.info(
-                        "[apply_overdue_decay] user %r: word=%r overdue -> delayed=True",
-                        self.username, w.name,
-                    )
+        for item in tuple(self.lexical_items):
+            schedule = item.schedule
+            if (
+                item.status == "learning"
+                and schedule.review_count >= 0
+                and not schedule.delayed
+                and now - schedule.next_review_at > window_seconds
+            ):
+                updated = replace(item, schedule=replace(schedule, delayed=True))
+                self.replace_lexical_item(updated)
+                affected.append(updated)
+                log.info(
+                    "[apply_overdue_decay] user %r: item=%s term=%r overdue",
+                    self.username,
+                    item.item_id,
+                    item.term,
+                )
 
         if affected:
             self.save()
 
         return affected
 
-    def has_any_word(self) -> bool:
-        return len(self.words) > 0
-
     # ------------------------------------------------------------------
     # Misc counters (for stats / commands)
     # ------------------------------------------------------------------
 
     def learning_count(self) -> int:
-        return sum(1 for w in self.words if w.known is False or w.known == "")
+        return sum(1 for item in self.lexical_items if item.status == "learning")
 
     def known_count(self) -> int:
-        return sum(1 for w in self.words if w.known is True or (isinstance(w.known, str) and w.known))
+        return sum(1 for item in self.lexical_items if item.status == "known")
 
 
 # ---------------------------------------------------------------------------

@@ -257,7 +257,7 @@ def _google_link(claims: dict, username: str) -> dict:
         previous = get_storage(owner)
         if (
             not previous.settings.is_onboarded()
-            and not previous.words
+            and not previous.lexical_items
             and not previous.lesson_topics
             and not db.user_has_account_activity(owner)
             and db.identity_reassign(_PROVIDER, sub, owner, username, email)

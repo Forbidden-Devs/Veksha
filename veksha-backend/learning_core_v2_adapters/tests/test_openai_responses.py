@@ -6,6 +6,7 @@ from typing import Any
 
 import pytest
 
+from learning_core_v2.acquisition import LexicalItem
 from learning_core_v2.catalog_translation import (
     CatalogEntry,
     CatalogTranslationRequest,
@@ -28,7 +29,6 @@ from learning_core_v2.phrase_mining import PhraseMiningRequest
 from learning_core_v2.practice import (
     AnswerCheckRequest,
     PracticeTask,
-    PracticeWord,
     TaskDraftRequest,
 )
 from learning_core_v2.sentence_mining import SentenceMiningRequest
@@ -198,7 +198,7 @@ async def test_practice_task_uses_its_own_structured_schema():
 
     draft = await provider.draft_task(
         TaskDraftRequest(
-            PracticeWord("run", "en", translation="бежать"),
+            LexicalItem("item-run", "run", "en", "бежать", status="learning"),
             "translation",
             "b1",
             "ru",
@@ -221,7 +221,15 @@ async def test_answer_check_includes_server_task_and_reverse_cue():
         api_key="test-key", model="test-model", transport=transport
     )
     task = PracticeTask(
-        "id", "run", "context", "reverse_translation", "Назовите слово", 1, "Recall", "бежать"
+        "id",
+        "item-run",
+        "run",
+        "context",
+        "reverse_translation",
+        "Назовите слово",
+        1,
+        "Recall",
+        "бежать",
     )
 
     result = await provider.evaluate_answer(

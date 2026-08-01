@@ -11,6 +11,7 @@ from __future__ import annotations
 import logging
 import random
 import time
+from dataclasses import replace
 
 from fastapi import APIRouter
 
@@ -37,10 +38,12 @@ async def api_debug_reset(username: CurrentUser) -> dict:
 async def api_debug_simulate_training(username: CurrentUser) -> dict:
     """Apply a successful training result to up to 15 random active words and one topic."""
     storage = get_storage(username)
-    active_words = [w for w in storage.words if w.known is False or w.known == ""]
-    selected_words = random.sample(active_words, min(15, len(active_words)))
-    for word in selected_words:
-        storage.apply_review_result(word, "correct", task_type="debug_simulate")
+    active_items = [
+        item for item in storage.lexical_items if item.status == "learning"
+    ]
+    selected_items = random.sample(active_items, min(15, len(active_items)))
+    for item in selected_items:
+        storage.apply_review_result(item, "correct", task_type="debug_simulate")
 
     topic_names = sorted(t.name for t in storage.lesson_topics)
     topic_name = random.choice(topic_names) if topic_names else None
@@ -55,11 +58,11 @@ async def api_debug_simulate_training(username: CurrentUser) -> dict:
     storage.save()
     log.info(
         "[debug/simulate-training] user=%r words=%d topic=%r",
-        username, len(selected_words), topic_name,
+        username, len(selected_items), topic_name,
     )
     return {
         "ok": True,
-        "words_updated": len(selected_words),
+        "words_updated": len(selected_items),
         "topic_updated": topic_name,
     }
 
@@ -71,13 +74,23 @@ async def api_debug_advance_day(username: CurrentUser) -> dict:
 
     storage = get_storage(username)
     shifted = 0
-    for word in storage.words:
-        if word.next_review:
-            word.next_review -= 24 * 3600
-            # Shift the review history too, so FSRS sees a full day of
-            # elapsed time (retrievability drops accordingly).
-            if word.last_review:
-                word.last_review -= 24 * 3600
+    for item in tuple(storage.lexical_items):
+        schedule = item.schedule
+        if schedule.next_review_at:
+            storage.replace_lexical_item(
+                replace(
+                    item,
+                    schedule=replace(
+                        schedule,
+                        next_review_at=schedule.next_review_at - 24 * 3600,
+                        last_review_at=(
+                            schedule.last_review_at - 24 * 3600
+                            if schedule.last_review_at
+                            else 0.0
+                        ),
+                    ),
+                )
+            )
             shifted += 1
     storage.save()
 

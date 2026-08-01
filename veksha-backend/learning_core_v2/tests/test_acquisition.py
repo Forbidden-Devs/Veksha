@@ -3,6 +3,7 @@ import pytest
 from learning_core_v2.acquisition import (
     DecideVocabulary,
     LexicalItem,
+    lexical_item_id,
     SuggestVocabulary,
     VocabularyEncounter,
     VocabularyProposal,
@@ -24,7 +25,7 @@ def proposal(**overrides):
 
 def test_creates_a_suggestion_with_its_first_encounter():
     result = SuggestVocabulary().execute(
-        (), proposal(), item_id="item-1", observed_at=123.0
+        (), proposal(), observed_at=123.0
     )
 
     assert result[0].status == "suggested"
@@ -39,12 +40,11 @@ def test_creates_a_suggestion_with_its_first_encounter():
 
 def test_repeated_sense_adds_an_encounter_without_a_duplicate_item():
     service = SuggestVocabulary()
-    first = service.execute((), proposal(), item_id="item-1", observed_at=1.0)
+    first = service.execute((), proposal(), observed_at=1.0)
 
     result = service.execute(
         first,
         proposal(context="I came across this phrase again."),
-        item_id="unused",
         observed_at=2.0,
     )
 
@@ -57,16 +57,27 @@ def test_repeated_sense_adds_an_encounter_without_a_duplicate_item():
 
 def test_same_form_with_another_meaning_stays_a_separate_sense():
     service = SuggestVocabulary()
-    first = service.execute((), proposal(), item_id="item-1", observed_at=1.0)
+    first = service.execute((), proposal(), observed_at=1.0)
 
     result = service.execute(
         first,
         proposal(translation="встретить случайно"),
-        item_id="item-2",
         observed_at=2.0,
     )
 
-    assert [item.item_id for item in result] == ["item-1", "item-2"]
+    assert [item.item_id for item in result] == [
+        lexical_item_id("come across", "en", "случайно найти"),
+        lexical_item_id("come across", "en", "встретить случайно"),
+    ]
+
+
+def test_sense_identifier_is_stable_but_changes_with_meaning():
+    first = lexical_item_id(" Bank ", "EN_us", "  БАНК ")
+    repeated = lexical_item_id("bank", "en-us", "банк")
+    another_sense = lexical_item_id("bank", "en-us", "берег")
+
+    assert first == repeated
+    assert another_sense != first
 
 
 @pytest.mark.parametrize(
@@ -86,7 +97,7 @@ def test_decision_is_an_explicit_one_way_transition(decision, status):
 def test_invalid_proposal_is_rejected():
     with pytest.raises(ValueError):
         SuggestVocabulary().execute(
-            (), proposal(translation=" "), item_id="item-1", observed_at=1.0
+            (), proposal(translation=" "), observed_at=1.0
         )
 
 
@@ -94,7 +105,6 @@ def test_source_url_drops_query_parameters_and_fragments():
     result = SuggestVocabulary().execute(
         (),
         proposal(source_url="https://example.test/story?token=secret#selection"),
-        item_id="item-1",
         observed_at=1.0,
     )
 

@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 import re
 import time
-import uuid
 
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
@@ -62,26 +61,15 @@ class PrepareReadingResponse(BaseModel):
 
 
 def _knowledge(storage, term: str, language: str) -> str:
-    word = next(
-        (
-            item
-            for item in storage.words
-            if item.language == language and item.name.strip().casefold() == term.casefold()
-        ),
-        None,
-    )
-    if word is not None:
-        return "known" if bool(word.known) else "learning"
-    inbox = next(
-        (
-            item
-            for item in reversed(storage.vocabulary_inbox)
-            if item.language == language and item.term.casefold() == term.casefold()
-        ),
-        None,
-    )
-    if inbox is not None and inbox.status in {"suggested", "ignored"}:
-        return inbox.status
+    statuses = {
+        item.status
+        for item in storage.lexical_items
+        if item.language == language
+        and item.term.strip().casefold() == term.casefold()
+    }
+    for status in ("known", "learning", "suggested", "ignored"):
+        if status in statuses:
+            return status
     return "unseen"
 
 
@@ -168,10 +156,10 @@ async def prepare_reading(req: PrepareReadingRequest, username: CurrentUser) -> 
     for term, detail in zip(eligible, details, strict=True):
         if detail is None:
             continue
-        before = len(storage.vocabulary_inbox)
-        storage.vocabulary_inbox = list(
+        before = len(storage.lexical_items)
+        storage.lexical_items = list(
             suggest.execute(
-                storage.vocabulary_inbox,
+                storage.lexical_items,
                 VocabularyProposal(
                     term=detail.headword or term,
                     language=language,
@@ -180,11 +168,10 @@ async def prepare_reading(req: PrepareReadingRequest, username: CurrentUser) -> 
                     context=_context_for(term, text),
                     source_url=req.source_url,
                 ),
-                item_id=str(uuid.uuid4()),
                 observed_at=time.time(),
             )
         )
-        if len(storage.vocabulary_inbox) > before:
+        if len(storage.lexical_items) > before:
             added += 1
     if added:
         storage.save()

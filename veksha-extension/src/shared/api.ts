@@ -571,28 +571,28 @@ export async function addKbWord(username: string, word: string): Promise<WordEnt
   return entry;
 }
 
-export function getKbWordDetails(username: string, word: string): Promise<WordEntry> {
-  return _get(`/api/kb_word_details?word=${encodeURIComponent(word)}`);
+export function getKbWordDetails(username: string, itemId: string): Promise<WordEntry> {
+  return _get(`/api/kb_word_details?item_id=${encodeURIComponent(itemId)}`);
 }
 
-export function mineKbWord(username: string, word: string, force = false): Promise<WordEntry> {
-  return _post("/api/kb_word_mine", { word, force }, 45_000);
+export function mineKbWord(username: string, itemId: string, force = false): Promise<WordEntry> {
+  return _post("/api/kb_word_mine", { item_id: itemId, force }, 45_000);
 }
 
-export function reviewKbWord(username: string, word: string, rating: "again" | "good"): Promise<{ ok: boolean; next_review: number }> {
-  return _post("/api/kb_word_review", { word, rating });
+export function reviewKbWord(username: string, itemId: string, rating: "again" | "good"): Promise<{ ok: boolean; next_review: number }> {
+  return _post("/api/kb_word_review", { item_id: itemId, rating });
 }
 
-export function deleteKbWord(username: string, word: string): Promise<{ ok: boolean }> {
-  return _delete("/api/kb_word", { word });
+export function deleteKbWord(username: string, itemId: string): Promise<{ ok: boolean }> {
+  return _delete("/api/kb_word", { item_id: itemId });
 }
 
 export function trainingInit(username: string): Promise<{ available_words: number }> {
   return _get("/api/training/init");
 }
 
-export function trainingValidate(username: string, wordNames: string[]): Promise<{ valid: string[] }> {
-  return _post("/api/training/validate", { word_names: wordNames });
+export function trainingValidate(username: string, itemIds: string[]): Promise<{ valid: string[] }> {
+  return _post("/api/training/validate", { item_ids: itemIds });
 }
 
 export function getLessonTopics(username: string): Promise<{ topics: LessonTopicSummary[] }> {

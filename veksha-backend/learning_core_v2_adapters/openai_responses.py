@@ -522,9 +522,9 @@ class OpenAIResponsesLanguageProvider:
                 "the question and short skill label in the learner's native language."
             ),
             user_data={
-                "word": request.word.text,
-                "context": request.word.context,
-                "known_translation": request.word.translation,
+                "word": request.item.term,
+                "context": request.item.latest_context,
+                "known_translation": request.item.translation,
                 "task_kind": request.kind,
                 "learner_proficiency": request.proficiency,
                 "native_language": request.native_language,

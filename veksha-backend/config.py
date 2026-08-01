@@ -104,12 +104,12 @@ FSRS_DESIRED_RETENTION = 0.9
 FSRS_MIN_INTERVAL_DAYS = 0.25
 FSRS_MAX_INTERVAL_DAYS = 365.0
 
-# Initial delay before the first review of an explicitly added word (days).
+# Initial delay before the first review of an explicitly added lexical item.
 # After the first review the schedule is fully FSRS-driven.
 FIRST_REVIEW_DELAY_DAYS = 1
 
-# A word becomes "due" once next_review is within REVIEW_WINDOW_HOURS from
-# now (or already in the past); see collect_train_word / due_count.
+# A sense becomes due once its next review is within REVIEW_WINDOW_HOURS from
+# now (or already in the past).
 REVIEW_WINDOW_HOURS = 24
 
 # ---------------------------------------------------------------------------

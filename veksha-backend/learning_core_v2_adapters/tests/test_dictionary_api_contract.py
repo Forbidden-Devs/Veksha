@@ -6,9 +6,9 @@ import pytest
 from fastapi import HTTPException
 
 from api import settings
+from learning_core_v2.acquisition import LexicalItem
 from learning_core_v2.dictionary import DictionaryDetails
 from learning_core_v2_adapters.openai_responses import LanguageProviderError
-from models import Word
 
 
 @dataclass
@@ -21,27 +21,14 @@ class FakeSettings:
 @dataclass
 class FakeStorage:
     settings: FakeSettings = field(default_factory=FakeSettings)
-    words: list[Word] = field(default_factory=list)
+    lexical_items: list[LexicalItem] = field(default_factory=list)
     saves: int = 0
 
-    def find_word(self, name):
+    def find_lexical_item_by_term(self, name):
         key = name.strip().casefold()
-        return next((word for word in self.words if word.name.casefold() == key), None)
-
-    def apply_kb_changes(self, patches):
-        for patch in patches:
-            if patch.type == "add_word" and self.find_word(patch.value) is None:
-                self.words.append(
-                    Word(
-                        name=patch.value,
-                        language=self.settings.target_lang,
-                        counter=patch.counter,
-                    )
-                )
-            elif patch.type == "delete_word":
-                word = self.find_word(patch.value)
-                if word is not None:
-                    self.words.remove(word)
+        return next(
+            (item for item in self.lexical_items if item.term.casefold() == key), None
+        )
 
     def save(self):
         self.saves += 1
@@ -101,4 +88,4 @@ async def test_new_word_is_rolled_back_when_v2_enrichment_fails(monkeypatch):
         )
 
     assert caught.value.status_code == 502
-    assert storage.words == []
+    assert storage.lexical_items == []

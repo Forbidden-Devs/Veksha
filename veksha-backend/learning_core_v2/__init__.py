@@ -3,9 +3,11 @@
 from .acquisition import (
     DecideVocabulary,
     LexicalItem,
+    ReviewSchedule,
     SuggestVocabulary,
     VocabularyEncounter,
     VocabularyProposal,
+    lexical_item_id,
 )
 from .catalog_translation import (
     CatalogEntry,
@@ -65,7 +67,6 @@ from .practice import (
     CheckPracticeAnswer,
     PracticeQueue,
     PracticeTask,
-    PracticeWord,
 )
 from .reading_coach import (
     AssessReading,
@@ -95,9 +96,11 @@ from .translation import (
 __all__ = [
     "DecideVocabulary",
     "LexicalItem",
+    "ReviewSchedule",
     "SuggestVocabulary",
     "VocabularyEncounter",
     "VocabularyProposal",
+    "lexical_item_id",
     "CatalogEntry",
     "CatalogTranslationRequest",
     "TranslateCatalog",
@@ -143,7 +146,6 @@ __all__ = [
     "CheckPracticeAnswer",
     "PracticeQueue",
     "PracticeTask",
-    "PracticeWord",
     "AssessReading",
     "ReadingAssessment",
     "ReadingObstacle",

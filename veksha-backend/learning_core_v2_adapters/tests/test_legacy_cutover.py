@@ -49,3 +49,18 @@ def test_migration_flags_and_legacy_entrypoints_are_gone():
         "llm/subtitles.py",
     ]
     assert all(not (BACKEND / relative).exists() for relative in removed)
+
+
+def test_lexical_item_v2_has_no_legacy_word_projection():
+    models_tree = ast.parse((BACKEND / "models.py").read_text(encoding="utf-8"))
+    class_names = {
+        node.name for node in ast.walk(models_tree) if isinstance(node, ast.ClassDef)
+    }
+    assert "Word" not in class_names
+
+    production = [
+        BACKEND / "storage.py",
+        BACKEND / "api" / "training_v2.py",
+        BACKEND / "learning_core_v2_adapters" / "practice.py",
+    ]
+    assert all("PracticeWord" not in path.read_text(encoding="utf-8") for path in production)

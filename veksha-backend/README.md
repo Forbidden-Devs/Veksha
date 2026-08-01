@@ -46,6 +46,11 @@ inbox instead of directly entering the review queue. The learner must choose
 Learn, Known, or Ignore in My Words. Source URLs are stored without query
 parameters or fragments.
 
+`LexicalItem` is the persisted and trained vocabulary unit. Each normalized
+term/language/meaning combination has a stable `item_id` and its own FSRS
+schedule. Legacy `Word` records migrate on load to `schema_version: 2`; the
+backend no longer writes a `words` projection or merges homonymous meanings.
+
 The rewritten training core is the only training implementation. Its Responses
 API model is configured via
 `VEKSHA_CORE_V2_TRAINING_MODEL` (default `gpt-5.6-terra`).
@@ -115,9 +120,9 @@ Linking attaches a Google identity to an existing account (409 if it belongs
 to someone else). Without a Google link, a lost local token still means a new
 account.
 
-All user data (accounts and KBs) lives in PostgreSQL. The KB is
-stored as one JSON document per user;
-normalizing into tables is deferred to the FSRS rework.
+All user data (accounts and KBs) lives in PostgreSQL. The KB remains one
+versioned JSON document per user; `LexicalItem` schedules are embedded per
+meaning while review events live in the relational `review_log` table.
 
 To copy a previous SQLite installation, stop the backend and run:
 
@@ -175,7 +180,7 @@ main.py               app entry point, routers, CORS, error handler
 config.py             env-based configuration
 db.py                 PostgreSQL: users/tokens, KB documents, review log
 auth.py               bearer-token dependencies (HTTP + WebSocket)
-models.py             transitional persisted Word/UserSettings/lesson records
+models.py             transitional settings/lesson/message records
 storage.py            adapters for the versioned user knowledge document
 fsrs.py               FSRS-4.5 scheduler (pure functions; default weights)
 learning_core_v2/     independent domain use cases
@@ -198,7 +203,7 @@ api/                  routers (one file per domain)
 | `GET /api/reminders` | due words / topics for extension alarms |
 | `GET /api/kb_summary`, `/api/kb_words`, `DELETE /api/kb_word` | vocabulary UI |
 | `GET /api/training/init`, `POST /api/training/validate`, `WS /api/training/ws` | word training |
-| `GET /api/training/review_log` | recent FSRS reviews (`?word=`, `?limit=`) |
+| `GET /api/training/review_log` | recent FSRS reviews (`?item_id=`, `?word=`, `?limit=`) |
 | `GET/POST /api/lesson-topics`, `WS /api/lesson/ws` | topic lessons |
 | `POST /api/immersion/analyze` | comprehensible-input page immersion (premium) |
 | `POST /api/subtitles/translate` | dual-subtitle line translation with word alignment (premium) |
@@ -218,24 +223,24 @@ WebSocket protocols are documented in the module docstrings of
 
 ## Spaced repetition (FSRS)
 
-Scheduling is FSRS-4.5 (`fsrs.py`, published default weights). Each word
-carries a memory state — `stability` (interval in days at 90% recall),
-`difficulty` (1–10), `last_review`, `lapses` — updated per review from the
+Scheduling is FSRS-4.5 (`fsrs.py`, published default weights). Each lexical
+meaning carries its own memory state — `stability` (interval in days at 90%
+recall), `difficulty` (1–10), `last_review`, `lapses` — updated per review from the
 LLM answer-check outcome: `correct` → Good, `vague` → Hard, `incorrect` →
 Again (`garbage` is not a review). `next_review = now + interval` for
 `config.FSRS_DESIRED_RETENTION` (0.9), clamped to
-`FSRS_MIN/MAX_INTERVAL_DAYS`. A word is due once `next_review` is less than
+`FSRS_MIN/MAX_INTERVAL_DAYS`. A lexical item is due once `next_review` is less than
 `REVIEW_WINDOW_HOURS` away or overdue — lateness needs no special handling
 because low retrievability at review time yields a bigger stability jump.
-Overdue words only get `delayed=True` (weight ×2 in selection). `counter`
+Overdue items only get `delayed=True`. `counter`
 survives as the review count (`-1` = new, drives the UI badge).
 
 Every review appends to the `review_log` table (rating, outcome, task type,
 elapsed/scheduled days, post-review stability/difficulty, pre-review
-retrievability) — read it via `GET /api/training/review_log`; it is also the
-training data for fitting per-user FSRS weights later. Words created before
-the FSRS switch have `stability == 0` and are initialized on their next
-review.
+retrievability and `lexical_item_id`) — read it via
+`GET /api/training/review_log`; it is also the training data for fitting
+per-user FSRS weights later. Migrated items without an FSRS state are
+initialized on their next review.
 
 ## Known limitations
 

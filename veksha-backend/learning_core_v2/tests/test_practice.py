@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 
 import pytest
 
+from learning_core_v2.acquisition import LexicalItem, ReviewSchedule
 from learning_core_v2.practice import (
     AnswerCheckRequest,
     AnswerEvaluation,
@@ -11,7 +12,6 @@ from learning_core_v2.practice import (
     CheckPracticeAnswer,
     PracticeQueue,
     PracticeTask,
-    PracticeWord,
     TaskDraft,
 )
 
@@ -52,9 +52,21 @@ class StubProvider:
 
 
 def word(text, **overrides):
-    values = {"text": text, "language": "en"}
-    values.update(overrides)
-    return PracticeWord(**values)
+    schedule_fields = {
+        key: overrides.pop(key)
+        for key in tuple(overrides)
+        if key in {"review_count", "next_review_at", "added_at"}
+    }
+    status = "known" if overrides.pop("known", False) else "learning"
+    return LexicalItem(
+        item_id=f"item-{text.casefold()}",
+        term=text,
+        language=overrides.pop("language", "en"),
+        translation=overrides.pop("translation", ""),
+        status=status,
+        schedule=ReviewSchedule(**schedule_fields),
+        **overrides,
+    )
 
 
 def test_queue_prioritizes_due_words_then_new_words():
@@ -71,7 +83,7 @@ def test_queue_prioritizes_due_words_then_new_words():
 
     available = queue.available(words, learning_language="en-US", now=1_000)
 
-    assert [item.text for item in available] == [
+    assert [item.term for item in available] == [
         "earlier",
         "later",
         "newer-first",
@@ -79,16 +91,16 @@ def test_queue_prioritizes_due_words_then_new_words():
     ]
 
 
-def test_queue_honors_case_insensitive_exclusions():
+def test_queue_honors_stable_item_id_exclusions():
     queue = PracticeQueue(review_horizon_seconds=0)
     available = queue.available(
         [word("Run"), word("Walk")],
         learning_language="en",
         now=1_000,
-        excluded={"RUN"},
+        excluded={"item-run"},
     )
 
-    assert [item.text for item in available] == ["Walk"]
+    assert [item.term for item in available] == ["Walk"]
 
 
 @pytest.mark.asyncio
@@ -129,7 +141,9 @@ async def test_task_builder_allows_reverse_kind_with_translation():
 async def test_blank_answer_is_garbage_without_provider_call():
     provider = StubProvider()
     checker = CheckPracticeAnswer(provider)
-    task = PracticeTask("id", "run", "", "translation", "Question", -1, "recall")
+    task = PracticeTask(
+        "task-id", "item-run", "run", "", "translation", "Question", -1, "recall"
+    )
 
     result = await checker.execute(
         AnswerCheckRequest(task, "  ", "b1", "ru", "en")
