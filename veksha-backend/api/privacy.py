@@ -71,7 +71,7 @@ async def privacy_policy() -> str:
 <body>
 <main>
   <h1>Veksha Privacy Policy</h1>
-  <p class="updated">Effective date: July 13, 2026</p>
+  <p class="updated">Effective date: August 1, 2026</p>
 
   <p>Veksha processes information only to provide the language-learning
   features requested by the user. This policy applies to the Veksha browser
@@ -107,10 +107,11 @@ async def privacy_policy() -> str:
   the Veksha production service. Text submitted for translation, explanation,
   chat, grammar, immersion, lesson, subtitle, OCR-related, or training
   features may be processed by OpenAI's API to generate the requested result.
-  Railway hosts the Veksha production service. Optional Google authentication
-  is processed by Google. Optional subscription billing is processed through
-  Telegram. These providers receive only the information needed to perform
-  their respective services.</p>
+  An infrastructure hosting provider processes the service's runtime and
+  stored account data. Optional Google authentication is processed by Google.
+  Optional subscription billing is processed through Telegram. These
+  providers receive only the information needed to perform their respective
+  services.</p>
 
   <h2>Browser permissions and local storage</h2>
   <p>Veksha accesses page content only to provide features the user enables or
@@ -160,7 +161,7 @@ async def terms_of_service() -> str:
 <body>
 <main>
   <h1>Veksha Terms of Service</h1>
-  <p class="updated">Effective date: July 18, 2026</p>
+  <p class="updated">Effective date: August 1, 2026</p>
 
   <p>These Terms govern use of the Veksha browser extension and the Veksha
   online services used by the extension. By using Veksha, you agree to these
@@ -195,8 +196,9 @@ async def terms_of_service() -> str:
   <h2>Subscriptions and third-party services</h2>
   <p>Optional paid features may be offered through third-party payment
   services such as Telegram. Their terms may also apply. Google, Telegram,
-  OpenAI, Railway, browser stores, and websites viewed through the extension
-  are independent third parties and are governed by their own terms.</p>
+  OpenAI, infrastructure hosting providers, browser stores, and websites
+  viewed through the extension are independent third parties and are governed
+  by their own terms.</p>
 
   <h2>Intellectual property</h2>
   <p>Veksha and its original software, design, and branding are protected by

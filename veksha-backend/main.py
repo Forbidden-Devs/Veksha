@@ -66,7 +66,7 @@ app.add_middleware(
 
 @app.get("/healthz", include_in_schema=False)
 async def healthz():
-    """Lightweight Railway healthcheck without external API calls."""
+    """Lightweight deployment healthcheck without external API calls."""
     try:
         db.healthcheck()
     except Exception:
@@ -78,7 +78,7 @@ async def healthz():
     return {
         "status": "ok",
         "service": "backend",
-        "revision": os.getenv("RAILWAY_GIT_COMMIT_SHA", "local"),
+        "revision": os.getenv("VEKSHA_REVISION", "local"),
     }
 
 

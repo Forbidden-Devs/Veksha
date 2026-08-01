@@ -1,29 +1,19 @@
-# Процесс выпуска расширения
+# Ручной выпуск расширения
 
-GitHub Actions полностью автоматизирует подготовку версии и создание GitHub
-Release. Публикация архивов в магазины браузеров остаётся отдельным этапом.
+Автоматическая подготовка версии и публикация GitHub Release временно
+отключены вместе с CI/CD. Выпуск выполняет разработчик локально.
 
-Текущий процесс:
+1. В `veksha-extension/` установите зависимости командой `npm ci`.
+2. Обновите версию: `node scripts/set-version.mjs patch` (или `minor`/`major`).
+3. Запустите `npm run typecheck`, `npm run test:version`,
+   `npm run version:check` и `npm run release`.
+4. Проверьте созданные ZIP-файлы в `veksha-extension/artifacts/` в чистых
+   профилях Chrome и Firefox.
+5. Закоммитьте синхронно изменённые `package.json`, `package-lock.json` и
+   `manifest.json` вместе с остальными изменениями выпуска.
+6. Тег, контрольные суммы и публикацию в магазины создавайте вручную только
+   после проверки commit, из которого собраны архивы.
 
-1. Workflow «Prepare extension release» получает `patch`, `minor` или `major`.
-2. Скрипт синхронно обновляет версию в `package.json`, `package-lock.json` и
-   `manifest.json`, проверяет сборку и создаёт release PR.
-3. После merge workflow проверяет, что номер версии увеличился, и создаёт тег
-   `extension-vX.Y.Z`.
-4. Workflow собирает три артефакта:
-   - Chrome ZIP;
-   - Firefox ZIP;
-   - Firefox source ZIP.
-
-5. Архивы и `SHA256SUMS.txt` сохраняются в артефактах workflow и GitHub Release.
-6. Повторный запуск безопасен: существующий корректный тег переиспользуется, а
-   файлы существующего Release обновляются.
-
-Чтобы подготовить выпуск, откройте Actions → **Prepare extension release** →
-**Run workflow**, выберите `patch`, `minor` или `major`, затем дождитесь CI и
-слейте созданный PR. Обычные изменения `package.json` без смены версии релиз не
-создают.
-
-Автоматическая публикация в Chrome Web Store и Firefox Add-ons относится к
-следующему этапу и должна требовать ручного подтверждения через GitHub
-Environment `browser-stores`.
+Собранные архивы и credentials магазинов не добавляются в Git. Автоматизацию
+релизов следует вернуть только вместе с выбранным CI и защищённым хранилищем
+секретов.

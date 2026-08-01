@@ -13,8 +13,8 @@ DATA_DIR: str = os.getenv(
 )
 
 # PostgreSQL is the durable store for accounts, learning state, billing data,
-# review history and reusable LLM output caches. Railway injects DATABASE_URL
-# automatically when a PostgreSQL service is attached to the backend.
+# review history and reusable LLM output caches. The runtime environment must
+# provide DATABASE_URL explicitly.
 DATABASE_URL = os.getenv("DATABASE_URL", "")
 DATABASE_POOL_MIN_SIZE = int(os.getenv("DATABASE_POOL_MIN_SIZE", "1"))
 DATABASE_POOL_MAX_SIZE = int(os.getenv("DATABASE_POOL_MAX_SIZE", "10"))
@@ -74,12 +74,11 @@ CORS_ALLOW_ORIGINS = [
 ]
 
 # Debug endpoints (/api/debug/*): enabled by default only for local runs.
-# The Procfile passes the host as a CLI flag (env HOST stays unset), so the
-# HOST check alone would enable debug in production — treat any Railway
-# environment as non-local explicitly.
+# HOST alone is not a reliable production signal. Deployments must set
+# VEKSHA_ENVIRONMENT to a non-local value; local development may omit it.
 _IS_LOCAL_RUN = (
     os.getenv("HOST", "127.0.0.1") in ("127.0.0.1", "localhost")
-    and not os.getenv("RAILWAY_ENVIRONMENT")
+    and os.getenv("VEKSHA_ENVIRONMENT", "local").lower() == "local"
 )
 DEBUG_API = os.getenv(
     "VEKSHA_DEBUG_API", "1" if _IS_LOCAL_RUN else "0",

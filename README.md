@@ -1,5 +1,10 @@
 # Veksha
 
+> Automated CI/CD is currently suspended. The next deployment target is a
+> manually operated Hetzner VPS, and the next version starts from an empty data
+> store. See [`docs/next-version.md`](docs/next-version.md) and the
+> [`Hetzner runbook`](docs/hetzner-runbook.md).
+
 Learn foreign-language vocabulary from the pages you actually read: select a
 word → get a translation → the word becomes a spaced-repetition card
 automatically. Plus LLM-generated topic lessons ("blocks") for grammar,

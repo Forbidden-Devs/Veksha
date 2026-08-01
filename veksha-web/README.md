@@ -39,11 +39,7 @@ the deployed web origin in the backend's `CORS_ALLOW_ORIGINS`.
 - A service worker caches the application shell; live learning data still
   requires a connection to the backend.
 
-## Railway
-
-Use the repository root as the service source because the web build imports
-shared extension files. Point the service config at `/veksha-web/railway.toml`;
-its Docker build and watch paths include both the web app and shared UI source.
-The Docker builder is intentional: Railpack cannot infer a Node provider from
-the monorepo root, which has no root `package.json`. After assigning a public
-domain, add that exact origin to backend `CORS_ALLOW_ORIGINS`.
+Deployment is currently suspended. A future build must still use the repository
+root as its context because the web app imports shared extension files. After a
+public domain is assigned, add that exact origin to backend
+`CORS_ALLOW_ORIGINS`; see `docs/deployment.md`.

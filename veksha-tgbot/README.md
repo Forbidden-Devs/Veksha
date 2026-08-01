@@ -35,12 +35,9 @@ checkout before the deep link opens. Bot does not offer a separate bundle
 checkout: every new invoice is created only from the selection frozen by the
 backend.
 
-## Railway
-
-Create a service from `/veksha-tgbot` and use `veksha-tgbot/railway.toml`.
-Set `TELEGRAM_BOT_TOKEN`, `VEKSHA_BACKEND_URL` and
-`VEKSHA_BOT_WEBHOOK_SECRET`. Run exactly one replica: Telegram long polling
-must not be consumed concurrently by multiple bot instances.
+When deployment returns, run exactly one bot replica: Telegram long polling
+must not be consumed concurrently by multiple instances. Deployment is
+currently suspended; see `docs/deployment.md`.
 
 ## Payment flow
 

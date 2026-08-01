@@ -19,7 +19,7 @@ createServer((request, response) => {
   }
   if (request.url === "/healthz") {
     response.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store" });
-    response.end(request.method === 'HEAD' ? undefined : JSON.stringify({ status: "ok", service: "admin", revision: process.env.RAILWAY_GIT_COMMIT_SHA || "local" }));
+    response.end(request.method === 'HEAD' ? undefined : JSON.stringify({ status: "ok", service: "admin", revision: process.env.VEKSHA_REVISION || "local" }));
     return;
   }
   let pathname;
