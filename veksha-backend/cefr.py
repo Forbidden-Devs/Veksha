@@ -1,8 +1,7 @@
 """cefr.py — shared CEFR band helpers.
 
-Used by api/immersion.py (per-sentence i+1 filtering) and api/ci_meter.py
-(whole-page comprehensible-input estimate) so the level->band mapping and
-band ordering live in exactly one place.
+Used by the rewritten immersion adapter and Reading Coach so the level-to-band
+mapping and ordering live in exactly one place.
 """
 from __future__ import annotations
 

@@ -9,6 +9,7 @@ import os
 import sys
 import tempfile
 import time
+from dataclasses import replace
 
 # Isolated runtime-file directory; the PostgreSQL test URL comes from conftest.
 os.environ["VEKSHA_DATA_DIR"] = tempfile.mkdtemp(prefix="veksha-test-")
@@ -16,7 +17,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import db  # noqa: E402
 import fsrs  # noqa: E402
-from models import Patch, Word  # noqa: E402
+from learning_core_v2.acquisition import LexicalItem, ReviewSchedule, lexical_item_id  # noqa: E402
 from storage import UserStorage  # noqa: E402
 
 USER = "fsrs_test_user"
@@ -60,24 +61,42 @@ def test_retrievability():
 def test_review_flow_and_log():
     db.create_user(USER)
     u = UserStorage(username=USER)
-    u.apply_kb_changes([Patch(type="add_word", value="hazelnut", counter=0, known=False)])
-    w = u.find_word("hazelnut")
-    assert w.stability == 0.0 and w.counter == 0
-    assert w.added_at > 0
+    now = time.time()
+    u.lexicon.append(
+        LexicalItem(
+            item_id=lexical_item_id("hazelnut", "en", ""),
+            term="hazelnut",
+            language="en",
+            translation="",
+            status="learning",
+            schedule=ReviewSchedule(review_count=0, added_at=now),
+        )
+    )
+    item = u.lexicon.find_active_term("hazelnut", "en")
+    assert item is not None
+    assert item.schedule.stability == 0.0 and item.schedule.review_count == 0
+    assert item.schedule.added_at > 0
 
-    u.apply_review_result(w, "correct", task_type="translation")
-    assert w.stability > 0 and w.counter == 1
-    assert w.next_review > time.time()
+    item = u.lexicon.apply_review_result(item, "correct", task_type="translation")
+    assert item.schedule.stability > 0 and item.schedule.review_count == 1
+    assert item.schedule.next_review_at > time.time()
 
     # Five days pass, then an incorrect answer.
-    w.last_review -= 5 * 86400
-    w.next_review -= 5 * 86400
-    u.apply_review_result(w, "incorrect", task_type="translation")
-    assert w.lapses == 1
+    item = replace(
+        item,
+        schedule=replace(
+            item.schedule,
+            last_review_at=item.schedule.last_review_at - 5 * 86400,
+            next_review_at=item.schedule.next_review_at - 5 * 86400,
+        ),
+    )
+    u.lexicon.replace(item)
+    item = u.lexicon.apply_review_result(item, "incorrect", task_type="translation")
+    assert item.schedule.lapses == 1
 
     # Garbage outcome is not a review.
-    u.apply_review_result(w, "garbage")
-    assert w.counter == 2
+    item = u.lexicon.apply_review_result(item, "garbage")
+    assert item.schedule.review_count == 2
 
     rows = db.review_log_recent(USER)
     assert len(rows) == 2
@@ -86,17 +105,19 @@ def test_review_flow_and_log():
     assert 0 < rows[0]["retrievability"] < 1          # second review
     assert abs(rows[0]["elapsed_days"] - 5) < 0.1
     assert len(db.review_log_recent(USER, word="hazelnut")) == 2
+    assert len(db.review_log_recent(USER, lexical_item_id=item.item_id)) == 2
 
     # Overdue words stay due and only get flagged delayed.
-    w.next_review = time.time() - 10 * 86400
-    assert u.due_count() == 1
-    flagged = u.apply_overdue_decay()
-    assert w.delayed and len(flagged) == 1
-
-    # Word (de)serialization keeps the FSRS fields.
-    w2 = Word.from_dict(w.to_dict())
-    assert (w2.stability, w2.lapses, w2.last_review) == (w.stability, w.lapses, w.last_review)
-    assert w2.added_at == w.added_at
+    item = replace(
+        item,
+        schedule=replace(
+            item.schedule, next_review_at=time.time() - 10 * 86400
+        ),
+    )
+    u.lexicon.replace(item)
+    assert u.lexicon.due_count() == 1
+    flagged = u.lexicon.apply_overdue_decay()
+    assert flagged[0].schedule.delayed and len(flagged) == 1
 
 
 if __name__ == "__main__":

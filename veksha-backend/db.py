@@ -89,6 +89,7 @@ def _conn():
             """CREATE TABLE IF NOT EXISTS review_log (
                    id             BIGSERIAL PRIMARY KEY,
                    username       TEXT NOT NULL,
+                   lexical_item_id TEXT,
                    word           TEXT NOT NULL,
                    ts             DOUBLE PRECISION NOT NULL,
                    rating         INTEGER NOT NULL,
@@ -103,6 +104,13 @@ def _conn():
         )
         conn.execute(
             "CREATE INDEX IF NOT EXISTS ix_review_log_user_ts ON review_log (username, ts)"
+        )
+        conn.execute(
+            "ALTER TABLE review_log ADD COLUMN IF NOT EXISTS lexical_item_id TEXT"
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS ix_review_log_user_item "
+            "ON review_log (username, lexical_item_id)"
         )
         conn.execute(
             """CREATE TABLE IF NOT EXISTS user_settings (
@@ -821,6 +829,7 @@ def kb_set(username: str, data: dict) -> None:
 
 def review_log_add(
     username: str,
+    lexical_item_id: str,
     word: str,
     ts: float,
     rating: int,
@@ -835,18 +844,23 @@ def review_log_add(
     with _conn() as c:
         c.execute(
             """INSERT INTO review_log
-               (username, word, ts, rating, outcome, task_type,
+               (username, lexical_item_id, word, ts, rating, outcome, task_type,
                 elapsed_days, scheduled_days, stability, difficulty, retrievability)
-               VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
-            (username, word, ts, rating, outcome, task_type,
+               VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+            (username, lexical_item_id, word, ts, rating, outcome, task_type,
              elapsed_days, scheduled_days, stability, difficulty, retrievability),
         )
 
 
-def review_log_recent(username: str, word: Optional[str] = None, limit: int = 50) -> list[dict]:
+def review_log_recent(
+    username: str,
+    word: Optional[str] = None,
+    lexical_item_id: Optional[str] = None,
+    limit: int = 50,
+) -> list[dict]:
     """Latest reviews, newest first (optionally for a single word)."""
     sql = (
-        "SELECT word, ts, rating, outcome, task_type, elapsed_days,"
+        "SELECT lexical_item_id, word, ts, rating, outcome, task_type, elapsed_days,"
         " scheduled_days, stability, difficulty, retrievability"
         " FROM review_log WHERE username=%s"
     )
@@ -854,10 +868,13 @@ def review_log_recent(username: str, word: Optional[str] = None, limit: int = 50
     if word is not None:
         sql += " AND word=%s"
         args.append(word)
+    if lexical_item_id is not None:
+        sql += " AND lexical_item_id=%s"
+        args.append(lexical_item_id)
     sql += " ORDER BY ts DESC LIMIT %s"
     args.append(max(1, min(int(limit), 500)))
 
-    cols = ("word", "ts", "rating", "outcome", "task_type", "elapsed_days",
+    cols = ("item_id", "word", "ts", "rating", "outcome", "task_type", "elapsed_days",
             "scheduled_days", "stability", "difficulty", "retrievability")
     return [dict(zip(cols, row)) for row in _conn().execute(sql, args).fetchall()]
 
@@ -1250,31 +1267,23 @@ def history_set(username: str, history: list[dict]) -> None:
 # Quizlet exports
 # ---------------------------------------------------------------------------
 
-def quizlet_export_mark(username: str, words: list[str]) -> None:
-    """Mark words as exported to Quizlet."""
-    if not words:
+def quizlet_export_mark(username: str, item_ids: list[str]) -> None:
+    """Mark lexical meanings as exported using their stable identifiers."""
+    if not item_ids:
         return
     now = time.time()
     with _conn() as c:
         c.executemany(
             "INSERT INTO quizlet_exports (username, word, exported_at) "
             "VALUES (%s,%s,%s) ON CONFLICT (username, word) DO NOTHING",
-            [(username, word, now) for word in words],
+            [(username, item_id, now) for item_id in item_ids],
         )
 
 
-def quizlet_is_exported(username: str, word: str) -> bool:
-    """Check if a word has been exported to Quizlet."""
+def quizlet_is_exported(username: str, item_id: str) -> bool:
+    """Check if a lexical meaning has been exported to Quizlet."""
     row = _conn().execute(
         "SELECT 1 FROM quizlet_exports WHERE username=%s AND word=%s",
-        (username, word),
+        (username, item_id),
     ).fetchone()
     return row is not None
-
-
-def quizlet_get_exported_count(username: str) -> int:
-    """Get count of exported words."""
-    row = _conn().execute(
-        "SELECT COUNT(*) FROM quizlet_exports WHERE username=%s", (username,)
-    ).fetchone()
-    return row[0] if row else 0

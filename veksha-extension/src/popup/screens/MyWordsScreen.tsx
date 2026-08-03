@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import * as api from "../../shared/api";
-import type { VocabFrequencyEntry } from "../../shared/api";
+import type { VocabularyInboxItem, VocabFrequencyEntry } from "../../shared/api";
 import { CONFIG } from "../../shared/config";
 import { useT } from "../../shared/i18n";
 import { storageGet, storageSet } from "../../shared/platform";
@@ -20,6 +20,9 @@ export function MyWordsScreen() {
   const [addingWord, setAddingWord] = useState<string | null>(null);
   const [addedWords, setAddedWords] = useState<Set<string>>(() => new Set());
   const [addError, setAddError] = useState<string | null>(null);
+  const [suggestions, setSuggestions] = useState<VocabularyInboxItem[] | null>(null);
+  const [decidingItem, setDecidingItem] = useState<string | null>(null);
+  const [inboxError, setInboxError] = useState(false);
 
   useEffect(() => {
     storageGet([CONFIG.STORAGE_KEY_VOCAB_FREQ]).then((result) => {
@@ -29,7 +32,40 @@ export function MyWordsScreen() {
 
   useEffect(() => {
     api.getVocabFrequencyTop().then((result) => setWords(result.words)).catch(() => setWords([]));
+    let active = true;
+    const refreshInbox = () => {
+      api.getVocabularyInbox()
+        .then((result) => {
+          if (active) setSuggestions(result.items);
+        })
+        .catch(() => {
+          if (active) setSuggestions([]);
+        });
+    };
+    refreshInbox();
+    const timer = window.setInterval(refreshInbox, 4000);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
   }, [enabled]);
+
+  async function decideSuggestion(
+    item: VocabularyInboxItem,
+    decision: "learn" | "known" | "ignore",
+  ) {
+    if (decidingItem) return;
+    setDecidingItem(item.item_id);
+    setInboxError(false);
+    try {
+      await api.decideVocabularyInboxItem(item.item_id, decision);
+      setSuggestions((current) => current?.filter((entry) => entry.item_id !== item.item_id) ?? []);
+    } catch {
+      setInboxError(true);
+    } finally {
+      setDecidingItem(null);
+    }
+  }
 
   async function toggle() {
     const next = !enabled;
@@ -62,6 +98,61 @@ export function MyWordsScreen() {
 
   return (
     <section className="screen screen-statistics my-words-screen">
+      <div className="vocabulary-inbox">
+        <div className="vocabulary-inbox-heading">
+          <h3>{t.vocabulary_inbox_title}</h3>
+          {suggestions && suggestions.length > 0 && <span>{suggestions.length}</span>}
+        </div>
+        {inboxError && <p className="onboarding-error">{t.vocabulary_inbox_error}</p>}
+        {suggestions === null && <p className="word-list-placeholder">…</p>}
+        {suggestions?.length === 0 && (
+          <p className="word-list-placeholder">{t.vocabulary_inbox_empty}</p>
+        )}
+        {suggestions?.map((item) => (
+          <article className="vocabulary-inbox-item" key={item.item_id}>
+            <div className="vocabulary-inbox-copy">
+              <div className="vocabulary-inbox-term">
+                <strong>{item.term}</strong>
+                {item.transcription && <span>{item.transcription}</span>}
+              </div>
+              <div className="vocabulary-inbox-translation">{item.translation}</div>
+              {item.latest_context && (
+                <q className="vocabulary-inbox-context">{item.latest_context}</q>
+              )}
+              <small>
+                {t.vocabulary_inbox_seen.replace("{n}", String(item.encounter_count))}
+              </small>
+            </div>
+            <div className="vocabulary-inbox-actions">
+              <button
+                type="button"
+                className="btn btn-gradient"
+                disabled={decidingItem !== null}
+                onClick={() => void decideSuggestion(item, "learn")}
+              >
+                {decidingItem === item.item_id ? "…" : t.vocabulary_inbox_learn}
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                disabled={decidingItem !== null}
+                onClick={() => void decideSuggestion(item, "known")}
+              >
+                {t.vocabulary_inbox_known}
+              </button>
+              <button
+                type="button"
+                className="vocabulary-inbox-ignore"
+                disabled={decidingItem !== null}
+                onClick={() => void decideSuggestion(item, "ignore")}
+              >
+                {t.vocabulary_inbox_ignore}
+              </button>
+            </div>
+          </article>
+        ))}
+      </div>
+
       <div className="my-words-intro">
         <p>{t.my_words_intro}</p>
         <button

@@ -16,6 +16,10 @@ import logging
 from pathlib import Path
 
 import config
+from learning_core_v2.catalog_translation import (
+    CatalogEntry,
+    CatalogTranslationRequest,
+)
 
 log = logging.getLogger(__name__)
 
@@ -63,13 +67,22 @@ UI_STRINGS: dict[str, str] = {
     "immersion_on": "Immersion on",
     "immersion_off": "Immerse page",
     "immersion_hint": "Sprinkle level-appropriate sentences in your target language right into the pages you read.",
-    "grammar_lens_title": "Grammar Lens",
-    "grammar_lens_on": "Grammar Lens on",
-    "grammar_lens_off": "Grammar Lens",
-    "grammar_lens_loading": "Analyzing visible text…",
-    "grammar_lens_disable": "Turn off Grammar Lens",
-    "grammar_lens_collapse": "Collapse the analysis",
-    "grammar_lens_expand": "Show the last analysis",
+    "ci_meter_on": "Reading Coach on",
+    "ci_meter_off": "Reading Coach",
+    "ci_meter_loading": "Checking readability…",
+    "ci_meter_refine": "Refine with AI",
+    "ci_meter_badge_known": "{pct}% known · {cefr}",
+    "ci_meter_verdict_ideal": "Great i+1 content for you — mostly familiar with a healthy stretch of new words.",
+    "ci_meter_verdict_too_easy": "You know this well already — good for fluency practice, but little new vocabulary.",
+    "ci_meter_verdict_too_hard": "This may be too difficult right now — expect to look up a lot of words.",
+    "ci_meter_verdict_close": "Close to your level.",
+    "grammar_memory_title": "Grammar Memory",
+    "grammar_memory_on": "Grammar Memory on",
+    "grammar_memory_off": "Grammar Memory",
+    "grammar_memory_scanning": "Analyzing visible text…",
+    "grammar_memory_disable": "Turn off Grammar Memory",
+    "grammar_memory_collapse": "Collapse the analysis",
+    "grammar_memory_expand": "Show grammar memory",
     "grammar_hint_select": "Select a sentence on the page and press the 🔍 button next to it for a detailed grammar analysis.",
     "grammar_analyze_selection": "Analyze the grammar of the selection",
     "grammar_analysis_loading": "Analyzing the sentence…",
@@ -77,6 +90,18 @@ UI_STRINGS: dict[str, str] = {
     "grammar_analysis_empty": "No notable grammar found in this selection.",
     "grammar_roles_title": "Sentence roles",
     "grammar_patterns_title": "Grammar in context",
+    "grammar_memory_patterns": "Your grammar memory",
+    "grammar_memory_loading": "Loading saved patterns…",
+    "grammar_memory_empty": "Patterns found while you read will collect here.",
+    "grammar_memory_seen": "Seen {n}×",
+    "grammar_memory_mastered": "Mark as mastered",
+    "grammar_memory_reopen": "Study again",
+    "grammar_memory_guide_title": "How Grammar Memory works",
+    "grammar_memory_guide_intro": "Grammar Memory turns patterns you encounter while reading into a personal, reusable collection.",
+    "grammar_memory_guide_step_1": "Turn on Grammar Memory while reading in your learning language. Veksha highlights sentence roles and detects useful constructions.",
+    "grammar_memory_guide_step_2": "Open the page panel to see saved patterns, explanations, real examples, and how often each pattern has appeared.",
+    "grammar_memory_guide_step_3": "Mark a pattern as mastered when it feels familiar. You can return it to learning at any time.",
+    "grammar_memory_guide_tip": "Select a sentence and use the grammar action to add a focused example to your memory.",
     "grammar_role_subject": "Subject",
     "grammar_role_verb": "Verb",
     "grammar_role_object": "Object",
@@ -86,6 +111,14 @@ UI_STRINGS: dict[str, str] = {
     "my_words_add": "Add to dictionary",
     "my_words_added": "Added to dictionary",
     "my_words_add_error": "Could not add the word. Try again.",
+    "vocabulary_inbox_title": "From your translations",
+    "vocabulary_inbox_empty": "New vocabulary suggestions will appear here.",
+    "vocabulary_inbox_seen": "Seen {n}×",
+    "vocabulary_inbox_learn": "Learn",
+    "vocabulary_inbox_known": "I know it",
+    "vocabulary_inbox_ignore": "Ignore",
+    "vocabulary_inbox_error": "Could not update this suggestion. Try again.",
+    "home_quick_suggested": "Review vocabulary suggestions →",
     "my_words_guide_step_1": "Open your word list and turn tracking on there. Veksha counts words only on pages in your target language.",
     "my_words_guide_step_2": "As you browse, a personal frequency list grows automatically and shows where each word appeared most often.",
     "my_words_guide_step_3": "Add an unfamiliar word to your dictionary with one click, then practise it in training.",
@@ -104,12 +137,21 @@ UI_STRINGS: dict[str, str] = {
     "settings_dual_subtitles_desc": "Enable translated subtitles and their playback control on YouTube.",
     "feature_guide_open": "How it works",
     "feature_guide_close": "Got it",
-    "ci_meter_guide_title": "How the CI meter works",
-    "ci_meter_guide_intro": "The CI meter quickly checks whether a page is comfortable and useful for your current language level.",
-    "ci_meter_guide_step_1": "Open an article in the language you're learning, then turn on the CI meter from Veksha.",
-    "ci_meter_guide_step_2": "A badge appears on the page with the percentage of familiar vocabulary and the estimated CEFR level.",
-    "ci_meter_guide_step_3": "Open the badge to see the verdict: green is ideal i+1 material, blue is easy, yellow is close to your level, and red may be too hard.",
-    "ci_meter_guide_tip": "Choose “Refine with AI” inside the badge when you want a more contextual difficulty estimate.",
+    "reading_coach_guide_title": "How Reading Coach works",
+    "reading_coach_guide_intro": "Reading Coach checks a page against the words you know and helps you prepare before you start reading.",
+    "reading_coach_guide_step_1": "Open an article in the language you're learning, then turn on Reading Coach from Veksha.",
+    "reading_coach_guide_step_2": "Open the page badge to see your current coverage, the most important unfamiliar words, and the projected coverage after learning them.",
+    "reading_coach_guide_step_3": "Select the useful blockers and prepare them. Veksha adds enriched suggestions to your Vocabulary Inbox for review.",
+    "reading_coach_guide_tip": "Words already being learned or waiting in your Inbox are marked and won't be added twice.",
+    "reading_coach_projection": "Learn these words: {before}% → {after}% coverage",
+    "reading_coach_obstacles": "Words blocking this page",
+    "reading_coach_learning": "learning",
+    "reading_coach_inbox": "in inbox",
+    "reading_coach_prepare": "Prepare selected words",
+    "reading_coach_preparing": "Preparing…",
+    "reading_coach_added": "{n} word(s) added to your Inbox",
+    "reading_coach_failed": "Could not prepare words",
+    "reading_coach_ready": "No high-impact blockers found. Start reading!",
     "dual_subtitles_guide_title": "How dual subtitles work",
     "dual_subtitles_guide_intro": "Dual subtitles add a translation above the original captions while you watch YouTube.",
     "dual_subtitles_guide_step_1": "Open a YouTube video and turn on its original captions.",
@@ -155,7 +197,7 @@ UI_STRINGS: dict[str, str] = {
     "subscription_intro_new": "All paid features are selected. Turn off anything you don't need — the total updates immediately.",
     "subscription_intro_manage": "Your active features are selected. Adjust the set and continue to confirm the new subscription.",
     "subscription_intro_add": "The requested feature and your current features are selected. Review the total before paying.",
-    "subscription_grammar_desc": "Analyzes grammar patterns directly in the text you're reading.",
+    "subscription_grammar_desc": "Collects grammar patterns and real examples from the texts you read.",
     "subscription_monthly": "/ month",
     "subscription_total": "Total",
     "subscription_continue": "Continue to payment",
@@ -444,32 +486,19 @@ def get_string(key: str, native_lang: str, **kwargs: object) -> str:
 # ---------------------------------------------------------------------------
 
 async def _translate_batch(keys: list[str], values: list[str], lang: str) -> dict[str, str]:
-    from llm._base import _call as _llm_call  # local import — avoids module-level circular dependency
-
-    pairs = "\n".join(f'"{k}": "{v}"' for k, v in zip(keys, values))
-    system = (
-        f"You are a professional UI/UX and app translator. "
-        f"Translate the following English strings into {lang}. "
-        f"Return ONLY a valid JSON object with the exact same keys and translated values. "
-        f"Rules: keep placeholders {{n}}, {{items}}, {{name}}, {{desc}}, {{limit}} exactly as-is; "
-        f"use natural friendly tone; keep labels short; "
-        f"do NOT translate: Veksha, AI, KB, e.g., A1, B1, B2, C1, C2."
-    )
-    user = f"Translate to {lang}:\n{{{{\n{pairs}\n}}}}"
+    from learning_core_v2_adapters.runtime import build_catalog_translator
 
     try:
-        raw = await _llm_call(
-            system=system,
-            user=user,
-            max_tokens=1500,
-            temp=0.1,
-            json_mode=True,
-            call_name=f"i18n_{lang}",
+        return await build_catalog_translator().execute(
+            CatalogTranslationRequest(
+                tuple(
+                    CatalogEntry(key, value)
+                    for key, value in zip(keys, values, strict=True)
+                ),
+                lang,
+            )
         )
-        data = json.loads(raw)
-        return {k: str(v) for k, v in data.items() if k in keys}
     except Exception as err:
-        # llm._base already logged the full request failure; one line is enough here.
         log.warning("[i18n] batch translate failed for lang=%r: %s", lang, err)
         return {}
 

@@ -58,7 +58,7 @@ export function OnboardingScreen({ initialName = "", onComplete, onGoogle, onBac
     <section className="screen screen-onboarding">
       <div className="onboarding-card">
         <button className="onboarding-back" type="button" onClick={onBack} disabled={loading}>
-          <span aria-hidden="true">←</span> {t.tutorial_back}
+          <span aria-hidden="true">←</span> {t.common_back}
         </button>
         <div className="logo-badge">Ve</div>
         <h1 className="onboarding-title">{t.onboarding_title}</h1>

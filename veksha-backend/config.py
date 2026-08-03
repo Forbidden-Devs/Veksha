@@ -13,8 +13,8 @@ DATA_DIR: str = os.getenv(
 )
 
 # PostgreSQL is the durable store for accounts, learning state, billing data,
-# review history and reusable LLM output caches. Railway injects DATABASE_URL
-# automatically when a PostgreSQL service is attached to the backend.
+# review history and reusable LLM output caches. The runtime environment must
+# provide DATABASE_URL explicitly.
 DATABASE_URL = os.getenv("DATABASE_URL", "")
 DATABASE_POOL_MIN_SIZE = int(os.getenv("DATABASE_POOL_MIN_SIZE", "1"))
 DATABASE_POOL_MAX_SIZE = int(os.getenv("DATABASE_POOL_MAX_SIZE", "10"))
@@ -55,9 +55,6 @@ ADMIN_DATABASE_SECRET = os.getenv("ADMIN_DATABASE_SECRET", "")
 # Optional Redis cache for one- and two-word translations.
 # Leave REDIS_URL empty to run without caching.
 REDIS_URL = os.getenv("REDIS_URL", "")
-TRANSLATION_CACHE_TTL_SECONDS = int(
-    os.getenv("TRANSLATION_CACHE_TTL_SECONDS", str(30 * 24 * 60 * 60))
-)
 
 # Log level: DEBUG (includes full LLM request texts), INFO (default)
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
@@ -77,12 +74,11 @@ CORS_ALLOW_ORIGINS = [
 ]
 
 # Debug endpoints (/api/debug/*): enabled by default only for local runs.
-# The Procfile passes the host as a CLI flag (env HOST stays unset), so the
-# HOST check alone would enable debug in production — treat any Railway
-# environment as non-local explicitly.
+# HOST alone is not a reliable production signal. Deployments must set
+# VEKSHA_ENVIRONMENT to a non-local value; local development may omit it.
 _IS_LOCAL_RUN = (
     os.getenv("HOST", "127.0.0.1") in ("127.0.0.1", "localhost")
-    and not os.getenv("RAILWAY_ENVIRONMENT")
+    and os.getenv("VEKSHA_ENVIRONMENT", "local").lower() == "local"
 )
 DEBUG_API = os.getenv(
     "VEKSHA_DEBUG_API", "1" if _IS_LOCAL_RUN else "0",
@@ -107,12 +103,12 @@ FSRS_DESIRED_RETENTION = 0.9
 FSRS_MIN_INTERVAL_DAYS = 0.25
 FSRS_MAX_INTERVAL_DAYS = 365.0
 
-# Initial delay before the first review of an explicitly added word (days).
+# Initial delay before the first review of an explicitly added lexical item.
 # After the first review the schedule is fully FSRS-driven.
 FIRST_REVIEW_DELAY_DAYS = 1
 
-# A word becomes "due" once next_review is within REVIEW_WINDOW_HOURS from
-# now (or already in the past); see collect_train_word / due_count.
+# A sense becomes due once its next review is within REVIEW_WINDOW_HOURS from
+# now (or already in the past).
 REVIEW_WINDOW_HOURS = 24
 
 # ---------------------------------------------------------------------------

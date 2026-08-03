@@ -12,16 +12,34 @@ from __future__ import annotations
 
 import logging
 import time
+from dataclasses import replace
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-import llm
 import db
 from auth import CurrentUser
-from config import REMINDER_MIN_WORDS, REVIEW_WINDOW_HOURS, SCHEDULER_INTERVAL_MINUTES
+from config import (
+    FIRST_REVIEW_DELAY_DAYS,
+    REMINDER_MIN_WORDS,
+    REVIEW_WINDOW_HOURS,
+    SCHEDULER_INTERVAL_MINUTES,
+)
 from cefr import BANDS, band_index, level_to_cefr
-from models import VALID_ENGLISH_LEVELS, Patch, UserSettings
+from learning_core_v2.acquisition import (
+    LexicalItem,
+    ReviewSchedule,
+    lexical_item_id,
+)
+from learning_core_v2.dictionary import DictionaryLookupRequest
+from learning_core_v2.lesson import TopicReviewPolicy
+from learning_core_v2.sentence_mining import SentenceMiningRequest as MiningCoreRequest
+from learning_core_v2_adapters.openai_responses import LanguageProviderError
+from learning_core_v2_adapters.runtime import (
+    build_dictionary_enrichment,
+    build_sentence_mining,
+)
+from models import VALID_ENGLISH_LEVELS, UserSettings
 from storage import UserStorage, get_storage
 
 log = logging.getLogger(__name__)
@@ -95,7 +113,8 @@ class SentenceMiningResponse(BaseModel):
     config: dict[str, str | int] = Field(default_factory=dict)
 
 
-class WordEntryResponse(BaseModel):
+class LexicalItemResponse(BaseModel):
+    item_id: str
     name: str
     context: str
     translation: str = ""
@@ -108,11 +127,11 @@ class WordEntryResponse(BaseModel):
 
 
 class KBWordsResponse(BaseModel):
-    words: list[WordEntryResponse]
+    words: list[LexicalItemResponse]
 
 
-class WordReviewRequest(BaseModel):
-    word: str
+class LexicalItemReviewRequest(BaseModel):
+    item_id: str
     rating: str
 
 
@@ -121,32 +140,98 @@ class AddWordRequest(BaseModel):
 
 
 class SentenceMiningRequest(BaseModel):
-    word: str = Field(..., min_length=1, max_length=200)
+    item_id: str = Field(..., min_length=1, max_length=100)
     force: bool = False
 
 
 def _topic_needing_review(storage: UserStorage) -> str | None:
-    """First lesson topic with generated blocks that are not yet mastered."""
-    from lesson import MASTERY_THRESHOLD, _block_has_content
+    topics = storage.lessons.topics()
+    return TopicReviewPolicy().first_due(topics)
 
-    for topic in storage.lesson_topics:
-        ready = [b for b in topic.blocks if _block_has_content(b)]
-        if ready and any(b.mastery_score < MASTERY_THRESHOLD for b in ready):
-            return topic.name
-    return None
+
+async def _dictionary_details(storage: UserStorage, entry) -> dict[str, str]:
+    try:
+        result = await build_dictionary_enrichment().execute(
+            DictionaryLookupRequest(
+                term=entry.term,
+                learning_language=storage.settings.target_lang,
+                native_language=storage.settings.native_lang,
+                proficiency=storage.settings.english_level or "intermediate",
+                context=entry.latest_context,
+            )
+        )
+    except (LanguageProviderError, ValueError) as exc:
+        log.warning("core-v2 dictionary enrichment unavailable: %s", exc)
+        return {}
+    return {
+        "headword": result.headword,
+        "translation": result.translation,
+        "transcription": result.transcription,
+    }
+
+
+async def _sentence_mining_card(
+    storage: UserStorage,
+    entry,
+    *,
+    level: str,
+    higher_level: str,
+    same_count: int,
+    higher_count: int,
+) -> dict:
+    try:
+        card = await build_sentence_mining().execute(
+            MiningCoreRequest(
+                term=entry.term,
+                known_translation=entry.translation,
+                context=entry.latest_context,
+                learning_language=storage.settings.target_lang,
+                native_language=storage.settings.native_lang,
+                learner_cefr=level,
+                stretch_cefr=higher_level,
+                learner_example_count=same_count,
+                stretch_example_count=higher_count,
+            )
+        )
+    except (LanguageProviderError, ValueError) as exc:
+        log.warning("core-v2 sentence mining unavailable: %s", exc)
+        return {}
+    return {
+        "examples": [
+            {
+                "sentence": example.sentence,
+                "translation": example.translation,
+                "level": example.level,
+                "is_higher": example.is_higher,
+            }
+            for example in card.examples
+        ],
+        "mnemonic": card.mnemonic,
+        "collocations": [
+            {"text": item.text, "translation": item.translation}
+            for item in card.collocations
+        ],
+    }
 
 
 def _due_word_names(storage: UserStorage, limit: int = 8) -> list[str]:
     now = time.time()
     window_seconds = REVIEW_WINDOW_HOURS * 3600
-    words = [
-        w for w in storage.words
-        if (w.known is False or w.known == "")
-        and w.counter >= 0
-        and w.next_review - now <= window_seconds  # due or overdue (FSRS)
+    items = [
+        item
+        for item in storage.lexicon.all()
+        if item.status == "learning"
+        and item.schedule.review_count >= 0
+        and item.schedule.next_review_at - now <= window_seconds
     ]
-    words.sort(key=lambda w: (w.next_review, -w.counter, w.name.lower()))
-    return [w.name for w in words[:limit]]
+    items.sort(
+        key=lambda item: (
+            item.schedule.next_review_at,
+            -item.schedule.review_count,
+            item.term.lower(),
+        )
+    )
+    return [item.term for item in items[:limit]]
 
 
 def _settings_response(storage: UserStorage) -> SettingsResponse:
@@ -173,6 +258,25 @@ def _settings_response(storage: UserStorage) -> SettingsResponse:
         mining_same_level_examples=s.mining_same_level_examples,
         mining_higher_level_examples=s.mining_higher_level_examples,
         is_onboarded=s.is_onboarded(),
+    )
+
+
+def _word_response(item: LexicalItem) -> LexicalItemResponse:
+    return LexicalItemResponse(
+        item_id=item.item_id,
+        name=item.term,
+        context=item.latest_context,
+        translation=item.translation,
+        transcription=item.transcription,
+        counter=item.schedule.review_count,
+        known=item.status == "known",
+        next_review=item.schedule.next_review_at,
+        added_at=item.schedule.added_at,
+        sentence_mining=(
+            SentenceMiningResponse(**item.sentence_mining)
+            if item.sentence_mining
+            else None
+        ),
     )
 
 
@@ -254,10 +358,11 @@ async def api_post_settings(req: SettingsRequest, username: CurrentUser) -> Sett
 @router.get("/api/reminders", response_model=RemindersResponse)
 async def api_reminders(username: CurrentUser) -> RemindersResponse:
     storage = get_storage(username)
-    decayed = storage.apply_overdue_decay()
+    decayed = storage.lexicon.apply_overdue_decay()
     if decayed:
+        storage.save()
         log.info("[reminders] user %r: %d word(s) decayed", username, len(decayed))
-    due_words = storage.due_count()
+    due_words = storage.lexicon.due_count()
     due_word_names = _due_word_names(storage)
     due_topic = _topic_needing_review(storage)
     return RemindersResponse(
@@ -273,119 +378,132 @@ async def api_kb_summary(username: CurrentUser) -> KBSummaryResponse:
     storage = get_storage(username)
     review_counts = db.review_log_counts(username)
     return KBSummaryResponse(
-        learning_count=storage.learning_count(),
-        known_count=storage.known_count(),
-        topics_count=len(storage.lesson_topics),
+        learning_count=storage.lexicon.learning_count(),
+        known_count=storage.lexicon.known_count(),
+        topics_count=len(storage.lessons),
         **review_counts,
     )
 
 
 @router.delete("/api/kb_word")
-async def api_delete_kb_word(word: str, username: CurrentUser) -> dict:
+async def api_delete_kb_word(item_id: str, username: CurrentUser) -> dict:
     storage = get_storage(username)
-    storage.apply_kb_changes([Patch(type="delete_word", value=word)])
-    log.info("[kb_word] deleted word=%r for user=%r", word, username)
+    if not storage.lexicon.remove(item_id):
+        raise HTTPException(status_code=404, detail="Lexical item not found.")
+    storage.save()
+    log.info("[kb_word] deleted item=%s for user=%r", item_id, username)
     return {"ok": True}
 
 
 @router.get("/api/kb_words", response_model=KBWordsResponse)
 async def api_kb_words(username: CurrentUser) -> KBWordsResponse:
     storage = get_storage(username)
-    words = sorted(
-        (w for w in storage.words if w.language == storage.settings.target_lang),
-        key=lambda w: w.name.casefold(),
+    items = sorted(
+        (
+            item
+            for item in storage.lexicon.all()
+            if item.language == storage.settings.target_lang
+            and item.status in {"learning", "known"}
+        ),
+        key=lambda item: (item.term.casefold(), item.translation.casefold()),
     )
     return KBWordsResponse(words=[
-        WordEntryResponse(
-            name=w.name,
-            context=w.context or "",
-            translation=w.translation,
-            transcription=w.transcription,
-            counter=w.counter,
-            known=bool(w.known),
-            next_review=w.next_review,
-            added_at=w.added_at,
+        LexicalItemResponse(
+            item_id=item.item_id,
+            name=item.term,
+            context=item.latest_context,
+            translation=item.translation,
+            transcription=item.transcription,
+            counter=item.schedule.review_count,
+            known=item.status == "known",
+            next_review=item.schedule.next_review_at,
+            added_at=item.schedule.added_at,
+            sentence_mining=(
+                SentenceMiningResponse(**item.sentence_mining)
+                if item.sentence_mining
+                else None
+            ),
         )
-        for w in words
+        for item in items
     ])
 
 
-@router.post("/api/kb_word", response_model=WordEntryResponse)
-async def api_add_kb_word(req: AddWordRequest, username: CurrentUser) -> WordEntryResponse:
+@router.post("/api/kb_word", response_model=LexicalItemResponse)
+async def api_add_kb_word(req: AddWordRequest, username: CurrentUser) -> LexicalItemResponse:
     """Add a tracked word and synchronously populate its dictionary fields."""
     storage = get_storage(username)
-    word = " ".join(req.word.split()).lower()
-    entry = storage.find_word(word)
-    created = entry is None
-    if created:
-        storage.apply_kb_changes([
-            Patch(type="add_word", value=word, context="", counter=0, known=False)
-        ])
-        entry = storage.find_word(word)
-    if entry is None:  # defensive: storage rejected an invalid patch
-        raise HTTPException(status_code=400, detail="Could not add word.")
+    term = " ".join(req.word.split()).lower()
+    existing = storage.lexicon.find_active_term(term, storage.settings.target_lang)
+    if existing is not None:
+        if not existing.translation or not existing.transcription:
+            result = await _dictionary_details(storage, existing)
+            if not result.get("translation"):
+                raise HTTPException(
+                    status_code=502, detail="Could not generate dictionary details."
+                )
+            existing = replace(
+                existing,
+                translation=existing.translation or result["translation"],
+                transcription=existing.transcription
+                or result.get("transcription", ""),
+            )
+            storage.lexicon.replace(existing)
+            storage.save()
+        return _word_response(existing)
 
-    if not entry.translation or not entry.transcription:
-        result = await llm.translate_selection(
-            entry.name,
-            storage.settings.target_lang,
-            storage.settings.native_lang,
-            level=storage.settings.english_level or "intermediate",
-        )
-        if not result.get("translation"):
-            if created:
-                storage.apply_kb_changes([Patch(type="delete_word", value=entry.name)])
-            raise HTTPException(status_code=502, detail="Could not generate dictionary details.")
-        entry.translation = result.get("translation", "")
-        entry.transcription = result.get("transcription", "")
-        storage.save()
-
-    return WordEntryResponse(
-        name=entry.name,
-        context=entry.context,
-        translation=entry.translation,
-        transcription=entry.transcription,
-        counter=entry.counter,
-        known=bool(entry.known),
-        next_review=entry.next_review,
-        added_at=entry.added_at,
-        sentence_mining=SentenceMiningResponse(**entry.sentence_mining) if entry.sentence_mining else None,
+    draft = LexicalItem(
+        item_id="pending",
+        term=term,
+        language=storage.settings.target_lang,
+        translation="",
+        status="learning",
     )
+    result = await _dictionary_details(storage, draft)
+    if not result.get("translation"):
+        raise HTTPException(status_code=502, detail="Could not generate dictionary details.")
+    now = time.time()
+    headword = " ".join((result.get("headword") or term).split()).lower()
+    entry = replace(
+        draft,
+        item_id=lexical_item_id(headword, draft.language, result["translation"]),
+        term=headword,
+        translation=result["translation"],
+        transcription=result.get("transcription", ""),
+        schedule=ReviewSchedule(
+            review_count=0,
+            next_review_at=now + FIRST_REVIEW_DELAY_DAYS * 86400,
+            added_at=now,
+        ),
+    )
+    storage.lexicon.append(entry)
+    storage.save()
+    return _word_response(entry)
 
 
-@router.get("/api/kb_word_details", response_model=WordEntryResponse)
-async def api_kb_word_details(word: str, username: CurrentUser) -> WordEntryResponse:
+@router.get("/api/kb_word_details", response_model=LexicalItemResponse)
+async def api_kb_word_details(item_id: str, username: CurrentUser) -> LexicalItemResponse:
     storage = get_storage(username)
-    entry = storage.find_word(word)
+    entry = storage.lexicon.find(item_id)
     if entry is None:
         raise HTTPException(status_code=404, detail="Word not found.")
     if not entry.translation or not entry.transcription:
-        result = await llm.translate_selection(
-            entry.name,
-            storage.settings.target_lang,
-            storage.settings.native_lang,
-            level=storage.settings.english_level or "intermediate",
+        result = await _dictionary_details(storage, entry)
+        if not result.get("translation"):
+            raise HTTPException(status_code=502, detail="Could not generate dictionary details.")
+        entry = replace(
+            entry,
+            translation=entry.translation or result.get("translation", ""),
+            transcription=entry.transcription or result.get("transcription", ""),
         )
-        entry.translation = result.get("translation", "")
-        entry.transcription = result.get("transcription", "")
+        storage.lexicon.replace(entry)
         storage.save()
-    return WordEntryResponse(
-        name=entry.name,
-        context=entry.context,
-        translation=entry.translation,
-        transcription=entry.transcription,
-        counter=entry.counter,
-        known=bool(entry.known),
-        next_review=entry.next_review,
-        added_at=entry.added_at,
-        sentence_mining=SentenceMiningResponse(**entry.sentence_mining) if entry.sentence_mining else None,
-    )
+    return _word_response(entry)
 
 
-@router.post("/api/kb_word_mine", response_model=WordEntryResponse)
-async def api_mine_kb_word(req: SentenceMiningRequest, username: CurrentUser) -> WordEntryResponse:
+@router.post("/api/kb_word_mine", response_model=LexicalItemResponse)
+async def api_mine_kb_word(req: SentenceMiningRequest, username: CurrentUser) -> LexicalItemResponse:
     storage = get_storage(username)
-    entry = storage.find_word(req.word)
+    entry = storage.lexicon.find(req.item_id)
     if entry is None:
         raise HTTPException(status_code=404, detail="Word not found.")
 
@@ -401,12 +519,9 @@ async def api_mine_kb_word(req: SentenceMiningRequest, username: CurrentUser) ->
     }
 
     if req.force or not entry.sentence_mining or entry.sentence_mining.get("config") != config:
-        card = await llm.generate_sentence_mining(
-            word=entry.name,
-            translation=entry.translation,
-            context=entry.context,
-            target_lang=storage.settings.target_lang,
-            native_lang=storage.settings.native_lang,
+        card = await _sentence_mining_card(
+            storage,
+            entry,
             level=level,
             higher_level=higher_level,
             same_count=same_count,
@@ -414,29 +529,20 @@ async def api_mine_kb_word(req: SentenceMiningRequest, username: CurrentUser) ->
         )
         if not card.get("examples"):
             raise HTTPException(status_code=503, detail="Could not generate Sentence Mining card.")
-        entry.sentence_mining = {**card, "config": config}
+        entry = replace(entry, sentence_mining={**card, "config": config})
+        storage.lexicon.replace(entry)
         storage.save()
 
-    return WordEntryResponse(
-        name=entry.name,
-        context=entry.context,
-        translation=entry.translation,
-        transcription=entry.transcription,
-        counter=entry.counter,
-        known=bool(entry.known),
-        next_review=entry.next_review,
-        added_at=entry.added_at,
-        sentence_mining=SentenceMiningResponse(**entry.sentence_mining),
-    )
+    return _word_response(entry)
 
 
 @router.post("/api/kb_word_review")
-async def api_kb_word_review(req: WordReviewRequest, username: CurrentUser) -> dict:
+async def api_kb_word_review(req: LexicalItemReviewRequest, username: CurrentUser) -> dict:
     storage = get_storage(username)
-    entry = storage.find_word(req.word)
+    entry = storage.lexicon.find(req.item_id)
     if entry is None:
         raise HTTPException(status_code=404, detail="Word not found.")
     outcome = "incorrect" if req.rating == "again" else "correct"
-    storage.apply_review_result(entry, outcome, task_type="anki")
+    updated = storage.lexicon.apply_review_result(entry, outcome, task_type="anki")
     storage.save()
-    return {"ok": True, "next_review": entry.next_review}
+    return {"ok": True, "next_review": updated.schedule.next_review_at}

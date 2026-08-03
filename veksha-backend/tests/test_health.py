@@ -18,7 +18,7 @@ def test_removed_chat_route_is_not_registered():
 
 
 def test_healthcheck_reports_running_revision(monkeypatch):
-    monkeypatch.setenv("RAILWAY_GIT_COMMIT_SHA", "test-revision")
+    monkeypatch.setenv("VEKSHA_REVISION", "test-revision")
     result = asyncio.run(main.healthz())
     assert result == {
         "status": "ok",

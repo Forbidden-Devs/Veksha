@@ -124,12 +124,12 @@ STRINGS: dict[str, dict[str, str]] = {
 
 FEATURE_NAMES = {
     "en": {
-        "grammar_lens": "Grammar Lens",
+        "grammar_lens": "Grammar Memory",
         "immersion": "Page immersion",
         "dual_subtitles": "Dual subtitles",
     },
     "ru": {
-        "grammar_lens": "Grammar Lens",
+        "grammar_lens": "Grammar Memory",
         "immersion": "Погружение",
         "dual_subtitles": "Двойные субтитры",
     },
@@ -347,7 +347,7 @@ async def start_health_server() -> web.AppRunner:
         return web.json_response({
             "status": "ok",
             "service": "telegram-bot",
-            "revision": os.getenv("RAILWAY_GIT_COMMIT_SHA", "local"),
+            "revision": os.getenv("VEKSHA_REVISION", "local"),
         })
 
     app.router.add_get("/healthz", healthz)

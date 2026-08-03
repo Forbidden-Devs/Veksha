@@ -71,7 +71,7 @@ export function AnkiCards({ username, words, onClose }: {
 
   function rate(rating: "again" | "good") {
     if (!card) return;
-    api.reviewKbWord(username, card.word.name, rating).catch(() => {});
+    api.reviewKbWord(username, card.word.item_id, rating).catch(() => {});
     setIndex((value) => value + 1);
     setAnswer("");
     setRevealed(false);

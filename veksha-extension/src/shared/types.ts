@@ -1,4 +1,4 @@
-export type Screen = "onboarding" | "home" | "translator" | "topics" | "dictionary" | "immersion" | "myWords" | "settings" | "subscription" | "statistics" | "debug" | "quizlet";
+export type Screen = "home" | "translator" | "topics" | "dictionary" | "immersion" | "myWords" | "settings" | "subscription" | "statistics" | "debug" | "quizlet";
 export type Overlay = "training" | "reminder" | null;
 export type SettingsMode = "onboarding" | "menu";
 
@@ -17,6 +17,7 @@ export interface TranslateResponse {
   detected_source_lang: string | null;
   single: boolean;
   normalized_text: string;
+  vocabulary_mode?: "saved" | "suggested";
 }
 
 export interface SettingsData {
@@ -68,6 +69,7 @@ export type TrainingOutcome = "correct" | "incorrect" | "vague" | "garbage";
 
 export interface TrainingTask {
   task_id: string;
+  item_id: string;
   word: string;
   context: string;
   task_type: TaskType;
@@ -107,6 +109,7 @@ export interface LessonBlock {
 }
 
 export interface WordEntry {
+  item_id: string;
   name: string;
   context: string;
   translation: string;

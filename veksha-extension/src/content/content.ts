@@ -2,7 +2,7 @@ import { CONFIG } from "../shared/config";
 import { LANGUAGES } from "../shared/languages";
 import { quickTranslate, explain, getSettings } from "../shared/api";
 import { canSpeak, speakText } from "../shared/speech";
-import { showTrainingOverlay, showLessonOverlay, showTopicPickerOverlay, showTutorialOverlay } from "./overlay";
+import { showTrainingOverlay, showLessonOverlay, showTopicPickerOverlay } from "./overlay";
 import { initYouTubeStudy, YT_STUDY_GUARD_SELECTOR } from "./youtube";
 import { initImmersion, setImmersionEnabled } from "./immersion";
 import { initCiMeter, setCiMeterEnabled } from "./cimeter";
@@ -77,7 +77,7 @@ document.addEventListener("mousemove", (e) => { lastMouse = { x: e.clientX, y: e
 document.addEventListener("contextmenu", (e) => { lastMouse = { x: e.clientX, y: e.clientY }; }, { capture: true });
 
 // ---------------------------------------------------------------------------
-// i18n — loaded from chrome.storage.local (key: av_i18n_{lang})
+// i18n — loaded from the versioned popup catalogue cache.
 // ---------------------------------------------------------------------------
 
 let i18nStrings: Record<string, string> = {};
@@ -89,8 +89,8 @@ function t(key: string, fallback: string): string {
 async function loadI18n(lang: string): Promise<void> {
   if (!lang || lang === "en") { i18nStrings = {}; return; }
   try {
-    const stored = await chrome.storage.local.get([`vk_i18n_${lang}`]);
-    i18nStrings = (stored[`vk_i18n_${lang}`] as Record<string, string> | undefined) ?? {};
+    const stored = await chrome.storage.local.get([`vk_i18n_v3_${lang}`]);
+    i18nStrings = (stored[`vk_i18n_v3_${lang}`] as Record<string, string> | undefined) ?? {};
   } catch { i18nStrings = {}; }
 }
 
@@ -187,22 +187,14 @@ function wordsFromMessage(msg: Record<string, unknown>): string[] {
   return raw.map((word) => String(word).trim()).filter(Boolean).slice(0, 8);
 }
 
-function buildTerrorLines(words: string[], dueTopic: string | null): string[] {
-  const pool = words.length ? words : [dueTopic || "one tiny useful word"];
-  const pick = () => pool[Math.floor(Math.random() * pool.length)] || pool[0];
-  return [
-    `Ты мог бы уже знать "${pick()}". Прямо сейчас.`,
-    `Представь, что "${pick()}" уже не бесит, а спокойно живёт в голове.`,
-    "Каждую минуту без тренировки ты упускаешь новые слова.",
-    "Одна тренировка сейчас дешевле, чем торг с совестью вечером.",
-    "Крестик тренирует ловкость. Кнопка тренировки тренирует английский.",
-    `Ты уже встречал "${pick()}". Будь вежлив, повтори.`,
-    dueTopic ? `Незаконченная тема "${dueTopic}" ждёт с подозрительным терпением.` : "Одна короткая тренировка — и день уже не зря.",
-  ];
+function buildReminderFocusItems(words: string[], dueTopic: string | null, fallback: string): string[] {
+  const items = [...words];
+  if (dueTopic) items.push(dueTopic);
+  return items.length ? items : [fallback];
 }
 
 function positionTerrorClose(button: HTMLButtonElement, x?: number, y?: number) {
-  const size = 46;
+  const size = 42;
   const nextX = x ?? window.innerWidth - size - 32;
   const nextY = y ?? 32;
   button.style.left = `${clamp(nextX, 14, window.innerWidth - size - 14)}px`;
@@ -229,8 +221,8 @@ function moveTerrorCloseAway(button: HTMLButtonElement, event: PointerEvent) {
 function updateTerrorMeter(root: HTMLElement, meter: HTMLElement, close: HTMLButtonElement) {
   root.style.setProperty("--terror-evasion", `${terrorEvasion}%`);
   meter.textContent = terrorEvasion < 20
-    ? "Ловкость: 18%. Крестик устал, лови."
-    : `Ловкость: ${Math.round(terrorEvasion)}%`;
+    ? "18%"
+    : `${Math.round(terrorEvasion)}%`;
   close.dataset.catchable = terrorEvasion < 20 ? "true" : "false";
 }
 
@@ -255,8 +247,11 @@ function showAggressiveReminder(msg: Record<string, unknown>) {
 
   aggressiveReminder = document.createElement("div");
   aggressiveReminder.className = "veksha-aggressive-reminder veksha-terror-reminder";
+  aggressiveReminder.setAttribute("role", "dialog");
+  aggressiveReminder.setAttribute("aria-modal", "true");
+  aggressiveReminder.setAttribute("aria-label", t("reminder_title", "Time to practice!"));
 
-  const banner = document.createElement("div");
+  const banner = document.createElement("section");
   banner.className = "veksha-aggressive-banner";
 
   const logo = document.createElement("img");
@@ -266,13 +261,49 @@ function showAggressiveReminder(msg: Record<string, unknown>) {
 
   const copy = document.createElement("div");
   copy.className = "veksha-aggressive-copy";
+  const eyebrow = document.createElement("div");
+  eyebrow.className = "veksha-reminder-eyebrow";
+  eyebrow.textContent = "VEKSHA / 01";
   const title = document.createElement("div");
   title.className = "veksha-aggressive-title";
-  title.textContent = "Время потренироваться!";
+  title.textContent = t("reminder_title", "Time to practice!");
   const description = document.createElement("div");
   description.className = "veksha-aggressive-subtitle";
   description.textContent = subtitle;
-  copy.append(title, description);
+  copy.append(eyebrow, title, description);
+
+  const queue = document.createElement("div");
+  queue.className = "veksha-reminder-queue";
+  if (dueWords > 0) {
+    const wordsItem = document.createElement("div");
+    wordsItem.className = "veksha-reminder-queue-item";
+    const wordsCount = document.createElement("strong");
+    wordsCount.textContent = String(dueWords).padStart(2, "0");
+    const wordsLabel = document.createElement("span");
+    wordsLabel.textContent = t("reminder_words", "{n} word(s) to review").replace("{n}", String(dueWords));
+    wordsItem.append(wordsCount, wordsLabel);
+    queue.appendChild(wordsItem);
+  }
+  if (dueTopic) {
+    const topicItem = document.createElement("div");
+    topicItem.className = "veksha-reminder-queue-item veksha-reminder-topic-item";
+    const topicMark = document.createElement("strong");
+    topicMark.textContent = "↗";
+    const topicLabel = document.createElement("span");
+    topicLabel.textContent = `${t("reminder_topic", "unfinished topic")}: ${dueTopic}`;
+    topicItem.append(topicMark, topicLabel);
+    queue.appendChild(topicItem);
+  }
+  if (!queue.childElementCount) {
+    const fallbackItem = document.createElement("div");
+    fallbackItem.className = "veksha-reminder-queue-item";
+    const fallbackMark = document.createElement("strong");
+    fallbackMark.textContent = "→";
+    const fallbackLabel = document.createElement("span");
+    fallbackLabel.textContent = t("reminder_subtitle_default", "You have words to review.");
+    fallbackItem.append(fallbackMark, fallbackLabel);
+    queue.appendChild(fallbackItem);
+  }
 
   const start = document.createElement("button");
   start.className = "veksha-aggressive-start";
@@ -302,7 +333,10 @@ function showAggressiveReminder(msg: Record<string, unknown>) {
     close.addEventListener("click", () => removeAggressiveReminder());
   }
 
-  banner.append(logo, copy, start);
+  const brand = document.createElement("div");
+  brand.className = "veksha-reminder-brand";
+  brand.append(logo, copy);
+  banner.append(brand, queue, start);
 
   let helpPanel: HTMLElement | null = null;
   if (overseer) {
@@ -310,12 +344,12 @@ function showAggressiveReminder(msg: Record<string, unknown>) {
     helpPanel.className = "veksha-terror-help";
     const helpTitle = document.createElement("div");
     helpTitle.className = "veksha-terror-help-title";
-    helpTitle.textContent = "Как отключить напоминание";
+    helpTitle.textContent = t("reminder_dismiss", "Dismiss reminder");
     helpPanel.appendChild(helpTitle);
 
     const helpRows = [
-      ["✓", "Закончить тренировку", "Самый быстрый способ"],
-      ["+", "Поймать крестик", "Сложность зависит от ловкости"],
+      ["01", t("reminder_start", "Start training"), ""],
+      ["02", t("reminder_dismiss", "Dismiss reminder"), ""],
     ];
     for (const [iconText, title, description] of helpRows) {
       const row = document.createElement("div");
@@ -328,31 +362,26 @@ function showAggressiveReminder(msg: Record<string, unknown>) {
       rowTitle.textContent = title;
       const rowDescription = document.createElement("small");
       rowDescription.textContent = description;
-      rowCopy.append(rowTitle, rowDescription);
+      rowCopy.appendChild(rowTitle);
+      if (description) rowCopy.appendChild(rowDescription);
       row.append(rowIcon, rowCopy);
       helpPanel.appendChild(row);
     }
 
     const helpNote = document.createElement("div");
     helpNote.className = "veksha-terror-help-note";
-    helpNote.textContent = "Выбери любой способ, чтобы продолжить.";
+    helpNote.textContent = subtitle;
     helpPanel.appendChild(helpNote);
   }
 
-  const captions = document.createElement("div");
+  const captions = document.createElement("aside");
   captions.className = "veksha-terror-captions";
-  const headline = document.createElement("div");
-  headline.className = "veksha-terror-headline";
-  const headlineBreak = document.createElement("br");
-  const headlineAccent = document.createElement("span");
-  headlineAccent.textContent = "упускаешь новые слова.";
-  headline.append("Каждую минуту без тренировки", headlineBreak, "ты ", headlineAccent);
   const prompt = document.createElement("div");
   prompt.className = "veksha-terror-prompt";
-  prompt.textContent = "Представь, что ты уже знаешь:";
+  prompt.textContent = "01 →";
   const captionText = document.createElement("div");
   captionText.className = "veksha-terror-caption-text";
-  const lines = buildTerrorLines(dueWordNames, dueTopic);
+  const lines = buildReminderFocusItems(dueWordNames, dueTopic, t("reminder_subtitle_default", "You have words to review."));
   let captionIndex = 0;
   captionText.textContent = lines[captionIndex];
   const wordStrip = document.createElement("div");
@@ -362,18 +391,18 @@ function showAggressiveReminder(msg: Record<string, unknown>) {
     chip.textContent = word;
     wordStrip.appendChild(chip);
   }
-  captions.append(headline, prompt, captionText);
+  captions.append(prompt, captionText);
   if (wordStrip.childElementCount) captions.append(wordStrip);
 
   const meter = document.createElement("div");
   meter.className = "veksha-terror-meter";
 
-  const squirrel = document.createElement("img");
-  squirrel.className = "veksha-aggressive-squirrel";
-  squirrel.src = chrome.runtime.getURL("source/squirrel.gif");
-  squirrel.alt = "";
+  const atmosphere = document.createElement("div");
+  atmosphere.className = "veksha-reminder-atmosphere";
 
-  aggressiveReminder.append(banner, captions, squirrel, close);
+  if (!overseer) banner.appendChild(close);
+  aggressiveReminder.append(atmosphere, captions, banner);
+  if (overseer) aggressiveReminder.appendChild(close);
   if (overseer) {
     if (helpPanel) aggressiveReminder.append(helpPanel);
     aggressiveReminder.append(meter);
@@ -670,7 +699,14 @@ async function requestTranslation(
   }
 
   try {
-    const response = await quickTranslate(username, text, sourceLang, targetLang);
+    const response = await quickTranslate(
+      username,
+      text,
+      sourceLang,
+      targetLang,
+      false,
+      location.href,
+    );
     if (requestId !== translationRequestId) return;
     resultBox.classList.remove("veksha-result--loading");
     resultBox.textContent = response.translation || "(empty)";
@@ -832,8 +868,6 @@ chrome.runtime.onMessage.addListener((msg: Record<string, unknown>) => {
     showTrainingOverlay(msg.username);
   } else if (msg.type === "VEKSHA_OPEN_LESSON_PICKER" && typeof msg.username === "string") {
     showTopicPickerOverlay(msg.username);
-  } else if (msg.type === "VEKSHA_OPEN_TUTORIAL" && typeof msg.username === "string") {
-    showTutorialOverlay(msg.username);
   } else if (
     msg.type === "VEKSHA_OPEN_LESSON" &&
     typeof msg.username === "string" &&
@@ -1109,11 +1143,25 @@ function luminance(rgb: string): number {
 /** Bidirectional translate: foreign → native; but if the source turns out to be
  *  the user's native language, translate into the studied language instead. */
 async function smartTranslate(username: string, text: string): Promise<string> {
-  const first = await quickTranslate(username, text, "auto", nativeLang || state.targetLang);
+  const first = await quickTranslate(
+    username,
+    text,
+    "auto",
+    nativeLang || state.targetLang,
+    false,
+    location.href,
+  );
   const det = (first.detected_source_lang || "").toLowerCase();
   if (det && studiedLang && det === (nativeLang || "").toLowerCase() &&
       studiedLang.toLowerCase() !== (nativeLang || "").toLowerCase()) {
-    const second = await quickTranslate(username, text, "auto", studiedLang);
+    const second = await quickTranslate(
+      username,
+      text,
+      "auto",
+      studiedLang,
+      false,
+      location.href,
+    );
     return second.translation || text;
   }
   return first.translation || text;

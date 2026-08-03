@@ -1,0 +1,165 @@
+"""Independent replacement for Veksha's learning domain."""
+
+from .acquisition import (
+    DecideVocabulary,
+    LexicalItem,
+    ReviewSchedule,
+    SuggestVocabulary,
+    VocabularyEncounter,
+    VocabularyProposal,
+    lexical_item_id,
+)
+from .catalog_translation import (
+    CatalogEntry,
+    CatalogTranslationRequest,
+    TranslateCatalog,
+)
+from .dictionary import (
+    DictionaryDetails,
+    DictionaryLookupRequest,
+    EnrichDictionaryEntry,
+)
+from .explanation import ExplainText, ExplanationRequest, ExplanationResult
+from .immersion import (
+    AnalyzeImmersion,
+    ImmersionBlock,
+    ImmersionContext,
+    ImmersionSentence,
+)
+from .grammar_memory import (
+    GrammarEncounter,
+    GrammarMemoryItem,
+    GrammarObservation,
+    RememberGrammar,
+    SetGrammarStatus,
+)
+from .grammar_analysis import (
+    AnalyzeGrammar,
+    GrammarAnalysis,
+    GrammarAnalysisDraft,
+    GrammarAnalysisRequest,
+    GrammarAnnotation,
+    GrammarAnnotationDraft,
+    GrammarSegment,
+    GrammarSegmentDraft,
+)
+from .lesson import (
+    BuildLessonQuestion,
+    CheckLessonAnswer,
+    LearnerProfile,
+    LessonMaterial,
+    LessonTopic,
+    LessonUnit,
+    PrepareLesson,
+    QuestionSchedule,
+    RecordLessonResults,
+    TopicReviewPolicy,
+)
+from .phrase_mining import (
+    MinePhraseVocabulary,
+    PhraseMiningRequest,
+    VocabularyCandidate,
+)
+from .practice import (
+    AnswerCheckRequest,
+    AnswerEvaluation,
+    BuildPracticeTask,
+    CheckPracticeAnswer,
+    PracticeQueue,
+    PracticeTask,
+)
+from .reading_coach import (
+    AssessReading,
+    ReadingAssessment,
+    ReadingObstacle,
+    ReadingToken,
+)
+from .sentence_mining import (
+    BuildSentenceMiningCard,
+    SentenceMiningCard,
+    SentenceMiningRequest,
+)
+from .subtitles import (
+    Alignment,
+    SubtitleBatchTranslation,
+    SubtitleLineTranslation,
+    SubtitleTranslationRequest,
+    TranslateSubtitles,
+)
+from .translation import (
+    TextTranslation,
+    TranslateText,
+    TranslationRequest,
+    TranslationResult,
+)
+
+__all__ = [
+    "DecideVocabulary",
+    "LexicalItem",
+    "ReviewSchedule",
+    "SuggestVocabulary",
+    "VocabularyEncounter",
+    "VocabularyProposal",
+    "lexical_item_id",
+    "CatalogEntry",
+    "CatalogTranslationRequest",
+    "TranslateCatalog",
+    "DictionaryDetails",
+    "DictionaryLookupRequest",
+    "EnrichDictionaryEntry",
+    "ExplainText",
+    "ExplanationRequest",
+    "ExplanationResult",
+    "AnalyzeImmersion",
+    "ImmersionBlock",
+    "ImmersionContext",
+    "ImmersionSentence",
+    "GrammarEncounter",
+    "GrammarMemoryItem",
+    "GrammarObservation",
+    "RememberGrammar",
+    "SetGrammarStatus",
+    "AnalyzeGrammar",
+    "GrammarAnalysis",
+    "GrammarAnalysisDraft",
+    "GrammarAnalysisRequest",
+    "GrammarAnnotation",
+    "GrammarAnnotationDraft",
+    "GrammarSegment",
+    "GrammarSegmentDraft",
+    "BuildLessonQuestion",
+    "CheckLessonAnswer",
+    "LearnerProfile",
+    "LessonMaterial",
+    "LessonTopic",
+    "LessonUnit",
+    "PrepareLesson",
+    "QuestionSchedule",
+    "RecordLessonResults",
+    "TopicReviewPolicy",
+    "MinePhraseVocabulary",
+    "PhraseMiningRequest",
+    "VocabularyCandidate",
+    "AnswerCheckRequest",
+    "AnswerEvaluation",
+    "BuildPracticeTask",
+    "CheckPracticeAnswer",
+    "PracticeQueue",
+    "PracticeTask",
+    "AssessReading",
+    "ReadingAssessment",
+    "ReadingObstacle",
+    "ReadingToken",
+    "BuildSentenceMiningCard",
+    "SentenceMiningCard",
+    "SentenceMiningRequest",
+    "Alignment",
+    "SubtitleBatchTranslation",
+    "SubtitleLineTranslation",
+    "SubtitleTranslationRequest",
+    "TranslateSubtitles",
+    "TextTranslation",
+    "TranslateText",
+    "TranslationRequest",
+    "TranslationResult",
+]

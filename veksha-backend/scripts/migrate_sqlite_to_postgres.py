@@ -109,14 +109,11 @@ def main() -> int:
         parser.error("DATABASE_URL must point at the destination PostgreSQL database")
 
     import db
-    import db_cache
 
     db.healthcheck()
-    db_cache._conn()
 
     sources = (
         (args.data_dir / "veksha.db", MAIN_TABLES),
-        (args.data_dir / "cache.db", ("cache",)),
     )
     copied = 0
     with db.database as destination:

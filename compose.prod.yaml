@@ -1,0 +1,207 @@
+name: veksha
+
+x-service-defaults: &service-defaults
+  restart: unless-stopped
+  init: true
+  security_opt:
+    - no-new-privileges:true
+  logging:
+    driver: json-file
+    options:
+      max-size: 10m
+      max-file: "5"
+
+services:
+  caddy:
+    <<: *service-defaults
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      VEKSHA_ACME_EMAIL: ${VEKSHA_ACME_EMAIL:?Set VEKSHA_ACME_EMAIL}
+      VEKSHA_APP_DOMAIN: ${VEKSHA_APP_DOMAIN:?Set VEKSHA_APP_DOMAIN}
+      VEKSHA_API_DOMAIN: ${VEKSHA_API_DOMAIN:?Set VEKSHA_API_DOMAIN}
+    volumes:
+      - ./ops/vps/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks:
+      - edge
+    depends_on:
+      backend:
+        condition: service_healthy
+      web:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:2019/config/"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    shm_size: 256mb
+    environment:
+      POSTGRES_DB: veksha
+      POSTGRES_USER: veksha
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      POSTGRES_INITDB_ARGS: --data-checksums
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U veksha -d veksha"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    stop_grace_period: 60s
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "5"
+
+  backend:
+    <<: *service-defaults
+    image: veksha/backend:${VEKSHA_IMAGE_TAG:?Set VEKSHA_IMAGE_TAG}
+    pull_policy: never
+    platform: linux/amd64
+    read_only: true
+    tmpfs:
+      - /tmp:size=128m,mode=1777
+    volumes:
+      - backend-runtime:/var/lib/veksha
+    environment:
+      DATABASE_URL: postgresql://veksha:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@postgres:5432/veksha
+      REDIS_URL: ""
+      VEKSHA_DATA_DIR: /var/lib/veksha
+      VEKSHA_ENVIRONMENT: ${VEKSHA_ENVIRONMENT:?Set VEKSHA_ENVIRONMENT}
+      VEKSHA_REVISION: ${VEKSHA_REVISION:?Set VEKSHA_REVISION}
+      HOST: 0.0.0.0
+      PORT: 8000
+      CORS_ALLOW_ORIGINS: ${VEKSHA_CORS_ALLOW_ORIGINS:?Set VEKSHA_CORS_ALLOW_ORIGINS}
+      VEKSHA_DEBUG_API: "0"
+      VEKSHA_DEV_ALL_FEATURES: "0"
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?Set OPENAI_API_KEY}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-5.4-mini}
+      OPENAI_SMART_MODEL: ${OPENAI_SMART_MODEL:-gpt-4.1}
+      VEKSHA_PHRASE_MINING_ENABLED: ${VEKSHA_PHRASE_MINING_ENABLED:-1}
+      VEKSHA_CORE_V2_LLM_TIMEOUT_SECONDS: ${VEKSHA_CORE_V2_LLM_TIMEOUT_SECONDS:-30}
+      VEKSHA_CORE_V2_TRANSLATION_MODEL: ${VEKSHA_CORE_V2_TRANSLATION_MODEL:-gpt-5.6-luna}
+      VEKSHA_CORE_V2_PHRASE_MINING_MODEL: ${VEKSHA_CORE_V2_PHRASE_MINING_MODEL:-gpt-5.6-luna}
+      VEKSHA_CORE_V2_DICTIONARY_MODEL: ${VEKSHA_CORE_V2_DICTIONARY_MODEL:-gpt-5.6-luna}
+      VEKSHA_CORE_V2_SENTENCE_MINING_MODEL: ${VEKSHA_CORE_V2_SENTENCE_MINING_MODEL:-gpt-5.6-luna}
+      VEKSHA_CORE_V2_GRAMMAR_MODEL: ${VEKSHA_CORE_V2_GRAMMAR_MODEL:-gpt-5.6-luna}
+      VEKSHA_CORE_V2_SUBTITLES_MODEL: ${VEKSHA_CORE_V2_SUBTITLES_MODEL:-gpt-5.6-luna}
+      VEKSHA_CORE_V2_I18N_MODEL: ${VEKSHA_CORE_V2_I18N_MODEL:-gpt-5.6-luna}
+      VEKSHA_CORE_V2_TRAINING_MODEL: ${VEKSHA_CORE_V2_TRAINING_MODEL:-gpt-5.6-terra}
+      VEKSHA_CORE_V2_LESSON_MODEL: ${VEKSHA_CORE_V2_LESSON_MODEL:-gpt-5.6-terra}
+      VEKSHA_CORE_V2_IMMERSION_MODEL: ${VEKSHA_CORE_V2_IMMERSION_MODEL:-gpt-5.6-luna}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_OAUTH_REDIRECT_URI: ${GOOGLE_OAUTH_REDIRECT_URI:-}
+      TELEGRAM_BOT_USERNAME: ${TELEGRAM_BOT_USERNAME:-}
+      TELEGRAM_BOT_WEBHOOK_SECRET: ${VEKSHA_BOT_WEBHOOK_SECRET:-}
+      ADMIN_API_SECRET: ${ADMIN_API_SECRET:?Set ADMIN_API_SECRET}
+      ADMIN_DATABASE_SECRET: ${ADMIN_DATABASE_SECRET:?Set ADMIN_DATABASE_SECRET}
+    networks:
+      - edge
+      - data
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz')"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 15s
+    stop_grace_period: 30s
+
+  web:
+    <<: *service-defaults
+    image: veksha/web:${VEKSHA_IMAGE_TAG:?Set VEKSHA_IMAGE_TAG}
+    pull_policy: never
+    platform: linux/amd64
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    environment:
+      PORT: 3000
+    networks:
+      - edge
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  admin:
+    <<: *service-defaults
+    image: veksha/admin:${VEKSHA_IMAGE_TAG:?Set VEKSHA_IMAGE_TAG}
+    pull_policy: never
+    platform: linux/amd64
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    environment:
+      PORT: 4173
+      VEKSHA_REVISION: ${VEKSHA_REVISION:?Set VEKSHA_REVISION}
+    ports:
+      - "127.0.0.1:4173:4173"
+    networks:
+      - edge
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:4173/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  tgbot:
+    <<: *service-defaults
+    profiles: ["telegram"]
+    image: veksha/tgbot:${VEKSHA_IMAGE_TAG:?Set VEKSHA_IMAGE_TAG}
+    pull_policy: never
+    platform: linux/amd64
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    environment:
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      VEKSHA_BACKEND_URL: http://backend:8000
+      VEKSHA_BOT_WEBHOOK_SECRET: ${VEKSHA_BOT_WEBHOOK_SECRET:-}
+      VEKSHA_REVISION: ${VEKSHA_REVISION:?Set VEKSHA_REVISION}
+      PORT: 8080
+    networks:
+      - edge
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/healthz')"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+networks:
+  edge:
+  data:
+    internal: true
+
+volumes:
+  postgres-data:
+  backend-runtime:
+  caddy-data:
+  caddy-config:

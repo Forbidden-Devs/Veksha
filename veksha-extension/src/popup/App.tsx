@@ -23,7 +23,6 @@ import { StatisticsScreen } from "./screens/StatisticsScreen";
 import { SubscriptionScreen, type SubscriptionIntent } from "./screens/SubscriptionScreen";
 import { TargetLangScreen } from "./screens/TargetLangScreen";
 import { TopicsScreen } from "./screens/TopicsScreen";
-import { TourScreen } from "./screens/TourScreen";
 import { QuizletScreen } from "./screens/QuizletScreen";
 
 // ---------------------------------------------------------------------------
@@ -189,8 +188,6 @@ export default function App() {
 
   // Onboarding sub-steps (only used when username === null)
   const [obStep, setObStep] = useState<ObStep>("native_lang");
-  // Post-registration tour (8 animated scenes)
-  const [showTour, setShowTour] = useState(false);
   const [pendingNativeLang, setPendingNativeLang] = useState(detected);
   const [pendingUsername, setPendingUsername] = useState("");
   const [pendingDisplayName, setPendingDisplayName] = useState("");
@@ -449,7 +446,6 @@ export default function App() {
     setUsername(pendingUsername);
     setScreen("home");
     setInitialRouteReady(true);
-    setShowTour(isExtension); // the tour demonstrates extension-only capture features
   }
 
   const navigateTo = useCallback((s: Screen, opts?: { settingsMode?: SettingsMode }) => {
@@ -667,8 +663,6 @@ export default function App() {
             </button>
           </nav>
         )}
-
-        {showTour && <TourScreen onFinish={() => setShowTour(false)} />}
 
         {reminderOpen === "reminder" && <ReminderCard />}
 

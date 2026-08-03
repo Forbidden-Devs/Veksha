@@ -60,7 +60,7 @@ export function LevelSetupScreen({
     <section className="screen screen-settings">
       <div className="lang-pick-header">
         <button className="onboarding-back" type="button" onClick={onBack} disabled={loading}>
-          <span aria-hidden="true">←</span> {t.tutorial_back}
+          <span aria-hidden="true">←</span> {t.common_back}
         </button>
         <div className="logo-badge">Ve</div>
         <h1 className="lang-pick-title">{t.level_setup_title}</h1>

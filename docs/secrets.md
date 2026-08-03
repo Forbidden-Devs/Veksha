@@ -1,49 +1,49 @@
 # Секреты и переменные
 
-Значения секретов никогда не добавляются в Git, документацию, CI artifacts или
-логи. Здесь перечислены только места хранения и назначение.
+Значения секретов никогда не добавляются в Git, документацию, артефакты или
+логи. Локальный запуск использует `.env`, созданный из `.env.example`, а VPS —
+`.env.production`, созданный из `.env.production.example`.
+Оба файла исключены из Git.
 
-## Railway: backend production
+## Backend
 
 - `OPENAI_API_KEY` — доступ backend к OpenAI.
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_OAUTH_REDIRECT_URI` — OAuth.
 - `TELEGRAM_BOT_USERNAME`, `TELEGRAM_BOT_WEBHOOK_SECRET` — интеграция с ботом.
-- `ADMIN_API_SECRET` — временная защита служебных backend endpoint.
-- `ADMIN_DATABASE_SECRET` — дополнительный секрет SQL-консоли админки. Должен
-  отличаться от `ADMIN_API_SECRET`; без него консоль отключена.
-- `DATABASE_URL` — подключение к PostgreSQL (при reference-подключении Railway
-  передаёт его из PostgreSQL service).
-- `VEKSHA_DATA_DIR` — каталог для runtime-файлов; persistent volume для БД
-  больше не нужен.
+- `ADMIN_API_SECRET` — временная защита служебных endpoint.
+- `ADMIN_DATABASE_SECRET` — отдельный секрет SQL-консоли админки; он должен
+  отличаться от `ADMIN_API_SECRET`.
+- `DATABASE_URL` — явное подключение к PostgreSQL.
 - `CORS_ALLOW_ORIGINS` — разрешённые web origins.
-- `REDIS_URL` — необязательный кеш коротких переводов; не содержит
-  пользовательские данные и не нужен для корректной работы.
+- `REDIS_URL` — необязательный кеш без пользовательских данных.
+- `VEKSHA_ENVIRONMENT` — `local` для разработки и другое явное значение в
+  будущем hosted runtime.
+- `VEKSHA_REVISION` — идентификатор исходной ревизии, возвращаемый healthcheck.
+- `VEKSHA_IMAGE_TAG` — тег application images; установщик release задаёт его как
+  `<VEKSHA_REVISION>-<VEKSHA_ENVIRONMENT>`.
 
-Runtime-секреты остаются в Railway. Они не дублируются в GitHub Actions.
+## Telegram bot и admin
 
-## Railway: Telegram bot
+Боту нужны `TELEGRAM_BOT_TOKEN`, `VEKSHA_BACKEND_URL` и
+`VEKSHA_BOT_WEBHOOK_SECRET`. Последний совпадает с
+`TELEGRAM_BOT_WEBHOOK_SECRET` backend.
 
-- `TELEGRAM_BOT_TOKEN` — токен от BotFather.
-- `VEKSHA_BACKEND_URL` — публичный HTTPS URL backend.
-- `VEKSHA_BOT_WEBHOOK_SECRET` — то же значение, что
-  `TELEGRAM_BOT_WEBHOOK_SECRET` backend.
+Admin получает `VITE_BACKEND_URL` во время сборки. `ADMIN_API_SECRET` и
+`ADMIN_DATABASE_SECRET` не встраиваются в bundle: сотрудник вводит их вручную,
+и они живут только в текущей вкладке браузера.
 
-## Railway: admin
+## Будущий hosting
 
-- `VITE_BACKEND_URL` — HTTPS URL backend, встраивается на этапе сборки.
+На VPS секреты хранятся в доступном только владельцу `deploy` файле
+`/srv/veksha/shared/.env.production` с mode `600`; шаблон находится в
+`.env.production.example`. Файл не входит в release archive. Это переходное
+решение до появления отдельного secret manager. Старые секреты не используются:
+для нового runtime они перевыпускаются.
 
-Административный секрет не встраивается в admin bundle: сотрудник вводит
-значение `ADMIN_API_SECRET` при входе, после чего оно живёт только в текущей
-вкладке браузера. `ADMIN_DATABASE_SECRET` также вводится вручную непосредственно
-перед диагностическим запросом и не сохраняется в bundle или браузерном хранилище.
+Credentials внешнего backup-хранилища находятся в конфигурации `rclone`.
+Адрес remote и секретный URL мониторинга backup находятся в root-owned файле
+`/etc/veksha/backup.env` с mode `600`. Эти файлы не добавляются в Git и не
+попадают в application images.
 
-## GitHub Environments
-
-Будущие credentials Chrome Web Store и Firefox AMO будут храниться только в
-environment `browser-stores` с ручным подтверждением публикации.
-
-## Ротация
-
-Секрет нужно немедленно заменить, если он попал в терминальный вывод, CI log,
-issue, pull request, скриншот или историю Git. После ротации старое значение
-считается недействительным.
+Секрет немедленно ротируется, если он попал в терминальный вывод, build log,
+issue, pull request, скриншот или историю Git.

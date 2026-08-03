@@ -402,45 +402,73 @@
   position: fixed;
   inset: 0;
   z-index: 2147483647;
-  background: rgba(31, 29, 36, 0.68);
-  backdrop-filter: grayscale(0.8) blur(1px);
-  font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+  background: rgba(17, 20, 30, 0.84);
+  -webkit-backdrop-filter: blur(3px) saturate(0.7);
+  backdrop-filter: blur(3px) saturate(0.7);
+  font-family: Inter, -apple-system, "Segoe UI", sans-serif;
   animation: veksha-aggressive-fade 0.22s ease-out;
+  isolation: isolate;
 }
 
 .veksha-terror-reminder {
   --terror-evasion: 86%;
-  background: rgba(12, 10, 18, 0.78);
-  -webkit-backdrop-filter: grayscale(0.85) blur(7px) saturate(0.8);
-  backdrop-filter: grayscale(0.85) blur(7px) saturate(0.8);
+  --veksha-ink: #17221d;
+  --veksha-paper: #f4f0e4;
+  --veksha-signal: #e76847;
+  --veksha-mint: #b8e1ce;
+  background: rgba(13, 20, 17, 0.9);
+  -webkit-backdrop-filter: blur(5px) saturate(0.65);
+  backdrop-filter: blur(5px) saturate(0.65);
   overflow: hidden;
 }
 
-.veksha-aggressive-banner {
+.veksha-reminder-atmosphere {
   position: absolute;
-  top: 48px;
-  left: 50%;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.42;
+  background-image:
+    linear-gradient(rgba(184, 225, 206, 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(184, 225, 206, 0.12) 1px, transparent 1px),
+    radial-gradient(circle at 18% 76%, rgba(231, 104, 71, 0.38), transparent 24%);
+  background-size: 48px 48px, 48px 48px, auto;
+  mask-image: linear-gradient(115deg, #000, transparent 86%);
+}
+
+.veksha-aggressive-banner {
+  position: relative;
+  width: min(560px, calc(100vw - 48px));
+  margin-left: min(30vw, 420px);
   display: flex;
-  align-items: center;
-  width: min(840px, calc(100vw - 36px));
-  gap: 18px;
-  padding: 24px 28px;
-  transform: translateX(-50%);
-  border: 1px solid rgba(255, 255, 255, 0.62);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.9);
-  -webkit-backdrop-filter: blur(20px);
-  backdrop-filter: blur(20px);
-  box-shadow: 0 18px 55px rgba(25, 18, 38, 0.35);
-  color: #2b2438;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 24px;
+  padding: clamp(28px, 5vw, 54px);
+  border: 1px solid rgba(23, 34, 29, 0.35);
+  border-radius: 2px;
+  background: var(--veksha-paper);
+  box-shadow: 16px 16px 0 rgba(184, 225, 206, 0.92), 0 28px 90px rgba(0, 0, 0, 0.42);
+  color: var(--veksha-ink);
   animation: veksha-aggressive-drop 0.3s ease-out;
 }
 
+.veksha-reminder-brand {
+  display: grid;
+  grid-template-columns: 54px 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
 .veksha-terror-logo {
-  width: 64px;
-  height: 64px;
-  border-radius: 8px;
-  box-shadow: 0 8px 22px color-mix(in srgb, var(--av-accent) 25%, transparent);
+  width: 54px;
+  height: 54px;
+  padding: 6px;
+  border-radius: 2px;
+  background: var(--veksha-ink);
+  box-shadow: 5px 5px 0 var(--veksha-signal);
 }
 
 .veksha-aggressive-copy {
@@ -448,186 +476,205 @@
   min-width: 0;
 }
 
-.veksha-aggressive-title {
-  margin-bottom: 4px;
-  font-size: 25px;
+.veksha-reminder-eyebrow {
+  margin-bottom: 12px;
+  color: #6a766f;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
   font-weight: 800;
+  letter-spacing: 0.16em;
+}
+
+.veksha-aggressive-title {
+  margin-bottom: 8px;
+  font-size: clamp(28px, 4vw, 42px);
+  font-weight: 900;
+  line-height: 1.03;
+  letter-spacing: -0.045em;
 }
 
 .veksha-aggressive-subtitle {
-  color: #746d82;
-  font-size: 16px;
-  line-height: 1.45;
+  color: #58645e;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.veksha-reminder-queue {
+  display: grid;
+  gap: 8px;
+  border-block: 1px solid rgba(23, 34, 29, 0.2);
+  padding-block: 12px;
+}
+
+.veksha-reminder-queue-item {
+  display: grid;
+  grid-template-columns: 58px 1fr;
+  align-items: center;
+  min-height: 48px;
+  font-size: 13px;
+}
+
+.veksha-reminder-queue-item + .veksha-reminder-queue-item {
+  border-top: 1px dashed rgba(23, 34, 29, 0.2);
+  padding-top: 8px;
+}
+
+.veksha-reminder-queue-item strong {
+  color: var(--veksha-signal);
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 25px;
+  font-weight: 850;
+}
+
+.veksha-reminder-queue-item span {
+  overflow: hidden;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .veksha-aggressive-start {
-  flex-shrink: 0;
-  border: 0;
-  border-radius: 8px;
-  padding: 14px 24px;
-  background: linear-gradient(135deg, #e986ad, #8f6bd4);
-  box-shadow: 0 6px 18px color-mix(in srgb, var(--av-accent) 28%, transparent);
-  color: #fff;
+  width: 100%;
+  border: 1px solid var(--veksha-ink);
+  border-radius: 2px;
+  padding: 16px 22px;
+  background: var(--veksha-ink);
+  box-shadow: 6px 6px 0 var(--veksha-signal);
+  color: var(--veksha-paper);
   cursor: pointer;
-  font-size: 13px;
-  font-weight: 750;
+  font-size: 14px;
+  font-weight: 850;
+  letter-spacing: 0.02em;
+  transition: transform 0.14s ease, box-shadow 0.14s ease;
+}
+
+.veksha-aggressive-start:hover {
+  transform: translate(2px, 2px);
+  box-shadow: 3px 3px 0 var(--veksha-signal);
 }
 
 .veksha-aggressive-close {
-  flex-shrink: 0;
-  width: 30px;
-  height: 30px;
-  border: 0;
-  border-radius: 50%;
-  background: rgba(43, 36, 56, 0.07);
-  color: #746d82;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  background: var(--veksha-paper);
+  color: var(--veksha-ink);
   cursor: pointer;
-  font-size: 22px;
-  line-height: 28px;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 20px;
+  line-height: 1;
 }
 
 .veksha-static-close {
-  position: fixed;
-  top: 24px;
-  right: 24px;
-  z-index: 2147483647;
-  width: 46px;
-  height: 46px;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.82);
-  color: #2b2438;
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.34);
-  cursor: pointer;
-  font-size: 26px;
-  font-weight: 800;
-  line-height: 42px;
+  position: absolute;
+  top: 14px;
+  right: 14px;
 }
 
 .veksha-static-close:hover {
-  background: #ffffff;
-  color: var(--av-accent);
+  background: var(--veksha-signal);
+  color: #fff;
 }
 
 .veksha-terror-close {
   position: fixed;
   z-index: 2147483647;
-  width: 46px;
-  height: 46px;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  background: rgba(255, 255, 255, 0.82);
-  color: #2b2438;
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.34);
-  font-size: 26px;
-  font-weight: 800;
-  line-height: 42px;
+  background: var(--veksha-paper);
+  box-shadow: 5px 5px 0 var(--veksha-signal);
+  font-size: 21px;
+  font-weight: 850;
   transition: left 0.16s cubic-bezier(.2, .8, .2, 1), top 0.16s cubic-bezier(.2, .8, .2, 1), transform 0.12s ease, background 0.12s ease;
 }
 
 .veksha-terror-close[data-catchable="false"] {
   cursor: crosshair;
-  transform: rotate(6deg);
+  transform: rotate(3deg);
 }
 
 .veksha-terror-close[data-catchable="true"] {
-  background: #ffffff;
-  color: var(--av-accent);
+  background: var(--veksha-signal);
+  color: #fff;
   cursor: pointer;
   animation: veksha-catchable 0.7s ease-in-out infinite;
 }
 
 .veksha-terror-captions {
   position: absolute;
-  left: 50%;
-  top: 48%;
-  width: min(980px, calc(100vw - 32px));
-  min-height: min(42vh, 380px);
-  transform: translate(-50%, -35%);
+  left: clamp(30px, 8vw, 130px);
+  top: 50%;
+  width: min(32vw, 430px);
+  transform: translateY(-50%);
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  gap: 18px;
+  gap: 14px;
   pointer-events: none;
-  color: #fff;
-  text-align: center;
-  text-shadow: 0 4px 28px rgba(0, 0, 0, 0.72), 0 1px 2px rgba(0, 0, 0, 0.8);
-}
-
-.veksha-terror-headline {
-  font-size: 48px;
-  font-weight: 900;
-  line-height: 1.22;
-  letter-spacing: 0;
-}
-
-.veksha-terror-headline span {
-  color: #d5a3ff;
+  color: var(--veksha-paper);
+  text-align: left;
 }
 
 .veksha-terror-prompt {
-  margin-top: 18px;
-  color: rgba(255, 255, 255, 0.66);
-  font-size: 22px;
-  font-weight: 600;
+  color: var(--veksha-mint);
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
 }
 
 .veksha-terror-caption-text {
-  font-size: 23px;
-  font-weight: 650;
-  line-height: 1.35;
-  letter-spacing: 0;
-  color: rgba(255, 255, 255, 0.78);
+  overflow-wrap: anywhere;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: clamp(34px, 5vw, 72px);
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -0.06em;
+  color: #fff;
   animation: veksha-caption-pulse 4.2s ease-in-out infinite;
 }
 
 .veksha-terror-word-strip {
   display: flex;
-  justify-content: center;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 7px;
 }
 
 .veksha-terror-word-strip span {
-  padding: 8px 12px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.14);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.92);
-  font-size: 16px;
-  font-weight: 750;
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
+  padding: 6px 9px;
+  border: 1px solid rgba(184, 225, 206, 0.46);
+  border-radius: 2px;
+  color: var(--veksha-mint);
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 11px;
 }
 
 .veksha-terror-help {
   position: absolute;
-  left: 18px;
-  top: 34%;
-  width: 238px;
-  padding: 16px 18px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.08);
-  -webkit-backdrop-filter: blur(18px);
-  backdrop-filter: blur(18px);
-  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.22);
-  color: #ffffff;
+  left: clamp(30px, 8vw, 130px);
+  bottom: 32px;
+  width: min(32vw, 430px);
+  padding-top: 14px;
+  border-top: 1px solid rgba(184, 225, 206, 0.3);
+  color: var(--veksha-paper);
 }
 
 .veksha-terror-help-title {
-  margin-bottom: 12px;
-  font-size: 16px;
-  font-weight: 850;
+  margin-bottom: 8px;
+  color: var(--veksha-mint);
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
   line-height: 1.25;
 }
 
 .veksha-terror-help-row {
   display: grid;
-  grid-template-columns: 34px 1fr;
-  gap: 10px;
+  grid-template-columns: 30px 1fr;
+  gap: 8px;
   align-items: center;
-  padding: 10px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.11);
+  padding: 5px 0;
 }
 
 .veksha-terror-help-row b,
@@ -636,65 +683,45 @@
 }
 
 .veksha-terror-help-row b {
-  font-size: 13px;
+  font-size: 11px;
   line-height: 1.25;
 }
 
 .veksha-terror-help-row small,
 .veksha-terror-help-note {
-  margin-top: 7px;
-  color: rgba(255, 255, 255, 0.62);
-  font-size: 11px;
+  margin-top: 6px;
+  color: rgba(244, 240, 228, 0.58);
+  font-size: 10px;
   line-height: 1.4;
 }
 
 .veksha-terror-help-icon {
-  width: 34px;
-  height: 34px;
+  width: 26px;
+  height: 26px;
   display: grid;
   place-items: center;
-  border-radius: 50%;
-  background: rgba(166, 196, 240, 0.35);
-  color: #fff;
-  font-size: 16px;
-  font-weight: 900;
+  border: 1px solid rgba(184, 225, 206, 0.5);
+  border-radius: 2px;
+  color: var(--veksha-mint);
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 9px;
+  font-weight: 800;
 }
 
 .veksha-terror-meter {
   position: absolute;
-  right: 10%;
-  top: 34%;
-  width: 220px;
-  padding: 0;
-  border-radius: 8px;
-  background: transparent;
-  border: 0;
-  color: rgba(255, 255, 255, 0.78);
-  font-size: 18px;
-  font-weight: 750;
-  text-align: left;
-  box-shadow: none;
+  left: clamp(30px, 8vw, 130px);
+  top: 32px;
+  color: var(--veksha-signal);
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 12px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
   pointer-events: none;
 }
 
 .veksha-terror-meter::before {
   content: none;
-}
-
-.veksha-aggressive-squirrel {
-  position: absolute;
-  bottom: -25px;
-  left: 18px;
-  width: 370px;
-  border-radius: 24px 24px 0 0;
-  filter: drop-shadow(0 14px 28px rgba(20, 16, 32, 0.35));
-  object-fit: contain;
-  pointer-events: none;
-  animation: veksha-squirrel-rise 0.45s cubic-bezier(.2, .8, .2, 1);
-}
-
-.veksha-terror-reminder .veksha-aggressive-squirrel {
-  display: none;
 }
 
 @keyframes veksha-aggressive-fade {
@@ -703,13 +730,8 @@
 }
 
 @keyframes veksha-aggressive-drop {
-  from { transform: translate(-50%, -24px); opacity: 0; }
-  to { transform: translate(-50%, 0); opacity: 1; }
-}
-
-@keyframes veksha-squirrel-rise {
-  from { transform: translateY(45px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from { transform: translate(22px, 0); opacity: 0; }
+  to { transform: translate(0, 0); opacity: 1; }
 }
 
 @keyframes veksha-caption-pulse {
@@ -723,26 +745,33 @@
 }
 
 @media (max-width: 640px) {
+  .veksha-aggressive-reminder {
+    padding: 16px;
+  }
+
   .veksha-aggressive-banner {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 12px;
+    width: calc(100vw - 32px);
+    margin: 0;
+    gap: 18px;
+    padding: 26px 22px;
+    box-shadow: 8px 8px 0 rgba(184, 225, 206, 0.92);
   }
 
   .veksha-terror-captions {
-    top: 54%;
-    min-height: 40vh;
+    display: none;
   }
 
-  .veksha-terror-headline {
-    font-size: 31px;
+  .veksha-reminder-brand {
+    grid-template-columns: 44px 1fr;
   }
 
-  .veksha-terror-caption-text {
-    font-size: 18px;
+  .veksha-terror-logo {
+    width: 44px;
+    height: 44px;
   }
 
-  .veksha-terror-help {
+  .veksha-terror-help,
+  .veksha-terror-meter {
     display: none;
   }
 }
@@ -1287,6 +1316,59 @@
   text-transform: uppercase;
 }
 
+.veksha-grammar-memory-card {
+  display: grid;
+  gap: 5px;
+  padding: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.veksha-grammar-memory-card.is-mastered {
+  opacity: 0.62;
+  border-color: rgba(72, 190, 125, 0.4);
+}
+
+.veksha-grammar-memory-card > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.veksha-grammar-memory-card small {
+  color: rgba(247, 244, 251, 0.55);
+  white-space: nowrap;
+}
+
+.veksha-grammar-memory-card > span,
+.veksha-grammar-memory-card > q {
+  color: rgba(247, 244, 251, 0.76);
+  font-size: 11px;
+  font-style: normal;
+  line-height: 1.4;
+}
+
+.veksha-grammar-memory-card > q {
+  color: #ffdca0;
+}
+
+.veksha-grammar-memory-card > button {
+  justify-self: start;
+  padding: 4px 7px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #f7f4fb;
+  font: 600 10px/1.2 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  cursor: pointer;
+}
+
+.veksha-grammar-memory-card > button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.14);
+}
+
 .veksha-grammar-detail-seg {
   display: grid;
   grid-template-columns: 9px 1fr;
@@ -1489,8 +1571,67 @@
   background: var(--av-surface);
   color: var(--av-ink);
   font-size: 12px;
-  max-width: 240px;
+  width: min(340px, calc(100vw - 32px));
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+}
+
+.veksha-reading-projection {
+  margin-bottom: 10px;
+  padding: 7px 9px;
+  border-radius: 8px;
+  background: var(--av-accent-soft);
+  color: var(--av-pink-deep);
+  font-weight: 700;
+}
+
+.veksha-reading-title {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.veksha-reading-list {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 9px;
+}
+
+.veksha-reading-word {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 6px;
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--av-surface) 82%, var(--av-border));
+}
+
+.veksha-reading-word span {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.veksha-reading-word b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.veksha-reading-word small,
+.veksha-reading-word em {
+  color: var(--av-muted);
+  font-size: 10px;
+  font-style: normal;
+  white-space: nowrap;
+}
+
+.veksha-reading-ready {
+  color: var(--av-ok);
+  font-weight: 700;
 }
 
 .veksha-ci-badge-verdict {

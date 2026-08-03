@@ -74,11 +74,14 @@ async def api_vocab_frequency_top(username: CurrentUser, limit: int = _DEFAULT_L
     storage = get_storage(username)
     target = storage.settings.target_lang or "en"
 
-    dictionary_words = {
-        w.name.strip().lower(): bool(w.known)
-        for w in storage.words
-        if w.language == target
-    }
+    dictionary_words: dict[str, bool] = {}
+    for item in storage.lexicon.all():
+        if item.language != target or item.status not in {"learning", "known"}:
+            continue
+        term = item.term.strip().lower()
+        dictionary_words[term] = (
+            dictionary_words.get(term, False) or item.status == "known"
+        )
 
     rows = db.word_freq_top(username, target, limit)
     return VocabFrequencyResponse(words=[

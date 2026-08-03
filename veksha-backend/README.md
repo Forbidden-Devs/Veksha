@@ -23,8 +23,67 @@ Optional env vars: `OPENAI_MODEL`, `OPENAI_SMART_MODEL`, `REDIS_URL`
 `VEKSHA_DATA_DIR` (downloaded runtime files), `CORS_ALLOW_ORIGINS`,
 `VEKSHA_DEBUG_API`, `DATABASE_POOL_MIN_SIZE`, `DATABASE_POOL_MAX_SIZE`.
 
+The independently rewritten translation core is the only translation
+implementation. Its model can be selected with
+`VEKSHA_CORE_V2_TRANSLATION_MODEL` (default `gpt-5.6-luna`).
+
+Dictionary-card enrichment for `/api/kb_word` and `/api/kb_word_details` uses
+the rewritten use case. Select its model through
+`VEKSHA_CORE_V2_DICTIONARY_MODEL` (default `gpt-5.6-luna`).
+
+Sentence Mining cards for `/api/kb_word_mine` always use the new core. Configure
+their model with
+`VEKSHA_CORE_V2_SENTENCE_MINING_MODEL` (default `gpt-5.6-luna`).
+
+Vocabulary extraction from translated multi-word selections is enabled by
+default. `VEKSHA_PHRASE_MINING_ENABLED=0` is an operational cost-control switch;
+it does not select a legacy implementation. The model is selected by
+`VEKSHA_CORE_V2_PHRASE_MINING_MODEL` (default `gpt-5.6-luna`).
+
+Vocabulary acquisition is learner-controlled. Single-word lookups and
+phrase-mining candidates go to the vocabulary
+inbox instead of directly entering the review queue. The learner must choose
+Learn, Known, or Ignore in My Words. Source URLs are stored without query
+parameters or fragments.
+
+`LexicalItem` is the persisted and trained vocabulary unit. Each normalized
+term/language/meaning combination has a stable `item_id` and its own FSRS
+schedule. Legacy `Word` records migrate on load to `schema_version: 2`; the
+backend no longer writes a `words` projection or merges homonymous meanings.
+
+The rewritten training core is the only training implementation. Its Responses
+API model is configured via
+`VEKSHA_CORE_V2_TRAINING_MODEL` (default `gpt-5.6-terra`).
+
+The rewritten topic-lesson core keeps `/api/lesson-topics` and
+`/api/lesson/ws` unchanged. Select its model with
+`VEKSHA_CORE_V2_LESSON_MODEL` (default `gpt-5.6-terra`). Existing lesson data
+is mapped at the storage boundary.
+
+The independently rewritten page-immersion analyzer is the only implementation;
+its model is configured through
+`VEKSHA_CORE_V2_IMMERSION_MODEL` (default `gpt-5.6-luna`). The endpoint remains
+`POST /api/immersion/analyze`, including its existing premium entitlement.
+
+Grammar Memory analysis is independently implemented and grounds every segment
+and annotation in the submitted text before saving examples. Its model is
+selected through `VEKSHA_CORE_V2_GRAMMAR_MODEL` (default `gpt-5.6-luna`). The
+existing `POST /api/grammar-lens/analyze` route and `grammar_lens` entitlement
+remain compatible.
+
+Dual subtitles use the rewritten structured-output translator. Alignment is
+validated against the submitted token counts and partial batches retry only
+missing cues. A bounded process-local cache avoids retaining subtitle text in
+PostgreSQL. Select the model with `VEKSHA_CORE_V2_SUBTITLES_MODEL` (default
+`gpt-5.6-luna`).
+
+Generated UI catalogues use the rewritten catalogue translator. Unknown keys,
+empty values, and translations that alter placeholders such as `{name}` are
+discarded. Select its model with `VEKSHA_CORE_V2_I18N_MODEL` (default
+`gpt-5.6-luna`).
+
 Local runs grant premium-gated development features automatically, so dual
-subtitles, Grammar Lens, and immersion can be exercised without Telegram
+subtitles, Grammar Memory, and immersion can be exercised without Telegram
 billing. Set `VEKSHA_DEV_ALL_FEATURES=0` to test the real free-tier gates.
 
 Google login additionally requires a **Web application** OAuth client and:
@@ -61,9 +120,9 @@ Linking attaches a Google identity to an existing account (409 if it belongs
 to someone else). Without a Google link, a lost local token still means a new
 account.
 
-All user data (accounts and KBs) lives in PostgreSQL. The KB is
-stored as one JSON document per user;
-normalizing into tables is deferred to the FSRS rework.
+All user data (accounts and KBs) lives in PostgreSQL. The KB remains one
+versioned JSON document per user; `LexicalItem` schedules are embedded per
+meaning while review events live in the relational `review_log` table.
 
 To copy a previous SQLite installation, stop the backend and run:
 
@@ -80,7 +139,7 @@ testing it can be enabled with
 
 ## Subscriptions (Telegram Stars)
 
-Paid features (Grammar Lens, page immersion, dual subtitles — see
+Paid features (Grammar Memory, page immersion, dual subtitles — see
 `entitlements.py`) can be purchased individually; gated endpoints return
 HTTP 402 with `detail.code = "subscription_required"`. Payments are collected
 by the companion bot (`veksha-tgbot/`) in Telegram Stars and reported to
@@ -121,18 +180,13 @@ main.py               app entry point, routers, CORS, error handler
 config.py             env-based configuration
 db.py                 PostgreSQL: users/tokens, KB documents, review log
 auth.py               bearer-token dependencies (HTTP + WebSocket)
-models.py             Word, Patch, UserSettings, LessonTopic/LessonBlock
-storage.py            per-user KB object model, spaced repetition primitives
+models.py             transitional settings/lesson/message records
+storage.py            adapters for the versioned user knowledge document
 fsrs.py               FSRS-4.5 scheduler (pure functions; default weights)
-selection.py          selection translate → KB update
-training.py           word-training sessions (task generation, answer check)
-lesson.py             topic lessons: block generation/review, mastery
+learning_core_v2/     independent domain use cases
+learning_core_v2_adapters/ HTTP/storage/LLM adapters for the new core
 i18n.py               UI/server strings + LLM-translated catalogues
 entitlements.py       subscription tiers, plans, feature gating (require_feature)
-llm/                  all OpenAI calls (metadata, training, lesson,
-                      selection, immersion, _base)
-db_cache.py           PostgreSQL cache for reusable LLM outputs
-translation_cache.py  memory/Redis cache for short translations
 api/                  routers (one file per domain)
 ```
 
@@ -149,7 +203,7 @@ api/                  routers (one file per domain)
 | `GET /api/reminders` | due words / topics for extension alarms |
 | `GET /api/kb_summary`, `/api/kb_words`, `DELETE /api/kb_word` | vocabulary UI |
 | `GET /api/training/init`, `POST /api/training/validate`, `WS /api/training/ws` | word training |
-| `GET /api/training/review_log` | recent FSRS reviews (`?word=`, `?limit=`) |
+| `GET /api/training/review_log` | recent FSRS reviews (`?item_id=`, `?word=`, `?limit=`) |
 | `GET/POST /api/lesson-topics`, `WS /api/lesson/ws` | topic lessons |
 | `POST /api/immersion/analyze` | comprehensible-input page immersion (premium) |
 | `POST /api/subtitles/translate` | dual-subtitle line translation with word alignment (premium) |
@@ -169,24 +223,24 @@ WebSocket protocols are documented in the module docstrings of
 
 ## Spaced repetition (FSRS)
 
-Scheduling is FSRS-4.5 (`fsrs.py`, published default weights). Each word
-carries a memory state — `stability` (interval in days at 90% recall),
-`difficulty` (1–10), `last_review`, `lapses` — updated per review from the
+Scheduling is FSRS-4.5 (`fsrs.py`, published default weights). Each lexical
+meaning carries its own memory state — `stability` (interval in days at 90%
+recall), `difficulty` (1–10), `last_review`, `lapses` — updated per review from the
 LLM answer-check outcome: `correct` → Good, `vague` → Hard, `incorrect` →
 Again (`garbage` is not a review). `next_review = now + interval` for
 `config.FSRS_DESIRED_RETENTION` (0.9), clamped to
-`FSRS_MIN/MAX_INTERVAL_DAYS`. A word is due once `next_review` is less than
+`FSRS_MIN/MAX_INTERVAL_DAYS`. A lexical item is due once `next_review` is less than
 `REVIEW_WINDOW_HOURS` away or overdue — lateness needs no special handling
 because low retrievability at review time yields a bigger stability jump.
-Overdue words only get `delayed=True` (weight ×2 in selection). `counter`
+Overdue items only get `delayed=True`. `counter`
 survives as the review count (`-1` = new, drives the UI badge).
 
 Every review appends to the `review_log` table (rating, outcome, task type,
 elapsed/scheduled days, post-review stability/difficulty, pre-review
-retrievability) — read it via `GET /api/training/review_log`; it is also the
-training data for fitting per-user FSRS weights later. Words created before
-the FSRS switch have `stability == 0` and are initialized on their next
-review.
+retrievability and `lexical_item_id`) — read it via
+`GET /api/training/review_log`; it is also the training data for fitting
+per-user FSRS weights later. Migrated items without an FSRS state are
+initialized on their next review.
 
 ## Known limitations
 

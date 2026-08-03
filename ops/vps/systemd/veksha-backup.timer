@@ -1,0 +1,11 @@
+[Unit]
+Description=Create a daily Veksha PostgreSQL backup
+
+[Timer]
+OnCalendar=*-*-* 02:17:00 UTC
+RandomizedDelaySec=15m
+Persistent=true
+Unit=veksha-backup.service
+
+[Install]
+WantedBy=timers.target

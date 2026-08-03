@@ -1,0 +1,32 @@
+{
+	email {$VEKSHA_ACME_EMAIL}
+	admin 127.0.0.1:2019
+}
+
+{$VEKSHA_APP_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy web:3000
+	log {
+		output stdout
+		format json
+	}
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+}
+
+{$VEKSHA_API_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy backend:8000
+	log {
+		output stdout
+		format json
+	}
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+}

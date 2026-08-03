@@ -1,5 +1,11 @@
 # Veksha
 
+> Automated CI/CD is currently suspended. The deployment target is a manually
+> operated netcup VPS, application images are built locally, and the next
+> version starts from an empty data store. See
+> [`docs/next-version.md`](docs/next-version.md) and the
+> [`VPS runbook`](docs/vps-runbook.md).
+
 Learn foreign-language vocabulary from the pages you actually read: select a
 word → get a translation → the word becomes a spaced-repetition card
 automatically. Plus LLM-generated topic lessons ("blocks") for grammar,
@@ -60,9 +66,10 @@ delete the local PostgreSQL and Redis data.
 - User data lives in PostgreSQL; clients
   authenticate with a bearer token issued at registration
   (`POST /api/auth/register`).
-- All LLM calls live in `veksha-backend/llm/`; business logic that decides
-  *when* to call them lives in `pipeline.py`, `training.py`, `lesson.py`,
-  `selection.py`.
+- Learning behavior lives in the transport-independent
+  `veksha-backend/learning_core_v2/` package. OpenAI Responses API, storage,
+  caching, and HTTP composition live in `learning_core_v2_adapters/` and
+  `api/`; there is no parallel legacy LLM implementation.
 - Trainings and lessons run over WebSocket (`/api/training/ws`,
   `/api/lesson/ws`); everything else is plain HTTP (see
   `veksha-backend/README.md` for the endpoint list).

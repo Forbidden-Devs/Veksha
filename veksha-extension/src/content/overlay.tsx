@@ -3,7 +3,6 @@ import { createRoot, Root } from "react-dom/client";
 import { TrainingWindow } from "../popup/overlays/TrainingWindow";
 import { LessonWindow } from "../popup/overlays/LessonWindow";
 import { TopicPickerOverlay } from "../popup/overlays/TopicPickerOverlay";
-import { TutorialWindow } from "../popup/overlays/TutorialWindow";
 import { I18nProvider } from "../shared/i18n";
 import rawPaletteCss from "../shared/palette.css?inline";
 import rawPopupCss from "../popup/popup.css?inline";
@@ -14,7 +13,7 @@ const SHADOW_CSS =
   `${rawPaletteCss}\n${rawPopupCss}`.replace(/:root/g, ":host") +
   `
   /* === page-overlay context overrides === */
-  .training-window, .lesson-overlay, .tut-window {
+  .training-window, .lesson-overlay {
     flex: 1 1 0;
     min-height: 0;
     position: static !important;
@@ -101,19 +100,6 @@ export function showLessonOverlay(username: string, topic: string): void {
     <I18nProvider>
       <PageOverlay initWidth={700} initHeight={720}>
         <LessonWindow username={username} topicName={topic} onClose={closeOverlay} />
-      </PageOverlay>
-    </I18nProvider>
-  );
-}
-
-export function showTutorialOverlay(username: string): void {
-  const container = getShadowContainer();
-  overlayRoot?.unmount();
-  overlayRoot = createRoot(container);
-  overlayRoot.render(
-    <I18nProvider>
-      <PageOverlay initWidth={940} initHeight={660}>
-        <TutorialWindow username={username} onClose={closeOverlay} />
       </PageOverlay>
     </I18nProvider>
   );

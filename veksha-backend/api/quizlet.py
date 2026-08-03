@@ -19,7 +19,12 @@ from pydantic import BaseModel
 
 import db
 from auth import CurrentUser
-from models import Patch
+from learning_core_v2.acquisition import (
+    LexicalItem,
+    ReviewSchedule,
+    VocabularyEncounter,
+    lexical_item_id,
+)
 from storage import get_storage
 
 log = logging.getLogger(__name__)
@@ -47,9 +52,11 @@ async def api_quizlet_export(username: CurrentUser) -> StreamingResponse:
 
     # Get words not yet exported
     unexported_words = [
-        word for word in storage.words
-        if word.language == storage.settings.target_lang
-        and not db.quizlet_is_exported(username, word.name)
+        item
+        for item in storage.lexicon.all()
+        if item.language == storage.settings.target_lang
+        and item.status in {"learning", "known"}
+        and not db.quizlet_is_exported(username, item.item_id)
     ]
 
     if not unexported_words:
@@ -64,15 +71,15 @@ async def api_quizlet_export(username: CurrentUser) -> StreamingResponse:
     writer = csv.writer(output)
     writer.writerow(["Word", "Translation", "Context"])
 
-    for word in unexported_words:
+    for item in unexported_words:
         writer.writerow([
-            word.name,
-            word.translation or "",
-            word.context or "",
+            item.term,
+            item.translation,
+            item.latest_context,
         ])
 
     # Mark as exported
-    db.quizlet_export_mark(username, [w.name for w in unexported_words])
+    db.quizlet_export_mark(username, [item.item_id for item in unexported_words])
     log.info("[quizlet] user %r exported %d words", username, len(unexported_words))
 
     # Convert StringIO to bytes iterator
@@ -91,7 +98,12 @@ async def api_quizlet_export_all(username: CurrentUser) -> StreamingResponse:
     storage = get_storage(username)
 
     # Get all words of target language
-    words = [w for w in storage.words if w.language == storage.settings.target_lang]
+    words = [
+        item
+        for item in storage.lexicon.all()
+        if item.language == storage.settings.target_lang
+        and item.status in {"learning", "known"}
+    ]
 
     if not words:
         return StreamingResponse(
@@ -105,15 +117,15 @@ async def api_quizlet_export_all(username: CurrentUser) -> StreamingResponse:
     writer = csv.writer(output)
     writer.writerow(["Word", "Translation", "Context"])
 
-    for word in words:
+    for item in words:
         writer.writerow([
-            word.name,
-            word.translation or "",
-            word.context or "",
+            item.term,
+            item.translation,
+            item.latest_context,
         ])
 
     # Mark all as exported
-    db.quizlet_export_mark(username, [w.name for w in words])
+    db.quizlet_export_mark(username, [item.item_id for item in words])
     log.info("[quizlet] user %r exported all %d words", username, len(words))
 
     csv_content = output.getvalue().encode("utf-8")
@@ -131,15 +143,24 @@ async def api_quizlet_export_status(username: CurrentUser) -> ExportStatusRespon
     storage = get_storage(username)
 
     # Count words by language
-    target_words = [w for w in storage.words if w.language == storage.settings.target_lang]
+    target_words = [
+        item
+        for item in storage.lexicon.all()
+        if item.language == storage.settings.target_lang
+        and item.status in {"learning", "known"}
+    ]
     total = len(target_words)
 
     # Count exported words
-    exported = db.quizlet_get_exported_count(username)
+    exported = sum(
+        1
+        for item in target_words
+        if db.quizlet_is_exported(username, item.item_id)
+    )
 
     return ExportStatusResponse(
         total_words=total,
-        exported_words=min(exported, total),  # Cap at total in case of stale data
+        exported_words=exported,
         unexported_words=max(0, total - exported),
     )
 
@@ -175,8 +196,8 @@ async def api_quizlet_import(file: UploadFile = File(...), username: CurrentUser
                 detail="CSV must have 'Word' and 'Translation' columns (or 'Term'/'Definition', 'Front'/'Back')"
             )
 
-        patches: list[Patch] = []
-        existing_words = {w.name.lower() for w in storage.words}
+        imported: list[LexicalItem] = []
+        existing_ids = {item.item_id for item in storage.lexicon.all()}
 
         for row_num, row in enumerate(reader, start=2):  # start=2 because header is row 1
             try:
@@ -189,19 +210,32 @@ async def api_quizlet_import(file: UploadFile = File(...), username: CurrentUser
                     skipped_count += 1
                     continue
 
-                # Skip if word already exists
-                if word.lower() in existing_words:
+                item_id = lexical_item_id(
+                    word, storage.settings.target_lang, translation
+                )
+                if item_id in existing_ids:
                     skipped_count += 1
                     continue
 
-                patches.append(Patch(
-                    type="add_word",
-                    value=word,
-                    context=context,
-                    counter=-1,
-                    known=False,
-                ))
-                existing_words.add(word.lower())
+                added_at = time.time()
+                imported.append(
+                    LexicalItem(
+                        item_id=item_id,
+                        term=word,
+                        language=storage.settings.target_lang,
+                        translation=translation,
+                        status="learning",
+                        encounters=(
+                            VocabularyEncounter(
+                                context=context, observed_at=added_at
+                            ),
+                        )
+                        if context
+                        else (),
+                        schedule=ReviewSchedule(added_at=added_at),
+                    )
+                )
+                existing_ids.add(item_id)
                 imported_count += 1
 
             except Exception as e:
@@ -209,14 +243,15 @@ async def api_quizlet_import(file: UploadFile = File(...), username: CurrentUser
                 skipped_count += 1
 
         # Apply all patches at once
-        if patches:
-            storage.apply_kb_changes(patches)
+        if imported:
+            storage.lexicon.extend(imported)
             storage.save()
 
         # Mark imported words as exported to prevent re-exporting
         if imported_count > 0:
-            imported_words = [p.value for p in patches if p.type == "add_word"]
-            db.quizlet_export_mark(username, imported_words)
+            db.quizlet_export_mark(
+                username, [item.item_id for item in imported]
+            )
 
         log.info(
             "[quizlet] user %r imported %d words (skipped %d)",

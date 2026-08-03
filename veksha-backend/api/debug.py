@@ -11,6 +11,7 @@ from __future__ import annotations
 import logging
 import random
 import time
+from dataclasses import replace
 
 from fastapi import APIRouter
 
@@ -37,29 +38,36 @@ async def api_debug_reset(username: CurrentUser) -> dict:
 async def api_debug_simulate_training(username: CurrentUser) -> dict:
     """Apply a successful training result to up to 15 random active words and one topic."""
     storage = get_storage(username)
-    active_words = [w for w in storage.words if w.known is False or w.known == ""]
-    selected_words = random.sample(active_words, min(15, len(active_words)))
-    for word in selected_words:
-        storage.apply_review_result(word, "correct", task_type="debug_simulate")
+    active_items = [
+        item for item in storage.lexicon.all() if item.status == "learning"
+    ]
+    selected_items = random.sample(active_items, min(15, len(active_items)))
+    for item in selected_items:
+        storage.lexicon.apply_review_result(item, "correct", task_type="debug_simulate")
 
-    topic_names = sorted(t.name for t in storage.lesson_topics)
+    topic_names = sorted(t.name for t in storage.lessons.topics())
     topic_name = random.choice(topic_names) if topic_names else None
     if topic_name:
-        lesson_topic = storage.find_lesson_topic(topic_name)
+        lesson_topic = storage.lessons.find(topic_name)
         if lesson_topic:
-            lesson_topic.last_reviewed = time.time()
-            if lesson_topic.blocks:
-                block = random.choice(lesson_topic.blocks)
-                block.mastery_score = min(1.0, block.mastery_score * 0.4 + 0.6)
+            units = list(lesson_topic.units)
+            if units:
+                index = random.randrange(len(units))
+                units[index] = replace(
+                    units[index], mastery=min(1.0, units[index].mastery * 0.4 + 0.6)
+                )
+            storage.lessons.put(
+                replace(lesson_topic, units=tuple(units), last_reviewed_at=time.time())
+            )
 
     storage.save()
     log.info(
         "[debug/simulate-training] user=%r words=%d topic=%r",
-        username, len(selected_words), topic_name,
+        username, len(selected_items), topic_name,
     )
     return {
         "ok": True,
-        "words_updated": len(selected_words),
+        "words_updated": len(selected_items),
         "topic_updated": topic_name,
     }
 
@@ -71,18 +79,29 @@ async def api_debug_advance_day(username: CurrentUser) -> dict:
 
     storage = get_storage(username)
     shifted = 0
-    for word in storage.words:
-        if word.next_review:
-            word.next_review -= 24 * 3600
-            # Shift the review history too, so FSRS sees a full day of
-            # elapsed time (retrievability drops accordingly).
-            if word.last_review:
-                word.last_review -= 24 * 3600
+    for item in storage.lexicon.all():
+        schedule = item.schedule
+        if schedule.next_review_at:
+            storage.lexicon.replace(
+                replace(
+                    item,
+                    schedule=replace(
+                        schedule,
+                        next_review_at=schedule.next_review_at - 24 * 3600,
+                        last_review_at=(
+                            schedule.last_review_at - 24 * 3600
+                            if schedule.last_review_at
+                            else 0.0
+                        ),
+                    ),
+                )
+            )
             shifted += 1
     storage.save()
 
-    storage.apply_overdue_decay()
-    due_words = storage.due_count()
+    if storage.lexicon.apply_overdue_decay():
+        storage.save()
+    due_words = storage.lexicon.due_count()
     due_word_names = _due_word_names(storage)
     due_topic = _topic_needing_review(storage)
     reminder = {

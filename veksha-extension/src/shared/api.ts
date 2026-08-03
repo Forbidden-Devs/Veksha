@@ -280,16 +280,53 @@ export async function quickTranslate(
   sourceLang: string,
   targetLang: string,
   bidirectional = false,
+  sourceUrl = "",
 ): Promise<TranslateResponse> {
   const resp = await _post<TranslateResponse>(
     "/api/quick_translate",
-    { text, source_lang: sourceLang, target_lang: targetLang, bidirectional },
+    {
+      text,
+      source_lang: sourceLang,
+      target_lang: targetLang,
+      bidirectional,
+      source_url: sourceUrl,
+    },
     15_000
   );
   // Every translation quietly saves a word — tell the background so it can
   // schedule the "first review" nudge after the first few words.
-  runtimeSend({ type: "VEKSHA_WORD_SAVED" });
+  if (resp.vocabulary_mode !== "suggested") {
+    runtimeSend({ type: "VEKSHA_WORD_SAVED" });
+  }
   return resp;
+}
+
+export interface VocabularyInboxItem {
+  item_id: string;
+  term: string;
+  language: string;
+  translation: string;
+  transcription: string;
+  encounter_count: number;
+  latest_context: string;
+  latest_source_url: string;
+  last_seen_at: number;
+}
+
+export function getVocabularyInbox(): Promise<{ items: VocabularyInboxItem[] }> {
+  return _get("/api/vocabulary-inbox");
+}
+
+export async function decideVocabularyInboxItem(
+  itemId: string,
+  decision: "learn" | "known" | "ignore",
+): Promise<{ item_id: string; status: "learning" | "known" | "ignored" }> {
+  const result = await _post<{ item_id: string; status: "learning" | "known" | "ignored" }>(
+    `/api/vocabulary-inbox/${encodeURIComponent(itemId)}/decision`,
+    { decision },
+  );
+  if (decision === "learn") runtimeSend({ type: "VEKSHA_WORD_SAVED" });
+  return result;
 }
 
 export interface ImmersionSentence {
@@ -305,17 +342,39 @@ export function analyzeImmersion(
   return _post("/api/immersion/analyze", { blocks }, 45_000);
 }
 
-export interface CiMeterResult {
+export interface ReadingCoachObstacle {
+  term: string;
+  occurrences: number;
+  cefr: string;
+  knowledge: "known" | "learning" | "suggested" | "ignored" | "unseen";
+  reason: "learning" | "already_suggested" | "above_level" | "frequent";
+}
+
+export interface ReadingCoachResult {
   known_pct: number;
+  projected_known_pct: number;
   cefr: string;
   user_level: string;
   verdict: "ideal" | "too_easy" | "too_hard" | "close";
-  source: "local" | "llm";
   confidence: "low" | "high";
+  unique_terms: number;
+  obstacles: ReadingCoachObstacle[];
 }
 
-export function analyzeCiMeter(text: string, refine = false): Promise<CiMeterResult> {
-  return _post("/api/ci_meter/analyze", { text, refine }, 20_000);
+export function analyzeReadingCoach(text: string): Promise<ReadingCoachResult> {
+  return _post("/api/reading-coach/analyze", { text }, 20_000);
+}
+
+export function prepareReadingCoach(
+  text: string,
+  terms: string[],
+  sourceUrl: string,
+): Promise<{ added: number; skipped: number }> {
+  return _post("/api/reading-coach/prepare", {
+    text,
+    terms,
+    source_url: sourceUrl,
+  }, 45_000);
 }
 
 export type GrammarRole = "subject" | "verb" | "object" | "place" | "time" | "modifier";
@@ -344,9 +403,39 @@ export interface GrammarBlockAnalysis {
 }
 
 export function analyzeGrammarLens(
-  blocks: string[]
-): Promise<{ blocks: GrammarBlockAnalysis[] }> {
-  return _post("/api/grammar-lens/analyze", { blocks }, 45_000);
+  blocks: string[],
+  sourceUrl = "",
+): Promise<{ blocks: GrammarBlockAnalysis[]; remembered: number }> {
+  return _post("/api/grammar-lens/analyze", { blocks, source_url: sourceUrl }, 45_000);
+}
+
+export interface GrammarMemoryEncounter {
+  example: string;
+  source_url: string;
+  observed_at: number;
+}
+
+export interface GrammarMemoryItem {
+  item_id: string;
+  category: GrammarCategory;
+  label: string;
+  explanation: string;
+  status: "learning" | "mastered";
+  seen_count: number;
+  first_seen_at: number;
+  last_seen_at: number;
+  encounters: GrammarMemoryEncounter[];
+}
+
+export function getGrammarMemory(): Promise<{ items: GrammarMemoryItem[] }> {
+  return _get("/api/grammar-memory");
+}
+
+export function setGrammarMemoryStatus(
+  itemId: string,
+  status: "learning" | "mastered",
+): Promise<GrammarMemoryItem> {
+  return _post(`/api/grammar-memory/${encodeURIComponent(itemId)}/status`, { status });
 }
 
 export interface VocabFrequencyEntry {
@@ -482,28 +571,28 @@ export async function addKbWord(username: string, word: string): Promise<WordEnt
   return entry;
 }
 
-export function getKbWordDetails(username: string, word: string): Promise<WordEntry> {
-  return _get(`/api/kb_word_details?word=${encodeURIComponent(word)}`);
+export function getKbWordDetails(username: string, itemId: string): Promise<WordEntry> {
+  return _get(`/api/kb_word_details?item_id=${encodeURIComponent(itemId)}`);
 }
 
-export function mineKbWord(username: string, word: string, force = false): Promise<WordEntry> {
-  return _post("/api/kb_word_mine", { word, force }, 45_000);
+export function mineKbWord(username: string, itemId: string, force = false): Promise<WordEntry> {
+  return _post("/api/kb_word_mine", { item_id: itemId, force }, 45_000);
 }
 
-export function reviewKbWord(username: string, word: string, rating: "again" | "good"): Promise<{ ok: boolean; next_review: number }> {
-  return _post("/api/kb_word_review", { word, rating });
+export function reviewKbWord(username: string, itemId: string, rating: "again" | "good"): Promise<{ ok: boolean; next_review: number }> {
+  return _post("/api/kb_word_review", { item_id: itemId, rating });
 }
 
-export function deleteKbWord(username: string, word: string): Promise<{ ok: boolean }> {
-  return _delete("/api/kb_word", { word });
+export function deleteKbWord(username: string, itemId: string): Promise<{ ok: boolean }> {
+  return _delete("/api/kb_word", { item_id: itemId });
 }
 
 export function trainingInit(username: string): Promise<{ available_words: number }> {
   return _get("/api/training/init");
 }
 
-export function trainingValidate(username: string, wordNames: string[]): Promise<{ valid: string[] }> {
-  return _post("/api/training/validate", { word_names: wordNames });
+export function trainingValidate(username: string, itemIds: string[]): Promise<{ valid: string[] }> {
+  return _post("/api/training/validate", { item_ids: itemIds });
 }
 
 export function getLessonTopics(username: string): Promise<{ topics: LessonTopicSummary[] }> {

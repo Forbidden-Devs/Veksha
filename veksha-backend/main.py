@@ -25,16 +25,19 @@ import db
 from api import auth as api_auth
 from api import admin
 from api import billing
-from api import ci_meter
-from api import debug, lesson, settings, training
+from api import debug, settings
+from api import immersion_v2 as immersion
 from api import i18n as api_i18n
-from api import immersion
+from api import lesson_v2 as lesson
 from api import privacy
+from api import reading_coach
 from api import grammar_lens
 from api import quizlet
 from api import subtitles as api_subtitles
-from api import translate
+from api import training_v2 as training
+from api import translate_v2 as translate
 from api import vocab_frequency
+from api import vocabulary_inbox
 from config import CORS_ALLOW_ORIGINS, DEBUG_API, HOST, LOG_LEVEL, PORT, RELOAD
 
 logging.basicConfig(
@@ -63,7 +66,7 @@ app.add_middleware(
 
 @app.get("/healthz", include_in_schema=False)
 async def healthz():
-    """Lightweight Railway healthcheck without external API calls."""
+    """Lightweight deployment healthcheck without external API calls."""
     try:
         db.healthcheck()
     except Exception:
@@ -75,7 +78,7 @@ async def healthz():
     return {
         "status": "ok",
         "service": "backend",
-        "revision": os.getenv("RAILWAY_GIT_COMMIT_SHA", "local"),
+        "revision": os.getenv("VEKSHA_REVISION", "local"),
     }
 
 
@@ -100,12 +103,13 @@ app.include_router(training.router)
 app.include_router(lesson.router)
 app.include_router(api_i18n.router)
 app.include_router(immersion.router)
-app.include_router(ci_meter.router)
 app.include_router(grammar_lens.router)
 app.include_router(quizlet.router)
 app.include_router(vocab_frequency.router)
+app.include_router(vocabulary_inbox.router)
 app.include_router(api_subtitles.router)
 app.include_router(privacy.router)
+app.include_router(reading_coach.router)
 if DEBUG_API:
     app.include_router(debug.router)
     log.warning("Debug API is enabled (/api/debug/*) — do not use in production.")

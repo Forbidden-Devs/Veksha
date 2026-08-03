@@ -30,22 +30,23 @@ export function ReminderCard() {
 
   return (
     <div className="overlay overlay-bottom" id="reminder-card">
+      <div className="reminder-kicker">VEKSHA / 01</div>
       <div className="reminder-content">
-        <div className="reminder-icon">&#128276;</div>
+        <div className="reminder-icon" aria-hidden="true">V</div>
         <div className="reminder-text">
-          <div className="reminder-title">{t.reminder_title} &#128170;</div>
+          <div className="reminder-title">{t.reminder_title}</div>
           <div className="reminder-subtitle">
             {data ? buildSubtitle(data, t) : t.reminder_subtitle_default}
           </div>
         </div>
-        <button className="icon-btn" aria-label="Dismiss" onClick={closeReminder}>
+        <button className="icon-btn" aria-label={t.reminder_dismiss} onClick={closeReminder}>
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M18 6L6 18M6 6l12 12" />
           </svg>
         </button>
       </div>
       <button className="btn btn-gradient btn-block" onClick={handleStartTraining}>
-        {t.reminder_start}
+        <span>{t.reminder_start}</span><span aria-hidden="true">↗</span>
       </button>
     </div>
   );

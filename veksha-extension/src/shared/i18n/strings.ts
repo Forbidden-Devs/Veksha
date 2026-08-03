@@ -76,27 +76,36 @@ export interface Strings {
   ci_meter_verdict_too_easy: string;
   ci_meter_verdict_too_hard: string;
   ci_meter_verdict_close: string;
+  reading_coach_projection: string;
+  reading_coach_obstacles: string;
+  reading_coach_learning: string;
+  reading_coach_inbox: string;
+  reading_coach_prepare: string;
+  reading_coach_preparing: string;
+  reading_coach_added: string;
+  reading_coach_failed: string;
+  reading_coach_ready: string;
   feature_guide_open: string;
   feature_guide_close: string;
-  ci_meter_guide_title: string;
-  ci_meter_guide_intro: string;
-  ci_meter_guide_step_1: string;
-  ci_meter_guide_step_2: string;
-  ci_meter_guide_step_3: string;
-  ci_meter_guide_tip: string;
+  reading_coach_guide_title: string;
+  reading_coach_guide_intro: string;
+  reading_coach_guide_step_1: string;
+  reading_coach_guide_step_2: string;
+  reading_coach_guide_step_3: string;
+  reading_coach_guide_tip: string;
   dual_subtitles_guide_title: string;
   dual_subtitles_guide_intro: string;
   dual_subtitles_guide_step_1: string;
   dual_subtitles_guide_step_2: string;
   dual_subtitles_guide_step_3: string;
   dual_subtitles_guide_tip: string;
-  grammar_lens_title: string;
-  grammar_lens_on: string;
-  grammar_lens_off: string;
-  grammar_lens_loading: string;
-  grammar_lens_disable: string;
-  grammar_lens_collapse: string;
-  grammar_lens_expand: string;
+  grammar_memory_title: string;
+  grammar_memory_on: string;
+  grammar_memory_off: string;
+  grammar_memory_scanning: string;
+  grammar_memory_disable: string;
+  grammar_memory_collapse: string;
+  grammar_memory_expand: string;
   grammar_hint_select: string;
   grammar_analyze_selection: string;
   grammar_analysis_loading: string;
@@ -104,6 +113,18 @@ export interface Strings {
   grammar_analysis_empty: string;
   grammar_roles_title: string;
   grammar_patterns_title: string;
+  grammar_memory_patterns: string;
+  grammar_memory_loading: string;
+  grammar_memory_empty: string;
+  grammar_memory_seen: string;
+  grammar_memory_mastered: string;
+  grammar_memory_reopen: string;
+  grammar_memory_guide_title: string;
+  grammar_memory_guide_intro: string;
+  grammar_memory_guide_step_1: string;
+  grammar_memory_guide_step_2: string;
+  grammar_memory_guide_step_3: string;
+  grammar_memory_guide_tip: string;
   grammar_role_subject: string;
   grammar_role_verb: string;
   grammar_role_object: string;
@@ -121,6 +142,13 @@ export interface Strings {
   my_words_add: string;
   my_words_added: string;
   my_words_add_error: string;
+  vocabulary_inbox_title: string;
+  vocabulary_inbox_empty: string;
+  vocabulary_inbox_seen: string;
+  vocabulary_inbox_learn: string;
+  vocabulary_inbox_known: string;
+  vocabulary_inbox_ignore: string;
+  vocabulary_inbox_error: string;
   my_words_guide_step_1: string;
   my_words_guide_step_2: string;
   my_words_guide_step_3: string;
@@ -284,83 +312,12 @@ export interface Strings {
   topics_blocks: string;      // placeholder: {n}
   topics_placeholder: string;
   topics_add: string;
-  // First-run tutorial
-  tutorial_skip: string;
-  tutorial_back: string;
-  tutorial_next: string;
-  tutorial_start: string;
-  tutorial_s1_title: string;
-  tutorial_s1_body: string;
-  tutorial_s2_title: string;
-  tutorial_s2_body: string;
-  tutorial_s4_title: string;
-  tutorial_s4_body: string;
-  tutorial_train_title: string;
-  tutorial_train_body: string;
-  tutorial_imm_title: string;
-  tutorial_imm_lead: string;
-  tutorial_imm_heading: string;
-  tutorial_imm_p1_term: string;
-  tutorial_imm_p1_desc: string;
-  tutorial_imm_p2_term: string;
-  tutorial_imm_p2_desc: string;
-  tutorial_imm_p3_term: string;
-  tutorial_imm_p3_desc: string;
-  tutorial_imm_p4_term: string;
-  tutorial_imm_p4_desc: string;
-  tutorial_s7_title: string;
-  tutorial_s7_body: string;
-  tutorial_s8_title: string;
-  tutorial_s8_body: string;
-  help_title: string;
-  help_body: string;
-  help_start: string;
-  // Post-registration tour (8 animated scenes). Titles use "|" to split the
-  // gradient-accented second line.
-  tour_skip: string;
-  tour_back: string;
-  tour_next: string;
-  tour_next_first: string;
-  tour_start: string;
-  tour_replay: string;
-  tour_kb: string;
-  tour_saved: string;
-  tour_region_tag: string;
-  tour_tt_title: string;
-  tour_tt_sub: string;
-  tour_q_badge: string;
-  tour_q_ctx: string;
-  tour_q_fb: string;
-  tour_s0_step: string;
-  tour_s0_title: string;
-  tour_s0_text: string;
-  tour_s1_step: string;
-  tour_s1_title: string;
-  tour_s1_text: string;
-  tour_s1_tag: string;
-  tour_s2_step: string;
-  tour_s2_title: string;
-  tour_s2_text: string;
-  tour_s2_tag: string;
-  tour_s3_step: string;
-  tour_s3_title: string;
-  tour_s3_text: string;
-  tour_s3_tag: string;
-  tour_s4_step: string;
-  tour_s4_title: string;
-  tour_s4_text: string;
-  tour_s4_tag: string;
-  tour_s5_step: string;
-  tour_s5_title: string;
-  tour_s5_text: string;
-  tour_s5_tag: string;
-  tour_s6_step: string;
-  tour_s6_title: string;
-  tour_s6_text: string;
-  tour_s6_tag: string;
-  tour_s7_step: string;
-  tour_s7_title: string;
-  tour_s7_text: string;
+  // Shared copy retained by setup and the web home screen.
+  common_back: string;
+  home_translation_body: string;
+  home_quick_saved: string;
+  home_quick_suggested: string;
+  home_hero_title: string;
   // Immersion explainer modal (shown on enable until "I already know")
   imm_modal_title: string;
   imm_modal_sub: string;
@@ -478,8 +435,8 @@ export const EN: Strings = {
   immersion_on: "Immersion on",
   immersion_off: "Immerse page",
   immersion_hint: "Sprinkle level-appropriate sentences in your target language right into the pages you read.",
-  ci_meter_on: "CI meter on",
-  ci_meter_off: "CI meter",
+  ci_meter_on: "Reading Coach on",
+  ci_meter_off: "Reading Coach",
   ci_meter_loading: "Checking readability…",
   ci_meter_refine: "Refine with AI",
   ci_meter_badge_known: "{pct}% known · {cefr}",
@@ -487,27 +444,36 @@ export const EN: Strings = {
   ci_meter_verdict_too_easy: "You know this well already — good for fluency practice, but little new vocabulary.",
   ci_meter_verdict_too_hard: "This may be too difficult right now — expect to look up a lot of words.",
   ci_meter_verdict_close: "Close to your level.",
+  reading_coach_projection: "Learn these words: {before}% → {after}% coverage",
+  reading_coach_obstacles: "Words blocking this page",
+  reading_coach_learning: "learning",
+  reading_coach_inbox: "in inbox",
+  reading_coach_prepare: "Prepare selected words",
+  reading_coach_preparing: "Preparing…",
+  reading_coach_added: "{n} word(s) added to your Inbox",
+  reading_coach_failed: "Could not prepare words",
+  reading_coach_ready: "No high-impact blockers found. Start reading!",
   feature_guide_open: "How it works",
   feature_guide_close: "Got it",
-  ci_meter_guide_title: "How the CI meter works",
-  ci_meter_guide_intro: "The CI meter quickly checks whether a page is comfortable and useful for your current language level.",
-  ci_meter_guide_step_1: "Open an article in the language you're learning, then turn on the CI meter from Veksha.",
-  ci_meter_guide_step_2: "A badge appears on the page with the percentage of familiar vocabulary and the estimated CEFR level.",
-  ci_meter_guide_step_3: "Open the badge to see the verdict: green is ideal i+1 material, blue is easy, yellow is close to your level, and red may be too hard.",
-  ci_meter_guide_tip: "Choose “Refine with AI” inside the badge when you want a more contextual difficulty estimate.",
+  reading_coach_guide_title: "How Reading Coach works",
+  reading_coach_guide_intro: "Reading Coach checks a page against the words you know and helps you prepare before you start reading.",
+  reading_coach_guide_step_1: "Open an article in the language you're learning, then turn on Reading Coach from Veksha.",
+  reading_coach_guide_step_2: "Open the page badge to see your current coverage, the most important unfamiliar words, and the projected coverage after learning them.",
+  reading_coach_guide_step_3: "Select the useful blockers and prepare them. Veksha adds enriched suggestions to your Vocabulary Inbox for review.",
+  reading_coach_guide_tip: "Words already being learned or waiting in your Inbox are marked and won't be added twice.",
   dual_subtitles_guide_title: "How dual subtitles work",
   dual_subtitles_guide_intro: "Dual subtitles add a translation above the original captions while you watch YouTube.",
   dual_subtitles_guide_step_1: "Open a YouTube video and turn on its original captions.",
   dual_subtitles_guide_step_2: "Turn on Dual subtitles in Veksha. The translated line appears above the original one.",
   dual_subtitles_guide_step_3: "Use the globe button beside the captions to hide or show the translation without leaving the video.",
   dual_subtitles_guide_tip: "Hover over a word in the original captions to highlight the matching word in the translation.",
-  grammar_lens_title: "Grammar Lens",
-  grammar_lens_on: "Grammar Lens on",
-  grammar_lens_off: "Grammar Lens",
-  grammar_lens_loading: "Analyzing visible text…",
-  grammar_lens_disable: "Turn off Grammar Lens",
-  grammar_lens_collapse: "Collapse the analysis",
-  grammar_lens_expand: "Show the last analysis",
+  grammar_memory_title: "Grammar Memory",
+  grammar_memory_on: "Grammar Memory on",
+  grammar_memory_off: "Grammar Memory",
+  grammar_memory_scanning: "Analyzing visible text…",
+  grammar_memory_disable: "Turn off Grammar Memory",
+  grammar_memory_collapse: "Collapse the analysis",
+  grammar_memory_expand: "Show grammar memory",
   grammar_hint_select: "Select a sentence on the page and press the 🔍 button next to it for a detailed grammar analysis.",
   grammar_analyze_selection: "Analyze the grammar of the selection",
   grammar_analysis_loading: "Analyzing the sentence…",
@@ -515,6 +481,18 @@ export const EN: Strings = {
   grammar_analysis_empty: "No notable grammar found in this selection.",
   grammar_roles_title: "Sentence roles",
   grammar_patterns_title: "Grammar in context",
+  grammar_memory_patterns: "Your grammar memory",
+  grammar_memory_loading: "Loading saved patterns…",
+  grammar_memory_empty: "Patterns found while you read will collect here.",
+  grammar_memory_seen: "Seen {n}×",
+  grammar_memory_mastered: "Mark as mastered",
+  grammar_memory_reopen: "Study again",
+  grammar_memory_guide_title: "How Grammar Memory works",
+  grammar_memory_guide_intro: "Grammar Memory turns patterns you encounter while reading into a personal, reusable collection.",
+  grammar_memory_guide_step_1: "Turn on Grammar Memory while reading in your learning language. Veksha highlights sentence roles and detects useful constructions.",
+  grammar_memory_guide_step_2: "Open the page panel to see saved patterns, explanations, real examples, and how often each pattern has appeared.",
+  grammar_memory_guide_step_3: "Mark a pattern as mastered when it feels familiar. You can return it to learning at any time.",
+  grammar_memory_guide_tip: "Select a sentence and use the grammar action to add a focused example to your memory.",
   grammar_role_subject: "Subject",
   grammar_role_verb: "Verb",
   grammar_role_object: "Object",
@@ -532,6 +510,13 @@ export const EN: Strings = {
   my_words_add: "Add to dictionary",
   my_words_added: "Added to dictionary",
   my_words_add_error: "Could not add the word. Try again.",
+  vocabulary_inbox_title: "From your translations",
+  vocabulary_inbox_empty: "New vocabulary suggestions will appear here.",
+  vocabulary_inbox_seen: "Seen {n}×",
+  vocabulary_inbox_learn: "Learn",
+  vocabulary_inbox_known: "I know it",
+  vocabulary_inbox_ignore: "Ignore",
+  vocabulary_inbox_error: "Could not update this suggestion. Try again.",
   my_words_guide_step_1: "Open your word list and turn tracking on there. Veksha counts words only on pages in your target language.",
   my_words_guide_step_2: "As you browse, a personal frequency list grows automatically and shows where each word appeared most often.",
   my_words_guide_step_3: "Add an unfamiliar word to your dictionary with one click, then practise it in training.",
@@ -586,7 +571,7 @@ export const EN: Strings = {
   subscription_intro_new: "All paid features are selected. Turn off anything you don't need — the total updates immediately.",
   subscription_intro_manage: "Your active features are selected. Adjust the set and continue to confirm the new subscription.",
   subscription_intro_add: "The requested feature and your current features are selected. Review the total before paying.",
-  subscription_grammar_desc: "Analyzes grammar patterns directly in the text you're reading.",
+  subscription_grammar_desc: "Collects grammar patterns and real examples from the texts you read.",
   subscription_monthly: "/ month",
   subscription_total: "Total",
   subscription_continue: "Continue to payment",
@@ -689,80 +674,11 @@ export const EN: Strings = {
   topics_blocks: "{n} block(s)",
   topics_placeholder: "e.g. Tenses, Medical terminology…",
   topics_add: "Add",
-  tutorial_skip: "Skip",
-  tutorial_back: "Back",
-  tutorial_next: "Next",
-  tutorial_start: "Start reading",
-  tutorial_s1_title: "Just translate. Veksha does the learning.",
-  tutorial_s1_body: "You read. You translate words you don't know. That's it. Behind the scenes Veksha remembers every word you look up, analyzes what you translate, and teaches it back to you at the right moment. Let's show you how.",
-  tutorial_s2_title: "Translate anything, anywhere",
-  tutorial_s2_body: "Select any word while you read and get its meaning instantly — right in context. There's even a special mode for YouTube subtitles, so you can learn straight from videos. This is the only step you do — and every word you look up is quietly saved to learn later.",
-  tutorial_s4_title: "A chat made only for translation",
-  tutorial_s4_body: "When you want to translate freely, the dedicated translation chat is always there. Type a word, phrase, or sentence — get a clean, in-context answer. And every translation is remembered and analyzed, quietly becoming something to review later.",
-  tutorial_train_title: "Your words come back when it counts",
-  tutorial_train_body: "Every word you translate is saved and tracked for you. Training brings each one back with spaced repetition — right before you'd forget it — so it actually sticks. No flashcards to make: Veksha already knows which words you need and exactly when.",
-  tutorial_imm_title: "One tap into immersion",
-  tutorial_imm_lead: "Veksha replaces part of the sentences and words you read with their version in the language you're learning. Only a portion of the text is swapped — right where it sits — so the page stays easy to read while new language slips in naturally.",
-  tutorial_imm_heading: "What immersion actually does",
-  tutorial_imm_p1_term: "Only part of the text",
-  tutorial_imm_p1_desc: "Veksha swaps in just some phrases — not the whole page — so reading stays natural while new language slips in.",
-  tutorial_imm_p2_term: "Comprehensible input",
-  tutorial_imm_p2_desc: "You already understand the rest, so each translated bit clicks from context instead of rote memorization.",
-  tutorial_imm_p3_term: "Tuned to your level (i + 1)",
-  tutorial_imm_p3_desc: "What gets translated sits just one step above what you know — the sweet spot where a language truly sticks.",
-  tutorial_imm_p4_term: "Adaptive, in the background",
-  tutorial_imm_p4_desc: "It leans on the words you've saved and how well you know them, growing bolder as you improve — while you just keep reading.",
-  tutorial_s7_title: "You translate. Veksha teaches.",
-  tutorial_s7_body: "That's the whole idea. Everything you look up is remembered, analyzed, and brought back at the right moment. Start reading — Veksha handles the rest.",
-  tutorial_s8_title: "Go deep on any topic",
-  tutorial_s8_body: "Open the menu to add a topic — “Tenses”, “Medical terminology”, anything — or pick one that's ready. Veksha builds a structured lesson from it: clear blocks you move through at your own pace, with hands-on practice questions checked in real time.",
-  help_title: "Need a hand?",
-  help_body: "Take a quick tour of Veksha",
-  help_start: "Start tour",
-  tour_skip: "Skip",
-  tour_back: "Back",
-  tour_next: "Next",
-  tour_next_first: "Show me how it works",
-  tour_start: "Start →",
-  tour_replay: "↻ replay animation",
-  tour_kb: "Knowledge base",
-  tour_saved: "✓ saved for review",
-  tour_region_tag: "Select an area to translate",
-  tour_tt_title: "Time to review!",
-  tour_tt_sub: "5 words are ready for training",
-  tour_q_badge: "Reverse translation",
-  tour_q_ctx: "You saw it in the video: majestic fjords — now say it in the language you're learning.",
-  tour_q_fb: "✓ Correct! The word moves into long-term memory.",
-  tour_s0_step: "Welcome",
-  tour_s0_title: "Remember words,|without writing them out",
-  tour_s0_text: "You simply use a handy translator — Veksha makes sure you remember everything.",
-  tour_s1_step: "Step 1 · Text",
-  tour_s1_title: "Select text —|it's already yours",
-  tour_s1_text: "Select it like ordinary text — the contextual translator appears instantly. And the word quietly flies into your knowledge base for review.",
-  tour_s1_tag: "🚀 Flies to the base automatically",
-  tour_s2_step: "Step 2 · Smart pick",
-  tour_s2_title: "Select a paragraph —|we keep only the hard part",
-  tour_s2_text: "From a big text Veksha pulls out the words that match your level. Easy ones are skipped, hard ones are saved.",
-  tour_s2_tag: "🎯 Words at your level",
-  tour_s3_step: "Step 3 · YouTube",
-  tour_s3_title: "Watch a video —|translate the subtitles",
-  tour_s3_text: "Tap a word right in the subtitles. It gets translated and lands in your base — same as when reading.",
-  tour_s3_tag: "▶ Works in subtitles",
-  tour_s4_step: "Step 4 · Documents",
-  tour_s4_title: "Even in PDF —|via the menu",
-  tour_s4_text: "Select text, right-click → “Translate in Veksha”. Works even in documents and books.",
-  tour_s4_tag: "📄 An item in the context menu",
-  tour_s5_step: "Step 5 · Images",
-  tour_s5_title: "Text on a picture?|Select the area",
-  tour_s5_text: "Draw a box right over the image — Veksha reads the text and translates it. Posters, memes, screenshots.",
-  tour_s5_tag: "🖼️ Area selection over a photo",
-  tour_s6_step: "Step 6 · Review",
-  tour_s6_title: "And then —|it reminds you itself",
-  tour_s6_text: "At the right moment Veksha calls you to a short training and asks exactly what you translated.",
-  tour_s6_tag: "🔁 Brings words back at the right moment",
-  tour_s7_step: "Done",
-  tour_s7_title: "Use me|as your translator",
-  tour_s7_text: "That's all you do. Everything else — remembering, reminding, training — I handle myself.",
+  common_back: "Back",
+  home_translation_body: "Translate a word, phrase, or sentence and get a clean, in-context answer. Useful vocabulary goes to your inbox, so you decide what is worth learning.",
+  home_quick_saved: "✓ saved for review",
+  home_quick_suggested: "Review vocabulary suggestions →",
+  home_hero_title: "Remember words,|without writing them out",
   imm_modal_title: "Immersion mode is on",
   imm_modal_sub: "Some words on the pages you read are replaced with the language you're learning — right as you read.",
   imm_card1_title: "Only part of the text",

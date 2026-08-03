@@ -1,7 +1,10 @@
 /** Grammar Lens — inline, reversible grammatical-role highlighting. */
 import {
   analyzeGrammarLens,
+  getGrammarMemory,
+  setGrammarMemoryStatus,
   type GrammarBlockAnalysis,
+  type GrammarMemoryItem,
   type GrammarRole,
   type GrammarSegment,
 } from "../shared/api";
@@ -42,6 +45,8 @@ let lastAnalysis: { text: string; analysis: GrammarBlockAnalysis } | null = null
 let analysisLoading = false;
 let analysisError: string | null = null;
 let analysisSequence = 0;
+let memoryItems: GrammarMemoryItem[] = [];
+let memoryLoading = false;
 
 export function initGrammarLens(value: GrammarLensDeps): void {
   deps = value;
@@ -62,6 +67,7 @@ export function setGrammarLensEnabled(on: boolean): void {
     observer = new MutationObserver(scheduleScan);
     observer.observe(document.body, { childList: true, subtree: true });
     scheduleScan();
+    void refreshGrammarMemory();
   } else {
     window.removeEventListener("scroll", scheduleScan);
     window.removeEventListener("resize", scheduleScan);
@@ -77,6 +83,8 @@ export function setGrammarLensEnabled(on: boolean): void {
     analysisLoading = false;
     analysisError = null;
     analysisSequence += 1;
+    memoryItems = [];
+    memoryLoading = false;
   }
 }
 
@@ -139,7 +147,10 @@ async function scan(): Promise<void> {
     }
 
     if (pending.length) {
-      const response = await analyzeGrammarLens(pending.map((item) => item.text));
+      const response = await analyzeGrammarLens(
+        pending.map((item) => item.text),
+        location.href,
+      );
       if (!enabled || scanGeneration !== generation) return;
       response.blocks.forEach((block, index) => {
         const source = pending[index];
@@ -147,6 +158,7 @@ async function scan(): Promise<void> {
         sessionCache.set(source.text, block);
         ready.push({ node: source.node, analysis: block });
       });
+      void refreshGrammarMemory();
     }
 
     if (!enabled || scanGeneration !== generation) return;
@@ -243,7 +255,7 @@ function renderLegend(loading: boolean): void {
     const header = document.createElement("div");
     header.className = "veksha-grammar-legend-header";
     const title = document.createElement("strong");
-    title.textContent = deps.t("grammar_lens_title", "Grammar Lens");
+    title.textContent = deps.t("grammar_memory_title", "Grammar Memory");
     const buttons = document.createElement("div");
     buttons.className = "veksha-grammar-legend-buttons";
     const toggle = document.createElement("button");
@@ -257,7 +269,7 @@ function renderLegend(loading: boolean): void {
     const close = document.createElement("button");
     close.type = "button";
     close.textContent = "×";
-    close.title = deps.t("grammar_lens_disable", "Turn off Grammar Lens");
+    close.title = deps.t("grammar_memory_disable", "Turn off Grammar Memory");
     close.addEventListener("click", () => {
       void chrome.storage.local.set({ [CONFIG.STORAGE_KEY_GRAMMAR_LENS]: false });
       setGrammarLensEnabled(false);
@@ -292,7 +304,7 @@ function renderLegend(loading: boolean): void {
   }
   const status = legend.querySelector<HTMLElement>(".veksha-grammar-legend-status");
   if (status) {
-    status.textContent = loading ? deps.t("grammar_lens_loading", "Analyzing visible text…") : "";
+    status.textContent = loading ? deps.t("grammar_memory_scanning", "Analyzing visible text…") : "";
     status.hidden = !loading;
   }
 }
@@ -303,7 +315,8 @@ function syncLegendMode(): void {
   const detail = legend.querySelector<HTMLElement>(".veksha-grammar-detail");
   const hint = legend.querySelector<HTMLElement>(".veksha-grammar-legend-hint");
   const toggle = legend.querySelector<HTMLButtonElement>(".veksha-grammar-legend-toggle");
-  const hasContent = Boolean(lastAnalysis) || analysisLoading || Boolean(analysisError);
+  const hasContent = Boolean(lastAnalysis) || memoryItems.length > 0 || memoryLoading
+    || analysisLoading || Boolean(analysisError);
   if (!hasContent) expanded = false;
   if (detail) detail.hidden = !expanded;
   if (hint) hint.hidden = expanded;
@@ -311,8 +324,8 @@ function syncLegendMode(): void {
     toggle.textContent = expanded ? "–" : "+";
     toggle.disabled = !expanded && !hasContent;
     toggle.title = expanded
-      ? deps.t("grammar_lens_collapse", "Collapse the analysis")
-      : deps.t("grammar_lens_expand", "Show the last analysis");
+      ? deps.t("grammar_memory_collapse", "Collapse the analysis")
+      : deps.t("grammar_memory_expand", "Show grammar memory");
   }
 }
 
@@ -337,19 +350,15 @@ function renderDetail(): void {
     syncLegendMode();
     return;
   }
-  if (!lastAnalysis) {
-    syncLegendMode();
-    return;
-  }
-
-  const quote = document.createElement("q");
-  quote.className = "veksha-grammar-detail-quote";
-  quote.textContent = lastAnalysis.text;
-  detail.appendChild(quote);
-
   const body = document.createElement("div");
   body.className = "veksha-grammar-detail-body";
-  const { segments, annotations } = lastAnalysis.analysis;
+  if (lastAnalysis) {
+    const quote = document.createElement("q");
+    quote.className = "veksha-grammar-detail-quote";
+    quote.textContent = lastAnalysis.text;
+    detail.appendChild(quote);
+  }
+  const { segments, annotations } = lastAnalysis?.analysis ?? { segments: [], annotations: [] };
 
   if (segments.length) {
     const rolesTitle = document.createElement("strong");
@@ -396,12 +405,14 @@ function renderDetail(): void {
     }
   }
 
-  if (!segments.length && !annotations.length) {
+  if (lastAnalysis && !segments.length && !annotations.length) {
     const empty = document.createElement("div");
     empty.className = "veksha-grammar-detail-loading";
     empty.textContent = deps.t("grammar_analysis_empty", "No notable grammar found in this selection.");
     body.appendChild(empty);
   }
+
+  renderMemory(body);
 
   detail.appendChild(body);
   syncLegendMode();
@@ -431,13 +442,14 @@ export function analyzeGrammarSelection(rawText: string): void {
       }
       let analysis = sessionCache.get(text) ?? null;
       if (!analysis) {
-        const response = await analyzeGrammarLens([text]);
+        const response = await analyzeGrammarLens([text], location.href);
         analysis = response.blocks[0] ?? { segments: [], annotations: [] };
         sessionCache.set(text, analysis);
       }
       if (sequence !== analysisSequence) return;
       analysisLoading = false;
       lastAnalysis = { text, analysis };
+      void refreshGrammarMemory();
       renderDetail();
     } catch (error) {
       console.debug("[grammar-lens] selection analysis failed:", error);
@@ -447,4 +459,89 @@ export function analyzeGrammarSelection(rawText: string): void {
       renderDetail();
     }
   })();
+}
+
+async function refreshGrammarMemory(): Promise<void> {
+  if (!enabled || memoryLoading) return;
+  memoryLoading = true;
+  renderDetail();
+  try {
+    const response = await getGrammarMemory();
+    if (!enabled) return;
+    memoryItems = response.items;
+  } catch (error) {
+    console.debug("[grammar-memory] load failed:", error);
+  } finally {
+    memoryLoading = false;
+    if (enabled) renderDetail();
+  }
+}
+
+function renderMemory(body: HTMLElement): void {
+  const title = document.createElement("strong");
+  title.textContent = deps.t("grammar_memory_patterns", "Your grammar memory");
+  body.appendChild(title);
+  if (memoryLoading && !memoryItems.length) {
+    const loading = document.createElement("div");
+    loading.className = "veksha-grammar-detail-loading";
+    loading.textContent = deps.t("grammar_memory_loading", "Loading saved patterns…");
+    body.appendChild(loading);
+    return;
+  }
+  if (!memoryItems.length) {
+    const empty = document.createElement("div");
+    empty.className = "veksha-grammar-detail-loading";
+    empty.textContent = deps.t(
+      "grammar_memory_empty",
+      "Patterns found while you read will collect here.",
+    );
+    body.appendChild(empty);
+    return;
+  }
+  for (const item of memoryItems.slice(0, 8)) {
+    const card = document.createElement("article");
+    card.className = "veksha-grammar-memory-card";
+    if (item.status === "mastered") card.classList.add("is-mastered");
+    const heading = document.createElement("div");
+    const label = document.createElement("b");
+    label.textContent = item.label;
+    const count = document.createElement("small");
+    count.textContent = deps.t("grammar_memory_seen", "Seen {n}×")
+      .replace("{n}", String(item.seen_count));
+    heading.append(label, count);
+    card.appendChild(heading);
+    if (item.explanation) {
+      const explanation = document.createElement("span");
+      explanation.textContent = item.explanation;
+      card.appendChild(explanation);
+    }
+    const example = item.encounters[0]?.example;
+    if (example) {
+      const quote = document.createElement("q");
+      quote.textContent = example;
+      card.appendChild(quote);
+    }
+    const status = document.createElement("button");
+    status.type = "button";
+    status.textContent = item.status === "mastered"
+      ? deps.t("grammar_memory_reopen", "Study again")
+      : deps.t("grammar_memory_mastered", "Mark as mastered");
+    status.addEventListener("click", (event) => {
+      event.stopPropagation();
+      status.disabled = true;
+      const next = item.status === "mastered" ? "learning" : "mastered";
+      void setGrammarMemoryStatus(item.item_id, next)
+        .then((updated) => {
+          memoryItems = memoryItems.map((candidate) => (
+            candidate.item_id === updated.item_id ? updated : candidate
+          ));
+          renderDetail();
+        })
+        .catch(() => {
+          status.disabled = false;
+        });
+    });
+    card.appendChild(status);
+    body.appendChild(card);
+  }
 }

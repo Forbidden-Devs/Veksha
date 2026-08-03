@@ -1,4 +1,3 @@
-import asyncio
 import os
 import sys
 
@@ -8,7 +7,7 @@ os.environ.setdefault("ADMIN_API_SECRET", "test-admin-secret")
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import db
-from llm import _base
+from learning_core_v2_adapters import runtime
 from usage_context import set_usage_user
 
 
@@ -37,51 +36,25 @@ def test_ai_usage_aggregates_by_user_and_period():
     assert len(stats["daily"]) == 30
 
 
-def test_base_call_records_provider_usage(monkeypatch):
+def test_core_provider_usage_records_by_active_user(monkeypatch):
     username = _user("ai_usage_base_call")
     set_usage_user(username)
     recorded = []
+    monkeypatch.setattr(
+        runtime.db, "ai_usage_record", lambda **kwargs: recorded.append(kwargs)
+    )
 
-    class FakeResponse:
-        status = 200
-
-        async def __aenter__(self):
-            return self
-
-        async def __aexit__(self, *_):
-            return None
-
-        def raise_for_status(self):
-            return None
-
-        async def json(self):
-            return {
-                "choices": [{"message": {"content": " done "}}],
-                "usage": {
-                    "prompt_tokens": 15,
-                    "completion_tokens": 7,
-                    "total_tokens": 22,
-                    "prompt_tokens_details": {"cached_tokens": 4},
-                    "completion_tokens_details": {"reasoning_tokens": 2},
-                },
-            }
-
-    class FakeSession:
-        async def __aenter__(self):
-            return self
-
-        async def __aexit__(self, *_):
-            return None
-
-        def post(self, *_args, **_kwargs):
-            return FakeResponse()
-
-    monkeypatch.setattr(_base.aiohttp, "ClientSession", FakeSession)
-    monkeypatch.setattr(_base, "_headers", lambda: {})
-    monkeypatch.setattr(_base.db, "ai_usage_record", lambda **kwargs: recorded.append(kwargs))
-
-    result = asyncio.run(_base._call("system", "user", call_name="test_call", model="gpt-test"))
-    assert result == "done"
+    runtime._record_usage(
+        "test_call",
+        "gpt-test",
+        {
+            "input_tokens": 15,
+            "output_tokens": 7,
+            "total_tokens": 22,
+            "input_tokens_details": {"cached_tokens": 4},
+            "output_tokens_details": {"reasoning_tokens": 2},
+        },
+    )
     assert recorded == [{
         "username": username,
         "call_name": "test_call",
