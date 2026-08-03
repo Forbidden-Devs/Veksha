@@ -8,8 +8,9 @@ Type=oneshot
 User=deploy
 Group=deploy
 WorkingDirectory=/srv/veksha
-Environment=VEKSHA_ENV_FILE=/srv/veksha/.env.production
+Environment=VEKSHA_ROOT=/srv/veksha
+Environment=VEKSHA_ENV_FILE=/srv/veksha/shared/.env.production
 Environment=VEKSHA_BACKUP_DIR=/srv/veksha/backups
 Environment=VEKSHA_BACKUP_RETENTION_DAYS=7
 EnvironmentFile=-/etc/veksha/backup.env
-ExecStart=/srv/veksha/ops/hetzner/backup-postgres.sh
+ExecStart=/srv/veksha/bin/backup-postgres.sh

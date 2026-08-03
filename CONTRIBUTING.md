@@ -32,7 +32,7 @@ Web также проверяется при изменении extension, по�
 ## Деплой
 
 Push в `master` ничего не разворачивает. Следующая версия готовится к ручному
-деплою конкретного commit SHA на Hetzner VPS; до прохождения staging-runbook это
-не считается production-контуром. Решение описано в
+деплою локально собранного release конкретного commit SHA на netcup VPS; до
+прохождения staging-runbook это не считается production-контуром. Решение описано в
 [`docs/next-version.md`](docs/next-version.md), а процедура — в
 [`docs/deployment.md`](docs/deployment.md).

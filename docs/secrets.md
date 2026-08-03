@@ -1,8 +1,8 @@
 # Секреты и переменные
 
 Значения секретов никогда не добавляются в Git, документацию, артефакты или
-логи. Локальный запуск использует `.env`, созданный из `.env.example`, а первый
-Hetzner staging — `.env.production`, созданный из `.env.production.example`.
+логи. Локальный запуск использует `.env`, созданный из `.env.example`, а VPS —
+`.env.production`, созданный из `.env.production.example`.
 Оба файла исключены из Git.
 
 ## Backend
@@ -19,6 +19,8 @@ Hetzner staging — `.env.production`, созданный из `.env.production.
 - `VEKSHA_ENVIRONMENT` — `local` для разработки и другое явное значение в
   будущем hosted runtime.
 - `VEKSHA_REVISION` — идентификатор исходной ревизии, возвращаемый healthcheck.
+- `VEKSHA_IMAGE_TAG` — тег application images; установщик release задаёт его как
+  `<VEKSHA_REVISION>-<VEKSHA_ENVIRONMENT>`.
 
 ## Telegram bot и admin
 
@@ -32,11 +34,11 @@ Admin получает `VITE_BACKEND_URL` во время сборки. `ADMIN_A
 
 ## Будущий hosting
 
-На первом Hetzner VPS production-секреты хранятся в доступном только владельцу
-`deploy` файле `/srv/veksha/.env.production` с mode `600`; шаблон находится в
-`.env.production.example`. Это переходное решение до появления отдельного
-secret manager. Секреты из Railway не переносятся как есть — для Hetzner они
-перевыпускаются.
+На VPS секреты хранятся в доступном только владельцу `deploy` файле
+`/srv/veksha/shared/.env.production` с mode `600`; шаблон находится в
+`.env.production.example`. Файл не входит в release archive. Это переходное
+решение до появления отдельного secret manager. Старые секреты не используются:
+для нового runtime они перевыпускаются.
 
 Credentials внешнего backup-хранилища находятся в конфигурации `rclone`, а
 несекретный адрес remote — в `/etc/veksha/backup.env`. Эти файлы не добавляются

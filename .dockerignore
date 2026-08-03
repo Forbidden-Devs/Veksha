@@ -11,3 +11,5 @@
 veksha-extension/artifacts
 veksha-extension/.dev-profiles
 veksha-backend/local_models
+/releases
+/backups

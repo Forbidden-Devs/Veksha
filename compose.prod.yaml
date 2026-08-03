@@ -24,7 +24,7 @@ services:
       VEKSHA_APP_DOMAIN: ${VEKSHA_APP_DOMAIN:?Set VEKSHA_APP_DOMAIN}
       VEKSHA_API_DOMAIN: ${VEKSHA_API_DOMAIN:?Set VEKSHA_API_DOMAIN}
     volumes:
-      - ./ops/hetzner/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./ops/vps/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy-data:/data
       - caddy-config:/config
     networks:
@@ -68,9 +68,9 @@ services:
 
   backend:
     <<: *service-defaults
-    image: veksha/backend:${VEKSHA_REVISION:?Set VEKSHA_REVISION}
-    build:
-      context: ./veksha-backend
+    image: veksha/backend:${VEKSHA_IMAGE_TAG:?Set VEKSHA_IMAGE_TAG}
+    pull_policy: never
+    platform: linux/amd64
     read_only: true
     tmpfs:
       - /tmp:size=128m,mode=1777
@@ -125,12 +125,9 @@ services:
 
   web:
     <<: *service-defaults
-    image: veksha/web:${VEKSHA_REVISION:?Set VEKSHA_REVISION}
-    build:
-      context: .
-      dockerfile: veksha-web/Dockerfile
-      args:
-        VITE_BACKEND_URL: https://${VEKSHA_API_DOMAIN:?Set VEKSHA_API_DOMAIN}
+    image: veksha/web:${VEKSHA_IMAGE_TAG:?Set VEKSHA_IMAGE_TAG}
+    pull_policy: never
+    platform: linux/amd64
     read_only: true
     tmpfs:
       - /tmp:size=32m,mode=1777
@@ -149,11 +146,9 @@ services:
 
   admin:
     <<: *service-defaults
-    image: veksha/admin:${VEKSHA_REVISION:?Set VEKSHA_REVISION}
-    build:
-      context: ./veksha-admin
-      args:
-        VITE_BACKEND_URL: https://${VEKSHA_API_DOMAIN:?Set VEKSHA_API_DOMAIN}
+    image: veksha/admin:${VEKSHA_IMAGE_TAG:?Set VEKSHA_IMAGE_TAG}
+    pull_policy: never
+    platform: linux/amd64
     read_only: true
     tmpfs:
       - /tmp:size=32m,mode=1777
@@ -176,9 +171,9 @@ services:
   tgbot:
     <<: *service-defaults
     profiles: ["telegram"]
-    image: veksha/tgbot:${VEKSHA_REVISION:?Set VEKSHA_REVISION}
-    build:
-      context: ./veksha-tgbot
+    image: veksha/tgbot:${VEKSHA_IMAGE_TAG:?Set VEKSHA_IMAGE_TAG}
+    pull_policy: never
+    platform: linux/amd64
     read_only: true
     tmpfs:
       - /tmp:size=32m,mode=1777

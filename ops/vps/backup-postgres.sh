@@ -2,15 +2,15 @@
 set -eu
 umask 077
 
-script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-repo_root=$(CDPATH= cd -- "$script_dir/../.." && pwd)
-env_file=${VEKSHA_ENV_FILE:-"$repo_root/.env.production"}
+root_dir=${VEKSHA_ROOT:-/srv/veksha}
+release_dir="$root_dir/current"
+env_file=${VEKSHA_ENV_FILE:-"$root_dir/shared/.env.production"}
 compose_project=${VEKSHA_COMPOSE_PROJECT:-veksha}
-backup_dir=${VEKSHA_BACKUP_DIR:-"$repo_root/backups"}
+backup_dir=${VEKSHA_BACKUP_DIR:-"$root_dir/backups"}
 retention_days=${VEKSHA_BACKUP_RETENTION_DAYS:-7}
-state_dir="$repo_root/.deployments"
+manifest="$release_dir/manifest.env"
 
-cd "$repo_root"
+cd "$root_dir"
 
 if [ ! -f "$env_file" ]; then
   echo "Missing production environment file: $env_file" >&2
@@ -29,20 +29,21 @@ if [ "$retention_days" -lt 1 ]; then
   exit 1
 fi
 
-if [ -f "$state_dir/current" ]; then
-  VEKSHA_REVISION=$(sed -n '1p' "$state_dir/current")
-else
-  VEKSHA_REVISION=$(git rev-parse --verify HEAD)
+if [ ! -f "$manifest" ]; then
+  echo "No active release manifest: $manifest" >&2
+  exit 1
 fi
-export VEKSHA_REVISION
+VEKSHA_REVISION=$(sed -n 's/^revision=//p' "$manifest" | sed -n '1p')
+VEKSHA_IMAGE_TAG=$(sed -n 's/^image_tag=//p' "$manifest" | sed -n '1p')
+export VEKSHA_REVISION VEKSHA_IMAGE_TAG
 
 if docker compose version >/dev/null 2>&1; then
   compose() {
-    docker compose --project-name "$compose_project" --env-file "$env_file" -f compose.prod.yaml "$@"
+    docker compose --project-name "$compose_project" --env-file "$env_file" -f "$release_dir/compose.prod.yaml" "$@"
   }
 elif docker-compose version >/dev/null 2>&1; then
   compose() {
-    docker-compose --project-name "$compose_project" --env-file "$env_file" -f compose.prod.yaml "$@"
+    docker-compose --project-name "$compose_project" --env-file "$env_file" -f "$release_dir/compose.prod.yaml" "$@"
   }
 else
   echo "Docker Compose v2 is required." >&2

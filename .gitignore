@@ -47,8 +47,8 @@ veksha-extension/icons/Untitled.png
 !.env.example
 !.env.production.example
 !**/.env.example
-.deployments/
 backups/
+/releases/
 .claude/
 
 # OS
