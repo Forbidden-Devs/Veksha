@@ -120,7 +120,9 @@ docker save $images > "$release_dir/images.tar"
 )
 
 archive="$output_dir/veksha-$release_id.tar.gz"
-tar -C "$temporary_dir" -czf "$archive" release
+# Prevent macOS tar from adding AppleDouble/xattr records that GNU tar would
+# otherwise unpack as extra files on the Linux server.
+COPYFILE_DISABLE=1 tar -C "$temporary_dir" -czf "$archive" release
 (
   cd "$output_dir"
   archive_name=$(basename -- "$archive")

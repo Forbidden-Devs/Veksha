@@ -105,7 +105,7 @@ done
 
 mv "$unpacked" "$release_dir"
 trap 'rm -rf "$temporary_dir"' EXIT HUP INT TERM
-rmdir "$temporary_dir"
+rm -rf "$temporary_dir"
 trap - EXIT HUP INT TERM
 
 activate_release() {
