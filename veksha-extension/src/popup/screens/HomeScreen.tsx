@@ -23,8 +23,7 @@ const Icons = {
   dictionary: <svg viewBox="0 0 24 24"><path d="M4 5.5A3.5 3.5 0 0 1 7.5 2H11v17H7.5A3.5 3.5 0 0 0 4 22V5.5Z"/><path d="M20 5.5A3.5 3.5 0 0 0 16.5 2H13v17h3.5A3.5 3.5 0 0 1 20 22V5.5Z"/></svg>,
   topics: <svg viewBox="0 0 24 24"><path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>,
   training: <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="m15 9 5-5M16 4h4v4"/></svg>,
-  immersion: <svg viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/><circle cx="12" cy="12" r="3.5"/></svg>,
-  ciMeter: <svg viewBox="0 0 24 24"><path d="M4 18a8 8 0 0 1 16 0"/><path d="M12 18l4.5-6"/><circle cx="12" cy="18" r="1.2"/></svg>,
+  readingCoach: <svg viewBox="0 0 24 24"><path d="M4 18a8 8 0 0 1 16 0"/><path d="M12 18l4.5-6"/><circle cx="12" cy="18" r="1.2"/></svg>,
   stats: <svg viewBox="0 0 24 24"><path d="M5 20V10h4v10M10 20V4h4v16M15 20v-7h4v7M3 20h18"/></svg>,
   settings: <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6 1.7 1.7 0 0 0 10 3v-.2h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z"/></svg>,
   language: <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.2 2.5 3.3 5.5 3.3 9S14.2 18.5 12 21c-2.2-2.5-3.3-5.5-3.3-9S9.8 5.5 12 3Z"/></svg>,
@@ -41,15 +40,14 @@ export function HomeScreen() {
   const t = useT();
   const [counts, setCounts] = useState<{ words: number; due: number } | null>(null);
   const [settings, setSettings] = useState<SettingsData | null>(null);
-  const [ciMeterOn, setCiMeterOn] = useState(false);
+  const [readingCoachOn, setReadingCoachOn] = useState(false);
   const [grammarLensOn, setGrammarLensOn] = useState(false);
-  const [immersionOn, setImmersionOn] = useState(false);
   const [vocabFreqOn, setVocabFreqOn] = useState(false);
   const [dualSubsEnabled, setDualSubsEnabled] = useState(false);
   const [activeUrl, setActiveUrl] = useState("");
   const [aiBlocklist, setAiBlocklist] = useState<AiBlocklist>({ sites: [], pages: [], allowedPages: [] });
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
-  const [featureGuide, setFeatureGuide] = useState<"immersion" | "ci_meter" | "dual_subtitles" | "grammar_memory" | "my_words" | null>(null);
+  const [featureGuide, setFeatureGuide] = useState<"reading_coach" | "dual_subtitles" | "grammar_memory" | "my_words" | null>(null);
   const [quickText, setQuickText] = useState("");
   const [quickResult, setQuickResult] = useState<string | null>(null);
   const [quickVocabularyMode, setQuickVocabularyMode] = useState<"saved" | "suggested">("saved");
@@ -99,6 +97,7 @@ export function HomeScreen() {
   useEffect(() => {
     storageGet([
       CONFIG.STORAGE_KEY_CI_METER,
+      CONFIG.STORAGE_KEY_READING_COACH,
       CONFIG.STORAGE_KEY_GRAMMAR_LENS,
       CONFIG.STORAGE_KEY_IMMERSION,
       CONFIG.STORAGE_KEY_VOCAB_FREQ,
@@ -106,9 +105,19 @@ export function HomeScreen() {
       CONFIG.STORAGE_KEY_DUAL_SUBS,
       CONFIG.STORAGE_KEY_AI_BLOCKLIST,
     ]).then((result) => {
-      setCiMeterOn(Boolean(result[CONFIG.STORAGE_KEY_CI_METER]));
+      const legacyImmersion = Boolean(result[CONFIG.STORAGE_KEY_IMMERSION]);
+      const legacyReadingCoach = result[CONFIG.STORAGE_KEY_CI_METER];
+      const readingCoachEnabled = result[CONFIG.STORAGE_KEY_READING_COACH] === undefined
+        ? (legacyReadingCoach === undefined ? legacyImmersion : Boolean(legacyReadingCoach))
+        : Boolean(result[CONFIG.STORAGE_KEY_READING_COACH]);
+      setReadingCoachOn(readingCoachEnabled);
       setGrammarLensOn(Boolean(result[CONFIG.STORAGE_KEY_GRAMMAR_LENS]));
-      setImmersionOn(Boolean(result[CONFIG.STORAGE_KEY_IMMERSION]));
+      if (legacyImmersion || result[CONFIG.STORAGE_KEY_READING_COACH] === undefined) {
+        void storageSet({
+          [CONFIG.STORAGE_KEY_READING_COACH]: readingCoachEnabled,
+          [CONFIG.STORAGE_KEY_IMMERSION]: false,
+        });
+      }
       setVocabFreqOn(Boolean(result[CONFIG.STORAGE_KEY_VOCAB_FREQ]));
       const storedDualSubsFeature = result[CONFIG.STORAGE_KEY_DUAL_SUBS_FEATURE];
       const legacyDualSubsEnabled = Boolean(result[CONFIG.STORAGE_KEY_DUAL_SUBS]);
@@ -144,14 +153,14 @@ export function HomeScreen() {
     void updateAiBlocklist(next);
   }
 
-  async function toggleCiMeter() {
-    const next = !ciMeterOn;
-    setCiMeterOn(next);
-    await storageSet({ [CONFIG.STORAGE_KEY_CI_METER]: next });
+  async function toggleReadingCoach() {
+    const next = !readingCoachOn;
+    setReadingCoachOn(next);
+    await storageSet({ [CONFIG.STORAGE_KEY_READING_COACH]: next });
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       if (tab?.id) {
-        await chrome.tabs.sendMessage(tab.id, { type: "VEKSHA_TOGGLE_CI_METER", enabled: next });
+        await chrome.tabs.sendMessage(tab.id, { type: "VEKSHA_TOGGLE_READING_COACH", enabled: next });
       }
     } catch {
       // Restricted pages cannot receive content-script messages; the saved
@@ -163,45 +172,14 @@ export function HomeScreen() {
     const next = !grammarLensOn;
     if (next && !(await requirePremiumFeature("grammar_lens", t.grammar_memory_title))) return;
     setGrammarLensOn(next);
-    if (next) setImmersionOn(false);
-    await storageSet({
-      [CONFIG.STORAGE_KEY_GRAMMAR_LENS]: next,
-      ...(next ? { [CONFIG.STORAGE_KEY_IMMERSION]: false } : {}),
-    });
+    await storageSet({ [CONFIG.STORAGE_KEY_GRAMMAR_LENS]: next });
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       if (tab?.id) {
-        if (next) await chrome.tabs.sendMessage(tab.id, { type: "VEKSHA_TOGGLE_IMMERSION", enabled: false });
         await chrome.tabs.sendMessage(tab.id, { type: "VEKSHA_TOGGLE_GRAMMAR_LENS", enabled: next });
       }
     } catch {
       // The saved preference is applied on the next regular page.
-    }
-  }
-
-  async function toggleImmersion() {
-    const next = !immersionOn;
-    if (next && !(await requirePremiumFeature("immersion", t.nav_immersion))) return;
-    setImmersionOn(next);
-    if (next) setGrammarLensOn(false);
-    try {
-      await storageSet({
-        [CONFIG.STORAGE_KEY_IMMERSION]: next,
-        ...(next ? { [CONFIG.STORAGE_KEY_GRAMMAR_LENS]: false } : {}),
-      });
-    } catch {
-      setImmersionOn(!next);
-      if (next) setGrammarLensOn(grammarLensOn);
-      return;
-    }
-    try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (tab?.id) {
-        if (next) await chrome.tabs.sendMessage(tab.id, { type: "VEKSHA_TOGGLE_GRAMMAR_LENS", enabled: false });
-        await chrome.tabs.sendMessage(tab.id, { type: "VEKSHA_TOGGLE_IMMERSION", enabled: next });
-      }
-    } catch {
-      // Restricted pages apply the saved preference on the next regular page.
     }
   }
 
@@ -342,30 +320,6 @@ export function HomeScreen() {
             <span className="capability-card-label">{t.ocr_translate_area}</span>
           </button>
         )}
-        {isExtension ? (
-          <div className="capability-control">
-            <button
-              className={`capability-card capability-toggle ${aiBlocked ? "is-blocked" : immersionOn ? "is-on" : "is-off"}`}
-              onClick={toggleImmersion}
-              disabled={aiBlocked}
-              aria-pressed={immersionOn}
-            >
-              <span className="capability-card-icon">{Icons.immersion}</span>
-              <span className="capability-card-label">{t.nav_immersion}</span>
-              <span className="capability-state">
-                <i aria-hidden="true" />
-                {aiBlocked ? t.feature_blocked : immersionOn ? t.feature_enabled : t.feature_disabled}
-              </span>
-            </button>
-            <button
-              type="button"
-              className="capability-help"
-              aria-label={`${t.feature_guide_open}: ${t.nav_immersion}`}
-              title={t.feature_guide_open}
-              onClick={() => setFeatureGuide("immersion")}
-            >?</button>
-          </div>
-        ) : <div className="capability-card capability-card-ghost" aria-hidden="true" />}
         {isExtension && (
           <div className="capability-control">
             <button
@@ -417,16 +371,16 @@ export function HomeScreen() {
         {isExtension && (
           <div className="capability-control">
             <button
-              className={`capability-card capability-toggle ${aiBlocked ? "is-blocked" : ciMeterOn ? "is-on" : "is-off"}`}
-              onClick={toggleCiMeter}
+              className={`capability-card capability-toggle ${aiBlocked ? "is-blocked" : readingCoachOn ? "is-on" : "is-off"}`}
+              onClick={toggleReadingCoach}
               disabled={aiBlocked}
-              aria-pressed={ciMeterOn}
+              aria-pressed={readingCoachOn}
             >
-              <span className="capability-card-icon">{Icons.ciMeter}</span>
+              <span className="capability-card-icon">{Icons.readingCoach}</span>
               <span className="capability-card-label">{t.ci_meter_off}</span>
               <span className="capability-state">
                 <i aria-hidden="true" />
-                {aiBlocked ? t.feature_blocked : ciMeterOn ? t.feature_enabled : t.feature_disabled}
+                {aiBlocked ? t.feature_blocked : readingCoachOn ? t.feature_enabled : t.feature_disabled}
               </span>
             </button>
             <button
@@ -434,7 +388,7 @@ export function HomeScreen() {
               className="capability-help"
               aria-label={`${t.feature_guide_open}: ${t.ci_meter_off}`}
               title={t.feature_guide_open}
-              onClick={() => setFeatureGuide("ci_meter")}
+              onClick={() => setFeatureGuide("reading_coach")}
             >?</button>
           </div>
         )}
@@ -518,64 +472,50 @@ export function HomeScreen() {
           >
             <button className="feature-guide-close" onClick={() => setFeatureGuide(null)} aria-label={t.feature_guide_close}>×</button>
             <span className="feature-guide-icon" aria-hidden="true">
-              {featureGuide === "ci_meter"
-                ? Icons.ciMeter
+              {featureGuide === "reading_coach"
+                ? Icons.readingCoach
                 : featureGuide === "grammar_memory"
                   ? Icons.grammar
                 : featureGuide === "dual_subtitles"
                   ? Icons.dualSubtitles
-                  : featureGuide === "immersion"
-                    ? Icons.immersion
-                    : Icons.myWords}
+                  : Icons.myWords}
             </span>
             <h2 id="feature-guide-title">
-              {featureGuide === "ci_meter"
+              {featureGuide === "reading_coach"
                 ? t.reading_coach_guide_title
                 : featureGuide === "grammar_memory"
                   ? t.grammar_memory_guide_title
                 : featureGuide === "dual_subtitles"
                   ? t.dual_subtitles_guide_title
-                  : featureGuide === "immersion"
-                    ? t.nav_immersion
-                    : t.my_words_title}
+                  : t.my_words_title}
             </h2>
             <p className="feature-guide-intro">
-              {featureGuide === "ci_meter"
+              {featureGuide === "reading_coach"
                 ? t.reading_coach_guide_intro
                 : featureGuide === "grammar_memory"
                   ? t.grammar_memory_guide_intro
                 : featureGuide === "dual_subtitles"
                   ? t.dual_subtitles_guide_intro
-                  : featureGuide === "immersion"
-                    ? t.imm_modal_sub
-                    : t.my_words_intro}
+                  : t.my_words_intro}
             </p>
             <ol>
-              {(featureGuide === "ci_meter"
+              {(featureGuide === "reading_coach"
                 ? [t.reading_coach_guide_step_1, t.reading_coach_guide_step_2, t.reading_coach_guide_step_3]
                 : featureGuide === "grammar_memory"
                   ? [t.grammar_memory_guide_step_1, t.grammar_memory_guide_step_2, t.grammar_memory_guide_step_3]
                 : featureGuide === "dual_subtitles"
                   ? [t.dual_subtitles_guide_step_1, t.dual_subtitles_guide_step_2, t.dual_subtitles_guide_step_3]
-                  : featureGuide === "immersion"
-                    ? [
-                        `${t.imm_card1_title}. ${t.imm_card1_desc}`,
-                        `${t.imm_card2_title}. ${t.imm_card2_desc}`,
-                        `${t.imm_card3_title}. ${t.imm_card3_desc}`,
-                      ]
-                    : [t.my_words_guide_step_1, t.my_words_guide_step_2, t.my_words_guide_step_3]
+                  : [t.my_words_guide_step_1, t.my_words_guide_step_2, t.my_words_guide_step_3]
               ).map((step, index) => <li key={index}>{step}</li>)}
             </ol>
             <p className="feature-guide-tip">
-              {featureGuide === "ci_meter"
+              {featureGuide === "reading_coach"
                 ? t.reading_coach_guide_tip
                 : featureGuide === "grammar_memory"
                   ? t.grammar_memory_guide_tip
                 : featureGuide === "dual_subtitles"
                   ? t.dual_subtitles_guide_tip
-                  : featureGuide === "immersion"
-                    ? t.immersion_hint
-                    : t.my_words_guide_tip}
+                  : t.my_words_guide_tip}
             </p>
             <button className="btn btn-gradient btn-block" type="button" onClick={() => setFeatureGuide(null)}>
               {t.feature_guide_close}

@@ -25,6 +25,7 @@ export const CONFIG = {
   STORAGE_KEY_NATIVE_LANG: "veksha_native_lang",
   STORAGE_KEY_IMMERSION: "veksha_immersion_on",
   STORAGE_KEY_CI_METER: "veksha_ci_meter_on",
+  STORAGE_KEY_READING_COACH: "veksha_reading_coach_on",
   STORAGE_KEY_GRAMMAR_LENS: "veksha_grammar_lens_on",
   STORAGE_KEY_VOCAB_FREQ: "veksha_vocab_freq_on",
   STORAGE_KEY_AI_BLOCKLIST: "veksha_ai_blocklist",

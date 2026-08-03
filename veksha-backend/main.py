@@ -26,7 +26,6 @@ from api import auth as api_auth
 from api import admin
 from api import billing
 from api import debug, settings
-from api import immersion_v2 as immersion
 from api import i18n as api_i18n
 from api import lesson_v2 as lesson
 from api import ocr
@@ -104,7 +103,6 @@ app.include_router(settings.router)
 app.include_router(training.router)
 app.include_router(lesson.router)
 app.include_router(api_i18n.router)
-app.include_router(immersion.router)
 app.include_router(grammar_lens.router)
 app.include_router(quizlet.router)
 app.include_router(vocab_frequency.router)

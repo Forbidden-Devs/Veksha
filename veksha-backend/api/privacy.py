@@ -106,7 +106,7 @@ async def privacy_policy() -> str:
   <h2>Information sharing and service providers</h2>
   <p>The extension sends the information required for a requested feature to
   the Veksha production service. Text submitted for translation, explanation,
-  chat, grammar, immersion, lesson, subtitle, OCR-related, or training
+  chat, grammar, Reading Coach, lesson, subtitle, OCR-related, or training
   features may be processed by OpenAI's API to generate the requested result.
   User-selected image crops may first be processed by Google Cloud Vision for
   text recognition; OpenAI vision is used when primary OCR is unavailable.
@@ -118,11 +118,13 @@ async def privacy_policy() -> str:
 
   <h2>Browser permissions and local storage</h2>
   <p>Veksha accesses page content only to provide features the user enables or
-  invokes, such as selection translation, immersion, grammar analysis,
+  invokes, such as selection translation, Reading Coach analysis, grammar analysis,
   subtitle tools, vocabulary frequency, reminders, and OCR. The extension
   stores an authentication token, account identifier, preferences, and
   feature state in local browser extension storage so it can work across
-  sessions. Area captures are kept temporarily in extension session memory, consumed
+  sessions. Reading passages used for a comprehension question are kept in
+  temporary server memory for up to 15 minutes and removed after the answer is
+  checked; they are not added to the learning database. Area captures are kept temporarily in extension session memory, consumed
   once by the capture workspace, and are not written to browser storage.</p>
 
   <h2>Retention and security</h2>

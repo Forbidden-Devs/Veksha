@@ -13,7 +13,6 @@ from learning_core_v2.catalog_translation import TranslateCatalog
 from learning_core_v2.dictionary import EnrichDictionaryEntry
 from learning_core_v2.explanation import ExplainText
 from learning_core_v2.grammar_analysis import AnalyzeGrammar
-from learning_core_v2.immersion import AnalyzeImmersion
 from learning_core_v2.lesson import (
     BuildLessonQuestion,
     CheckLessonAnswer,
@@ -21,6 +20,7 @@ from learning_core_v2.lesson import (
 )
 from learning_core_v2.phrase_mining import MinePhraseVocabulary
 from learning_core_v2.practice import BuildPracticeTask, CheckPracticeAnswer
+from learning_core_v2.reading_coach import BuildReadingQuestion, CheckReadingAnswer
 from learning_core_v2.sentence_mining import BuildSentenceMiningCard
 from learning_core_v2.subtitles import TranslateSubtitles
 from learning_core_v2.translation import TranslateText, VocabularySink
@@ -28,7 +28,6 @@ from storage import UserStorage
 from usage_context import get_usage_user
 
 from .openai_responses import OpenAIResponsesLanguageProvider
-from .immersion import CachedImmersionProvider
 from .grammar import CachedGrammarProvider
 from .practice import RandomChoiceSource, UuidIdentifierSource
 from .subtitles import CachedSubtitleTranslator
@@ -154,7 +153,8 @@ def build_lesson_services() -> tuple[
     )
 
 
-@lru_cache(maxsize=1)
-def build_immersion_analyzer() -> AnalyzeImmersion:
-    provider = _provider("VEKSHA_CORE_V2_IMMERSION_MODEL", "gpt-5.6-luna")
-    return AnalyzeImmersion(CachedImmersionProvider(provider))
+def build_reading_comprehension_services() -> tuple[
+    BuildReadingQuestion, CheckReadingAnswer
+]:
+    provider = _provider("VEKSHA_CORE_V2_READING_MODEL", "gpt-5.6-luna")
+    return BuildReadingQuestion(provider), CheckReadingAnswer(provider)

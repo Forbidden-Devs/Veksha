@@ -15,7 +15,7 @@ def test_main_composes_only_rewritten_learning_routers():
         for alias in node.names
     }
 
-    assert {"translate_v2", "training_v2", "lesson_v2", "immersion_v2"} <= imports
+    assert {"translate_v2", "training_v2", "lesson_v2", "reading_coach"} <= imports
     assert not {"translate", "training", "lesson", "immersion", "ci_meter"} & imports
 
 
@@ -37,6 +37,8 @@ def test_migration_flags_and_legacy_entrypoints_are_gone():
         "api/training.py",
         "api/lesson.py",
         "api/immersion.py",
+        "api/immersion_v2.py",
+        "api/immersion_contract.py",
         "api/ci_meter.py",
         "selection.py",
         "training.py",

@@ -149,3 +149,21 @@ test("region translation uses a clean capture workspace", () => {
   assert.match(api, /\/api\/ocr\/translate-region/);
   assert.doesNotMatch(capture, /tesseract|offscreen/i);
 });
+
+test("Reading Coach fully replaces page immersion", () => {
+  const home = source("src/popup/screens/HomeScreen.tsx");
+  const runtime = source("src/content/page-runtime.ts");
+  const coach = source("src/content/reading-coach.ts");
+  const api = source("src/shared/api.ts");
+
+  assert.equal(existsSync(path.join(root, "src/content/immersion.ts")), false);
+  assert.equal(existsSync(path.join(root, "src/popup/screens/ImmersionScreen.tsx")), false);
+  assert.match(home, /toggleReadingCoach/);
+  assert.match(runtime, /initReadingCoach/);
+  assert.match(coach, /analyzeReadingCoach/);
+  assert.match(coach, /helpReadingParagraph/);
+  assert.match(coach, /createReadingQuestion/);
+  assert.match(coach, /checkReadingAnswer/);
+  assert.match(runtime, /refreshReadingCoach/);
+  assert.doesNotMatch(`${home}\n${runtime}\n${api}`, /analyzeImmersion|TOGGLE_IMMERSION|Icons\.immersion/);
+});

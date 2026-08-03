@@ -1,7 +1,6 @@
 import { CONFIG } from "../shared/config";
-import { initCiMeter, setCiMeterEnabled } from "./cimeter";
+import { initReadingCoach, refreshReadingCoach, setReadingCoachEnabled } from "./reading-coach";
 import { initGrammarLens, setGrammarLensEnabled } from "./grammar-lens";
-import { initImmersion, setImmersionEnabled } from "./immersion";
 import { closeOverlay, showLessonOverlay, showTrainingOverlay } from "./overlay";
 import { PageReminder } from "./page-reminder";
 import { PageSession, type PageFeaturePolicy } from "./page-session";
@@ -25,8 +24,7 @@ class PageRuntime {
     document.documentElement.dataset.vekshaAiBlocked = "true";
     await this.session.initialize();
 
-    initImmersion({ getUsername: this.session.getUsername });
-    initCiMeter({ getUsername: this.session.getUsername, t: this.session.t });
+    initReadingCoach({ getUsername: this.session.getUsername, t: this.session.t });
     initGrammarLens({ getUsername: this.session.getUsername, t: this.session.t });
     initVocabFreq({ getUsername: this.session.getUsername });
     if (/(^|\.)youtube\.com$/.test(location.hostname)) {
@@ -51,7 +49,6 @@ class PageRuntime {
     } catch {
       this.applyPolicy({
         blocked: true,
-        immersion: false,
         readingCoach: false,
         grammarMemory: false,
         vocabularyTracking: false,
@@ -66,8 +63,7 @@ class PageRuntime {
       this.selection.close();
       closeOverlay();
     }
-    setImmersionEnabled(!policy.blocked && policy.immersion);
-    setCiMeterEnabled(!policy.blocked && policy.readingCoach);
+    setReadingCoachEnabled(!policy.blocked && policy.readingCoach);
     setGrammarLensEnabled(!policy.blocked && policy.grammarMemory);
     setVocabFreqEnabled(!policy.blocked && policy.vocabularyTracking);
     document.dispatchEvent(new CustomEvent("VEKSHA_AI_BLOCK_STATE", {
@@ -79,7 +75,7 @@ class PageRuntime {
     if (location.href === this.currentUrl) return;
     this.currentUrl = location.href;
     this.selection.close();
-    void this.refreshPolicy();
+    void this.refreshPolicy().then(refreshReadingCoach);
   };
 
   private readonly onStorageChanged = (
@@ -117,20 +113,11 @@ class PageRuntime {
       case "VEKSHA_AI_BLOCKLIST_UPDATED":
         void this.refreshPolicy();
         return;
-      case "VEKSHA_TOGGLE_IMMERSION":
-        if (!this.blocked) {
-          if (message.enabled) setGrammarLensEnabled(false);
-          setImmersionEnabled(Boolean(message.enabled));
-        }
-        return;
-      case "VEKSHA_TOGGLE_CI_METER":
-        if (!this.blocked) setCiMeterEnabled(Boolean(message.enabled));
+      case "VEKSHA_TOGGLE_READING_COACH":
+        if (!this.blocked) setReadingCoachEnabled(Boolean(message.enabled));
         return;
       case "VEKSHA_TOGGLE_GRAMMAR_LENS":
-        if (!this.blocked) {
-          if (message.enabled) setImmersionEnabled(false);
-          setGrammarLensEnabled(Boolean(message.enabled));
-        }
+        if (!this.blocked) setGrammarLensEnabled(Boolean(message.enabled));
         return;
       case "VEKSHA_TOGGLE_VOCAB_FREQ":
         if (!this.blocked) setVocabFreqEnabled(Boolean(message.enabled));

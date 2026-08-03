@@ -592,44 +592,6 @@
 }
 
 /* ---------------------------------------------------------------------- */
-/* Page immersion — inline translated sentences ("comprehensible input")   */
-/* Deliberately quiet: inherits the page's font/size/color so it blends in, */
-/* marked only by a faint dotted underline. Hover reveals the original.     */
-/* ---------------------------------------------------------------------- */
-.av-imm {
-  font: inherit;
-  color: inherit;
-  text-decoration: underline dotted;
-  text-decoration-color: color-mix(in srgb, var(--av-accent) 50%, transparent);
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.18em;
-  border-radius: 3px;
-  cursor: help;
-  transition: background-color 0.15s ease, text-decoration-color 0.15s ease;
-}
-
-.av-imm:hover {
-  background-color: color-mix(in srgb, var(--av-accent) 10%, transparent);
-  text-decoration-color: color-mix(in srgb, var(--av-accent) 85%, transparent);
-}
-
-/* Tiny CEFR chip, shown only on hover so it never clutters the page. */
-.av-imm[data-av-cefr]:hover::after {
-  content: attr(data-av-cefr);
-  margin-left: 0.35em;
-  padding: 0 0.35em;
-  border-radius: 4px;
-  background: color-mix(in srgb, var(--av-accent) 14%, transparent);
-  color: var(--av-accent);
-  font-size: 0.7em;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  vertical-align: super;
-  line-height: 1;
-  white-space: nowrap;
-}
-
-/* ---------------------------------------------------------------------- */
 /* Grammar Lens — grammatical roles in the original page text              */
 /* ---------------------------------------------------------------------- */
 .av-grammar {
@@ -1035,7 +997,7 @@
 }
 
 /* ---------------------------------------------------------------------- */
-/* Comprehensible Input Meter — small floating badge (cimeter.ts)          */
+/* Reading Coach — page-readiness badge and vocabulary preparation         */
 /* ---------------------------------------------------------------------- */
 
 .veksha-ci-badge {
@@ -1081,6 +1043,13 @@
   background: var(--av-accent-soft);
   color: var(--av-pink-deep);
   font-weight: 700;
+}
+
+.veksha-reading-structure {
+  margin: -4px 0 10px;
+  color: var(--av-muted);
+  font-size: 10.5px;
+  line-height: 1.4;
 }
 
 .veksha-reading-title {
@@ -1148,3 +1117,43 @@
   font-weight: 600;
   cursor: pointer;
 }
+
+.veksha-reading-tools {
+  display: grid;
+  gap: 7px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--av-border);
+}
+
+.veksha-reading-tools > strong { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+.veksha-reading-tools > p { margin: 0; color: var(--av-muted); line-height: 1.4; }
+.veksha-reading-tool-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.veksha-reading-tool-actions button,
+.veksha-reading-tool-output button {
+  border: 1px solid var(--av-border);
+  border-radius: 8px;
+  padding: 7px 8px;
+  background: var(--av-surface);
+  color: var(--av-ink);
+  font: 600 11px/1.2 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  cursor: pointer;
+}
+.veksha-reading-tool-output { display: grid; gap: 7px; }
+.veksha-reading-tool-output p { margin: 0; line-height: 1.45; }
+.veksha-reading-original { max-height: 88px; overflow: auto; color: var(--av-muted); font-style: italic; }
+.veksha-reading-translation { padding: 7px; border-radius: 7px; background: var(--av-accent-soft); }
+.veksha-reading-question { font-weight: 700; }
+.veksha-reading-tool-output textarea {
+  box-sizing: border-box;
+  width: 100%;
+  resize: vertical;
+  border: 1px solid var(--av-border);
+  border-radius: 8px;
+  padding: 7px;
+  background: var(--av-surface);
+  color: var(--av-ink);
+  font: 12px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+.veksha-reading-tool-output [data-outcome="correct"] { color: var(--av-ok); }
+.veksha-reading-tool-output [data-outcome="incorrect"] { color: var(--av-error); }

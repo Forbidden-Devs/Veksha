@@ -10,7 +10,6 @@ import { ReminderCard } from "./overlays/ReminderCard";
 import { TrainingWindow } from "./overlays/TrainingWindow";
 import { TranslatorScreen } from "./screens/TranslatorScreen";
 import { HomeScreen } from "./screens/HomeScreen";
-import { ImmersionScreen } from "./screens/ImmersionScreen";
 import { DebugScreen } from "./screens/DebugScreen";
 import { DictionaryScreen } from "./screens/DictionaryScreen";
 import { LevelSetupScreen } from "./screens/LevelSetupScreen";
@@ -585,7 +584,6 @@ export default function App() {
     goals: { title: t.lesson_goals_kicker, sub: t.lesson_goals_hint },
     statistics: { title: t.nav_stats, sub: t.sub_stats },
     dictionary: { title: t.dictionary_title, sub: "" },
-    immersion: { title: t.nav_immersion, sub: "" },
     myWords: { title: t.my_words_title, sub: "" },
     quizlet: { title: "Quizlet", sub: "" },
     settings: { title: t.nav_settings, sub: t.sub_settings },
@@ -628,7 +626,6 @@ export default function App() {
             {screen === "translator" && <TranslatorScreen />}
             {screen === "goals" && <LearningGoalsScreen />}
             {screen === "dictionary" && <DictionaryScreen />}
-            {screen === "immersion" && <ImmersionScreen />}
             {screen === "myWords" && <MyWordsScreen />}
             {screen === "settings" && <SettingsScreen />}
             {screen === "subscription" && (
@@ -674,11 +671,11 @@ export default function App() {
         )}
 
         {premiumPrompt && (
-          <div className="imm-modal-backdrop">
-            <div className="imm-modal premium-modal" role="dialog" aria-modal="true" aria-labelledby="premium-required-title">
-              <div className="imm-modal-icon premium-modal-icon" aria-hidden="true">★</div>
+          <div className="premium-modal-backdrop">
+            <div className="premium-modal" role="dialog" aria-modal="true" aria-labelledby="premium-required-title">
+              <div className="premium-modal-icon" aria-hidden="true">★</div>
               <h3 id="premium-required-title">{t.premium_required_title}</h3>
-              <p className="imm-modal-sub">
+              <p className="premium-modal-sub">
                 {t.premium_required_desc.replace("{feature}", premiumPrompt.featureName)}
               </p>
               <div className="premium-modal-actions">

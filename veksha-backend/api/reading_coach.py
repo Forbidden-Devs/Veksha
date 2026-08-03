@@ -4,26 +4,38 @@ from __future__ import annotations
 
 import asyncio
 import re
+import secrets
 import time
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from wordfreq import tokenize
 
 import textstats
 from auth import CurrentUser
 from cefr import level_to_cefr
+from entitlements import require_feature
 from learning_core_v2.acquisition import SuggestVocabulary, VocabularyProposal
 from learning_core_v2.dictionary import DictionaryLookupRequest
 from learning_core_v2.reading_coach import AssessReading, ReadingToken
+from learning_core_v2.reading_coach import ReadingAnswerRequest, ReadingQuestionRequest
+from learning_core_v2.explanation import ExplanationRequest
 from learning_core_v2_adapters.openai_responses import LanguageProviderError
-from learning_core_v2_adapters.runtime import build_dictionary_enrichment
+from learning_core_v2_adapters.runtime import (
+    build_deferred_translate_text,
+    build_dictionary_enrichment,
+    build_explain_text,
+    build_reading_comprehension_services,
+)
+from api.translate_v2 import TranslateRequest, _execute_translation
 from storage import get_storage
 
 
 router = APIRouter()
 _MAX_TEXT_CHARACTERS = 12_000
 _MAX_PREPARED_TERMS = 8
+_QUESTION_TTL_SECONDS = 15 * 60
+_questions: dict[str, tuple[str, str, str, float]] = {}
 
 
 class ReadingCoachRequest(BaseModel):
@@ -46,6 +58,10 @@ class ReadingCoachResponse(BaseModel):
     verdict: str
     confidence: str
     unique_terms: int
+    lexical_cefr: str
+    structure_cefr: str
+    average_sentence_words: float
+    long_sentence_ratio: float
     obstacles: list[ReadingObstacleResponse]
 
 
@@ -58,6 +74,35 @@ class PrepareReadingRequest(BaseModel):
 class PrepareReadingResponse(BaseModel):
     added: int
     skipped: int
+
+
+class ParagraphHelpRequest(BaseModel):
+    text: str = Field(..., min_length=20, max_length=3000)
+
+
+class ParagraphHelpResponse(BaseModel):
+    original: str
+    translation: str
+    explanation: str
+
+
+class ComprehensionQuestionRequest(BaseModel):
+    text: str = Field(..., min_length=40, max_length=3000)
+
+
+class ComprehensionQuestionResponse(BaseModel):
+    question_id: str
+    question: str
+
+
+class ComprehensionAnswerRequest(BaseModel):
+    question_id: str = Field(..., min_length=16, max_length=128)
+    answer: str = Field(..., max_length=2000)
+
+
+class ComprehensionAnswerResponse(BaseModel):
+    outcome: str
+    feedback: str
 
 
 def _knowledge(storage, term: str, language: str) -> str:
@@ -82,17 +127,21 @@ async def analyze_reading(req: ReadingCoachRequest, username: CurrentUser) -> Re
     for token in tokenize(req.text.casefold(), language):
         if any(character.isalpha() for character in token):
             counts[token] = counts.get(token, 0) + 1
+    tokens = [
+        ReadingToken(
+            term=term,
+            occurrences=occurrences,
+            cefr=textstats.band_for_word(term, language),
+            knowledge=_knowledge(storage, term, language),
+        )
+        for term, occurrences in counts.items()
+    ]
+    structure = textstats.estimate_structure(req.text, language)
+    lexical_assessment = AssessReading().execute(tokens, learner_cefr=learner)
     assessment = AssessReading().execute(
-        [
-            ReadingToken(
-                term=term,
-                occurrences=occurrences,
-                cefr=textstats.band_for_word(term, language),
-                knowledge=_knowledge(storage, term, language),
-            )
-            for term, occurrences in counts.items()
-        ],
+        tokens,
         learner_cefr=learner,
+        structure_cefr=structure.cefr,
     )
     return ReadingCoachResponse(
         known_pct=round(assessment.known_ratio, 4),
@@ -102,6 +151,10 @@ async def analyze_reading(req: ReadingCoachRequest, username: CurrentUser) -> Re
         verdict=assessment.verdict,
         confidence=assessment.confidence,
         unique_terms=assessment.unique_terms,
+        lexical_cefr=lexical_assessment.page_cefr,
+        structure_cefr=structure.cefr,
+        average_sentence_words=structure.average_sentence_words,
+        long_sentence_ratio=structure.long_sentence_ratio,
         obstacles=[
             ReadingObstacleResponse(
                 term=item.term,
@@ -115,7 +168,114 @@ async def analyze_reading(req: ReadingCoachRequest, username: CurrentUser) -> Re
     )
 
 
-@router.post("/api/reading-coach/prepare", response_model=PrepareReadingResponse)
+@router.post(
+    "/api/reading-coach/paragraph-help",
+    response_model=ParagraphHelpResponse,
+    dependencies=[Depends(require_feature("immersion"))],
+)
+async def help_with_paragraph(
+    req: ParagraphHelpRequest, username: CurrentUser
+) -> ParagraphHelpResponse:
+    storage = get_storage(username)
+    original = " ".join(req.text.split())
+    translation_service, _, _ = build_deferred_translate_text(storage)
+    try:
+        translated = await _execute_translation(
+            TranslateRequest(
+                text=original,
+                source_lang=storage.settings.target_lang or "auto",
+                target_lang=storage.settings.native_lang or "en",
+            ),
+            storage,
+            translation_service,
+        )
+        explained = await build_explain_text().execute(
+            ExplanationRequest(
+                text=original,
+                translation=translated.translation,
+                proficiency=storage.settings.english_level or "intermediate",
+                native_language=storage.settings.native_lang or "en",
+                learning_language=storage.settings.target_lang or "en",
+            )
+        )
+    except (LanguageProviderError, ValueError) as exc:
+        raise HTTPException(status_code=502, detail="Paragraph help unavailable.") from exc
+    return ParagraphHelpResponse(
+        original=original,
+        translation=translated.translation,
+        explanation=explained.explanation,
+    )
+
+
+@router.post(
+    "/api/reading-coach/comprehension/question",
+    response_model=ComprehensionQuestionResponse,
+    dependencies=[Depends(require_feature("immersion"))],
+)
+async def create_comprehension_question(
+    req: ComprehensionQuestionRequest, username: CurrentUser
+) -> ComprehensionQuestionResponse:
+    storage = get_storage(username)
+    builder, _ = build_reading_comprehension_services()
+    passage = " ".join(req.text.split())
+    try:
+        question = await builder.execute(
+            ReadingQuestionRequest(
+                passage=passage,
+                learner_cefr=level_to_cefr(storage.settings.english_level),
+                learning_language=storage.settings.target_lang or "en",
+                native_language=storage.settings.native_lang or "en",
+            )
+        )
+    except (LanguageProviderError, ValueError) as exc:
+        raise HTTPException(status_code=502, detail="Comprehension question unavailable.") from exc
+    now = time.monotonic()
+    for key, value in list(_questions.items()):
+        if value[3] <= now:
+            _questions.pop(key, None)
+    if len(_questions) >= 500:
+        oldest = min(_questions, key=lambda key: _questions[key][3])
+        _questions.pop(oldest, None)
+    question_id = secrets.token_urlsafe(24)
+    _questions[question_id] = (username, passage, question, now + _QUESTION_TTL_SECONDS)
+    return ComprehensionQuestionResponse(question_id=question_id, question=question)
+
+
+@router.post(
+    "/api/reading-coach/comprehension/check",
+    response_model=ComprehensionAnswerResponse,
+    dependencies=[Depends(require_feature("immersion"))],
+)
+async def check_comprehension_answer(
+    req: ComprehensionAnswerRequest, username: CurrentUser
+) -> ComprehensionAnswerResponse:
+    stored = _questions.get(req.question_id)
+    if not stored or stored[0] != username or stored[3] <= time.monotonic():
+        raise HTTPException(status_code=404, detail="Reading question expired.")
+    _questions.pop(req.question_id, None)
+    storage = get_storage(username)
+    _, checker = build_reading_comprehension_services()
+    try:
+        result = await checker.execute(
+            ReadingAnswerRequest(
+                passage=stored[1],
+                question=stored[2],
+                answer=req.answer,
+                learner_cefr=level_to_cefr(storage.settings.english_level),
+                learning_language=storage.settings.target_lang or "en",
+                native_language=storage.settings.native_lang or "en",
+            )
+        )
+    except (LanguageProviderError, ValueError) as exc:
+        raise HTTPException(status_code=502, detail="Answer check unavailable.") from exc
+    return ComprehensionAnswerResponse(outcome=result.outcome, feedback=result.feedback)
+
+
+@router.post(
+    "/api/reading-coach/prepare",
+    response_model=PrepareReadingResponse,
+    dependencies=[Depends(require_feature("immersion"))],
+)
 async def prepare_reading(req: PrepareReadingRequest, username: CurrentUser) -> PrepareReadingResponse:
     storage = get_storage(username)
     language = storage.settings.target_lang or "en"

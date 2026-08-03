@@ -1,7 +1,7 @@
 /**
  * page-text.ts — shared page-text filtering rules.
  *
- * Used by immersion.ts (continuous viewport scanning) and cimeter.ts /
+ * Used by Reading Coach and vocabulary tracking.
  * vocabfreq.ts (one-shot whole-page sampling) so the "what counts as
  * readable content" rules live in one place.
  */
@@ -35,7 +35,7 @@ function isReadable(text: string, minChars: number): boolean {
 
 /** One-shot whole-page text sample, up to `budget` chars, for features that
  *  analyze a page once (CI Meter, vocab frequency) rather than continuously
- *  (immersion.ts). */
+ */
 export function sampleText(budget: number, minChars = 40): string {
   const parts: string[] = [];
   let total = 0;

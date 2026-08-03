@@ -3,7 +3,7 @@ import { AdminApiError, adminApi, type AdminOverview, type DatabaseQueryResult, 
 
 const FEATURE_NAMES: Record<string, string> = {
   grammar_lens: "Reading Coach и Grammar Memory",
-  immersion: "Погружение в страницу",
+  immersion: "Reading Coach",
   dual_subtitles: "Двойные субтитры",
 };
 
@@ -25,7 +25,7 @@ const OPERATION_NAMES: Record<string, string> = {
   grammar_lens_analyze: "Grammar Memory",
   dualsub: "Перевод субтитров",
   dualsub_batch: "Пакет субтитров",
-  immersion_analyze: "Погружение",
+  immersion_analyze: "Старый анализ чтения",
 };
 
 const emptyPromo: PromoDraft = {

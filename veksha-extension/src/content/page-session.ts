@@ -4,7 +4,6 @@ import { CONFIG } from "../shared/config";
 
 export interface PageFeaturePolicy {
   blocked: boolean;
-  immersion: boolean;
   readingCoach: boolean;
   grammarMemory: boolean;
   vocabularyTracking: boolean;
@@ -74,6 +73,7 @@ export class PageSession {
       CONFIG.STORAGE_KEY_AI_BLOCKLIST,
       CONFIG.STORAGE_KEY_IMMERSION,
       CONFIG.STORAGE_KEY_CI_METER,
+      CONFIG.STORAGE_KEY_READING_COACH,
       CONFIG.STORAGE_KEY_GRAMMAR_LENS,
       CONFIG.STORAGE_KEY_VOCAB_FREQ,
     ]);
@@ -82,10 +82,20 @@ export class PageSession {
       normalizeAiBlocklist(values[CONFIG.STORAGE_KEY_AI_BLOCKLIST]),
     );
     const grammarMemory = Boolean(values[CONFIG.STORAGE_KEY_GRAMMAR_LENS]);
+    const legacyImmersion = Boolean(values[CONFIG.STORAGE_KEY_IMMERSION]);
+    const legacyReadingCoach = values[CONFIG.STORAGE_KEY_CI_METER];
+    const readingCoach = values[CONFIG.STORAGE_KEY_READING_COACH] === undefined
+      ? (legacyReadingCoach === undefined ? legacyImmersion : Boolean(legacyReadingCoach))
+      : Boolean(values[CONFIG.STORAGE_KEY_READING_COACH]);
+    if (legacyImmersion || values[CONFIG.STORAGE_KEY_READING_COACH] === undefined) {
+      await chrome.storage.local.set({
+        [CONFIG.STORAGE_KEY_READING_COACH]: readingCoach,
+        [CONFIG.STORAGE_KEY_IMMERSION]: false,
+      });
+    }
     return {
       blocked,
-      immersion: !grammarMemory && Boolean(values[CONFIG.STORAGE_KEY_IMMERSION]),
-      readingCoach: Boolean(values[CONFIG.STORAGE_KEY_CI_METER]),
+      readingCoach,
       grammarMemory,
       vocabularyTracking: Boolean(values[CONFIG.STORAGE_KEY_VOCAB_FREQ]),
     };

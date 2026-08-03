@@ -2,7 +2,7 @@
 
 HTTP + WebSocket API for the Veksha extension: vocabulary knowledge base
 with spaced repetition, LLM-backed translation/explanation, word-training and
-topic-lesson sessions, and page immersion.
+topic-lesson sessions, and an actionable Reading Coach.
 
 ## Running
 
@@ -65,10 +65,14 @@ The rewritten topic-lesson core keeps `/api/lesson-topics` and
 `VEKSHA_CORE_V2_LESSON_MODEL` (default `gpt-5.6-terra`). Existing lesson data
 is mapped at the storage boundary.
 
-The independently rewritten page-immersion analyzer is the only implementation;
-its model is configured through
-`VEKSHA_CORE_V2_IMMERSION_MODEL` (default `gpt-5.6-luna`). The endpoint remains
-`POST /api/immersion/analyze`, including its existing premium entitlement.
+Reading Coach estimates page difficulty from CEFR bands and the learner's
+LexicalItem collection, identifies high-impact blockers, and prepares selected
+terms in the Vocabulary Inbox. It uses `/api/reading-coach/analyze` and
+`/api/reading-coach/prepare`. Page assessment is free; vocabulary preparation,
+paragraph help, and comprehension questions use the existing paid entitlement.
+Comprehension uses `VEKSHA_CORE_V2_READING_MODEL` (default `gpt-5.6-luna`).
+The stable `immersion` billing identifier is
+retained only so existing purchases continue to unlock Reading Coach.
 
 Grammar Memory analysis is independently implemented and grounds every segment
 and annotation in the submitted text before saving examples. Its model is
@@ -88,7 +92,7 @@ discarded. Select its model with `VEKSHA_CORE_V2_I18N_MODEL` (default
 `gpt-5.6-luna`).
 
 Local runs grant premium-gated development features automatically, so dual
-subtitles, Grammar Memory, and immersion can be exercised without Telegram
+subtitles, Grammar Memory, and Reading Coach can be exercised without Telegram
 billing. Set `VEKSHA_DEV_ALL_FEATURES=0` to test the real free-tier gates.
 
 Google login additionally requires a **Web application** OAuth client and:
@@ -144,7 +148,7 @@ testing it can be enabled with
 
 ## Subscriptions (Telegram Stars)
 
-Paid features (Grammar Memory, page immersion, dual subtitles — see
+Paid features (Grammar Memory, Reading Coach, dual subtitles — see
 `entitlements.py`) can be purchased individually; gated endpoints return
 HTTP 402 with `detail.code = "subscription_required"`. Payments are collected
 by the companion bot (`veksha-tgbot/`) in Telegram Stars and reported to
@@ -210,7 +214,8 @@ api/                  routers (one file per domain)
 | `GET /api/training/init`, `POST /api/training/validate`, `WS /api/training/ws` | word training |
 | `GET /api/training/review_log` | recent FSRS reviews (`?item_id=`, `?word=`, `?limit=`) |
 | `GET/POST /api/lesson-topics`, `WS /api/lesson/ws` | topic lessons |
-| `POST /api/immersion/analyze` | comprehensible-input page immersion (premium) |
+| `POST /api/reading-coach/analyze` | page readiness and vocabulary blockers (premium) |
+| `POST /api/reading-coach/prepare` | enrich selected blockers into the Vocabulary Inbox (premium) |
 | `POST /api/subtitles/translate` | dual-subtitle line translation with word alignment (premium) |
 | `POST /api/subtitles/translate-batch` | contextual pretranslation of adjacent timed subtitle cues (premium) |
 | `GET /api/billing/status`, `GET /api/billing/features` | active selection / feature prices |

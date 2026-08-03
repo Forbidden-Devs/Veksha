@@ -329,19 +329,6 @@ export async function decideVocabularyInboxItem(
   return result;
 }
 
-export interface ImmersionSentence {
-  text: string;
-  cefr: string;
-  translation: string;
-}
-
-export function analyzeImmersion(
-  username: string,
-  blocks: string[]
-): Promise<{ blocks: { sentences: ImmersionSentence[] }[] }> {
-  return _post("/api/immersion/analyze", { blocks }, 45_000);
-}
-
 export interface ReadingCoachObstacle {
   term: string;
   occurrences: number;
@@ -358,6 +345,10 @@ export interface ReadingCoachResult {
   verdict: "ideal" | "too_easy" | "too_hard" | "close";
   confidence: "low" | "high";
   unique_terms: number;
+  lexical_cefr: string;
+  structure_cefr: string;
+  average_sentence_words: number;
+  long_sentence_ratio: number;
   obstacles: ReadingCoachObstacle[];
 }
 
@@ -374,6 +365,32 @@ export function prepareReadingCoach(
     text,
     terms,
     source_url: sourceUrl,
+  }, 45_000);
+}
+
+export interface ReadingParagraphHelp {
+  original: string;
+  translation: string;
+  explanation: string;
+}
+
+export function helpReadingParagraph(text: string): Promise<ReadingParagraphHelp> {
+  return _post("/api/reading-coach/paragraph-help", { text }, 45_000);
+}
+
+export function createReadingQuestion(
+  text: string,
+): Promise<{ question_id: string; question: string }> {
+  return _post("/api/reading-coach/comprehension/question", { text }, 45_000);
+}
+
+export function checkReadingAnswer(
+  questionId: string,
+  answer: string,
+): Promise<{ outcome: "correct" | "vague" | "incorrect" | "garbage"; feedback: string }> {
+  return _post("/api/reading-coach/comprehension/check", {
+    question_id: questionId,
+    answer,
   }, 45_000);
 }
 

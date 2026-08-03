@@ -84,7 +84,7 @@ DEBUG_API = os.getenv(
     "VEKSHA_DEBUG_API", "1" if _IS_LOCAL_RUN else "0",
 ).lower() in {"1", "true", "yes"}
 
-# Local extension development needs premium-gated flows (subtitles, immersion,
+# Local extension development needs premium-gated flows (subtitles, Reading Coach,
 # Grammar Lens) without configuring Telegram billing for every disposable DB.
 DEV_ALL_FEATURES = os.getenv(
     "VEKSHA_DEV_ALL_FEATURES", "1" if _IS_LOCAL_RUN else "0",

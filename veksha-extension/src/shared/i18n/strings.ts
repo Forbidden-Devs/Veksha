@@ -68,9 +68,6 @@ export interface Strings {
   translator_note_label: string;
   translator_failed: string;
   translator_explain_failed: string;
-  immersion_on: string;
-  immersion_off: string;
-  immersion_hint: string;
   ci_meter_on: string;
   ci_meter_off: string;
   ci_meter_loading: string;
@@ -89,6 +86,19 @@ export interface Strings {
   reading_coach_added: string;
   reading_coach_failed: string;
   reading_coach_ready: string;
+  reading_coach_structure: string;
+  reading_coach_selected_title: string;
+  reading_coach_selected_hint: string;
+  reading_coach_help_paragraph: string;
+  reading_coach_check_understanding: string;
+  reading_coach_select_paragraph: string;
+  reading_coach_working: string;
+  reading_coach_reveal_translation: string;
+  reading_coach_hide_translation: string;
+  reading_coach_advanced_unavailable: string;
+  reading_coach_answer_placeholder: string;
+  reading_coach_check_answer: string;
+  reading_coach_question_expired: string;
   feature_guide_open: string;
   feature_guide_close: string;
   reading_coach_guide_title: string;
@@ -367,20 +377,9 @@ export interface Strings {
   home_quick_suggested: string;
   home_hero_title: string;
   // Immersion explainer modal (shown on enable until "I already know")
-  imm_modal_title: string;
-  imm_modal_sub: string;
-  imm_card1_title: string;
-  imm_card1_desc: string;
-  imm_card2_title: string;
-  imm_card2_desc: string;
-  imm_card3_title: string;
-  imm_card3_desc: string;
-  imm_modal_known: string;
-  imm_modal_ok: string;
   // App shell (sidebar + topbar)
   nav_topics: string;
   nav_training: string;
-  nav_immersion: string;
   nav_stats: string;
   nav_settings: string;
   topbar_train: string;
@@ -496,9 +495,6 @@ export const EN: Strings = {
   translator_note_label: "Language note",
   translator_failed: "Translation is temporarily unavailable.",
   translator_explain_failed: "The translation is ready, but its explanation could not be loaded.",
-  immersion_on: "Immersion on",
-  immersion_off: "Immerse page",
-  immersion_hint: "Sprinkle level-appropriate sentences in your target language right into the pages you read.",
   ci_meter_on: "Reading Coach on",
   ci_meter_off: "Reading Coach",
   ci_meter_loading: "Checking readability…",
@@ -517,6 +513,19 @@ export const EN: Strings = {
   reading_coach_added: "{n} word(s) added to your Inbox",
   reading_coach_failed: "Could not prepare words",
   reading_coach_ready: "No high-impact blockers found. Start reading!",
+  reading_coach_structure: "Vocabulary {lexical} · sentence structure {structure} · {average} words/sentence",
+  reading_coach_selected_title: "Selected paragraph",
+  reading_coach_selected_hint: "Select a paragraph on the page, then ask for a hint or check your understanding.",
+  reading_coach_help_paragraph: "Help me understand",
+  reading_coach_check_understanding: "Check understanding",
+  reading_coach_select_paragraph: "Select a complete paragraph first.",
+  reading_coach_working: "Preparing…",
+  reading_coach_reveal_translation: "Reveal translation",
+  reading_coach_hide_translation: "Hide translation",
+  reading_coach_advanced_unavailable: "This advanced Reading Coach tool requires activation or is temporarily unavailable.",
+  reading_coach_answer_placeholder: "Answer in your own words",
+  reading_coach_check_answer: "Check answer",
+  reading_coach_question_expired: "This question expired. Create a new one.",
   feature_guide_open: "How it works",
   feature_guide_close: "Got it",
   reading_coach_guide_title: "How Reading Coach works",
@@ -787,19 +796,8 @@ export const EN: Strings = {
   home_quick_saved: "✓ saved for review",
   home_quick_suggested: "Review vocabulary suggestions →",
   home_hero_title: "Remember words,|without writing them out",
-  imm_modal_title: "Immersion mode is on",
-  imm_modal_sub: "Some words on the pages you read are replaced with the language you're learning — right as you read.",
-  imm_card1_title: "Only part of the text",
-  imm_card1_desc: "Not the whole page — just a few phrases. Reading stays easy.",
-  imm_card2_title: "Clear from context",
-  imm_card2_desc: "The meaning is obvious from the surrounding words — no dictionary, no cramming.",
-  imm_card3_title: "Matched to your level",
-  imm_card3_desc: "One step above what you already know — that's where language sticks.",
-  imm_modal_known: "I already know",
-  imm_modal_ok: "Got it",
   nav_topics: "Topics",
   nav_training: "Training",
-  nav_immersion: "Immersion",
   nav_stats: "Statistics",
   nav_settings: "Settings",
   topbar_train: "Train",

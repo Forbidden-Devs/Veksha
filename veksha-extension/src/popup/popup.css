@@ -678,59 +678,6 @@ html, body, #root {
   white-space: nowrap;
 }
 
-/* Immersion toggle — eye-catching "press me" pill, calms down once active. */
-.immersion-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  flex-shrink: 0;
-  padding: 6px 10px;
-  border: none;
-  border-radius: 14px;
-  background: var(--av-gradient);
-  background-size: 180% 180%;
-  color: #fff;
-  font-size: 11px;
-  font-weight: 800;
-  line-height: 1.08;
-  text-align: left;
-  cursor: pointer;
-  box-shadow: 0 3px 10px color-mix(in srgb, var(--av-accent) 28%, transparent);
-  animation: immersion-attract 2.6s ease-in-out infinite;
-}
-
-@keyframes immersion-attract {
-  0%, 100% { background-position: 0% 50%; transform: translateY(0); box-shadow: 0 3px 10px color-mix(in srgb, var(--av-accent) 28%, transparent); }
-  50% { background-position: 100% 50%; transform: translateY(-1px); box-shadow: 0 6px 16px color-mix(in srgb, var(--av-accent) 45%, transparent); }
-}
-
-.immersion-toggle:hover { filter: brightness(1.05); }
-
-.immersion-toggle.is-on {
-  animation: none;
-  background: var(--av-accent);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25), 0 2px 8px color-mix(in srgb, var(--av-accent) 30%, transparent);
-}
-
-.immersion-toggle.is-on::before {
-  content: "";
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #5ef0a6;
-  box-shadow: 0 0 6px #5ef0a6;
-}
-
-/* Wrap the label onto 2 lines so the button stays narrow and the header fits. */
-.immersion-toggle-label {
-  white-space: normal;
-  max-width: 92px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .immersion-toggle { animation: none; }
-}
-
 /* ---------------------------------------------------------------------- */
 /* Settings screen                                                          */
 /* ---------------------------------------------------------------------- */
@@ -1090,22 +1037,6 @@ html, body, #root {
 .settings-footer {
   padding: 12px 16px;
   border-top: 1px solid var(--av-border);
-  flex-shrink: 0;
-}
-
-.immersion-screen {
-  gap: 12px;
-  padding: 18px 16px;
-  overflow-y: auto;
-}
-
-.immersion-screen .imm-modal-icon {
-  margin: 0 auto;
-  font-size: 34px;
-}
-
-.immersion-screen .btn {
-  margin-top: auto;
   flex-shrink: 0;
 }
 
@@ -3474,8 +3405,7 @@ html, body, #root {
   100% { opacity: 0; transform: translate(var(--fly-x), var(--fly-y)) scale(0.3); }
 }
 
-/* immersion explainer modal */
-.imm-modal-backdrop {
+.premium-modal-backdrop {
   position: absolute;
   inset: 0;
   z-index: 80;
@@ -3488,7 +3418,7 @@ html, body, #root {
   padding: 24px;
 }
 
-.imm-modal {
+.premium-modal {
   background: #fff;
   border-radius: 24px;
   padding: 26px 24px 20px;
@@ -3498,7 +3428,7 @@ html, body, #root {
   text-align: center;
 }
 
-.imm-modal-icon {
+.premium-modal-icon {
   width: 60px;
   height: 60px;
   border-radius: 18px;
@@ -3511,10 +3441,10 @@ html, body, #root {
   box-shadow: 0 10px 24px color-mix(in srgb, var(--av-accent) 35%, transparent);
 }
 
-.imm-modal-icon svg { width: 30px; height: 30px; }
+.premium-modal-icon svg { width: 30px; height: 30px; }
 
-.imm-modal h3 { font-size: 19px; font-weight: 800; margin: 0 0 8px; }
-.imm-modal-sub { font-size: 13.5px; color: var(--av-muted); line-height: 1.55; margin: 0 0 16px; }
+.premium-modal h3 { font-size: 19px; font-weight: 800; margin: 0 0 8px; }
+.premium-modal-sub { font-size: 13.5px; color: var(--av-muted); line-height: 1.55; margin: 0 0 16px; }
 
 .premium-modal-icon { font-size: 28px; }
 
@@ -3529,59 +3459,6 @@ html, body, #root {
   display: grid;
   gap: 8px;
 }
-
-.imm-card {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  text-align: left;
-  border-radius: 16px;
-  padding: 13px 14px;
-  margin-bottom: 10px;
-}
-
-.imm-card.pink { background: #fdeef5; }
-.imm-card.blue { background: #e8f3fc; }
-
-.imm-card-ic {
-  flex: 0 0 auto;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 6px rgba(31, 36, 48, 0.08);
-}
-
-.imm-card-ic svg { width: 18px; height: 18px; }
-.imm-card.pink .imm-card-ic { color: var(--av-pink-deep); }
-.imm-card.blue .imm-card-ic { color: var(--av-blue); }
-
-.imm-card-title {
-  font-size: 13.5px;
-  font-weight: 800;
-  margin-bottom: 3px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.imm-card.pink .imm-card-title { color: var(--av-pink-deep); }
-.imm-card.blue .imm-card-title { color: var(--av-blue-deep); }
-
-.imm-badge {
-  font-size: 10.5px;
-  font-weight: 800;
-  color: var(--av-blue-deep);
-  background: #d8ecfb;
-  border-radius: 999px;
-  padding: 2px 8px;
-  white-space: nowrap;
-}
-
-.imm-card-desc { font-size: 12.5px; color: var(--av-muted); line-height: 1.5; }
 
 .imm-modal-actions {
   display: flex;

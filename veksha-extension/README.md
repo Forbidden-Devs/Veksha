@@ -62,7 +62,7 @@ instructions included with the AMO source upload.
 src/background/    background (Chrome: service worker, Firefox: event page):
                    reminder alarms, context menu, first-review nudge
 src/capture/       one-shot screenshot crop workspace for image/PDF translation
-src/content/       selection translate popup, immersion mode, YouTube
+src/content/       selection translate popup, Reading Coach, YouTube
                    subtitles integration, in-page reminder overlay
 src/popup/         popup app: translator, topics, training
                    and lesson overlays, statistics, settings, onboarding

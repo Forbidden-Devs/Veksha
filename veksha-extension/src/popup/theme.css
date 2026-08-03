@@ -386,7 +386,7 @@ body,
 
 /* cards / list rows on stats, topics, settings */
 .word-row, .word-list-item, .topic-row, .stat-card, .debug-info-block,
-.onboarding-card, .imm-modal, .imm-card,
+.onboarding-card, .premium-modal,
 .settings-account-status {
   background: var(--m-surface) !important;
   color: var(--m-fg) !important;
@@ -470,7 +470,7 @@ body,
    white — the gradient is invisible on the dark canvas. */
 .onboarding-title,
 .onboarding-card h1,
-.imm-modal h3,
+.premium-modal h3,
 .screen h1, .screen h2 {
   background: none !important;
   -webkit-background-clip: initial !important;
@@ -478,7 +478,7 @@ body,
   color: var(--m-fg) !important;
 }
 
-.onboarding-subtitle, .imm-modal-sub {
+.onboarding-subtitle, .premium-modal-sub {
   color: var(--m-dim) !important;
 }
 
@@ -590,7 +590,7 @@ body,
 .btn:hover, .send-btn:hover { background: var(--m-accent-hover) !important; }
 
 .word-row, .word-list-item, .topic-row, .stat-card, .debug-info-block,
-.onboarding-card, .imm-modal, .imm-card, .settings-account-status,
+.onboarding-card, .premium-modal, .settings-account-status,
 .settings-level, .settings-toggle {
   border: 1px solid var(--m-border) !important;
   border-radius: var(--r-md) !important;

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal, Sequence
+from typing import Literal, Protocol, Sequence
 
 
 CEFR_BANDS = ("A1", "A2", "B1", "B2", "C1", "C2")
@@ -40,6 +40,71 @@ class ReadingAssessment:
     obstacles: tuple[ReadingObstacle, ...]
 
 
+@dataclass(frozen=True, slots=True)
+class ReadingQuestionRequest:
+    passage: str
+    learner_cefr: str
+    learning_language: str
+    native_language: str
+
+
+@dataclass(frozen=True, slots=True)
+class ReadingAnswerRequest:
+    passage: str
+    question: str
+    answer: str
+    learner_cefr: str
+    learning_language: str
+    native_language: str
+
+
+@dataclass(frozen=True, slots=True)
+class ReadingAnswerEvaluation:
+    outcome: Literal["correct", "vague", "incorrect", "garbage"]
+    feedback: str
+
+
+class ReadingComprehensionProvider(Protocol):
+    async def create_reading_question(self, request: ReadingQuestionRequest) -> str: ...
+
+    async def evaluate_reading_answer(
+        self, request: ReadingAnswerRequest
+    ) -> ReadingAnswerEvaluation: ...
+
+
+class BuildReadingQuestion:
+    def __init__(self, provider: ReadingComprehensionProvider) -> None:
+        self._provider = provider
+
+    async def execute(self, request: ReadingQuestionRequest) -> str:
+        passage = " ".join(request.passage.split())
+        if len(passage) < 40:
+            raise ValueError("passage is too short")
+        normalized = ReadingQuestionRequest(
+            passage[:3000],
+            _cefr(request.learner_cefr),
+            request.learning_language.strip() or "en",
+            request.native_language.strip() or "en",
+        )
+        question = (await self._provider.create_reading_question(normalized)).strip()
+        if not question:
+            raise ValueError("question provider returned empty text")
+        return question
+
+
+class CheckReadingAnswer:
+    def __init__(self, provider: ReadingComprehensionProvider) -> None:
+        self._provider = provider
+
+    async def execute(self, request: ReadingAnswerRequest) -> ReadingAnswerEvaluation:
+        if not request.answer.strip():
+            return ReadingAnswerEvaluation("garbage", "")
+        result = await self._provider.evaluate_reading_answer(request)
+        if result.outcome not in {"correct", "vague", "incorrect", "garbage"}:
+            raise ValueError("answer provider returned an invalid outcome")
+        return ReadingAnswerEvaluation(result.outcome, result.feedback.strip())
+
+
 class AssessReading:
     def __init__(self, maximum_obstacles: int = 8) -> None:
         if not 1 <= maximum_obstacles <= 20:
@@ -51,6 +116,7 @@ class AssessReading:
         tokens: Sequence[ReadingToken],
         *,
         learner_cefr: str,
+        structure_cefr: str | None = None,
     ) -> ReadingAssessment:
         learner = _cefr(learner_cefr)
         normalized = _normalize_tokens(tokens)
@@ -80,7 +146,9 @@ class AssessReading:
         obstacles = tuple(_obstacle(token, learner_index) for token in selected)
         projected = known_occurrences + sum(token.occurrences for token in selected)
         known_ratio = known_occurrences / total
-        page_cefr = _page_cefr(normalized, total)
+        lexical_cefr = _page_cefr(normalized, total)
+        structure = _cefr(structure_cefr or "A1")
+        page_cefr = max((lexical_cefr, structure), key=CEFR_BANDS.index)
         return ReadingAssessment(
             known_ratio=known_ratio,
             projected_known_ratio=min(1.0, projected / total),
@@ -160,9 +228,11 @@ def _page_cefr(tokens: Sequence[ReadingToken], total: int) -> str:
 
 def _verdict(page: str, learner: str, known_ratio: float) -> ReadingVerdict:
     gap = CEFR_BANDS.index(page) - CEFR_BANDS.index(learner)
+    if gap >= 2:
+        return "too_hard"
     if known_ratio >= 0.98:
         return "too_easy"
-    if gap >= 2 or known_ratio < 0.85:
+    if known_ratio < 0.85:
         return "too_hard"
     if gap == 1 and known_ratio >= 0.90:
         return "ideal"

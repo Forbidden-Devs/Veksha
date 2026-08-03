@@ -20,12 +20,6 @@ from .dictionary import (
     EnrichDictionaryEntry,
 )
 from .explanation import ExplainText, ExplanationRequest, ExplanationResult
-from .immersion import (
-    AnalyzeImmersion,
-    ImmersionBlock,
-    ImmersionContext,
-    ImmersionSentence,
-)
 from .grammar_memory import (
     GrammarEncounter,
     GrammarMemoryItem,
@@ -70,8 +64,13 @@ from .practice import (
 )
 from .reading_coach import (
     AssessReading,
+    BuildReadingQuestion,
+    CheckReadingAnswer,
+    ReadingAnswerEvaluation,
+    ReadingAnswerRequest,
     ReadingAssessment,
     ReadingObstacle,
+    ReadingQuestionRequest,
     ReadingToken,
 )
 from .sentence_mining import (
@@ -110,10 +109,6 @@ __all__ = [
     "ExplainText",
     "ExplanationRequest",
     "ExplanationResult",
-    "AnalyzeImmersion",
-    "ImmersionBlock",
-    "ImmersionContext",
-    "ImmersionSentence",
     "GrammarEncounter",
     "GrammarMemoryItem",
     "GrammarObservation",
@@ -147,8 +142,13 @@ __all__ = [
     "PracticeQueue",
     "PracticeTask",
     "AssessReading",
+    "BuildReadingQuestion",
+    "CheckReadingAnswer",
+    "ReadingAnswerEvaluation",
+    "ReadingAnswerRequest",
     "ReadingAssessment",
     "ReadingObstacle",
+    "ReadingQuestionRequest",
     "ReadingToken",
     "BuildSentenceMiningCard",
     "SentenceMiningCard",

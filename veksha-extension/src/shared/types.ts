@@ -1,4 +1,4 @@
-export type Screen = "home" | "translator" | "goals" | "dictionary" | "immersion" | "myWords" | "settings" | "subscription" | "statistics" | "debug" | "quizlet";
+export type Screen = "home" | "translator" | "goals" | "dictionary" | "myWords" | "settings" | "subscription" | "statistics" | "debug" | "quizlet";
 export type Overlay = "training" | "reminder" | null;
 export type SettingsMode = "onboarding" | "menu";
 

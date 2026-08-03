@@ -16,10 +16,10 @@ usage patterns, and interview-style topics.
 ```
 veksha-backend/    FastAPI backend: PostgreSQL storage (users, KB), token auth,
                     spaced repetition, LLM calls (OpenAI), training/lesson
-                    WebSocket sessions, translation, immersion.
+                    WebSocket sessions, translation, Reading Coach.
 veksha-extension/  Chrome + Firefox extension (MV3, React + TypeScript,
                     Vite) — the capture surface: selection-translate popup,
-                    immersion mode, YouTube subtitles, OCR capture,
+                    Reading Coach, YouTube subtitles, OCR capture,
                     plus the popup app.
 veksha-web/        The same study app (chat / training / lessons / stats)
                     as a standalone PWA-installable web page; reuses the
