@@ -43,3 +43,43 @@ test("removed tutorial assets are not referenced by extension source", () => {
     assert.doesNotMatch(source(relativePath), /tut_|Tutorial back|tutorial\.png/i);
   }
 });
+
+test("the popup shell is independent from the former tile interface", () => {
+  const app = source("src/popup/App.tsx");
+  const home = source("src/popup/screens/HomeScreen.tsx");
+  const entrypoint = source("src/popup/main.tsx");
+  const legacyShell = /shell-(?:main|topbar|content)|screen-home|m-(?:tiles|tile|feature)/;
+
+  assert.match(app, /workspace-frame/);
+  assert.match(home, /capability-grid/);
+  assert.match(entrypoint, /\.\/shell\.css/);
+  assert.doesNotMatch(app, legacyShell);
+  assert.doesNotMatch(home, legacyShell);
+  assert.doesNotMatch(source("src/popup/popup.css"), legacyShell);
+  assert.doesNotMatch(source("src/popup/theme.css"), legacyShell);
+});
+
+test("Quizlet copy participates in the shared localization catalogue", () => {
+  const screen = source("src/popup/screens/QuizletScreen.tsx");
+  const strings = source("src/shared/i18n/strings.ts");
+  const backendStrings = source("../veksha-backend/i18n.py");
+
+  assert.match(screen, /useT\(\)/);
+  assert.match(screen, /t\.quizlet_status_title/);
+  assert.match(screen, /t\.quizlet_error_import/);
+  assert.doesNotMatch(screen, />\s*(?:Export status|Import from Quizlet|Loading\.\.\.)\s*</);
+  for (const key of ["quizlet_loading", "quizlet_export_new", "quizlet_import_title", "quizlet_error_import"]) {
+    assert.match(strings, new RegExp(`${key}:`));
+    assert.match(backendStrings, new RegExp(`"${key}":`));
+  }
+});
+
+test("light, colorful, and dark themes are available", () => {
+  const runtime = source("src/shared/theme.ts");
+  const palette = source("src/shared/palette.css");
+  const settings = source("src/popup/screens/SettingsScreen.tsx");
+
+  assert.match(runtime, /\["light", "grove", "dark"\]/);
+  assert.match(palette, /data-veksha-theme="grove"/);
+  assert.match(settings, /grove: t\.theme_grove/);
+});

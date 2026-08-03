@@ -63,6 +63,11 @@ export function SettingsScreen() {
 
   const isOnboarding = settingsMode === "onboarding";
   const canLinkGoogle = Boolean(CONFIG.GOOGLE_CLIENT_ID);
+  const themeLabels: Record<ThemeName, string> = {
+    light: t.theme_light,
+    grove: t.theme_grove,
+    dark: t.theme_dark,
+  };
 
   useEffect(() => {
     if (!isExtension || isOnboarding) return;
@@ -386,8 +391,8 @@ export function SettingsScreen() {
                   key={name}
                   type="button"
                   className={`theme-swatch theme-swatch-${name}${theme === name ? " is-active" : ""}`}
-                  title={name}
-                  aria-label={name}
+                  title={themeLabels[name]}
+                  aria-label={themeLabels[name]}
                   onClick={() => pickTheme(name)}
                 />
               ))}

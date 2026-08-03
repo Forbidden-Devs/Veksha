@@ -35,7 +35,6 @@ html[data-vk-theme="light"] {
   --m-input-border: color-mix(in srgb, var(--vk-ink) 20%, var(--vk-paper));
   --m-error: var(--vk-danger);
   --m-ok: var(--vk-success);
-  --m-tile-shadow: 0 10px 24px color-mix(in srgb, var(--vk-ink) 13%, transparent);
   --m-elevated-shadow: 0 18px 48px color-mix(in srgb, var(--vk-ink) 16%, transparent);
 }
 
@@ -59,8 +58,30 @@ html[data-vk-theme="dark"] {
   --m-input-border: color-mix(in srgb, var(--m-fg) 24%, var(--m-bg));
   --m-error: color-mix(in srgb, var(--vk-danger) 55%, white);
   --m-ok: color-mix(in srgb, var(--vk-success) 55%, white);
-  --m-tile-shadow: 0 12px 28px color-mix(in srgb, black 28%, transparent);
   --m-elevated-shadow: 0 20px 52px color-mix(in srgb, black 38%, transparent);
+}
+
+/* Grove: a brighter, more chromatic middle ground between light and dark. */
+:root[data-veksha-theme="grove"],
+html[data-vk-theme="grove"] {
+  color-scheme: light;
+  --m-bg: color-mix(in srgb, var(--vk-paper) 58%, #bcd8ca);
+  --m-surface: color-mix(in srgb, #fff3d9 88%, var(--vk-paper));
+  --m-surface-2: color-mix(in srgb, var(--vk-secondary) 21%, #f5e4cd);
+  --m-fg: color-mix(in srgb, var(--vk-ink) 88%, var(--vk-secondary));
+  --m-dim: color-mix(in srgb, var(--m-fg) 68%, var(--m-bg));
+  --m-accent: color-mix(in srgb, var(--vk-primary) 88%, #e77839);
+  --m-accent-hover: color-mix(in srgb, var(--m-accent) 84%, black);
+  --m-accent-2: color-mix(in srgb, var(--vk-secondary) 90%, #207763);
+  --m-accent-soft: color-mix(in srgb, var(--m-accent) 24%, #ffe8c9);
+  --m-on-accent: #fffaf1;
+  --m-border: color-mix(in srgb, var(--m-accent-2) 31%, var(--m-bg));
+  --m-input-bg: color-mix(in srgb, var(--m-surface) 92%, white);
+  --m-input-fg: var(--m-fg);
+  --m-input-border: color-mix(in srgb, var(--m-accent-2) 30%, var(--m-bg));
+  --m-error: var(--vk-danger);
+  --m-ok: color-mix(in srgb, var(--vk-success) 90%, #188455);
+  --m-elevated-shadow: 0 20px 50px color-mix(in srgb, var(--m-accent-2) 20%, transparent);
 }
 
 /* Compatibility aliases used by the older component stylesheet. */

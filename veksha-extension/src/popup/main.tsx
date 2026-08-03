@@ -4,6 +4,7 @@ import { I18nProvider } from "../shared/i18n";
 import "../shared/palette.css";
 import "./popup.css";
 import "./theme.css";
+import "./shell.css";
 import { initTheme } from "../shared/theme";
 
 void initTheme();

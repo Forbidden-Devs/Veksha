@@ -1,0 +1,341 @@
+/* Independent popup shell: layout and launch surface only. */
+
+.workspace-frame {
+  display: grid;
+  grid-template-rows: 64px minmax(0, 1fr);
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  background: var(--m-bg);
+}
+
+.workspace-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--m-border);
+  background: color-mix(in srgb, var(--m-surface) 90%, transparent);
+  backdrop-filter: blur(14px);
+}
+
+.workspace-title {
+  overflow: hidden;
+  color: var(--m-fg);
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workspace-back,
+.workspace-debug {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--m-border);
+  border-radius: 10px;
+  background: var(--m-surface);
+  color: var(--m-fg);
+  cursor: pointer;
+}
+
+.workspace-back:hover,
+.workspace-debug:hover {
+  border-color: var(--m-accent);
+  color: var(--m-accent);
+}
+
+.workspace-mark {
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border: 1px solid color-mix(in srgb, var(--m-accent-2) 24%, var(--m-border));
+  border-radius: 12px;
+  background: var(--m-surface) url("/icons/icon48.png") center / 31px no-repeat;
+  box-shadow: 0 5px 16px color-mix(in srgb, var(--m-fg) 9%, transparent);
+}
+
+.workspace-context {
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--m-accent-2) 13%, var(--m-bg));
+  color: var(--m-accent-2);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.workspace-header-spacer {
+  flex: 1;
+}
+
+.workspace-content {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.workspace-content > .screen {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.launchpad {
+  overflow-y: auto;
+  padding: 16px 18px 22px;
+  background:
+    radial-gradient(circle at 94% 2%, color-mix(in srgb, var(--m-accent) 11%, transparent), transparent 28%),
+    radial-gradient(circle at 2% 94%, color-mix(in srgb, var(--m-accent-2) 10%, transparent), transparent 31%),
+    var(--m-bg);
+}
+
+.capability-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  align-content: start;
+}
+
+.capability-card,
+.capability-control {
+  min-width: 0;
+  min-height: 86px;
+}
+
+.capability-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  grid-template-rows: 1fr auto;
+  align-items: center;
+  column-gap: 11px;
+  width: 100%;
+  height: 100%;
+  padding: 13px;
+  border: 1px solid var(--m-border);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--m-surface) 94%, transparent);
+  color: var(--m-fg);
+  box-shadow: 0 5px 18px color-mix(in srgb, var(--m-fg) 7%, transparent);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+}
+
+.capability-card:hover:not(:disabled) {
+  border-color: var(--m-accent);
+  background: var(--m-surface);
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--m-fg) 11%, transparent);
+  transform: translateY(-2px);
+}
+
+.capability-card:focus-visible,
+.capability-help:focus-visible {
+  outline: 2px solid var(--m-accent);
+  outline-offset: 2px;
+}
+
+.capability-card:disabled {
+  cursor: default;
+  opacity: 0.48;
+}
+
+.capability-card-icon {
+  grid-row: 1 / 3;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  background: var(--m-accent-soft);
+  color: var(--m-accent);
+}
+
+.capability-card-icon svg {
+  width: 21px;
+  height: 21px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.capability-card-label {
+  align-self: end;
+  overflow: hidden;
+  font-size: 12.5px;
+  font-weight: 750;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.capability-card-badge {
+  align-self: start;
+  width: fit-content;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: var(--m-surface-2);
+  color: var(--m-dim);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.capability-card-wide {
+  grid-column: span 2;
+}
+
+.capability-card-primary {
+  border-color: color-mix(in srgb, var(--m-accent-2) 44%, var(--m-border));
+  background: color-mix(in srgb, var(--m-accent-2) 9%, var(--m-surface));
+  box-shadow: 0 7px 20px color-mix(in srgb, var(--m-accent-2) 12%, transparent);
+}
+
+.capability-card-primary:hover:not(:disabled) {
+  border-color: var(--m-accent-2);
+  background: color-mix(in srgb, var(--m-accent-2) 13%, var(--m-surface));
+}
+
+.capability-card-primary .capability-card-icon {
+  background: color-mix(in srgb, var(--m-accent-2) 17%, var(--m-bg));
+  color: var(--m-accent-2);
+}
+
+.capability-card-primary .capability-card-badge {
+  color: var(--m-accent-2);
+}
+
+.capability-card-alt {
+  border-color: color-mix(in srgb, var(--m-accent-2) 55%, var(--m-border));
+}
+
+.capability-card-alt .capability-card-icon {
+  color: var(--m-accent-2);
+}
+
+.capability-card-ghost {
+  visibility: hidden;
+}
+
+.capability-control {
+  position: relative;
+}
+
+.capability-control > .capability-card {
+  padding-right: 34px;
+}
+
+.capability-toggle.is-on {
+  border-color: color-mix(in srgb, var(--m-ok) 55%, var(--m-border));
+  background: color-mix(in srgb, var(--m-ok) 7%, var(--m-surface));
+}
+
+.capability-toggle.is-on .capability-card-icon {
+  color: var(--m-ok);
+}
+
+.capability-toggle.is-blocked {
+  filter: grayscale(0.65);
+}
+
+.capability-state {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  overflow: hidden;
+  color: var(--m-dim);
+  width: fit-content;
+  padding: 3px 6px;
+  border-radius: 999px;
+  background: var(--m-surface-2);
+  font-size: 9px;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.capability-state i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.is-on .capability-state {
+  background: color-mix(in srgb, var(--m-ok) 12%, var(--m-surface));
+  color: var(--m-ok);
+}
+
+.capability-help {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 21px;
+  height: 21px;
+  padding: 0;
+  border: 1px solid var(--m-border);
+  border-radius: 8px;
+  background: var(--m-surface);
+  color: var(--m-dim);
+  font: 700 10px/1 inherit;
+  cursor: help;
+}
+
+.capability-help:hover {
+  border-color: var(--m-accent);
+  color: var(--m-accent);
+}
+
+.capability-privacy {
+  border-style: dashed;
+  background: color-mix(in srgb, var(--m-accent-2) 5%, var(--m-surface));
+}
+
+/* The optional Grove theme deliberately carries more colour than Light. */
+:root[data-veksha-theme="grove"] .workspace-header {
+  background: linear-gradient(
+    100deg,
+    color-mix(in srgb, var(--m-accent) 10%, var(--m-surface)),
+    color-mix(in srgb, var(--m-accent-2) 11%, var(--m-surface))
+  );
+}
+
+:root[data-veksha-theme="grove"] .capability-grid > .capability-card:nth-child(3n + 1),
+:root[data-veksha-theme="grove"] .capability-grid > .capability-control:nth-child(3n + 1) > .capability-card {
+  background: color-mix(in srgb, var(--m-accent) 15%, var(--m-surface));
+  border-color: color-mix(in srgb, var(--m-accent) 34%, var(--m-border));
+}
+
+:root[data-veksha-theme="grove"] .capability-grid > .capability-card:nth-child(3n + 2),
+:root[data-veksha-theme="grove"] .capability-grid > .capability-control:nth-child(3n + 2) > .capability-card {
+  background: color-mix(in srgb, var(--m-accent-2) 14%, var(--m-surface));
+  border-color: color-mix(in srgb, var(--m-accent-2) 35%, var(--m-border));
+}
+
+:root[data-veksha-theme="grove"] .capability-grid > .capability-card:nth-child(3n),
+:root[data-veksha-theme="grove"] .capability-grid > .capability-control:nth-child(3n) > .capability-card {
+  background: color-mix(in srgb, #6d5b91 13%, var(--m-surface));
+  border-color: color-mix(in srgb, #6d5b91 30%, var(--m-border));
+}
+
+:root[data-veksha-theme="grove"] .capability-grid > :nth-child(3n) .capability-card-icon {
+  background: color-mix(in srgb, #6d5b91 18%, var(--m-bg));
+  color: #675487;
+}
+
+@media (max-width: 560px) {
+  .capability-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

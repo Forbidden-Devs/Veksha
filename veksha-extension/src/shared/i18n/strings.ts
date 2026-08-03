@@ -161,6 +161,9 @@ export interface Strings {
   settings_title: string;
   settings_intro: string;
   settings_theme: string;
+  theme_light: string;
+  theme_grove: string;
+  theme_dark: string;
   settings_display_name: string;
   settings_native_lang: string;
   settings_learning_languages: string;
@@ -309,6 +312,37 @@ export interface Strings {
   lesson_practice: string;
   lesson_practice_hint: string;
   dictionary_empty: string;
+  // Quizlet import/export
+  quizlet_loading: string;
+  quizlet_status_title: string;
+  quizlet_total_words: string;
+  quizlet_exported: string;
+  quizlet_not_exported: string;
+  quizlet_export_options: string;
+  quizlet_exporting: string;
+  quizlet_export_new: string;
+  quizlet_export_all: string;
+  quizlet_export_new_hint: string;
+  quizlet_export_all_hint: string;
+  quizlet_format_hint: string;
+  quizlet_import_title: string;
+  quizlet_import_desc: string;
+  quizlet_importing: string;
+  quizlet_select_csv: string;
+  quizlet_imported: string;
+  quizlet_skipped: string;
+  quizlet_errors: string;
+  quizlet_export_success: string;
+  quizlet_export_steps_title: string;
+  quizlet_export_step_1: string;
+  quizlet_export_step_2: string;
+  quizlet_export_step_3: string;
+  quizlet_export_step_4: string;
+  quizlet_error_status: string;
+  quizlet_error_export: string;
+  quizlet_error_export_all: string;
+  quizlet_error_csv: string;
+  quizlet_error_import: string;
   lesson_goals_kicker: string;
   lesson_goals_prompt: string;
   lesson_goals_hint: string;
@@ -538,6 +572,9 @@ export const EN: Strings = {
   settings_title: "Settings",
   settings_intro: "Tell us your languages and level so we can pick the right words and difficulty for you.",
   settings_theme: "Theme",
+  theme_light: "Light",
+  theme_grove: "Colorful",
+  theme_dark: "Dark",
   settings_display_name: "Your name",
   settings_native_lang: "Your language",
   settings_learning_languages: "Languages you study",
@@ -682,6 +719,36 @@ export const EN: Strings = {
   lesson_practice: "Practice",
   lesson_practice_hint: "Answer in your own words",
   dictionary_empty: "Your dictionary has no saved entries yet.",
+  quizlet_loading: "Loading Quizlet data…",
+  quizlet_status_title: "Export status",
+  quizlet_total_words: "Total words",
+  quizlet_exported: "Exported",
+  quizlet_not_exported: "Not exported",
+  quizlet_export_options: "Export options",
+  quizlet_exporting: "Exporting…",
+  quizlet_export_new: "Export new ({n})",
+  quizlet_export_all: "Export all ({n})",
+  quizlet_export_new_hint: "Only words you have not exported yet.",
+  quizlet_export_all_hint: "Every word in your vocabulary.",
+  quizlet_format_hint: "Both options download a CSV file ready for Quizlet.",
+  quizlet_import_title: "Import from Quizlet",
+  quizlet_import_desc: "Upload a Quizlet CSV to add words to your vocabulary. Expected columns: Word, Translation, Context.",
+  quizlet_importing: "Importing…",
+  quizlet_select_csv: "Select CSV file",
+  quizlet_imported: "Imported",
+  quizlet_skipped: "Skipped",
+  quizlet_errors: "Errors ({n})",
+  quizlet_export_success: "Export complete. The file has been downloaded.",
+  quizlet_export_steps_title: "How to export from Quizlet",
+  quizlet_export_step_1: "Open your study set in Quizlet.",
+  quizlet_export_step_2: "Open the three-dot menu (⋮).",
+  quizlet_export_step_3: "Choose Export and select CSV.",
+  quizlet_export_step_4: "Upload the downloaded file here.",
+  quizlet_error_status: "Could not load Quizlet export status.",
+  quizlet_error_export: "Could not export new words.",
+  quizlet_error_export_all: "Could not export the vocabulary.",
+  quizlet_error_csv: "Select a CSV file.",
+  quizlet_error_import: "Could not import this file. Check its format and try again.",
   lesson_goals_kicker: "Learning objective",
   lesson_goals_prompt: "What should you be able to do?",
   lesson_goals_hint: "Describe a result, situation, or text you want to understand. The lesson will build a route toward it.",

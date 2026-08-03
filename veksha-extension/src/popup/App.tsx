@@ -597,11 +597,11 @@ export default function App() {
   return (
     <AppContext.Provider value={ctx}>
       <div className={`app${isExtension ? "" : " app-web"}`}>
-        <div className="shell-main">
-          <div className="shell-topbar">
+        <div className="workspace-frame">
+          <div className="workspace-header">
             {screen !== "home" && (
               <button
-                className="m-back"
+                className="workspace-back"
                 aria-label="Back"
                 onClick={() => navigateTo(
                   screen === "subscription" && subscriptionIntent.mode !== "add" ? "settings" : "home",
@@ -612,17 +612,18 @@ export default function App() {
                 </svg>
               </button>
             )}
-            <div className="shell-page-title">{meta.title}</div>
-            {screen === "home" && <div className="shell-brand-mark" aria-hidden="true" />}
+            {screen === "home" && <div className="workspace-mark" aria-hidden="true" />}
+            <div className="workspace-title">{meta.title}</div>
+            {screen === "home" && <span className="workspace-context">{targetLang.toUpperCase()}</span>}
             {screen === "home" && __DEV_BUILD__ && (
               <>
-                <div className="shell-topbar-spacer" />
-                <button className="m-debug" onClick={() => navigateTo("debug")} aria-label={t.debug_title}>&#9881;&#65038;</button>
+                <div className="workspace-header-spacer" />
+                <button className="workspace-debug" onClick={() => navigateTo("debug")} aria-label={t.debug_title}>&#9881;&#65038;</button>
               </>
             )}
           </div>
 
-          <div className="shell-content">
+          <div className="workspace-content">
             {screen === "home" && <HomeScreen />}
             {screen === "translator" && <TranslatorScreen />}
             {screen === "goals" && <LearningGoalsScreen />}

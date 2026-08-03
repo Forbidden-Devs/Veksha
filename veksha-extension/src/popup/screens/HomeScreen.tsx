@@ -17,14 +17,7 @@ import {
 } from "../../shared/aiBlocklist";
 import { useApp } from "../App";
 
-/**
- * HomeScreen — Metro start screen with a compact feature tile grid.
- *
- * Layout (mirrors the paper sketch):
- *   [dictionary] [topics] [training] [immersion]
- *   [dual subs] [grammar] [CI meter] [my words]
- *   [statistics] [settings] [          language          ]
- */
+/** HomeScreen — launch surface for learning tools and page-level controls. */
 
 const Icons = {
   dictionary: <svg viewBox="0 0 24 24"><path d="M4 5.5A3.5 3.5 0 0 1 7.5 2H11v17H7.5A3.5 3.5 0 0 0 4 22V5.5Z"/><path d="M20 5.5A3.5 3.5 0 0 0 16.5 2H13v17h3.5A3.5 3.5 0 0 1 20 22V5.5Z"/></svg>,
@@ -252,7 +245,7 @@ export function HomeScreen() {
   if (!isExtension) {
     const languageName = LANGUAGES.find((lang) => lang.code === targetLang)?.name ?? targetLang.toUpperCase();
     return (
-      <section className="screen screen-home web-home">
+      <section className="screen launchpad web-home">
         <div className="web-home-hero">
           <div className="web-home-kicker">{languageName} · {targetLang.toUpperCase()}</div>
           <h1>{t.home_hero_title.replace("|", " ")}</h1>
@@ -319,63 +312,63 @@ export function HomeScreen() {
   }
 
   return (
-    <section className="screen screen-home">
-      <div className="m-tiles">
-        <button className="m-tile" onClick={() => navigateTo("dictionary")}>
-          <span className="m-tile-icon">{Icons.dictionary}</span>
-          <span className="m-tile-label">{t.dictionary_title}</span>
+    <section className="screen launchpad">
+      <div className="capability-grid">
+        <button className="capability-card capability-card-primary" onClick={openTraining}>
+          <span className="capability-card-icon">{Icons.training}</span>
+          {counts !== null && counts.due > 0 && <span className="capability-card-badge">{counts.due}</span>}
+          <span className="capability-card-label">{t.nav_training}</span>
         </button>
-        <button className="m-tile" onClick={() => navigateTo("goals")}>
-          <span className="m-tile-icon">{Icons.topics}</span>
-          <span className="m-tile-label">{t.lesson_goals_kicker}</span>
+        <button className="capability-card" onClick={() => navigateTo("goals")}>
+          <span className="capability-card-icon">{Icons.topics}</span>
+          <span className="capability-card-label">{t.lesson_goals_kicker}</span>
         </button>
-        <button className="m-tile" onClick={openTraining}>
-          <span className="m-tile-icon">{Icons.training}</span>
-          {counts !== null && counts.due > 0 && <span className="m-tile-badge">{counts.due}</span>}
-          <span className="m-tile-label">{t.nav_training}</span>
+        <button className="capability-card" onClick={() => navigateTo("dictionary")}>
+          <span className="capability-card-icon">{Icons.dictionary}</span>
+          <span className="capability-card-label">{t.dictionary_title}</span>
         </button>
         {isExtension ? (
-          <div className="m-feature-guide-wrap">
+          <div className="capability-control">
             <button
-              className={`m-tile m-feature-tile ${aiBlocked ? "is-blocked" : immersionOn ? "is-on" : "is-off"}`}
+              className={`capability-card capability-toggle ${aiBlocked ? "is-blocked" : immersionOn ? "is-on" : "is-off"}`}
               onClick={toggleImmersion}
               disabled={aiBlocked}
               aria-pressed={immersionOn}
             >
-              <span className="m-tile-icon">{Icons.immersion}</span>
-              <span className="m-tile-label">{t.nav_immersion}</span>
-              <span className="m-feature-state">
+              <span className="capability-card-icon">{Icons.immersion}</span>
+              <span className="capability-card-label">{t.nav_immersion}</span>
+              <span className="capability-state">
                 <i aria-hidden="true" />
                 {aiBlocked ? t.feature_blocked : immersionOn ? t.feature_enabled : t.feature_disabled}
               </span>
             </button>
             <button
               type="button"
-              className="m-feature-guide-button"
+              className="capability-help"
               aria-label={`${t.feature_guide_open}: ${t.nav_immersion}`}
               title={t.feature_guide_open}
               onClick={() => setFeatureGuide("immersion")}
             >?</button>
           </div>
-        ) : <div className="m-tile m-tile-ghost" aria-hidden="true" />}
+        ) : <div className="capability-card capability-card-ghost" aria-hidden="true" />}
         {isExtension && (
-          <div className="m-feature-guide-wrap">
+          <div className="capability-control">
             <button
-              className={`m-tile m-feature-tile ${aiBlocked ? "is-blocked" : dualSubsEnabled ? "is-on" : "is-off"}`}
+              className={`capability-card capability-toggle ${aiBlocked ? "is-blocked" : dualSubsEnabled ? "is-on" : "is-off"}`}
               onClick={toggleDualSubtitles}
               disabled={aiBlocked}
               aria-pressed={dualSubsEnabled}
             >
-              <span className="m-tile-icon">{Icons.dualSubtitles}</span>
-              <span className="m-tile-label">{t.settings_dual_subtitles}</span>
-              <span className="m-feature-state">
+              <span className="capability-card-icon">{Icons.dualSubtitles}</span>
+              <span className="capability-card-label">{t.settings_dual_subtitles}</span>
+              <span className="capability-state">
                 <i aria-hidden="true" />
                 {aiBlocked ? t.feature_blocked : dualSubsEnabled ? t.feature_enabled : t.feature_disabled}
               </span>
             </button>
             <button
               type="button"
-              className="m-feature-guide-button"
+              className="capability-help"
               aria-label={`${t.feature_guide_open}: ${t.settings_dual_subtitles}`}
               title={t.feature_guide_open}
               onClick={() => setFeatureGuide("dual_subtitles")}
@@ -383,23 +376,23 @@ export function HomeScreen() {
           </div>
         )}
         {isExtension && (
-          <div className="m-feature-guide-wrap">
+          <div className="capability-control">
             <button
-              className={`m-tile m-feature-tile ${aiBlocked ? "is-blocked" : grammarLensOn ? "is-on" : "is-off"}`}
+              className={`capability-card capability-toggle ${aiBlocked ? "is-blocked" : grammarLensOn ? "is-on" : "is-off"}`}
               onClick={toggleGrammarLens}
               disabled={aiBlocked}
               aria-pressed={grammarLensOn}
             >
-              <span className="m-tile-icon">{Icons.grammar}</span>
-              <span className="m-tile-label">{t.grammar_memory_title}</span>
-              <span className="m-feature-state">
+              <span className="capability-card-icon">{Icons.grammar}</span>
+              <span className="capability-card-label">{t.grammar_memory_title}</span>
+              <span className="capability-state">
                 <i aria-hidden="true" />
                 {aiBlocked ? t.feature_blocked : grammarLensOn ? t.feature_enabled : t.feature_disabled}
               </span>
             </button>
             <button
               type="button"
-              className="m-feature-guide-button"
+              className="capability-help"
               aria-label={`${t.feature_guide_open}: ${t.grammar_memory_title}`}
               title={t.feature_guide_open}
               onClick={() => setFeatureGuide("grammar_memory")}
@@ -407,23 +400,23 @@ export function HomeScreen() {
           </div>
         )}
         {isExtension && (
-          <div className="m-feature-guide-wrap">
+          <div className="capability-control">
             <button
-              className={`m-tile m-feature-tile ${aiBlocked ? "is-blocked" : ciMeterOn ? "is-on" : "is-off"}`}
+              className={`capability-card capability-toggle ${aiBlocked ? "is-blocked" : ciMeterOn ? "is-on" : "is-off"}`}
               onClick={toggleCiMeter}
               disabled={aiBlocked}
               aria-pressed={ciMeterOn}
             >
-              <span className="m-tile-icon">{Icons.ciMeter}</span>
-              <span className="m-tile-label">{t.ci_meter_off}</span>
-              <span className="m-feature-state">
+              <span className="capability-card-icon">{Icons.ciMeter}</span>
+              <span className="capability-card-label">{t.ci_meter_off}</span>
+              <span className="capability-state">
                 <i aria-hidden="true" />
                 {aiBlocked ? t.feature_blocked : ciMeterOn ? t.feature_enabled : t.feature_disabled}
               </span>
             </button>
             <button
               type="button"
-              className="m-feature-guide-button"
+              className="capability-help"
               aria-label={`${t.feature_guide_open}: ${t.ci_meter_off}`}
               title={t.feature_guide_open}
               onClick={() => setFeatureGuide("ci_meter")}
@@ -431,21 +424,21 @@ export function HomeScreen() {
           </div>
         )}
         {isExtension && (
-          <div className="m-feature-guide-wrap">
+          <div className="capability-control">
             <button
-              className={`m-tile m-feature-tile m-feature-destination ${vocabFreqOn ? "is-on" : "is-off"}`}
+              className={`capability-card capability-toggle capability-destination ${vocabFreqOn ? "is-on" : "is-off"}`}
               onClick={() => navigateTo("myWords")}
             >
-              <span className="m-tile-icon">{Icons.myWords}</span>
-              <span className="m-tile-label">{t.my_words_title}</span>
-              <span className="m-feature-state">
+              <span className="capability-card-icon">{Icons.myWords}</span>
+              <span className="capability-card-label">{t.my_words_title}</span>
+              <span className="capability-state">
                 <i aria-hidden="true" />
                 {vocabFreqOn ? t.feature_enabled : t.feature_disabled}
               </span>
             </button>
             <button
               type="button"
-              className="m-feature-guide-button"
+              className="capability-help"
               aria-label={`${t.feature_guide_open}: ${t.my_words_title}`}
               title={t.feature_guide_open}
               onClick={() => setFeatureGuide("my_words")}
@@ -455,34 +448,34 @@ export function HomeScreen() {
 
         {isExtension && (
           <button
-            className={`m-tile m-feature-tile m-ai-block-tile ${aiBlocked ? "is-on" : "is-off"}`}
+            className={`capability-card capability-toggle capability-privacy ${aiBlocked ? "is-on" : "is-off"}`}
             onClick={() => setBlockDialogOpen(true)}
             disabled={!aiBlockAvailable}
           >
-            <span className="m-tile-icon">{Icons.aiBlock}</span>
-            <span className="m-tile-label">{t.ai_block_title}</span>
-            <span className="m-feature-state"><i aria-hidden="true" />{aiBlocked ? t.ai_block_enabled : t.feature_disabled}</span>
+            <span className="capability-card-icon">{Icons.aiBlock}</span>
+            <span className="capability-card-label">{t.ai_block_title}</span>
+            <span className="capability-state"><i aria-hidden="true" />{aiBlocked ? t.ai_block_enabled : t.feature_disabled}</span>
           </button>
         )}
 
-        <button className="m-tile" onClick={() => navigateTo("quizlet")}>
-          <span className="m-tile-icon">{Icons.quizlet}</span>
-          <span className="m-tile-label">Quizlet</span>
+        <button className="capability-card" onClick={() => navigateTo("quizlet")}>
+          <span className="capability-card-icon">{Icons.quizlet}</span>
+          <span className="capability-card-label">Quizlet</span>
         </button>
 
-        <button className="m-tile m-tile-stats" onClick={() => navigateTo("statistics")}>
-          <span className="m-tile-icon">{Icons.stats}</span>
-          <span className="m-tile-label">{t.nav_stats}</span>
-          <span className="m-tile-badge">{counts?.words ?? "…"}</span>
+        <button className="capability-card capability-card-stats" onClick={() => navigateTo("statistics")}>
+          <span className="capability-card-icon">{Icons.stats}</span>
+          <span className="capability-card-label">{t.nav_stats}</span>
+          <span className="capability-card-badge">{counts?.words ?? "…"}</span>
         </button>
-        <button className="m-tile" onClick={() => navigateTo("settings", { settingsMode: "menu" })}>
-          <span className="m-tile-icon">{Icons.settings}</span>
-          <span className="m-tile-label">{t.nav_settings}</span>
+        <button className="capability-card" onClick={() => navigateTo("settings", { settingsMode: "menu" })}>
+          <span className="capability-card-icon">{Icons.settings}</span>
+          <span className="capability-card-label">{t.nav_settings}</span>
         </button>
-        <button className="m-tile m-tile-wide m-tile-alt" onClick={switchTargetLanguage} disabled={!settings || (settings.target_langs?.length ?? 1) < 2}>
-          <span className="m-tile-icon">{Icons.language}</span>
-          <span className="m-tile-badge">{targetLang.toUpperCase()}</span>
-          <span className="m-tile-label">{LANGUAGES.find((lang) => lang.code === targetLang)?.name ?? targetLang}</span>
+        <button className="capability-card capability-card-wide capability-card-alt" onClick={switchTargetLanguage} disabled={!settings || (settings.target_langs?.length ?? 1) < 2}>
+          <span className="capability-card-icon">{Icons.language}</span>
+          <span className="capability-card-badge">{targetLang.toUpperCase()}</span>
+          <span className="capability-card-label">{LANGUAGES.find((lang) => lang.code === targetLang)?.name ?? targetLang}</span>
         </button>
       </div>
       {blockDialogOpen && (
