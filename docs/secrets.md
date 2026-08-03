@@ -40,9 +40,10 @@ Admin получает `VITE_BACKEND_URL` во время сборки. `ADMIN_A
 решение до появления отдельного secret manager. Старые секреты не используются:
 для нового runtime они перевыпускаются.
 
-Credentials внешнего backup-хранилища находятся в конфигурации `rclone`, а
-несекретный адрес remote — в `/etc/veksha/backup.env`. Эти файлы не добавляются
-в Git и не попадают в application images.
+Credentials внешнего backup-хранилища находятся в конфигурации `rclone`.
+Адрес remote и секретный URL мониторинга backup находятся в root-owned файле
+`/etc/veksha/backup.env` с mode `600`. Эти файлы не добавляются в Git и не
+попадают в application images.
 
 Секрет немедленно ротируется, если он попал в терминальный вывод, build log,
 issue, pull request, скриншот или историю Git.

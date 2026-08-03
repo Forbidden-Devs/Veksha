@@ -147,7 +147,12 @@ root-owned файл `/etc/veksha/backup.env`:
 
 ```dotenv
 VEKSHA_BACKUP_REMOTE=remote-name:veksha/staging/postgres
+VEKSHA_BACKUP_HEALTHCHECK_URL=https://hc-ping.com/replace-with-check-uuid
 ```
+
+`VEKSHA_BACKUP_HEALTHCHECK_URL` необязателен. Если он задан, systemd отправляет
+сигналы начала, успешного завершения и ошибки. URL проверки является секретом:
+не добавляйте его в Git и не выводите в логи.
 
 Проверьте backup вручную:
 

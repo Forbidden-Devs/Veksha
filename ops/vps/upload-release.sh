@@ -34,6 +34,7 @@ echo "Uploading server-side deployment tools"
 rsync -a --progress \
   "$script_dir/install-release.sh" \
   "$script_dir/rollback.sh" \
+  "$script_dir/backup-healthcheck.sh" \
   "$script_dir/backup-postgres.sh" \
   "$script_dir/restore-postgres.sh" \
   "$script_dir/smoke-test.sh" \
