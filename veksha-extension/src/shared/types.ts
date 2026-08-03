@@ -1,16 +1,6 @@
-export type Screen = "home" | "translator" | "topics" | "dictionary" | "immersion" | "myWords" | "settings" | "subscription" | "statistics" | "debug" | "quizlet";
+export type Screen = "home" | "translator" | "goals" | "dictionary" | "immersion" | "myWords" | "settings" | "subscription" | "statistics" | "debug" | "quizlet";
 export type Overlay = "training" | "reminder" | null;
 export type SettingsMode = "onboarding" | "menu";
-
-export interface ChatMessage {
-  id: string;
-  text: string;
-  role: "user" | "bot" | "error";
-  time: Date;
-  isTranslation?: boolean;
-  originalText?: string;
-  speechLang?: string;
-}
 
 export interface TranslateResponse {
   translation: string;

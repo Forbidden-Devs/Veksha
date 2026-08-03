@@ -55,15 +55,19 @@ export interface Strings {
   menu_statistics: string;
   menu_settings: string;
   menu_debug: string;
-  // Chat
-  chat_reminders: string;
-  chat_today: string;
-  chat_placeholder: string;
-  chat_mode_training: string;
-  chat_mode_lesson: string;
-  chat_mode_translate: string;
-  chat_explain: string;
-  chat_listen: string;
+  translator_title: string;
+  reminder_label: string;
+  translator_source_label: string;
+  translator_source_placeholder: string;
+  translator_action: string;
+  translator_working: string;
+  translator_clear: string;
+  translator_result_label: string;
+  translator_listen: string;
+  translator_explain: string;
+  translator_note_label: string;
+  translator_failed: string;
+  translator_explain_failed: string;
   immersion_on: string;
   immersion_off: string;
   immersion_hint: string;
@@ -304,14 +308,19 @@ export interface Strings {
   lesson_scroll_next: string;
   lesson_practice: string;
   lesson_practice_hint: string;
-  // Topic picker
-  topics_loading: string;
-  topics_empty: string;
-  topics_empty_title: string;
-  topics_empty_hint: string;
-  topics_blocks: string;      // placeholder: {n}
-  topics_placeholder: string;
-  topics_add: string;
+  dictionary_empty: string;
+  lesson_goals_kicker: string;
+  lesson_goals_prompt: string;
+  lesson_goals_hint: string;
+  lesson_goals_placeholder: string;
+  lesson_goals_start: string;
+  lesson_goals_active: string;
+  lesson_goals_loading: string;
+  lesson_goals_evidence: string;
+  lesson_goals_continue: string;
+  lesson_goals_empty: string;
+  lesson_goals_load_failed: string;
+  lesson_goals_create_failed: string;
   // Shared copy retained by setup and the web home screen.
   common_back: string;
   home_translation_body: string;
@@ -424,14 +433,19 @@ export const EN: Strings = {
   menu_statistics: "Statistics",
   menu_settings: "Settings",
   menu_debug: "Debug",
-  chat_reminders: "Reminders",
-  chat_today: "Today",
-  chat_placeholder: "Write a message...",
-  chat_mode_training: "Training",
-  chat_mode_lesson: "Lesson",
-  chat_mode_translate: "Translate",
-  chat_explain: "More details",
-  chat_listen: "Listen",
+  translator_title: "Translation desk",
+  reminder_label: "Review queue",
+  translator_source_label: "Text to work with",
+  translator_source_placeholder: "Paste a word, sentence, or short passage",
+  translator_action: "Translate text",
+  translator_working: "Working…",
+  translator_clear: "Clear",
+  translator_result_label: "Translation",
+  translator_listen: "Play audio",
+  translator_explain: "Explain choices",
+  translator_note_label: "Language note",
+  translator_failed: "Translation is temporarily unavailable.",
+  translator_explain_failed: "The translation is ready, but its explanation could not be loaded.",
   immersion_on: "Immersion on",
   immersion_off: "Immerse page",
   immersion_hint: "Sprinkle level-appropriate sentences in your target language right into the pages you read.",
@@ -667,13 +681,19 @@ export const EN: Strings = {
   lesson_scroll_next: "Keep scrolling for the next block",
   lesson_practice: "Practice",
   lesson_practice_hint: "Answer in your own words",
-  topics_loading: "Loading topics...",
-  topics_empty: "No topics yet. Add your first topic below.",
-  topics_empty_title: "What would you like to master?",
-  topics_empty_hint: 'Type the name of a topic you\'d like to understand in English — for example “Tenses”, “Medical terminology”, or anything else.',
-  topics_blocks: "{n} block(s)",
-  topics_placeholder: "e.g. Tenses, Medical terminology…",
-  topics_add: "Add",
+  dictionary_empty: "Your dictionary has no saved entries yet.",
+  lesson_goals_kicker: "Learning objective",
+  lesson_goals_prompt: "What should you be able to do?",
+  lesson_goals_hint: "Describe a result, situation, or text you want to understand. The lesson will build a route toward it.",
+  lesson_goals_placeholder: "For example: prepare for a project update call",
+  lesson_goals_start: "Build lesson",
+  lesson_goals_active: "Objectives in progress",
+  lesson_goals_loading: "Loading your objectives…",
+  lesson_goals_evidence: "{n} learning step(s) recorded",
+  lesson_goals_continue: "Continue",
+  lesson_goals_empty: "Your first objective will appear here after the lesson begins.",
+  lesson_goals_load_failed: "Objectives could not be loaded. You can still start a new one.",
+  lesson_goals_create_failed: "This objective could not be started. Try again.",
   common_back: "Back",
   home_translation_body: "Translate a word, phrase, or sentence and get a clean, in-context answer. Useful vocabulary goes to your inbox, so you decide what is worth learning.",
   home_quick_saved: "✓ saved for review",

@@ -7,7 +7,6 @@ import { isExtension, sessionGet, sessionSet, storageGet, storageRemove, storage
 import type { Screen, SettingsMode } from "../shared/types";
 import { LessonWindow } from "./overlays/LessonWindow";
 import { ReminderCard } from "./overlays/ReminderCard";
-import { TopicPickerOverlay } from "./overlays/TopicPickerOverlay";
 import { TrainingWindow } from "./overlays/TrainingWindow";
 import { TranslatorScreen } from "./screens/TranslatorScreen";
 import { HomeScreen } from "./screens/HomeScreen";
@@ -22,7 +21,7 @@ import { SettingsScreen } from "./screens/SettingsScreen";
 import { StatisticsScreen } from "./screens/StatisticsScreen";
 import { SubscriptionScreen, type SubscriptionIntent } from "./screens/SubscriptionScreen";
 import { TargetLangScreen } from "./screens/TargetLangScreen";
-import { TopicsScreen } from "./screens/TopicsScreen";
+import { LearningGoalsScreen } from "./screens/LearningGoalsScreen";
 import { QuizletScreen } from "./screens/QuizletScreen";
 
 // ---------------------------------------------------------------------------
@@ -74,7 +73,6 @@ interface AppCtx {
   openReminder: () => void;
   closeReminder: () => void;
   openTraining: () => void;
-  openLessonPicker: () => void;
   openLesson: (topic: string) => void;
   requirePremiumFeature: (feature: PremiumFeature, featureName: string) => Promise<boolean>;
   openSubscription: (intent?: SubscriptionIntent) => void;
@@ -310,8 +308,15 @@ export default function App() {
       } else if (saved) {
         // Reopened shortly after a focus-loss close — resume where they were.
         setSettingsMode(saved.settingsMode);
-        // Older builds persisted the former combined screen as "chat".
-        setScreen((saved.screen as string) === "chat" ? "translator" : saved.screen);
+        // Resume useful destinations while retiring names from previous UI models.
+        const previousScreen = saved.screen as string;
+        setScreen(
+          previousScreen === "chat"
+            ? "translator"
+            : previousScreen === "topics"
+              ? "goals"
+              : saved.screen,
+        );
       } else {
         setScreen("home");
       }
@@ -485,7 +490,7 @@ export default function App() {
   // On the web the study windows render as local overlays; in the extension
   // they are injected into the active tab so they outlive the popup.
   const [webOverlay, setWebOverlay] = useState<
-    { kind: "training" } | { kind: "picker" } | { kind: "lesson"; topic: string } | null
+    { kind: "training" } | { kind: "lesson"; topic: string } | null
   >(null);
 
   const openTraining = useCallback(async () => {
@@ -493,15 +498,6 @@ export default function App() {
     const status = await sendToActiveTab({ type: "VEKSHA_OPEN_TRAINING", username });
     if (status === "restricted") setToastMsg("Open any webpage first, then try Training again.");
     else if (status === "error") setToastMsg("Could not open Training. Please refresh the page.");
-    // Opened on the page — collapse the popup so it's out of the way.
-    else window.close();
-  }, [username]);
-
-  const openLessonPicker = useCallback(async () => {
-    if (!isExtension) { setWebOverlay({ kind: "picker" }); return; }
-    const status = await sendToActiveTab({ type: "VEKSHA_OPEN_LESSON_PICKER", username });
-    if (status === "restricted") setToastMsg("Open any webpage first, then try Lesson again.");
-    else if (status === "error") setToastMsg("Could not open Lesson. Please refresh the page.");
     // Opened on the page — collapse the popup so it's out of the way.
     else window.close();
   }, [username]);
@@ -574,7 +570,6 @@ export default function App() {
     openReminder,
     closeReminder,
     openTraining,
-    openLessonPicker,
     openLesson,
     requirePremiumFeature,
     openSubscription,
@@ -586,8 +581,8 @@ export default function App() {
 
   const pageMeta: Record<string, { title: string; sub: string }> = {
     home: { title: "veksha", sub: "" },
-    translator: { title: t.chat_mode_translate, sub: "" },
-    topics: { title: t.nav_topics, sub: t.sub_topics },
+    translator: { title: t.translator_title, sub: "" },
+    goals: { title: t.lesson_goals_kicker, sub: t.lesson_goals_hint },
     statistics: { title: t.nav_stats, sub: t.sub_stats },
     dictionary: { title: t.dictionary_title, sub: "" },
     immersion: { title: t.nav_immersion, sub: "" },
@@ -630,7 +625,7 @@ export default function App() {
           <div className="shell-content">
             {screen === "home" && <HomeScreen />}
             {screen === "translator" && <TranslatorScreen />}
-            {screen === "topics" && <TopicsScreen />}
+            {screen === "goals" && <LearningGoalsScreen />}
             {screen === "dictionary" && <DictionaryScreen />}
             {screen === "immersion" && <ImmersionScreen />}
             {screen === "myWords" && <MyWordsScreen />}
@@ -656,7 +651,7 @@ export default function App() {
               <span className="web-nav-practice" aria-hidden="true">↻</span><small>{t.nav_training}</small>
             </button>
             <button className={screen === "translator" ? "is-active" : ""} onClick={() => navigateTo("translator")}>
-              <span aria-hidden="true">文</span><small>{t.chat_mode_translate}</small>
+              <span aria-hidden="true">文</span><small>{t.translator_title}</small>
             </button>
             <button className={screen === "settings" ? "is-active" : ""} onClick={() => navigateTo("settings", { settingsMode: "menu" })}>
               <span aria-hidden="true">⚙</span><small>{t.nav_settings}</small>
@@ -668,13 +663,6 @@ export default function App() {
 
         {webOverlay?.kind === "training" && (
           <TrainingWindow username={username} onClose={() => setWebOverlay(null)} />
-        )}
-        {webOverlay?.kind === "picker" && (
-          <TopicPickerOverlay
-            username={username}
-            onSelect={(topic) => setWebOverlay({ kind: "lesson", topic })}
-            onClose={() => setWebOverlay(null)}
-          />
         )}
         {webOverlay?.kind === "lesson" && (
           <LessonWindow

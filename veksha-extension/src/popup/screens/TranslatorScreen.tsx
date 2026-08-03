@@ -1,74 +1,153 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as api from "../../shared/api";
 import { useT } from "../../shared/i18n";
-import type { ChatMessage } from "../../shared/types";
-import { ChatInput } from "../components/ChatInput";
-import { ChatMessages } from "../components/ChatMessages";
+import { canSpeak, speakText } from "../../shared/speech";
 import { useApp } from "../App";
+
+interface TranslationSheet {
+  source: string;
+  translated: string;
+  speechLanguage: string;
+  explanation: string;
+}
+
+const EMPTY_SHEET: TranslationSheet = {
+  source: "",
+  translated: "",
+  speechLanguage: "",
+  explanation: "",
+};
 
 export function TranslatorScreen() {
   const { username, openReminder, targetLang, nativeLang } = useApp();
   const t = useT();
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [sending, setSending] = useState(false);
-  const [explainedMsgs, setExplainedMsgs] = useState<Set<string>>(new Set());
+  const [draft, setDraft] = useState("");
+  const [sheet, setSheet] = useState(EMPTY_SHEET);
+  const [working, setWorking] = useState(false);
+  const [explaining, setExplaining] = useState(false);
+  const [error, setError] = useState("");
 
-  function addMessage(text: string, role: ChatMessage["role"]): void {
-    setMessages((prev) => [
-      ...prev,
-      { id: crypto.randomUUID(), text, role, time: new Date() },
-    ]);
-  }
-
-  async function handleExplain(msgId: string, originalText: string, translation: string) {
-    setExplainedMsgs((prev) => new Set(prev).add(msgId));
-    setSending(true);
+  async function translate() {
+    const source = draft.trim();
+    if (!source || working) return;
+    setWorking(true);
+    setError("");
+    setSheet(EMPTY_SHEET);
     try {
-      const res = await api.explain(username, originalText, translation);
-      addMessage(res.explanation, "bot");
-    } catch {
-      // The translation stays usable even when an optional explanation fails.
+      const response = await api.translate(
+        username,
+        source,
+        nativeLang,
+        targetLang,
+        true,
+      );
+      setSheet({
+        source,
+        translated: response.translation,
+        speechLanguage:
+          response.detected_source_lang === targetLang ? nativeLang : targetLang,
+        explanation: "",
+      });
+    } catch (reason) {
+      setError((reason as Error).message || t.translator_failed);
     } finally {
-      setSending(false);
+      setWorking(false);
     }
   }
 
-  const handleSend = useCallback(
-    async (text: string) => {
-      addMessage(text, "user");
-      setSending(true);
-      try {
-        const res = await api.translate(username, text, nativeLang, targetLang, true);
-        const speechLang = res.detected_source_lang === targetLang ? nativeLang : targetLang;
-        setMessages((prev) => [...prev, {
-          id: crypto.randomUUID(),
-          text: res.translation,
-          role: "bot",
-          time: new Date(),
-          isTranslation: true,
-          originalText: text,
-          speechLang,
-        }]);
-      } catch (err) {
-        addMessage(`Error: ${(err as Error).message}`, "error");
-      } finally {
-        setSending(false);
-      }
-    },
-    [username, nativeLang, targetLang],
-  );
+  async function explain() {
+    if (!sheet.translated || explaining) return;
+    setExplaining(true);
+    try {
+      const response = await api.explain(username, sheet.source, sheet.translated);
+      setSheet((current) => ({ ...current, explanation: response.explanation }));
+    } catch {
+      setError(t.translator_explain_failed);
+    } finally {
+      setExplaining(false);
+    }
+  }
+
+  function reset() {
+    setDraft("");
+    setSheet(EMPTY_SHEET);
+    setError("");
+  }
 
   return (
-    <section className="screen screen-chat">
-      <header className="chat-header">
-        <strong className="translator-heading">{t.chat_mode_translate}</strong>
-        <div className="header-actions">
-          <RemindersButton username={username} onOpen={openReminder} />
-        </div>
-      </header>
+    <section className="screen translator-workbench">
+      <div className="translator-toolbar">
+        <span className="translator-route">{nativeLang.toUpperCase()} ⇄ {targetLang.toUpperCase()}</span>
+        <RemindersButton username={username} onOpen={openReminder} />
+      </div>
 
-      <ChatMessages messages={messages} onExplain={handleExplain} explainedMsgs={explainedMsgs} />
-      <ChatInput onSend={handleSend} disabled={sending} />
+      <div className="translator-source">
+        <label htmlFor="translator-draft">{t.translator_source_label}</label>
+        <textarea
+          id="translator-draft"
+          value={draft}
+          rows={5}
+          maxLength={5000}
+          placeholder={t.translator_source_placeholder}
+          onChange={(event) => setDraft(event.target.value)}
+          onKeyDown={(event) => {
+            if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+              event.preventDefault();
+              void translate();
+            }
+          }}
+        />
+        <div className="translator-source-footer">
+          <span>{draft.length}/5000</span>
+          <div>
+            {(draft || sheet.translated) && (
+              <button type="button" className="translator-secondary" onClick={reset}>
+                {t.translator_clear}
+              </button>
+            )}
+            <button
+              type="button"
+              className="translator-run"
+              disabled={!draft.trim() || working}
+              onClick={() => void translate()}
+            >
+              {working ? t.translator_working : t.translator_action}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {error && <p className="translator-error" role="alert">{error}</p>}
+
+      {sheet.translated && (
+        <article className="translation-sheet" aria-live="polite">
+          <header>
+            <span>{t.translator_result_label}</span>
+            <div>
+              {canSpeak() && (
+                <button
+                  type="button"
+                  onClick={() => speakText(sheet.translated, sheet.speechLanguage)}
+                >
+                  {t.translator_listen}
+                </button>
+              )}
+              {!sheet.explanation && (
+                <button type="button" disabled={explaining} onClick={() => void explain()}>
+                  {explaining ? t.translator_working : t.translator_explain}
+                </button>
+              )}
+            </div>
+          </header>
+          <p className="translation-sheet-text">{sheet.translated}</p>
+          {sheet.explanation && (
+            <div className="translation-note">
+              <strong>{t.translator_note_label}</strong>
+              <p>{sheet.explanation}</p>
+            </div>
+          )}
+        </article>
+      )}
     </section>
   );
 }
@@ -81,24 +160,28 @@ function RemindersButton({ username, onOpen }: { username: string; onOpen: () =>
   useEffect(() => {
     if (checkedRef.current) return;
     checkedRef.current = true;
-    api.getReminders(username).then((r) => setHasDue(r.should_remind)).catch(() => {});
+    api.getReminders(username).then((result) => setHasDue(result.should_remind)).catch(() => {});
   }, [username]);
 
-  async function handleClick() {
+  async function openIfNeeded() {
     try {
       const result = await api.getReminders(username);
       setHasDue(result.should_remind);
       if (result.should_remind) onOpen();
-    } catch {}
+    } catch {
+      // Reminders are optional; translation remains available when polling fails.
+    }
   }
 
   return (
-    <button className="icon-btn" title={t.chat_reminders} aria-label={t.chat_reminders} onClick={handleClick}>
-      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
-        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-      </svg>
-      {hasDue && <span className="dot" />}
+    <button
+      type="button"
+      className="translator-reminders"
+      aria-label={t.reminder_label}
+      onClick={() => void openIfNeeded()}
+    >
+      <span aria-hidden="true">◷</span>
+      {hasDue && <i />}
     </button>
   );
 }

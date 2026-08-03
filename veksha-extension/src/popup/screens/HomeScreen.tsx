@@ -266,7 +266,7 @@ export function HomeScreen() {
               autoCapitalize="none"
               autoComplete="off"
               maxLength={500}
-              aria-label={t.chat_mode_translate}
+              aria-label={t.translator_title}
             />
             <button type="submit" disabled={!quickText.trim() || quickLoading}>
               {quickLoading ? "…" : "→"}
@@ -303,8 +303,8 @@ export function HomeScreen() {
         </div>
 
         <div className="web-action-grid">
-          <button onClick={() => navigateTo("translator")}><span>{Icons.dictionary}</span><strong>{t.chat_mode_translate}</strong></button>
-          <button onClick={() => navigateTo("topics")}><span>{Icons.topics}</span><strong>{t.nav_topics}</strong><small>{t.sub_topics}</small></button>
+          <button onClick={() => navigateTo("translator")}><span>{Icons.dictionary}</span><strong>{t.translator_title}</strong></button>
+          <button onClick={() => navigateTo("goals")}><span>{Icons.topics}</span><strong>{t.lesson_goals_kicker}</strong><small>{t.lesson_goals_hint}</small></button>
           <button onClick={() => navigateTo("statistics")}><span>{Icons.stats}</span><strong>{t.nav_stats}</strong></button>
           <button onClick={() => navigateTo("settings", { settingsMode: "menu" })}><span>{Icons.settings}</span><strong>{t.nav_settings}</strong></button>
         </div>
@@ -325,9 +325,9 @@ export function HomeScreen() {
           <span className="m-tile-icon">{Icons.dictionary}</span>
           <span className="m-tile-label">{t.dictionary_title}</span>
         </button>
-        <button className="m-tile" onClick={() => navigateTo("topics")}>
+        <button className="m-tile" onClick={() => navigateTo("goals")}>
           <span className="m-tile-icon">{Icons.topics}</span>
-          <span className="m-tile-label">{t.nav_topics}</span>
+          <span className="m-tile-label">{t.lesson_goals_kicker}</span>
         </button>
         <button className="m-tile" onClick={openTraining}>
           <span className="m-tile-icon">{Icons.training}</span>

@@ -2,7 +2,6 @@ import React, { useLayoutEffect, useRef, useState } from "react";
 import { createRoot, Root } from "react-dom/client";
 import { TrainingWindow } from "../popup/overlays/TrainingWindow";
 import { LessonWindow } from "../popup/overlays/LessonWindow";
-import { TopicPickerOverlay } from "../popup/overlays/TopicPickerOverlay";
 import { I18nProvider } from "../shared/i18n";
 import rawPaletteCss from "../shared/palette.css?inline";
 import rawPopupCss from "../popup/popup.css?inline";
@@ -60,23 +59,6 @@ function getShadowContainer(): HTMLElement {
   }
 
   return container;
-}
-
-export function showTopicPickerOverlay(username: string): void {
-  const container = getShadowContainer();
-  overlayRoot?.unmount();
-  overlayRoot = createRoot(container);
-  overlayRoot.render(
-    <I18nProvider>
-      <PageOverlay initWidth={460} initHeight={520}>
-        <TopicPickerOverlay
-          username={username}
-          onSelect={(topic) => showLessonOverlay(username, topic)}
-          onClose={closeOverlay}
-        />
-      </PageOverlay>
-    </I18nProvider>
-  );
 }
 
 export function showTrainingOverlay(username: string): void {
