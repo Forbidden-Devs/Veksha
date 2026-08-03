@@ -187,6 +187,8 @@ export interface Strings {
   settings_reminder_level_3: string;
   settings_persistent: string;
   settings_persistent_desc: string;
+  settings_focus_guard: string;
+  settings_focus_guard_desc: string;
   settings_dual_subtitles: string;
   settings_dual_subtitles_desc: string;
   settings_subscription: string;
@@ -284,6 +286,9 @@ export interface Strings {
   reminder_have: string;     // placeholder: {items}
   reminder_start: string;
   reminder_dismiss: string;
+  reminder_focus_note: string;
+  reminder_snooze: string;
+  reminder_skip_today: string;
   // Training window
   training_title: string;
   training_loading: string;
@@ -388,8 +393,19 @@ export interface Strings {
   pdf_region_hint: string;
   pdf_no_text: string;
   pdf_patch_dismiss: string;
+  ocr_capture_hint: string;
+  ocr_recognized_text: string;
+  ocr_translate_selection: string;
+  ocr_choose_again: string;
+  ocr_translate_area: string;
+  ocr_copy_translation: string;
+  ocr_translation_copied: string;
   // Content script (translation popup on page)
   content_translating: string;
+  content_translate: string;
+  content_close: string;
+  content_translation_failed: string;
+  content_explanation_failed: string;
   content_explain: string;
   content_listen: string;
   content_breakdown: string;
@@ -594,10 +610,12 @@ export const EN: Strings = {
   settings_reminder_level: "Reminder intensity",
   settings_reminder_level_desc: "How insistently Veksha reminds you to train.",
   settings_reminder_level_1: "Just a notification",
-  settings_reminder_level_2: "Pop-up with blur",
-  settings_reminder_level_3: "Blur + frequent",
+  settings_reminder_level_2: "Noticeable card",
+  settings_reminder_level_3: "Focus screen + frequent",
   settings_persistent: "Persistent reminders",
   settings_persistent_desc: "Hard-to-dismiss reminders: the close button runs away — finish a quick training or catch it to clear them.",
+  settings_focus_guard: "Focus safeguard",
+  settings_focus_guard_desc: "Turn reminders into a full-page decision: start now, snooze for 15 minutes, or intentionally pause for today.",
   settings_dual_subtitles: "Dual subtitles",
   settings_dual_subtitles_desc: "Enable translated subtitles and their playback control on YouTube.",
   settings_subscription: "Subscription",
@@ -693,6 +711,9 @@ export const EN: Strings = {
   reminder_have: "You have {items}.",
   reminder_start: "Start training",
   reminder_dismiss: "Dismiss reminder",
+  reminder_focus_note: "Choose what happens next so this review does not disappear unnoticed.",
+  reminder_snooze: "Remind me in 15 minutes",
+  reminder_skip_today: "Pause for today",
   training_title: "Training",
   training_loading: "Loading task...",
   training_done: "Session complete — {n} words done!",
@@ -790,7 +811,18 @@ export const EN: Strings = {
   pdf_region_hint: "Drag to select an area, then click the icon",
   pdf_no_text: "No text recognized in this area.",
   pdf_patch_dismiss: "Click to dismiss",
+  ocr_capture_hint: "Drag across the text you want to translate.",
+  ocr_recognized_text: "Recognized text",
+  ocr_translate_selection: "Translate selection",
+  ocr_choose_again: "Choose again",
+  ocr_translate_area: "Translate area",
+  ocr_copy_translation: "Copy translation",
+  ocr_translation_copied: "Copied",
   content_translating: "Translating...",
+  content_translate: "Translate selection",
+  content_close: "Close",
+  content_translation_failed: "Translation failed. Try again.",
+  content_explanation_failed: "Explanation is unavailable.",
   content_explain: "More details",
   content_listen: "Listen",
   content_breakdown: "Break down",

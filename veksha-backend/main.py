@@ -29,6 +29,7 @@ from api import debug, settings
 from api import immersion_v2 as immersion
 from api import i18n as api_i18n
 from api import lesson_v2 as lesson
+from api import ocr
 from api import privacy
 from api import reading_coach
 from api import grammar_lens
@@ -98,6 +99,7 @@ app.include_router(api_auth.router)
 app.include_router(admin.router)
 app.include_router(billing.router)
 app.include_router(translate.router)
+app.include_router(ocr.router)
 app.include_router(settings.router)
 app.include_router(training.router)
 app.include_router(lesson.router)

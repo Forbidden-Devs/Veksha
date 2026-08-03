@@ -23,6 +23,11 @@ Optional env vars: `OPENAI_MODEL`, `OPENAI_SMART_MODEL`, `REDIS_URL`
 `VEKSHA_DATA_DIR` (downloaded runtime files), `CORS_ALLOW_ORIGINS`,
 `VEKSHA_DEBUG_API`, `DATABASE_POOL_MIN_SIZE`, `DATABASE_POOL_MAX_SIZE`.
 
+Region translation uses `GOOGLE_CLOUD_VISION_API_KEY` for primary OCR when it
+is configured and falls back to OpenAI vision. Select the fallback model with
+`VEKSHA_OCR_VISION_MODEL` (default `gpt-5.6-luna`). Only the crop selected by
+the user is sent to `/api/ocr/translate-region`.
+
 The independently rewritten translation core is the only translation
 implementation. Its model can be selected with
 `VEKSHA_CORE_V2_TRANSLATION_MODEL` (default `gpt-5.6-luna`).

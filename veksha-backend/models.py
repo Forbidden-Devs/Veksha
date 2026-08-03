@@ -32,7 +32,7 @@ class UserSettings:
     #   2 = + in-page pop-up with page blur
     #   3 = + shown frequently (hourly instead of every 12h)
     reminder_level: int = 2
-    # Separate flag: the in-page close button runs away ("overseer" mode).
+    # Compatibility field: enables the explicit full-page focus safeguard.
     overseer: bool = False
     mining_same_level_examples: int = 2
     mining_higher_level_examples: int = 1

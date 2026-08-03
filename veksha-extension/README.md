@@ -37,9 +37,6 @@ add-on signed by AMO; the `browser_specific_settings.gecko.id` is set in
 at `http://127.0.0.1:8000`. Production builds use `https://veksha.app`.
 Development credentials use separate storage keys, so a production token in
 the persistent browser profile cannot cause local `401` responses.
-`scripts/sync-assets.mjs` copies tesseract/langdata assets into `public/`
-before the build (`npm run sync-assets`).
-
 `npm run release` removes the previous `artifacts/` directory, performs clean
 production builds, validates the generated manifests, excludes localhost
 permissions and source maps, and creates Chrome, Firefox, and Firefox reviewer
@@ -48,11 +45,6 @@ instructions included with the AMO source upload.
 
 ## Browser differences
 
-- Chrome's MV3 background is a service worker with no DOM, so OCR runs in an
-  offscreen document (`src/offscreen/`). Firefox has no `offscreen` API, but
-  its background is an event page with DOM access — it runs the same capture
-  controller (`src/shared/capture.ts`) directly. The split is decided at
-  build time via the `__BROWSER__` constant.
 - Firefox MV3 treats `<all_urls>` host permission as opt-in: users must grant
   site access in the extension's Permissions settings (or per-site via the
   toolbar icon) before content scripts run everywhere.
@@ -68,17 +60,16 @@ instructions included with the AMO source upload.
 
 ```
 src/background/    background (Chrome: service worker, Firefox: event page):
-                   reminder alarms, context menu, OCR routing,
-                   first-review nudge
+                   reminder alarms, context menu, first-review nudge
+src/capture/       one-shot screenshot crop workspace for image/PDF translation
 src/content/       selection translate popup, immersion mode, YouTube
                    subtitles integration, in-page reminder overlay
 src/popup/         popup app: translator, topics, training
                    and lesson overlays, statistics, settings, onboarding
 src/training/      standalone training page (full tab)
 src/lesson/        standalone lesson page (full tab)
-src/offscreen/     offscreen document (Chrome only): hosts shared/capture
 src/shared/        api client, config, types, i18n, speech helpers,
-                   capture controller (OCR via tesseract.js)
+                   platform adapters
 design/            brand-art generator (render.mjs): squirrel logo/icons,
                    mascot GIF frames, popup background pattern
 ```

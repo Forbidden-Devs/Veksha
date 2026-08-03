@@ -33,6 +33,7 @@ const Icons = {
   myWords: <svg viewBox="0 0 24 24"><path d="M4 19V6a2 2 0 0 1 2-2h11l3 3v12a1 1 0 0 1-1 1H6a2 2 0 0 1-2-2Z"/><path d="M8 9h8M8 13h5"/></svg>,
   quizlet: <svg viewBox="0 0 24 24"><path d="M5 5h7v7H5V5zm7 0h7v7h-7V5zM5 12h7v7H5v-7zm7 0h7v7h-7v-7z"/></svg>,
   aiBlock: <svg viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.7 2.8 8.1 7 10 4.2-1.9 7-5.3 7-10V6l-7-3Z"/><path d="m8 16 8-8"/><circle cx="9" cy="9" r="1"/><circle cx="15" cy="15" r="1"/></svg>,
+  capture: <svg viewBox="0 0 24 24"><path d="M4 9V5a1 1 0 0 1 1-1h4M15 4h4a1 1 0 0 1 1 1v4M20 15v4a1 1 0 0 1-1 1h-4M9 20H5a1 1 0 0 1-1-1v-4"/><path d="M8 12h8M12 8v8"/></svg>,
 };
 
 export function HomeScreen() {
@@ -204,6 +205,14 @@ export function HomeScreen() {
     }
   }
 
+  async function openAreaTranslation() {
+    try {
+      await chrome.runtime.sendMessage({ type: "VEKSHA_START_REGION_CAPTURE" });
+    } catch {
+      // Browser-protected pages cannot be captured; keep the popup responsive.
+    }
+  }
+
   async function toggleDualSubtitles() {
     const next = !dualSubsEnabled;
     if (next && !(await requirePremiumFeature("dual_subtitles", t.settings_dual_subtitles))) return;
@@ -327,6 +336,12 @@ export function HomeScreen() {
           <span className="capability-card-icon">{Icons.dictionary}</span>
           <span className="capability-card-label">{t.dictionary_title}</span>
         </button>
+        {isExtension && (
+          <button className="capability-card" onClick={openAreaTranslation}>
+            <span className="capability-card-icon">{Icons.capture}</span>
+            <span className="capability-card-label">{t.ocr_translate_area}</span>
+          </button>
+        )}
         {isExtension ? (
           <div className="capability-control">
             <button

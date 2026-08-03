@@ -15,8 +15,8 @@ import type {
 // Auth token
 //
 // The bearer token is issued once by POST /api/auth/register and stored in
-// chrome.storage.local. Every context (popup, content script, background,
-// offscreen) reads it lazily from storage and caches it in-module.
+// chrome.storage.local. Every context (popup, content script, background)
+// reads it lazily from storage and caches it in-module.
 // The legacy `username` parameters on the functions below are kept so call
 // sites stay unchanged — the server derives the user from the token.
 // ---------------------------------------------------------------------------
@@ -55,7 +55,7 @@ async function _authHeaders(): Promise<Record<string, string>> {
 // the page's privileges and get blocked by the site's CSP (connect-src), and
 // Chrome subjects them to the page's CORS. They are proxied through the
 // background (VEKSHA_API_FETCH), which has extension privileges. Extension
-// pages (popup/offscreen/background itself) and the web app fetch directly.
+// pages (popup/background itself) and the web app fetch directly.
 // ---------------------------------------------------------------------------
 
 const IS_CONTENT_SCRIPT =
@@ -493,6 +493,25 @@ export function subtitleTranslateBatch(
 
 export function explain(username: string, text: string, translation: string): Promise<{ explanation: string }> {
   return _post("/api/explain", { text, translation });
+}
+
+export interface ImageRegionTranslation {
+  recognized_text: string;
+  translation: string;
+  detected_source_lang: string | null;
+  provider: "google" | "openai";
+}
+
+export function translateImageRegion(
+  imageDataUrl: string,
+  sourceLang: string,
+  targetLang: string,
+): Promise<ImageRegionTranslation> {
+  return _post("/api/ocr/translate-region", {
+    image_data_url: imageDataUrl,
+    source_lang: sourceLang,
+    target_lang: targetLang,
+  }, 60_000);
 }
 
 export function getReminders(username: string): Promise<RemindersData> {

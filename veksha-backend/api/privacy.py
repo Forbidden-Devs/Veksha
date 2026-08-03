@@ -84,7 +84,8 @@ async def privacy_policy() -> str:
     <li>authentication tokens and, for optional Google sign-in, the Google
       profile name and email address returned by Google;</li>
     <li>selected text, page text, subtitle text, OCR results, and the domain
-      of the current website;</li>
+      of the current website, and an image crop when the user explicitly
+      invokes area translation;</li>
     <li>chat messages, saved vocabulary, training answers, learning history,
       language preferences, goals, settings, and feature state;</li>
     <li>AI feature usage records, including the feature, model, timestamp, and
@@ -107,6 +108,8 @@ async def privacy_policy() -> str:
   the Veksha production service. Text submitted for translation, explanation,
   chat, grammar, immersion, lesson, subtitle, OCR-related, or training
   features may be processed by OpenAI's API to generate the requested result.
+  User-selected image crops may first be processed by Google Cloud Vision for
+  text recognition; OpenAI vision is used when primary OCR is unavailable.
   An infrastructure hosting provider processes the service's runtime and
   stored account data. Optional Google authentication is processed by Google.
   Optional subscription billing is processed through Telegram. These
@@ -119,8 +122,8 @@ async def privacy_policy() -> str:
   subtitle tools, vocabulary frequency, reminders, and OCR. The extension
   stores an authentication token, account identifier, preferences, and
   feature state in local browser extension storage so it can work across
-  sessions. OCR JavaScript, WebAssembly, and language assets are packaged
-  locally with the extension; Veksha does not download or execute remote code.</p>
+  sessions. Area captures are kept temporarily in extension session memory, consumed
+  once by the capture workspace, and are not written to browser storage.</p>
 
   <h2>Retention and security</h2>
   <p>Local extension data remains in the browser until the user clears the

@@ -47,7 +47,7 @@ export function SettingsScreen() {
   const [targetLangs, setTargetLangs] = useState<string[]>(() => [appTargetLang || "en"]);
   const [languageSettings, setLanguageSettings] = useState<Record<string, { level: string; goals: string; prompt: string }>>({});
   const [reminderLevel, setReminderLevel] = useState(2);
-  const [overseer, setOverseer] = useState(false);
+  const [focusGuard, setFocusGuard] = useState(false);
   const [miningSameLevelExamples, setMiningSameLevelExamples] = useState(2);
   const [miningHigherLevelExamples, setMiningHigherLevelExamples] = useState(1);
   const [error, setError] = useState<string | null>(null);
@@ -242,7 +242,7 @@ export function SettingsScreen() {
       setTargetLangs(s.target_langs?.length ? s.target_langs : [s.target_lang || "en"]);
       setLanguageSettings(s.language_settings ?? {});
       setReminderLevel(s.reminder_level ?? 2);
-      setOverseer(s.overseer ?? false);
+      setFocusGuard(s.overseer ?? false);
       setMiningSameLevelExamples(s.mining_same_level_examples ?? 2);
       setMiningHigherLevelExamples(s.mining_higher_level_examples ?? 1);
       setSettingsLoaded(true);
@@ -278,7 +278,7 @@ export function SettingsScreen() {
         targetLangs,
         languageSettings: updatedLanguageSettings,
         reminderLevel,
-        overseer,
+        overseer: focusGuard,
         miningSameLevelExamples,
         miningHigherLevelExamples,
       });
@@ -574,14 +574,14 @@ export function SettingsScreen() {
 
         <label className={`settings-toggle${reminderLevel < 2 ? " is-disabled" : ""}`}>
           <span className="settings-toggle-copy">
-            <span className="settings-toggle-title">{t.settings_persistent}</span>
-            <span className="settings-toggle-desc">{t.settings_persistent_desc}</span>
+            <span className="settings-toggle-title">{t.settings_focus_guard}</span>
+            <span className="settings-toggle-desc">{t.settings_focus_guard_desc}</span>
           </span>
           <input
             type="checkbox"
-            checked={overseer}
+            checked={focusGuard}
             disabled={reminderLevel < 2}
-            onChange={(e) => setOverseer(e.target.checked)}
+            onChange={(e) => setFocusGuard(e.target.checked)}
           />
           <span className="settings-toggle-slider" aria-hidden="true" />
         </label>

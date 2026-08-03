@@ -83,3 +83,69 @@ test("light, colorful, and dark themes are available", () => {
   assert.match(palette, /data-veksha-theme="grove"/);
   assert.match(settings, /grove: t\.theme_grove/);
 });
+
+test("the page assistant boots through the new runtime", () => {
+  const entrypoint = source("src/content/content.ts");
+  const runtime = source("src/content/page-runtime.ts");
+  const overlay = source("src/content/overlay.tsx");
+
+  assert.match(entrypoint, /startPageRuntime/);
+  assert.match(entrypoint, /__vekshaPageRuntimeV2/);
+  assert.doesNotMatch(entrypoint, /openPopup|runRegionTranslate|showAggressiveReminder/);
+  assert.match(runtime, /class PageRuntime/);
+  assert.match(runtime, /SelectionAssistant/);
+  assert.match(overlay, /vk-page-window/);
+  assert.doesNotMatch(overlay, /av-overlay-auto|veksha-overlay-host/);
+});
+
+test("retired OCR implementation and coercive reminder code are absent", () => {
+  const files = [
+    "src/content/content.ts",
+    "src/content/page-runtime.ts",
+    "src/content/content.css",
+    "src/background/background.ts",
+    "manifest.json",
+    "vite.config.ts",
+    "package.json",
+    "package-lock.json",
+    "scripts/build.mjs",
+    "scripts/sync-assets.mjs",
+  ];
+  for (const relativePath of files) {
+    assert.doesNotMatch(source(relativePath), /VEKSHA_OCR|OCR_REGION|tesseract|terror-reminder|runRegionTranslate/i, relativePath);
+  }
+  for (const relativePath of [
+    "src/shared/capture.ts",
+    "src/offscreen/offscreen.ts",
+    "src/offscreen/offscreen.html",
+  ]) {
+    assert.equal(existsSync(path.join(root, relativePath)), false, relativePath);
+  }
+  assert.doesNotMatch(source("manifest.json"), /"offscreen"/);
+});
+
+test("focus reminders require an explicit, reversible choice", () => {
+  const reminder = source("src/content/page-reminder.ts");
+  const background = source("src/background/background.ts");
+  const settings = source("src/popup/screens/SettingsScreen.tsx");
+
+  assert.match(reminder, /reminder_focus_note/);
+  assert.match(reminder, /VEKSHA_SNOOZE_PRACTICE_REMINDER/);
+  assert.match(reminder, /VEKSHA_PAUSE_PRACTICE_REMINDERS/);
+  assert.match(background, /SNOOZE_REMINDER_ALARM/);
+  assert.match(settings, /settings_focus_guard/);
+  assert.doesNotMatch(reminder, /mousemove|pointermove|Math\.random/);
+});
+
+test("region translation uses a clean capture workspace", () => {
+  const background = source("src/background/background.ts");
+  const capture = source("src/capture/main.ts");
+  const api = source("src/shared/api.ts");
+
+  assert.match(background, /captureVisibleTab/);
+  assert.match(background, /VEKSHA_GET_REGION_CAPTURE/);
+  assert.match(capture, /translateImageRegion/);
+  assert.match(capture, /canvas\.toDataURL/);
+  assert.match(api, /\/api\/ocr\/translate-region/);
+  assert.doesNotMatch(capture, /tesseract|offscreen/i);
+});

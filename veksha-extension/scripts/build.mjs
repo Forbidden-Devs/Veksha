@@ -8,7 +8,6 @@
  * browser executable (Brave, Zen, …) for the auto-launch in watch mode.
  */
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -22,26 +21,6 @@ for (let i = 0; i < rest.length; i++) {
   else viteArgs.push(rest[i]);
 }
 const devBuild = viteArgs.includes("--watch");
-
-function walk(dir) {
-  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
-    const path = join(dir, entry.name);
-    return entry.isDirectory() ? walk(path) : [path];
-  });
-}
-
-function sanitizeTesseractRuntime() {
-  const outputDir = join(root, "dist", browser);
-  if (!existsSync(outputDir)) return;
-  for (const path of walk(outputDir).filter((file) => file.endsWith(".js"))) {
-    const code = readFileSync(path, "utf8");
-    const sanitized = code.replace(
-      /Function\("r","regeneratorRuntime = r"\)\(([A-Za-z_$][\w$]*)\)/g,
-      "globalThis.regeneratorRuntime=$1",
-    );
-    if (sanitized !== code) writeFileSync(path, sanitized);
-  }
-}
 
 const result = spawnSync(
   process.execPath,
@@ -57,5 +36,4 @@ const result = spawnSync(
     },
   },
 );
-if (result.status === 0 && !devBuild) sanitizeTesseractRuntime();
 process.exit(result.status ?? 1);

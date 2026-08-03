@@ -1,5 +1,5 @@
 /**
- * content.css — styles for the floating icon and translation popup.
+ * content.css — page-level study tools rendered outside the app popup.
  *
  * Palette follows the app's forest identity (popup/theme.css): warm cream
  * surfaces with rust-orange and pine-green accents, light and dark.
@@ -13,767 +13,266 @@
 /* light doubles as the no-attribute default.                              */
 /* ---------------------------------------------------------------------- */
 
-/* ---------------------------------------------------------------------- */
-/* PDF area translate (OCR)                                                 */
-/* ---------------------------------------------------------------------- */
+/* Page assistant: selection actions and translation card. */
 
-.veksha-pdf-fab {
+.vk-selection-tools,
+.vk-assistant-card,
+.vk-reminder-stage,
+.vk-page-reminder {
+  all: initial;
   position: fixed;
-  right: 18px;
-  bottom: 18px;
-  z-index: 2147483600;
+  z-index: 2147483647;
+  box-sizing: border-box;
+  color: var(--m-fg);
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.vk-reminder-stage {
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 18px;
+  pointer-events: none;
+}
+
+.vk-reminder-stage.is-focus {
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: color-mix(in srgb, var(--m-fg) 42%, transparent);
+  backdrop-filter: blur(7px) saturate(.8);
+  pointer-events: auto;
+}
+
+.vk-selection-tools {
+  display: flex;
+  gap: 5px;
+  padding: 4px;
+  border: 1px solid var(--m-border);
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--m-surface) 94%, transparent);
+  box-shadow: 0 10px 30px color-mix(in srgb, var(--m-fg) 22%, transparent);
+  backdrop-filter: blur(12px);
+}
+
+.vk-selection-tools button {
+  display: grid;
+  place-items: center;
+  height: 30px;
+  min-width: 30px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--m-fg);
+  font: 750 11px/1 Inter, -apple-system, sans-serif;
+  cursor: pointer;
+}
+
+.vk-selection-tools .vk-selection-translate {
+  background: var(--m-accent-2);
+  color: var(--m-on-accent);
+  font-size: 17px;
+}
+
+.vk-selection-tools button:hover { transform: translateY(-1px); }
+
+.vk-assistant-card {
+  display: grid;
+  width: min(360px, calc(100vw - 24px));
+  max-height: min(520px, calc(100vh - 24px));
+  overflow: hidden auto;
+  border: 1px solid color-mix(in srgb, var(--m-accent-2) 36%, var(--m-border));
+  border-radius: 18px;
+  background: var(--m-surface);
+  box-shadow: 0 24px 70px color-mix(in srgb, var(--m-fg) 26%, transparent);
+  animation: vk-assistant-arrive 140ms ease-out;
+}
+
+.vk-assistant-card header {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 9px 14px 9px 10px;
-  border-radius: 999px;
-  background: rgba(26, 22, 36, 0.82);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.4);
-  color: #fff;
-  font: 600 13px -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  cursor: pointer;
-  user-select: none;
-  transition: transform 0.12s ease, box-shadow 0.15s ease;
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--m-border);
 }
 
-.veksha-pdf-fab:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.5);
+.vk-assistant-card header span {
+  color: var(--m-accent-2);
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: .12em;
 }
 
-.veksha-pdf-fab img {
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
-  pointer-events: none;
+.vk-assistant-card header small {
+  flex: 1;
+  color: var(--m-dim);
+  font-size: 9px;
+  font-weight: 750;
+  text-align: right;
 }
 
-.veksha-pdf-region-layer {
-  position: fixed;
-  inset: 0;
-  z-index: 2147483601;
-  background: rgba(20, 16, 32, 0.18);
-  cursor: crosshair;
-}
-
-.veksha-pdf-region-hint {
-  position: fixed;
-  top: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 7px 14px;
-  border-radius: 999px;
-  background: rgba(26, 22, 36, 0.9);
-  color: #fff;
-  font: 600 12.5px -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  pointer-events: none;
-}
-
-.veksha-pdf-region-box {
-  position: absolute;
-  border: 2px solid var(--av-accent);
-  border-radius: 6px;
-  background: color-mix(in srgb, var(--av-accent) 14%, transparent);
-  box-shadow: 0 0 0 100vmax rgba(20, 16, 32, 0.12);
-}
-
-.veksha-pdf-region-go {
-  position: absolute;
-  top: -16px;
-  right: -16px;
-  width: 34px;
-  height: 34px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.vk-assistant-card header button {
+  width: 27px;
+  height: 27px;
   padding: 0;
-  border: none;
-  border-radius: 50%;
-  background: var(--av-gradient);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  border: 0;
+  border-radius: 8px;
+  background: var(--m-surface-2);
+  color: var(--m-dim);
+  font: 18px/1 sans-serif;
   cursor: pointer;
 }
 
-.veksha-pdf-region-go img {
-  width: 20px;
-  height: 20px;
-  border-radius: 5px;
-  pointer-events: none;
-}
-
-/* Region box drawn while dragging over an image (no page dimming) */
-.veksha-img-region-box {
-  position: fixed;
-  z-index: 2147483601;
-  border: 2px solid var(--av-accent);
-  border-radius: 6px;
-  background: color-mix(in srgb, var(--av-accent) 12%, transparent);
-  pointer-events: none;
-}
-
-/* Translated overlay patch (inpaint + text) laid over an OCR'd region */
-.veksha-pdf-patch {
-  position: fixed;
-  z-index: 2147483600;
-  cursor: pointer;
+.vk-assistant-card > q {
+  display: -webkit-box;
+  margin: 0;
+  padding: 13px 15px 8px;
   overflow: hidden;
-}
-
-.veksha-pdf-patch-line {
-  position: absolute;
-  display: flex;
-  align-items: center;
-  overflow: hidden;
-  border-radius: 2px;
-}
-
-.veksha-pdf-patch-text {
-  white-space: nowrap;
-  transform-origin: left center;
-  font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  font-weight: 500;
-  line-height: 1;
-}
-
-.veksha-pdf-loading {
-  position: absolute;
-  z-index: 2147483602;
-  padding: 7px 12px;
-  border-radius: 10px;
-  background: rgba(26, 22, 36, 0.9);
-  color: #fff;
-  font: 600 12.5px -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
-  pointer-events: none;
-}
-
-.veksha-icon,
-.veksha-popup {
-  position: absolute;
-  z-index: 2147483647;
-  font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  box-sizing: border-box;
-}
-
-.veksha-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
-  background: transparent;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 2px 10px rgba(20, 16, 32, 0.25);
-  border: none;
-  transition: transform 0.12s ease, filter 0.12s ease;
-  user-select: none;
-  overflow: hidden;
-}
-
-.veksha-icon-image {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  pointer-events: none;
-}
-
-.veksha-icon:hover {
-  filter: brightness(1.06);
-  transform: translateY(-1px) scale(1.05);
-}
-
-.veksha-icon-lens {
-  background: #ffffff;
-  font-size: 15px;
-  line-height: 1;
-}
-
-.veksha-popup {
-  width: min(360px, calc(100vw - 24px));
-  min-width: 280px;
-  max-width: 360px;
-  background: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 8px 30px rgba(20, 16, 32, 0.18), 0 2px 8px rgba(20, 16, 32, 0.08);
-  border: 1px solid var(--av-border);
-  padding: 8px 14px 12px;
-  color: var(--av-ink);
-  font-size: 14px;
-  line-height: 1.45;
-  animation: veksha-pop-in 0.12s ease-out;
-}
-
-@keyframes veksha-pop-in {
-  from {
-    opacity: 0;
-    transform: translateY(-4px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.veksha-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-  margin-bottom: 7px;
-}
-
-.veksha-lang-row {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  min-width: 0;
-}
-
-.veksha-select {
-  appearance: none;
-  border: none;
-  background: transparent;
-  color: #8f899a;
-  border-radius: 5px;
-  padding: 3px 2px;
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  width: auto;
-  max-width: 36px;
-  cursor: pointer;
-}
-
-.veksha-select:focus {
-  outline: none;
-  color: var(--av-accent);
-}
-
-.veksha-swap {
-  border: none;
-  background: transparent;
-  color: #aaa4b5;
+  color: var(--m-dim);
   font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 2px 4px;
-  border-radius: 6px;
-  flex-shrink: 0;
+  font-style: normal;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
 }
 
-.veksha-swap:hover {
-  background: var(--av-accent-soft);
-}
-
-.veksha-close {
-  border: none;
-  background: transparent;
-  color: var(--av-muted);
-  font-size: 15px;
-  line-height: 1;
-  cursor: pointer;
-  padding: 2px 6px;
-  border-radius: 6px;
-  flex-shrink: 0;
-}
-
-.veksha-close:hover {
-  background: var(--av-accent-soft);
-  color: var(--av-ink);
-}
-
-.veksha-result {
-  min-height: 25px;
-  padding: 0px 10px 10px;
-  font-size: 16px;
-  font-weight: 600;
-  word-break: break-word;
+.vk-assistant-result {
+  min-height: 54px;
+  padding: 8px 15px 14px;
+  color: var(--m-fg);
+  font-size: 17px;
+  font-weight: 720;
+  line-height: 1.4;
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
-.veksha-result--loading {
-  color: var(--av-muted);
-  animation: veksha-pulse 1.2s ease-in-out infinite;
-}
+.vk-assistant-result.is-loading { color: var(--m-dim); animation: vk-assistant-pulse 1s ease-in-out infinite; }
+.vk-assistant-result.is-error, .vk-assistant-details.is-error { color: var(--m-error); }
 
-@keyframes veksha-pulse {
-  0%, 100% { opacity: 0.35; }
-  50% { opacity: 1; }
-}
-
-.veksha-result.veksha-error {
-  color: var(--av-error);
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.veksha-action-row {
+.vk-assistant-card footer {
   display: flex;
   justify-content: flex-end;
-  align-items: center;
-  margin-top: 4px;
-  gap: 6px;
-}
-
-.veksha-secondary-actions {
-  display: flex;
-  align-items: center;
   gap: 7px;
+  padding: 10px 12px 12px;
 }
 
-.veksha-listen-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  border: 1px solid var(--av-border);
-  border-radius: 999px;
-  background: #ffffff;
-  color: var(--av-accent);
-  cursor: pointer;
-  font-size: 13px;
-  box-shadow: 0 2px 7px color-mix(in srgb, var(--av-accent) 12%, transparent);
-  transition: transform 0.12s ease, opacity 0.12s ease;
-}
-
-.veksha-listen-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-}
-
-.veksha-listen-btn:disabled {
-  cursor: default;
-  opacity: 0.35;
-}
-
-.veksha-explain-btn {
-  border: none;
-  background: var(--av-gradient);
-  background-size: 220% 220%;
-  color: #ffffff;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  padding: 8px 16px;
-  border-radius: 999px;
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--av-accent) 25%, transparent);
-  transition: transform 0.12s ease, opacity 0.12s ease;
-  animation: veksha-gradient-drift 9s ease-in-out infinite;
-}
-
-.veksha-explain-btn:hover {
-  transform: translateY(-1px);
-}
-
-.veksha-explain-btn:disabled {
-  opacity: 0.6;
-  cursor: default;
-  transform: none;
-  animation: none;
-}
-
-@keyframes veksha-gradient-drift {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-}
-
-.veksha-explain {
-  margin-top: 8px;
-  padding: 10px 12px;
+.vk-assistant-card footer button {
+  min-height: 31px;
+  padding: 0 12px;
+  border: 1px solid var(--m-border);
   border-radius: 10px;
-  background: var(--av-surface);
-  border: 1px solid var(--av-border);
-  font-size: 13px;
+  background: var(--m-surface-2);
+  color: var(--m-fg);
+  font: 700 11px/1 Inter, -apple-system, sans-serif;
+  cursor: pointer;
+}
+
+.vk-assistant-card footer button:last-child { background: var(--m-accent); color: var(--m-on-accent); }
+.vk-assistant-card footer button:disabled { cursor: default; opacity: .4; }
+
+.vk-assistant-details {
+  margin: 0 12px 4px;
+  padding: 11px;
+  border-radius: 11px;
+  background: var(--m-surface-2);
+  color: var(--m-fg);
+  font-size: 12px;
   line-height: 1.5;
   white-space: pre-wrap;
-  word-break: break-word;
 }
 
-.veksha-explain.veksha-error {
-  color: var(--av-error);
-  border-color: rgba(179, 65, 58, 0.25);
-}
-
-.veksha-aggressive-reminder {
-  position: fixed;
-  inset: 0;
-  z-index: 2147483647;
-  display: grid;
-  place-items: center;
-  padding: 28px;
-  background: rgba(17, 20, 30, 0.84);
-  -webkit-backdrop-filter: blur(3px) saturate(0.7);
-  backdrop-filter: blur(3px) saturate(0.7);
-  font-family: Inter, -apple-system, "Segoe UI", sans-serif;
-  animation: veksha-aggressive-fade 0.22s ease-out;
-  isolation: isolate;
-}
-
-.veksha-terror-reminder {
-  --terror-evasion: 86%;
-  --veksha-ink: #17221d;
-  --veksha-paper: #f4f0e4;
-  --veksha-signal: #e76847;
-  --veksha-mint: #b8e1ce;
-  background: rgba(13, 20, 17, 0.9);
-  -webkit-backdrop-filter: blur(5px) saturate(0.65);
-  backdrop-filter: blur(5px) saturate(0.65);
-  overflow: hidden;
-}
-
-.veksha-reminder-atmosphere {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  opacity: 0.42;
-  background-image:
-    linear-gradient(rgba(184, 225, 206, 0.12) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(184, 225, 206, 0.12) 1px, transparent 1px),
-    radial-gradient(circle at 18% 76%, rgba(231, 104, 71, 0.38), transparent 24%);
-  background-size: 48px 48px, 48px 48px, auto;
-  mask-image: linear-gradient(115deg, #000, transparent 86%);
-}
-
-.veksha-aggressive-banner {
+.vk-page-reminder {
   position: relative;
-  width: min(560px, calc(100vw - 48px));
-  margin-left: min(30vw, 420px);
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 24px;
-  padding: clamp(28px, 5vw, 54px);
-  border: 1px solid rgba(23, 34, 29, 0.35);
-  border-radius: 2px;
-  background: var(--veksha-paper);
-  box-shadow: 16px 16px 0 rgba(184, 225, 206, 0.92), 0 28px 90px rgba(0, 0, 0, 0.42);
-  color: var(--veksha-ink);
-  animation: veksha-aggressive-drop 0.3s ease-out;
-}
-
-.veksha-reminder-brand {
   display: grid;
-  grid-template-columns: 54px 1fr;
-  gap: 18px;
-  align-items: start;
-}
-
-.veksha-terror-logo {
-  width: 54px;
-  height: 54px;
-  padding: 6px;
-  border-radius: 2px;
-  background: var(--veksha-ink);
-  box-shadow: 5px 5px 0 var(--veksha-signal);
-}
-
-.veksha-aggressive-copy {
-  flex: 1;
-  min-width: 0;
-}
-
-.veksha-reminder-eyebrow {
-  margin-bottom: 12px;
-  color: #6a766f;
-  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.16em;
-}
-
-.veksha-aggressive-title {
-  margin-bottom: 8px;
-  font-size: clamp(28px, 4vw, 42px);
-  font-weight: 900;
-  line-height: 1.03;
-  letter-spacing: -0.045em;
-}
-
-.veksha-aggressive-subtitle {
-  color: #58645e;
-  font-size: 14px;
-  line-height: 1.55;
-}
-
-.veksha-reminder-queue {
-  display: grid;
-  gap: 8px;
-  border-block: 1px solid rgba(23, 34, 29, 0.2);
-  padding-block: 12px;
-}
-
-.veksha-reminder-queue-item {
-  display: grid;
-  grid-template-columns: 58px 1fr;
+  grid-template-columns: 40px minmax(0, 1fr);
   align-items: center;
-  min-height: 48px;
-  font-size: 13px;
+  gap: 11px;
+  width: min(470px, calc(100vw - 36px));
+  padding: 13px 44px 13px 13px;
+  border: 1px solid color-mix(in srgb, var(--m-accent-2) 38%, var(--m-border));
+  border-radius: 17px;
+  background: color-mix(in srgb, var(--m-surface) 94%, transparent);
+  box-shadow: 0 20px 55px color-mix(in srgb, var(--m-fg) 25%, transparent);
+  backdrop-filter: blur(14px);
+  animation: vk-reminder-arrive 180ms ease-out;
+  pointer-events: auto;
 }
 
-.veksha-reminder-queue-item + .veksha-reminder-queue-item {
-  border-top: 1px dashed rgba(23, 34, 29, 0.2);
-  padding-top: 8px;
+.vk-reminder-stage.is-focus .vk-page-reminder {
+  width: min(520px, calc(100vw - 40px));
+  padding: 20px;
+  border-color: color-mix(in srgb, var(--m-accent) 48%, var(--m-border));
+  border-radius: 22px;
+  box-shadow: 0 30px 100px color-mix(in srgb, #000 45%, transparent);
+  animation: vk-reminder-focus-arrive 220ms ease-out;
 }
 
-.veksha-reminder-queue-item strong {
-  color: var(--veksha-signal);
-  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
-  font-size: 25px;
-  font-weight: 850;
-}
+.vk-page-reminder img { width: 40px; height: 40px; border-radius: 11px; }
+.vk-page-reminder div { min-width: 0; }
+.vk-page-reminder strong { display: block; font-size: 13px; line-height: 1.25; }
+.vk-page-reminder p { margin: 3px 0 0; overflow: hidden; color: var(--m-dim); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.vk-page-reminder .vk-page-reminder-note { margin-top: 9px; white-space: normal; line-height: 1.45; }
 
-.veksha-reminder-queue-item span {
-  overflow: hidden;
-  font-weight: 700;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.veksha-aggressive-start {
-  width: 100%;
-  border: 1px solid var(--veksha-ink);
-  border-radius: 2px;
-  padding: 16px 22px;
-  background: var(--veksha-ink);
-  box-shadow: 6px 6px 0 var(--veksha-signal);
-  color: var(--veksha-paper);
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 850;
-  letter-spacing: 0.02em;
-  transition: transform 0.14s ease, box-shadow 0.14s ease;
-}
-
-.veksha-aggressive-start:hover {
-  transform: translate(2px, 2px);
-  box-shadow: 3px 3px 0 var(--veksha-signal);
-}
-
-.veksha-aggressive-close {
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  border: 1px solid currentColor;
-  border-radius: 2px;
-  background: var(--veksha-paper);
-  color: var(--veksha-ink);
-  cursor: pointer;
-  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
-  font-size: 20px;
-  line-height: 1;
-}
-
-.veksha-static-close {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-}
-
-.veksha-static-close:hover {
-  background: var(--veksha-signal);
-  color: #fff;
-}
-
-.veksha-terror-close {
-  position: fixed;
-  z-index: 2147483647;
-  background: var(--veksha-paper);
-  box-shadow: 5px 5px 0 var(--veksha-signal);
-  font-size: 21px;
-  font-weight: 850;
-  transition: left 0.16s cubic-bezier(.2, .8, .2, 1), top 0.16s cubic-bezier(.2, .8, .2, 1), transform 0.12s ease, background 0.12s ease;
-}
-
-.veksha-terror-close[data-catchable="false"] {
-  cursor: crosshair;
-  transform: rotate(3deg);
-}
-
-.veksha-terror-close[data-catchable="true"] {
-  background: var(--veksha-signal);
-  color: #fff;
-  cursor: pointer;
-  animation: veksha-catchable 0.7s ease-in-out infinite;
-}
-
-.veksha-terror-captions {
-  position: absolute;
-  left: clamp(30px, 8vw, 130px);
-  top: 50%;
-  width: min(32vw, 430px);
-  transform: translateY(-50%);
+.vk-page-reminder-actions {
+  grid-column: 1 / -1;
   display: flex;
-  flex-direction: column;
-  gap: 14px;
-  pointer-events: none;
-  color: var(--veksha-paper);
-  text-align: left;
-}
-
-.veksha-terror-prompt {
-  color: var(--veksha-mint);
-  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.18em;
-}
-
-.veksha-terror-caption-text {
-  overflow-wrap: anywhere;
-  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
-  font-size: clamp(34px, 5vw, 72px);
-  font-weight: 800;
-  line-height: 1.02;
-  letter-spacing: -0.06em;
-  color: #fff;
-  animation: veksha-caption-pulse 4.2s ease-in-out infinite;
-}
-
-.veksha-terror-word-strip {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
-}
-
-.veksha-terror-word-strip span {
-  padding: 6px 9px;
-  border: 1px solid rgba(184, 225, 206, 0.46);
-  border-radius: 2px;
-  color: var(--veksha-mint);
-  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
-  font-size: 11px;
-}
-
-.veksha-terror-help {
-  position: absolute;
-  left: clamp(30px, 8vw, 130px);
-  bottom: 32px;
-  width: min(32vw, 430px);
-  padding-top: 14px;
-  border-top: 1px solid rgba(184, 225, 206, 0.3);
-  color: var(--veksha-paper);
-}
-
-.veksha-terror-help-title {
-  margin-bottom: 8px;
-  color: var(--veksha-mint);
-  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  line-height: 1.25;
-}
-
-.veksha-terror-help-row {
-  display: grid;
-  grid-template-columns: 30px 1fr;
-  gap: 8px;
   align-items: center;
-  padding: 5px 0;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 3px;
 }
 
-.veksha-terror-help-row b,
-.veksha-terror-help-row small {
-  display: block;
+.vk-page-reminder-actions button {
+  min-height: 34px;
+  padding: 0 13px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--m-accent-2);
+  color: var(--m-on-accent);
+  font: 750 11px/1 Inter, -apple-system, sans-serif;
+  cursor: pointer;
 }
 
-.veksha-terror-help-row b {
-  font-size: 11px;
-  line-height: 1.25;
+.vk-page-reminder-actions .vk-page-reminder-secondary {
+  border: 1px solid var(--m-border);
+  background: var(--m-surface-2);
+  color: var(--m-fg);
 }
 
-.veksha-terror-help-row small,
-.veksha-terror-help-note {
-  margin-top: 6px;
-  color: rgba(244, 240, 228, 0.58);
-  font-size: 10px;
-  line-height: 1.4;
+.vk-page-reminder-actions .vk-page-reminder-link {
+  padding-inline: 7px;
+  background: transparent;
+  color: var(--m-dim);
+  font-weight: 650;
 }
 
-.veksha-terror-help-icon {
+.vk-page-reminder-close {
+  position: absolute;
+  top: 7px;
+  right: 8px;
   width: 26px;
   height: 26px;
-  display: grid;
-  place-items: center;
-  border: 1px solid rgba(184, 225, 206, 0.5);
-  border-radius: 2px;
-  color: var(--veksha-mint);
-  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
-  font-size: 9px;
-  font-weight: 800;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--m-dim);
+  font: 18px/1 sans-serif;
+  cursor: pointer;
 }
 
-.veksha-terror-meter {
-  position: absolute;
-  left: clamp(30px, 8vw, 130px);
-  top: 32px;
-  color: var(--veksha-signal);
-  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
-  font-size: 12px;
-  font-weight: 850;
-  letter-spacing: 0.08em;
-  pointer-events: none;
-}
+@keyframes vk-assistant-arrive { from { opacity: 0; transform: translateY(-5px) scale(.98); } }
+@keyframes vk-assistant-pulse { 50% { opacity: .45; } }
+@keyframes vk-reminder-arrive { from { opacity: 0; transform: translateY(10px); } }
+@keyframes vk-reminder-focus-arrive { from { opacity: 0; transform: translateY(12px) scale(.97); } }
 
-.veksha-terror-meter::before {
-  content: none;
-}
-
-@keyframes veksha-aggressive-fade {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes veksha-aggressive-drop {
-  from { transform: translate(22px, 0); opacity: 0; }
-  to { transform: translate(0, 0); opacity: 1; }
-}
-
-@keyframes veksha-caption-pulse {
-  0%, 100% { opacity: 0.9; transform: translateY(0); }
-  50% { opacity: 1; transform: translateY(-2px); }
-}
-
-@keyframes veksha-catchable {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(0.92); }
-}
-
-@media (max-width: 640px) {
-  .veksha-aggressive-reminder {
-    padding: 16px;
-  }
-
-  .veksha-aggressive-banner {
-    width: calc(100vw - 32px);
-    margin: 0;
-    gap: 18px;
-    padding: 26px 22px;
-    box-shadow: 8px 8px 0 rgba(184, 225, 206, 0.92);
-  }
-
-  .veksha-terror-captions {
-    display: none;
-  }
-
-  .veksha-reminder-brand {
-    grid-template-columns: 44px 1fr;
-  }
-
-  .veksha-terror-logo {
-    width: 44px;
-    height: 44px;
-  }
-
-  .veksha-terror-help,
-  .veksha-terror-meter {
-    display: none;
-  }
+@media (max-width: 520px) {
+  .vk-reminder-stage { padding: 10px; }
+  .vk-page-reminder { width: calc(100vw - 20px); grid-template-columns: 36px minmax(0, 1fr); }
+  .vk-page-reminder-actions { align-items: stretch; flex-direction: column; }
+  .vk-page-reminder-actions button { width: 100%; }
 }
 
 /* ===================================================================
