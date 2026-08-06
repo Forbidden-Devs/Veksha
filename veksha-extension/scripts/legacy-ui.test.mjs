@@ -3,9 +3,50 @@ import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
+import { execFileSync } from "node:child_process";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const source = (relativePath) => readFileSync(path.join(root, relativePath), "utf8");
+
+function longestMatchingBlock(left, right) {
+  const a = left.replace(/\r\n/g, "\n").split("\n");
+  const b = right.replace(/\r\n/g, "\n").split("\n");
+  const previous = new Array(b.length + 1).fill(0);
+  let longest = 0;
+  for (const line of a) {
+    const current = new Array(b.length + 1).fill(0);
+    for (let index = 0; index < b.length; index += 1) {
+      if (line === b[index]) current[index + 1] = previous[index] + 1;
+      longest = Math.max(longest, current[index + 1]);
+    }
+    previous.splice(0, previous.length, ...current);
+  }
+  return longest;
+}
+
+function committedSource(relativePath) {
+  return execFileSync("git", ["show", `HEAD:veksha-extension/${relativePath}`], {
+    cwd: path.resolve(root, ".."),
+    encoding: "utf8",
+  });
+}
+
+test("clean-room replacements share no source block longer than eight lines", () => {
+  const popupLayers = [
+    "foundation.css", "onboarding.css", "settings-and-lists.css",
+    "learning-windows.css", "language-and-billing.css", "workbenches.css",
+  ].map((name) => source(`src/popup/styles/${name}`)).join("\n");
+  assert.ok(longestMatchingBlock(committedSource("src/popup/popup.css"), popupLayers) <= 8);
+  const youtubeRuntime = `${source("src/content/youtube.ts")}\n${source("src/content/youtube-study-runtime.ts")}`;
+  assert.ok(longestMatchingBlock(committedSource("src/content/youtube.ts"), youtubeRuntime) <= 8);
+  for (const screen of ["SettingsScreen.tsx", "LevelSetupScreen.tsx", "OnboardingScreen.tsx"]) {
+    assert.ok(longestMatchingBlock(
+      committedSource(`src/popup/screens/${screen}`),
+      source(`src/popup/screens/${screen}`),
+    ) <= 8, screen);
+  }
+  assert.equal(existsSync(path.join(root, "src/popup/screens/DebugScreen.tsx")), false);
+});
 
 test("the popup has no legacy chat or topic components", () => {
   for (const relativePath of [
@@ -52,11 +93,12 @@ test("the popup shell is independent from the former tile interface", () => {
 
   assert.match(app, /workspace-frame/);
   assert.match(home, /capability-grid/);
-  assert.match(entrypoint, /\.\/shell\.css/);
+  assert.match(entrypoint, /\.\/styles\/index\.css/);
   assert.doesNotMatch(app, legacyShell);
   assert.doesNotMatch(home, legacyShell);
-  assert.doesNotMatch(source("src/popup/popup.css"), legacyShell);
-  assert.doesNotMatch(source("src/popup/theme.css"), legacyShell);
+  assert.equal(existsSync(path.join(root, "src/popup/popup.css")), false);
+  assert.match(source("src/popup/styles/index.css"), /foundation\.css/);
+  assert.doesNotMatch(source("src/popup/styles/theme.css"), legacyShell);
 });
 
 test("Quizlet copy participates in the shared localization catalogue", () => {
@@ -124,17 +166,18 @@ test("retired OCR implementation and coercive reminder code are absent", () => {
   assert.doesNotMatch(source("manifest.json"), /"offscreen"/);
 });
 
-test("focus reminders require an explicit, reversible choice", () => {
-  const reminder = source("src/content/page-reminder.ts");
+test("full-page focus requires a deliberate session and remains reversible", () => {
+  const gate = source("src/focus/main.ts");
   const background = source("src/background/background.ts");
   const settings = source("src/popup/screens/SettingsScreen.tsx");
 
-  assert.match(reminder, /reminder_focus_note/);
-  assert.match(reminder, /VEKSHA_SNOOZE_PRACTICE_REMINDER/);
-  assert.match(reminder, /VEKSHA_PAUSE_PRACTICE_REMINDERS/);
-  assert.match(background, /SNOOZE_REMINDER_ALARM/);
-  assert.match(settings, /settings_focus_guard/);
-  assert.doesNotMatch(reminder, /mousemove|pointermove|Math\.random/);
+  assert.match(settings, /startFocusSession/);
+  assert.match(settings, /\[20, 40, 60\]/);
+  assert.match(background, /sessionBlocksUrl/);
+  assert.doesNotMatch(background, /VEKSHA_SHOW_PRACTICE_REMINDER/);
+  assert.match(gate, /10 \* 60 \* 1000/);
+  assert.match(gate, /STORAGE_KEY_FOCUS_SESSION/);
+  assert.doesNotMatch(gate, /mousemove|pointermove|Math\.random/);
 });
 
 test("region translation uses a clean capture workspace", () => {
@@ -197,4 +240,34 @@ test("Reading Coach fully replaces page immersion", () => {
   assert.match(coach, /checkReadingAnswer/);
   assert.match(runtime, /refreshReadingCoach/);
   assert.doesNotMatch(`${home}\n${runtime}\n${api}`, /analyzeImmersion|TOGGLE_IMMERSION|Icons\.immersion/);
+});
+
+test("Reading Sessions replace passive browsing observation", () => {
+  const runtime = source("src/content/page-runtime.ts");
+  const reader = source("src/content/reading-session.ts");
+  const words = source("src/popup/screens/MyWordsScreen.tsx");
+  assert.match(words, /startReadingSession/);
+  assert.match(words, /endReadingSession/);
+  assert.match(reader, /sessionId/);
+  assert.match(runtime, /VEKSHA_READING_SESSION_CHANGED/);
+  assert.doesNotMatch(`${runtime}\n${reader}\n${words}`, /TOGGLE_VOCAB|vocabfreq/i);
+});
+
+test("Pattern Workshop saves only after a micro-practice", () => {
+  const workshop = source("src/content/pattern-workshop.ts");
+  const api = source("src/shared/api.ts");
+  const home = source("src/popup/screens/HomeScreen.tsx");
+  assert.match(workshop, /completePatternWorkshop/);
+  assert.match(workshop, /pattern_workshop_choose/);
+  assert.match(api, /\/api\/pattern-workshop\/complete/);
+  assert.match(api, /\/api\/pattern-workshop\/error-drafts/);
+  assert.doesNotMatch(home, /TOGGLE_GRAMMAR|GRAMMAR_LENS/);
+});
+
+test("localization uses bundled static catalogues", () => {
+  const runtime = source("src/shared/i18n/index.tsx");
+  const catalogs = source("src/shared/i18n/catalogs.ts");
+  assert.match(runtime, /catalogFor/);
+  assert.match(catalogs, /i18n_ru\.json/);
+  assert.doesNotMatch(runtime, /fetch\(|\/api\/i18n\/translate|fillMissingKeys/);
 });

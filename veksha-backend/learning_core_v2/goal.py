@@ -269,7 +269,7 @@ class DiscoveredTerm:
 
 @dataclass(frozen=True, slots=True)
 class DiscoveredPattern:
-    """A construction the lesson surfaced, on its way to Grammar Memory."""
+    """A construction the lesson surfaced, on its way to Pattern Workshop."""
 
     category: str
     label: str

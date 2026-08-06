@@ -47,7 +47,7 @@ PLANS: list[dict] = [
         "days": 31,
         "stars": 100,
         "title": "Veksha Premium — 1 month",
-        "description": "Grammar Memory, Reading Coach and dual subtitles for one month.",
+        "description": "Pattern Workshop, Reading Coach and dual subtitles for one month.",
     },
     {
         "id": "premium_3m",
@@ -55,7 +55,7 @@ PLANS: list[dict] = [
         "days": 93,
         "stars": 250,
         "title": "Veksha Premium — 3 months",
-        "description": "Grammar Memory, Reading Coach and dual subtitles for three months.",
+        "description": "Pattern Workshop, Reading Coach and dual subtitles for three months.",
     },
     {
         "id": "premium_12m",
@@ -63,7 +63,7 @@ PLANS: list[dict] = [
         "days": 366,
         "stars": 800,
         "title": "Veksha Premium — 12 months",
-        "description": "Grammar Memory, Reading Coach and dual subtitles for a full year.",
+        "description": "Pattern Workshop, Reading Coach and dual subtitles for a full year.",
     },
 ]
 

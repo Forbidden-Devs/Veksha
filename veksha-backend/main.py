@@ -11,16 +11,13 @@ Endpoints are split by domain into api/:
 """
 from __future__ import annotations
 
-import asyncio
 import logging
 import os
-from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-import i18n
 import db
 from api import auth as api_auth
 from api import admin
@@ -31,13 +28,13 @@ from api import goal_v2 as goals
 from api import ocr
 from api import privacy
 from api import reading_coach
-from api import grammar_lens
+from api import pattern_workshop
 from api import quizlet
 from api import subtitles as api_subtitles
 from api import subtitle_study as api_subtitle_study
 from api import training_v2 as training
 from api import translate_v2 as translate
-from api import vocab_frequency
+from api import reading_sessions
 from api import vocabulary_inbox
 from config import CORS_ALLOW_ORIGINS, DEBUG_API, HOST, LOG_LEVEL, PORT, RELOAD
 
@@ -48,14 +45,7 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 
-@asynccontextmanager
-async def _lifespan(_: FastAPI):
-    for lang in sorted(i18n.known_langs()):
-        asyncio.create_task(i18n.ensure_cache_complete(lang))
-    yield
-
-
-app = FastAPI(title="Veksha Backend", version="0.1.0", lifespan=_lifespan)
+app = FastAPI(title="Veksha Backend", version="0.1.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -104,9 +94,9 @@ app.include_router(settings.router)
 app.include_router(training.router)
 app.include_router(goals.router)
 app.include_router(api_i18n.router)
-app.include_router(grammar_lens.router)
+app.include_router(pattern_workshop.router)
 app.include_router(quizlet.router)
-app.include_router(vocab_frequency.router)
+app.include_router(reading_sessions.router)
 app.include_router(vocabulary_inbox.router)
 app.include_router(api_subtitles.router)
 app.include_router(api_subtitle_study.router)

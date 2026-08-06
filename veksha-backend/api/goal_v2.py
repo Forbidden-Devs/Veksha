@@ -234,7 +234,7 @@ def _report_payload(report: GoalReport) -> dict:
 
 
 def _harvest(storage: UserStorage, goal: LearningGoal) -> None:
-    """Send what the lesson turned up to the inbox and to Grammar Memory.
+    """Send what the lesson turned up to the inbox and to Pattern Workshop.
 
     A goal-oriented lesson surfaces words and constructions the learner has not
     formally met. They arrive as suggestions, never as decided knowledge — the

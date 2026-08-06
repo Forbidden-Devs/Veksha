@@ -1,7 +1,7 @@
 /**
  * content.css — page-level study tools rendered outside the app popup.
  *
- * Palette follows the app's forest identity (popup/theme.css): warm cream
+ * Palette follows the app's forest identity: warm cream
  * surfaces with rust-orange and pine-green accents, light and dark.
  */
 
@@ -16,33 +16,13 @@
 /* Page assistant: selection actions and translation card. */
 
 .vk-selection-tools,
-.vk-assistant-card,
-.vk-reminder-stage,
-.vk-page-reminder {
+.vk-assistant-card {
   all: initial;
   position: fixed;
   z-index: 2147483647;
   box-sizing: border-box;
   color: var(--m-fg);
   font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-}
-
-.vk-reminder-stage {
-  inset: 0;
-  display: flex;
-  align-items: flex-end;
-  justify-content: flex-end;
-  padding: 18px;
-  pointer-events: none;
-}
-
-.vk-reminder-stage.is-focus {
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  background: color-mix(in srgb, var(--m-fg) 42%, transparent);
-  backdrop-filter: blur(7px) saturate(.8);
-  pointer-events: auto;
 }
 
 .vk-selection-tools {
@@ -184,96 +164,9 @@
   white-space: pre-wrap;
 }
 
-.vk-page-reminder {
-  position: relative;
-  display: grid;
-  grid-template-columns: 40px minmax(0, 1fr);
-  align-items: center;
-  gap: 11px;
-  width: min(470px, calc(100vw - 36px));
-  padding: 13px 44px 13px 13px;
-  border: 1px solid color-mix(in srgb, var(--m-accent-2) 38%, var(--m-border));
-  border-radius: 17px;
-  background: color-mix(in srgb, var(--m-surface) 94%, transparent);
-  box-shadow: 0 20px 55px color-mix(in srgb, var(--m-fg) 25%, transparent);
-  backdrop-filter: blur(14px);
-  animation: vk-reminder-arrive 180ms ease-out;
-  pointer-events: auto;
-}
-
-.vk-reminder-stage.is-focus .vk-page-reminder {
-  width: min(520px, calc(100vw - 40px));
-  padding: 20px;
-  border-color: color-mix(in srgb, var(--m-accent) 48%, var(--m-border));
-  border-radius: 22px;
-  box-shadow: 0 30px 100px color-mix(in srgb, #000 45%, transparent);
-  animation: vk-reminder-focus-arrive 220ms ease-out;
-}
-
-.vk-page-reminder img { width: 40px; height: 40px; border-radius: 11px; }
-.vk-page-reminder div { min-width: 0; }
-.vk-page-reminder strong { display: block; font-size: 13px; line-height: 1.25; }
-.vk-page-reminder p { margin: 3px 0 0; overflow: hidden; color: var(--m-dim); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
-.vk-page-reminder .vk-page-reminder-note { margin-top: 9px; white-space: normal; line-height: 1.45; }
-
-.vk-page-reminder-actions {
-  grid-column: 1 / -1;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 3px;
-}
-
-.vk-page-reminder-actions button {
-  min-height: 34px;
-  padding: 0 13px;
-  border: 0;
-  border-radius: 10px;
-  background: var(--m-accent-2);
-  color: var(--m-on-accent);
-  font: 750 11px/1 Inter, -apple-system, sans-serif;
-  cursor: pointer;
-}
-
-.vk-page-reminder-actions .vk-page-reminder-secondary {
-  border: 1px solid var(--m-border);
-  background: var(--m-surface-2);
-  color: var(--m-fg);
-}
-
-.vk-page-reminder-actions .vk-page-reminder-link {
-  padding-inline: 7px;
-  background: transparent;
-  color: var(--m-dim);
-  font-weight: 650;
-}
-
-.vk-page-reminder-close {
-  position: absolute;
-  top: 7px;
-  right: 8px;
-  width: 26px;
-  height: 26px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--m-dim);
-  font: 18px/1 sans-serif;
-  cursor: pointer;
-}
-
 @keyframes vk-assistant-arrive { from { opacity: 0; transform: translateY(-5px) scale(.98); } }
 @keyframes vk-assistant-pulse { 50% { opacity: .45; } }
-@keyframes vk-reminder-arrive { from { opacity: 0; transform: translateY(10px); } }
-@keyframes vk-reminder-focus-arrive { from { opacity: 0; transform: translateY(12px) scale(.97); } }
 
-@media (max-width: 520px) {
-  .vk-reminder-stage { padding: 10px; }
-  .vk-page-reminder { width: calc(100vw - 20px); grid-template-columns: 36px minmax(0, 1fr); }
-  .vk-page-reminder-actions { align-items: stretch; flex-direction: column; }
-  .vk-page-reminder-actions button { width: 100%; }
-}
 
 /* ===================================================================
    YouTube subtitle study mode — frosted, player-friendly UI
@@ -1382,3 +1275,29 @@
 }
 .veksha-reading-tool-output [data-outcome="correct"] { color: var(--av-ok); }
 .veksha-reading-tool-output [data-outcome="incorrect"] { color: var(--av-error); }
+.veksha-pattern-workshop {
+  position: fixed;
+  z-index: 2147483646;
+  right: 18px;
+  bottom: 18px;
+  width: min(420px, calc(100vw - 36px));
+  max-height: min(680px, calc(100vh - 36px));
+  overflow: auto;
+  padding: 18px;
+  border: 1px solid var(--m-border);
+  border-radius: 18px;
+  background: var(--m-bg);
+  color: var(--m-fg);
+  box-shadow: var(--m-shadow-lg);
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+}
+.veksha-pattern-workshop header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.veksha-pattern-workshop header button { border: 0; background: transparent; color: inherit; font-size: 24px; cursor: pointer; }
+.veksha-pattern-workshop q { display: block; margin: 0 0 14px; padding: 12px; border-radius: 12px; background: var(--m-surface-2); }
+.veksha-pattern-workshop-choices { display: grid; gap: 8px; }
+.veksha-pattern-workshop-choices button { display: grid; gap: 4px; padding: 12px; text-align: left; border: 1px solid var(--m-border); border-radius: 12px; background: var(--m-surface); color: inherit; cursor: pointer; }
+.veksha-pattern-workshop-choices small { color: var(--m-dim); }
+.veksha-pattern-practice { display: grid; gap: 12px; }
+.veksha-pattern-practice label { display: grid; gap: 7px; font-size: 12px; font-weight: 700; }
+.veksha-pattern-practice input { min-height: 42px; padding: 0 10px; border: 1px solid var(--m-border); border-radius: 10px; background: var(--m-surface); color: inherit; }
+.veksha-pattern-practice button { min-height: 44px; border: 0; border-radius: 12px; background: var(--m-accent); color: white; font-weight: 800; cursor: pointer; }

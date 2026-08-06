@@ -1,4 +1,4 @@
-export type Screen = "home" | "translator" | "goals" | "dictionary" | "myWords" | "settings" | "subscription" | "statistics" | "debug" | "quizlet";
+export type Screen = "home" | "translator" | "goals" | "dictionary" | "myWords" | "settings" | "subscription" | "statistics" | "quizlet";
 export type Overlay = "training" | "reminder" | null;
 export type SettingsMode = "onboarding" | "menu";
 
@@ -21,7 +21,6 @@ export interface SettingsData {
   target_langs?: string[];
   language_settings?: Record<string, LanguageSettings>;
   reminder_level: number;
-  overseer: boolean;
   mining_same_level_examples: number;
   mining_higher_level_examples: number;
   is_onboarded: boolean;

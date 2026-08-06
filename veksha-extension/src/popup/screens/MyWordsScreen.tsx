@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import * as api from "../../shared/api";
-import type { VocabularyInboxItem, VocabFrequencyEntry } from "../../shared/api";
+import type { ReadingVocabularyEntry, VocabularyInboxItem } from "../../shared/api";
 import { CONFIG } from "../../shared/config";
 import { useT } from "../../shared/i18n";
 import { storageGet, storageSet } from "../../shared/platform";
@@ -15,8 +15,8 @@ function topDomain(domains: Record<string, number>): string {
 export function MyWordsScreen() {
   const { username } = useApp();
   const t = useT();
-  const [enabled, setEnabled] = useState(false);
-  const [words, setWords] = useState<VocabFrequencyEntry[] | null>(null);
+  const [session, setSession] = useState<{ sessionId: string; startedAt: number } | null>(null);
+  const [words, setWords] = useState<ReadingVocabularyEntry[] | null>(null);
   const [addingWord, setAddingWord] = useState<string | null>(null);
   const [addedWords, setAddedWords] = useState<Set<string>>(() => new Set());
   const [addError, setAddError] = useState<string | null>(null);
@@ -25,13 +25,16 @@ export function MyWordsScreen() {
   const [inboxError, setInboxError] = useState(false);
 
   useEffect(() => {
-    storageGet([CONFIG.STORAGE_KEY_VOCAB_FREQ]).then((result) => {
-      setEnabled(Boolean(result[CONFIG.STORAGE_KEY_VOCAB_FREQ]));
+    storageGet([CONFIG.STORAGE_KEY_READING_SESSION]).then((result) => {
+      const value = result[CONFIG.STORAGE_KEY_READING_SESSION];
+      if (value && typeof value === "object") {
+        setSession(value as { sessionId: string; startedAt: number });
+      }
     });
   }, []);
 
   useEffect(() => {
-    api.getVocabFrequencyTop().then((result) => setWords(result.words)).catch(() => setWords([]));
+    api.getReadingVocabulary().then((result) => setWords(result.words)).catch(() => setWords([]));
     let active = true;
     const refreshInbox = () => {
       api.getVocabularyInbox()
@@ -48,7 +51,7 @@ export function MyWordsScreen() {
       active = false;
       window.clearInterval(timer);
     };
-  }, [enabled]);
+  }, [session]);
 
   async function decideSuggestion(
     item: VocabularyInboxItem,
@@ -67,18 +70,24 @@ export function MyWordsScreen() {
     }
   }
 
-  async function toggle() {
-    const next = !enabled;
-    setEnabled(next);
-    await storageSet({ [CONFIG.STORAGE_KEY_VOCAB_FREQ]: next });
+  async function toggleReadingSession() {
+    let next: { sessionId: string; startedAt: number } | null = null;
+    if (session) {
+      await api.endReadingSession(session.sessionId);
+    } else {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      const started = await api.startReadingSession(tab?.url ?? "");
+      next = { sessionId: started.session_id, startedAt: started.started_at * 1000 };
+    }
+    setSession(next);
+    await storageSet({ [CONFIG.STORAGE_KEY_READING_SESSION]: next });
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       if (tab?.id) {
-        await chrome.tabs.sendMessage(tab.id, { type: "VEKSHA_TOGGLE_VOCAB_FREQ", enabled: next });
+        await chrome.tabs.sendMessage(tab.id, { type: "VEKSHA_READING_SESSION_CHANGED" });
       }
     } catch {
-      // Restricted pages cannot receive content-script messages; the saved
-      // preference will still be applied on the next regular page.
+      // The explicit session is still picked up on the next regular page.
     }
   }
 
@@ -156,13 +165,13 @@ export function MyWordsScreen() {
       <div className="my-words-intro">
         <p>{t.my_words_intro}</p>
         <button
-          className={`btn btn-block my-words-toggle${enabled ? " is-on" : ""}`}
+          className={`btn btn-block my-words-toggle${session ? " is-on" : ""}`}
           type="button"
-          onClick={toggle}
-          aria-pressed={enabled}
+          onClick={() => void toggleReadingSession()}
+          aria-pressed={Boolean(session)}
         >
           <span className="my-words-toggle-dot" aria-hidden="true" />
-          {enabled ? t.my_words_on : t.my_words_off}
+          {session ? t.my_words_on : t.my_words_off}
         </button>
       </div>
 

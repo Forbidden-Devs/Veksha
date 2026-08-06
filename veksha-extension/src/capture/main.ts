@@ -2,7 +2,7 @@ import "../shared/palette.css";
 import "./style.css";
 import { getSettings, translateImageRegion } from "../shared/api";
 import { CONFIG } from "../shared/config";
-import { loadOrGenerateTranslation } from "../shared/i18n";
+import { loadStaticCatalog } from "../shared/i18n";
 
 type Point = { x: number; y: number };
 type Box = { left: number; top: number; width: number; height: number };
@@ -116,7 +116,7 @@ async function initialize(): Promise<void> {
   ]);
   document.documentElement.dataset.vekshaTheme = String(stored.vk_theme ?? "light");
   const nativeLang = String(stored[CONFIG.STORAGE_KEY_NATIVE_LANG] ?? "en");
-  strings = await loadOrGenerateTranslation(nativeLang) as unknown as Record<string, string>;
+  strings = await loadStaticCatalog(nativeLang) as unknown as Record<string, string>;
   targetLang = nativeLang;
   const username = String(stored[CONFIG.STORAGE_KEY_USERNAME] ?? "");
   if (username) {

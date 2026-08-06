@@ -11,7 +11,7 @@ const extSource = join(root, "..", "veksha-extension", "source");
 
 const publicSource = join(root, "public", "source");
 mkdirSync(publicSource, { recursive: true });
-// Only what the study app actually references (popup.css background).
+// Only what the study app actually references from the extension workspace.
 copyFileSync(join(extSource, "back.png"), join(publicSource, "back.png"));
 
 console.log("[sync-assets] done");

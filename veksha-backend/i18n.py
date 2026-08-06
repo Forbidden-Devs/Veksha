@@ -1,25 +1,18 @@
 """
-i18n.py — catalogue of all UI strings and server strings for Veksha + LLM-based translation.
+i18n.py — static UI and server string catalogues for Veksha.
 
 UI_STRINGS      — extension UI strings (English base).
 BACKEND_STRINGS — server strings (training, lessons, unknown-message replies).
 
-When a new language is selected: /api/i18n/translate sends batches to the LLM in parallel,
-the result is saved to data/i18n_{lang}.json and returned to the client for caching.
-On next startup the file is loaded directly.
+Language catalogues are reviewed JSON files shipped with the application.
 """
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
 from pathlib import Path
 
 import config
-from learning_core_v2.catalog_translation import (
-    CatalogEntry,
-    CatalogTranslationRequest,
-)
 
 log = logging.getLogger(__name__)
 
@@ -73,13 +66,12 @@ UI_STRINGS: dict[str, str] = {
     "ci_meter_verdict_too_easy": "You know this well already — good for fluency practice, but little new vocabulary.",
     "ci_meter_verdict_too_hard": "This may be too difficult right now — expect to look up a lot of words.",
     "ci_meter_verdict_close": "Close to your level.",
-    "grammar_memory_title": "Grammar Memory",
-    "grammar_memory_on": "Grammar Memory on",
-    "grammar_memory_off": "Grammar Memory",
-    "grammar_memory_scanning": "Analyzing visible text…",
-    "grammar_memory_disable": "Turn off Grammar Memory",
-    "grammar_memory_collapse": "Collapse the analysis",
-    "grammar_memory_expand": "Show grammar memory",
+    "pattern_workshop_title": "Pattern Workshop",
+    "pattern_workshop_select_hint": "Select a sentence to begin",
+    "pattern_workshop_choose": "Choose one construction to practise now.",
+    "pattern_workshop_retry": "Not yet — use the construction name shown above.",
+    "pattern_workshop_complete": "Complete and add to Error Map",
+    "pattern_workshop_saved": "Practice complete. This skill is now in your Error Map.",
     "grammar_hint_select": "Select a sentence on the page and press the 🔍 button next to it for a detailed grammar analysis.",
     "grammar_analyze_selection": "Analyze the grammar of the selection",
     "grammar_analysis_loading": "Analyzing the sentence…",
@@ -87,18 +79,12 @@ UI_STRINGS: dict[str, str] = {
     "grammar_analysis_empty": "No notable grammar found in this selection.",
     "grammar_roles_title": "Sentence roles",
     "grammar_patterns_title": "Grammar in context",
-    "grammar_memory_patterns": "Your grammar memory",
-    "grammar_memory_loading": "Loading saved patterns…",
-    "grammar_memory_empty": "Patterns found while you read will collect here.",
-    "grammar_memory_seen": "Seen {n}×",
-    "grammar_memory_mastered": "Mark as mastered",
-    "grammar_memory_reopen": "Study again",
-    "grammar_memory_guide_title": "How Grammar Memory works",
-    "grammar_memory_guide_intro": "Grammar Memory turns patterns you encounter while reading into a personal, reusable collection.",
-    "grammar_memory_guide_step_1": "Turn on Grammar Memory while reading in your learning language. Veksha highlights sentence roles and detects useful constructions.",
-    "grammar_memory_guide_step_2": "Open the page panel to see saved patterns, explanations, real examples, and how often each pattern has appeared.",
-    "grammar_memory_guide_step_3": "Mark a pattern as mastered when it feels familiar. You can return it to learning at any time.",
-    "grammar_memory_guide_tip": "Select a sentence and use the grammar action to add a focused example to your memory.",
+    "pattern_workshop_guide_title": "How Pattern Workshop works",
+    "pattern_workshop_guide_intro": "Grammar starts from a sentence you choose or an error you made — never from passive browsing.",
+    "pattern_workshop_guide_step_1": "Select a complete sentence and choose the Aa action.",
+    "pattern_workshop_guide_step_2": "Inspect up to three constructions and consciously choose one to practise.",
+    "pattern_workshop_guide_step_3": "Complete the micro-task. Only then is the skill added to your Error Map.",
+    "pattern_workshop_guide_tip": "Unfinished analyses are drafts and expire without changing your long-term profile.",
     "grammar_role_subject": "Subject",
     "grammar_role_verb": "Verb",
     "grammar_role_object": "Object",
@@ -116,10 +102,10 @@ UI_STRINGS: dict[str, str] = {
     "vocabulary_inbox_ignore": "Ignore",
     "vocabulary_inbox_error": "Could not update this suggestion. Try again.",
     "home_quick_suggested": "Review vocabulary suggestions →",
-    "my_words_guide_step_1": "Open your word list and turn tracking on there. Veksha counts words only on pages in your target language.",
-    "my_words_guide_step_2": "As you browse, a personal frequency list grows automatically and shows where each word appeared most often.",
+    "my_words_guide_step_1": "Open your word list and consciously start a Reading Session on the text you want to study.",
+    "my_words_guide_step_2": "Only pages you visit while that session is active contribute vocabulary; end it whenever you are done.",
     "my_words_guide_step_3": "Add an unfamiliar word to your dictionary with one click, then practise it in training.",
-    "my_words_guide_tip": "The tile opens your word list, tracking is controlled inside it, and the question-mark button always opens this guide.",
+    "my_words_guide_tip": "Ordinary browsing is never analyzed. The session button is the only entry point.",
     # Settings
     "settings_title": "Settings",
     "settings_intro": "Tell us your languages and level so we can pick the right words and difficulty for you.",
@@ -186,10 +172,15 @@ UI_STRINGS: dict[str, str] = {
     "settings_reminder_level_1": "Just a notification",
     "settings_reminder_level_2": "Noticeable card",
     "settings_reminder_level_3": "Focus screen + frequent",
-    "settings_overseer": "Overseer",
-    "settings_overseer_desc": "The close button runs away — finish a training or catch it to dismiss.",
-    "settings_focus_guard": "Focus safeguard",
-    "settings_focus_guard_desc": "Turn reminders into a full-page decision: start now, snooze for 15 minutes, or intentionally pause for today.",
+    "focus_session_title": "Study Focus Session",
+    "focus_session_desc": "Choose an intention, duration, and distracting sites before you begin.",
+    "focus_session_intention": "Your intention",
+    "focus_session_intention_placeholder": "e.g. Read in Spanish",
+    "focus_session_site_placeholder": "Distracting site, e.g. reddit.com",
+    "focus_session_strict": "Strict mode (choose before starting)",
+    "focus_session_start": "Start focus session",
+    "focus_session_end": "End focus session",
+    "focus_session_active": "{n} minutes remaining",
     "settings_subscription": "Subscription",
     "settings_sub_free": "Free plan",
     "settings_sub_premium": "Premium — active until",
@@ -410,21 +401,6 @@ UI_STRINGS: dict[str, str] = {
     "quizlet_error_csv": "Select a CSV file.",
     "quizlet_error_import": "Could not import this file. Check its format and try again.",
     # Debug
-    "debug_title": "Debug",
-    "debug_user": "User",
-    "debug_backend": "Backend",
-    "debug_browser_lang": "Browser lang",
-    "debug_all_langs": "All langs",
-    "debug_commands": "Commands",
-    "debug_simulate_training_name": "Simulate completed training",
-    "debug_simulate_training_desc": "Advances 15 random words and one random topic as if training was completed.",
-    "debug_advance_day_name": "Move to tomorrow",
-    "debug_advance_day_desc": "Moves all word review dates one day back and triggers a reminder.",
-    "debug_reset_name": "Reset user data",
-    "debug_reset_desc": "Deletes all KB, session and settings on the server, then clears local storage. Registration starts from scratch.",
-    "debug_reset_confirm": "Reset ALL data for \"{username}\"? This cannot be undone.",
-    "debug_run": "Run",
-    "debug_reloading": "Reloading…",
 }
 
 # ---------------------------------------------------------------------------
@@ -440,215 +416,30 @@ BACKEND_STRINGS: dict[str, str] = {
 }
 
 # ---------------------------------------------------------------------------
-# Cache helpers
+# Static catalogue access
 # ---------------------------------------------------------------------------
 
-_BATCH_SIZE = 20
-
-# Meta key inside a catalogue file: keys whose correct translation is
-# identical to the English source ("Debug", brand names, …). Without this
-# marker such keys look permanently untranslated and would be re-sent to the
-# LLM on every startup and catalogue request.
-_META_SAME_AS_EN = "__same_as_en__"
-
-# Auto-fill attempts per language are rate-limited in-process, so a dead LLM
-# key (quota, network) doesn't get hammered by every startup task and
-# catalogue request.
-_ENSURE_RETRY_SECONDS = 600.0
-_ensure_last_attempt: dict[str, float] = {}
-
-
-def _cache_path(lang: str) -> Path:
+def _catalog_path(lang: str) -> Path:
     return DATA_DIR / f"i18n_{lang}.json"
 
-
 def known_langs() -> set[str]:
-    """Languages that have a catalogue in the data dir or shipped as a seed."""
-    langs: set[str] = set()
-    for d in (DATA_DIR, _SEED_DIR):
-        for path in d.glob("i18n_*.json"):
-            langs.add(path.stem[len("i18n_"):])
-    return langs
+    return {path.stem[len("i18n_"):] for path in _SEED_DIR.glob("i18n_*.json")}
 
-
-def load_cached(lang: str) -> dict[str, str] | None:
+def load_catalog(lang: str) -> dict[str, str]:
     if lang == "en":
         return {**UI_STRINGS, **BACKEND_STRINGS}
-    path = _cache_path(lang)
+    path = _catalog_path(lang)
     if not path.exists():
-        seed = _SEED_DIR / f"i18n_{lang}.json"
-        if seed != path and seed.exists():
-            path = seed
-        else:
-            return None
+        path = _SEED_DIR / f"i18n_{lang}.json"
     try:
-        cached = json.loads(path.read_text("utf-8"))
-        current_keys = {*UI_STRINGS, *BACKEND_STRINGS, _META_SAME_AS_EN}
-        return {key: value for key, value in cached.items() if key in current_keys}
-    except Exception:
-        log.exception("[i18n] Failed to read cache for lang=%r", lang)
-        return None
-
-
-def save_cache(lang: str, strings: dict[str, str]) -> None:
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    _cache_path(lang).write_text(json.dumps(strings, ensure_ascii=False, indent=2), "utf-8")
-
-
-def untranslated_strings(lang: str, cached: dict[str, str] | None) -> dict[str, str]:
-    """Return catalogue fields that are absent, empty, or still contain the English source.
-
-    Keys listed in the __same_as_en__ meta entry are trusted: the LLM already
-    returned the English text as the correct translation for them.
-    """
-    if lang == "en":
-        return {}
-
-    cached = cached or {}
-    same_as_en = set(cached.get(_META_SAME_AS_EN) or [])
-    all_strings = {**UI_STRINGS, **BACKEND_STRINGS}
-    return {
-        key: english
-        for key, english in all_strings.items()
-        if key not in same_as_en
-        and (
-            not isinstance(cached.get(key), str)
-            or not cached[key].strip()
-            or cached[key].strip() == english.strip()
-        )
-    }
-
-
-def merge_translations(cached: dict, translated: dict[str, str]) -> dict:
-    """Merge fresh LLM output into a cached catalogue, maintaining the
-    __same_as_en__ meta entry for keys the LLM translated to the English
-    source verbatim (so they are not retried forever)."""
-    all_strings = {**UI_STRINGS, **BACKEND_STRINGS}
-    same_as_en = set(cached.get(_META_SAME_AS_EN) or [])
-    for key, value in translated.items():
-        english = all_strings.get(key)
-        if english is not None and value.strip() == english.strip():
-            same_as_en.add(key)
-        else:
-            same_as_en.discard(key)
-    merged = {**cached, **translated}
-    if same_as_en:
-        merged[_META_SAME_AS_EN] = sorted(same_as_en)
-    else:
-        merged.pop(_META_SAME_AS_EN, None)
-    return merged
-
-
-def public_catalog(strings: dict) -> dict[str, str]:
-    """Serve only current catalogue fields, never obsolete cached UI keys."""
-    current_keys = {*UI_STRINGS, *BACKEND_STRINGS}
-    return {key: value for key, value in strings.items() if key in current_keys}
-
+        translated = json.loads(path.read_text("utf-8")) if path.exists() else {}
+    except (OSError, ValueError):
+        log.exception("[i18n] failed to read static catalogue for lang=%r", lang)
+        translated = {}
+    return {**UI_STRINGS, **BACKEND_STRINGS, **translated}
 
 def get_string(key: str, native_lang: str, **kwargs: object) -> str:
-    """Get a BACKEND_STRINGS entry in the user's language, with template substitution."""
-    all_strings: dict[str, str] | None = None
-    if native_lang and native_lang != "en":
-        all_strings = load_cached(native_lang)
-    if all_strings is None:
-        all_strings = BACKEND_STRINGS
-    text = all_strings.get(key) or BACKEND_STRINGS.get(key, key)
-    if kwargs:
-        for k, v in kwargs.items():
-            text = text.replace(f"{{{k}}}", str(v))
+    text = load_catalog(native_lang).get(key) or BACKEND_STRINGS.get(key, key)
+    for name, value in kwargs.items():
+        text = text.replace(f"{{{name}}}", str(value))
     return text
-
-
-# ---------------------------------------------------------------------------
-# LLM batch translation
-# ---------------------------------------------------------------------------
-
-async def _translate_batch(keys: list[str], values: list[str], lang: str) -> dict[str, str]:
-    from learning_core_v2_adapters.runtime import build_catalog_translator
-
-    try:
-        return await build_catalog_translator().execute(
-            CatalogTranslationRequest(
-                tuple(
-                    CatalogEntry(key, value)
-                    for key, value in zip(keys, values, strict=True)
-                ),
-                lang,
-            )
-        )
-    except Exception as err:
-        log.warning("[i18n] batch translate failed for lang=%r: %s", lang, err)
-        return {}
-
-
-async def translate_strings(lang: str, strings: dict[str, str]) -> dict[str, str]:
-    """Translate an arbitrary subset of strings to lang (used for filling missing keys)."""
-    if not strings:
-        return {}
-    keys = list(strings.keys())
-    values = list(strings.values())
-    batches = [
-        (keys[i: i + _BATCH_SIZE], values[i: i + _BATCH_SIZE])
-        for i in range(0, len(keys), _BATCH_SIZE)
-    ]
-    results = await asyncio.gather(
-        *[_translate_batch(k, v, lang) for k, v in batches]
-    )
-    merged: dict[str, str] = {}
-    for r in results:
-        if isinstance(r, dict):
-            merged.update(r)
-    return merged
-
-
-async def ensure_cache_complete(lang: str) -> None:
-    """Translate every catalogue field that is missing, empty, or still English.
-
-    Rate-limited per language: when the LLM is unavailable (dead key, quota),
-    startup tasks and catalogue requests don't retry more than once per
-    _ENSURE_RETRY_SECONDS.
-    """
-    if lang == "en":
-        return
-    cached = load_cached(lang) or {}
-    missing = untranslated_strings(lang, cached)
-    if not missing:
-        return
-
-    now = asyncio.get_running_loop().time()
-    last = _ensure_last_attempt.get(lang)
-    if last is not None and now - last < _ENSURE_RETRY_SECONDS:
-        return
-    _ensure_last_attempt[lang] = now
-
-    log.info("[i18n] translating %d incomplete fields for lang=%r", len(missing), lang)
-    translated = await translate_strings(lang, missing)
-    if not translated:
-        return  # LLM unavailable — leave the cache as is, retry after backoff
-    save_cache(lang, merge_translations(cached, translated))
-
-
-async def generate_translation(lang: str) -> dict[str, str]:
-    """
-    Translate all UI_STRINGS + BACKEND_STRINGS to lang in parallel batches.
-    Missing keys fall back to English.
-    """
-    all_strings = {**UI_STRINGS, **BACKEND_STRINGS}
-    keys = list(all_strings.keys())
-    values = list(all_strings.values())
-
-    batches = [
-        (keys[i: i + _BATCH_SIZE], values[i: i + _BATCH_SIZE])
-        for i in range(0, len(keys), _BATCH_SIZE)
-    ]
-
-    results = await asyncio.gather(
-        *[_translate_batch(k, v, lang) for k, v in batches]
-    )
-
-    merged: dict[str, str] = {}
-    for r in results:
-        if isinstance(r, dict):
-            merged.update(r)
-
-    return merged

@@ -1,13 +1,12 @@
 import { CONFIG } from "../shared/config";
 import { initReadingCoach, refreshReadingCoach, setReadingCoachEnabled } from "./reading-coach";
-import { initGrammarLens, setGrammarLensEnabled } from "./grammar-lens";
+import { closePatternWorkshop, initPatternWorkshop } from "./pattern-workshop";
 import { closeOverlay, showLessonOverlay, showTrainingOverlay } from "./overlay";
 import type { GoalTarget } from "../popup/overlays/GoalWindow";
-import { PageReminder } from "./page-reminder";
 import { PageSession, type PageFeaturePolicy } from "./page-session";
 import { SelectionAssistant } from "./selection-assistant";
-import { initVocabFreq, setVocabFreqEnabled } from "./vocabfreq";
-import { initYouTubeStudy } from "./youtube";
+import { observeCurrentPage, setReadingSession } from "./reading-session";
+import { initYouTubeStudy } from "./youtube-study-runtime";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object";
@@ -16,7 +15,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 class PageRuntime {
   private readonly session = new PageSession();
   private readonly selection = new SelectionAssistant(this.session, () => this.blocked);
-  private readonly reminder = new PageReminder(this.session, showTrainingOverlay);
   private blocked = true;
   private currentUrl = location.href;
   private routeTimer = 0;
@@ -26,8 +24,7 @@ class PageRuntime {
     await this.session.initialize();
 
     initReadingCoach({ getUsername: this.session.getUsername, t: this.session.t });
-    initGrammarLens({ getUsername: this.session.getUsername, t: this.session.t });
-    initVocabFreq({ getUsername: this.session.getUsername });
+    initPatternWorkshop({ getUsername: this.session.getUsername, t: this.session.t });
     if (/(^|\.)youtube\.com$/.test(location.hostname)) {
       initYouTubeStudy({
         getUsername: this.session.getUsername,
@@ -51,8 +48,7 @@ class PageRuntime {
       this.applyPolicy({
         blocked: true,
         readingCoach: false,
-        grammarMemory: false,
-        vocabularyTracking: false,
+        readingSession: null,
       });
     }
   };
@@ -65,8 +61,7 @@ class PageRuntime {
       closeOverlay();
     }
     setReadingCoachEnabled(!policy.blocked && policy.readingCoach);
-    setGrammarLensEnabled(!policy.blocked && policy.grammarMemory);
-    setVocabFreqEnabled(!policy.blocked && policy.vocabularyTracking);
+    setReadingSession(!policy.blocked ? policy.readingSession : null);
     document.dispatchEvent(new CustomEvent("VEKSHA_AI_BLOCK_STATE", {
       detail: { blocked: policy.blocked },
     }));
@@ -75,8 +70,12 @@ class PageRuntime {
   private readonly observeRoute = (): void => {
     if (location.href === this.currentUrl) return;
     this.currentUrl = location.href;
-    this.selection.close();
-    void this.refreshPolicy().then(refreshReadingCoach);
+      this.selection.close();
+      closePatternWorkshop();
+    void this.refreshPolicy().then(() => {
+      refreshReadingCoach();
+      void observeCurrentPage();
+    });
   };
 
   private readonly onStorageChanged = (
@@ -97,12 +96,6 @@ class PageRuntime {
     switch (message.type) {
       case "VEKSHA_PING":
         return;
-      case "VEKSHA_SHOW_PRACTICE_REMINDER":
-        this.reminder.show(message);
-        return;
-      case "VEKSHA_CLEAR_PRACTICE_REMINDER":
-        this.reminder.close();
-        return;
       case "VEKSHA_OPEN_TRAINING":
         if (typeof message.username === "string") showTrainingOverlay(message.username);
         return;
@@ -121,11 +114,8 @@ class PageRuntime {
       case "VEKSHA_TOGGLE_READING_COACH":
         if (!this.blocked) setReadingCoachEnabled(Boolean(message.enabled));
         return;
-      case "VEKSHA_TOGGLE_GRAMMAR_LENS":
-        if (!this.blocked) setGrammarLensEnabled(Boolean(message.enabled));
-        return;
-      case "VEKSHA_TOGGLE_VOCAB_FREQ":
-        if (!this.blocked) setVocabFreqEnabled(Boolean(message.enabled));
+      case "VEKSHA_READING_SESSION_CHANGED":
+        void this.refreshPolicy();
         return;
       case "VEKSHA_TRANSLATE_SELECTION":
         if (typeof message.text === "string") this.selection.openFromMessage(message.text);
@@ -136,7 +126,6 @@ class PageRuntime {
   private readonly dispose = (): void => {
     window.clearInterval(this.routeTimer);
     this.selection.dispose();
-    this.reminder.close();
     chrome.runtime.onMessage.removeListener(this.onMessage);
     chrome.storage.onChanged.removeListener(this.onStorageChanged);
   };

@@ -2,9 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { I18nProvider } from "../shared/i18n";
 import "../shared/palette.css";
-import "./popup.css";
-import "./theme.css";
-import "./shell.css";
+import "./styles/index.css";
 import { initTheme } from "../shared/theme";
 
 void initTheme();

@@ -1,8 +1,8 @@
 /**
- * theme.css — the Veksha design system, layered over popup.css.
+ * Veksha component theme.
  *
  * Shared component theme for popup, training/lesson pages and veksha-web.
- * The popup workspace and launch surface live in shell.css so their layout
+ * The popup workspace and launch surface live in the shell layer so their layout
  * does not depend on the historical application skin.
  *
  * shared/theme.ts switches the `data-veksha-theme` attribute. The editable
@@ -515,7 +515,7 @@ body,
 /* screens carry their own legacy headers — the Metro topbar replaces them */
 .menu-header { display: none !important; }
 
-/* settings: reminder-intensity + overseer cards go dark */
+/* settings: reminder-intensity cards go dark */
 .settings-level,
 .settings-toggle {
   background: var(--m-surface) !important;

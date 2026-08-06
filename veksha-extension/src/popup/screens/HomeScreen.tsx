@@ -41,14 +41,13 @@ export function HomeScreen() {
   const [counts, setCounts] = useState<{ words: number; due: number } | null>(null);
   const [settings, setSettings] = useState<SettingsData | null>(null);
   const [readingCoachOn, setReadingCoachOn] = useState(false);
-  const [grammarLensOn, setGrammarLensOn] = useState(false);
-  const [vocabFreqOn, setVocabFreqOn] = useState(false);
+  const [readingSessionOn, setReadingSessionOn] = useState(false);
   const [dualSubsEnabled, setDualSubsEnabled] = useState(false);
   const [subtitleStudyOn, setSubtitleStudyOn] = useState(false);
   const [activeUrl, setActiveUrl] = useState("");
   const [aiBlocklist, setAiBlocklist] = useState<AiBlocklist>({ sites: [], pages: [], allowedPages: [] });
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
-  const [featureGuide, setFeatureGuide] = useState<"reading_coach" | "dual_subtitles" | "grammar_memory" | "my_words" | null>(null);
+  const [featureGuide, setFeatureGuide] = useState<"reading_coach" | "dual_subtitles" | "pattern_workshop" | "my_words" | null>(null);
   const [quickText, setQuickText] = useState("");
   const [quickResult, setQuickResult] = useState<string | null>(null);
   const [quickVocabularyMode, setQuickVocabularyMode] = useState<"saved" | "suggested">("saved");
@@ -97,39 +96,15 @@ export function HomeScreen() {
 
   useEffect(() => {
     storageGet([
-      CONFIG.STORAGE_KEY_CI_METER,
       CONFIG.STORAGE_KEY_READING_COACH,
-      CONFIG.STORAGE_KEY_GRAMMAR_LENS,
-      CONFIG.STORAGE_KEY_IMMERSION,
-      CONFIG.STORAGE_KEY_VOCAB_FREQ,
+      CONFIG.STORAGE_KEY_READING_SESSION,
       CONFIG.STORAGE_KEY_DUAL_SUBS_FEATURE,
-      CONFIG.STORAGE_KEY_DUAL_SUBS,
       CONFIG.STORAGE_KEY_SUBTITLE_STUDY,
       CONFIG.STORAGE_KEY_AI_BLOCKLIST,
     ]).then((result) => {
-      const legacyImmersion = Boolean(result[CONFIG.STORAGE_KEY_IMMERSION]);
-      const legacyReadingCoach = result[CONFIG.STORAGE_KEY_CI_METER];
-      const readingCoachEnabled = result[CONFIG.STORAGE_KEY_READING_COACH] === undefined
-        ? (legacyReadingCoach === undefined ? legacyImmersion : Boolean(legacyReadingCoach))
-        : Boolean(result[CONFIG.STORAGE_KEY_READING_COACH]);
-      setReadingCoachOn(readingCoachEnabled);
-      setGrammarLensOn(Boolean(result[CONFIG.STORAGE_KEY_GRAMMAR_LENS]));
-      if (legacyImmersion || result[CONFIG.STORAGE_KEY_READING_COACH] === undefined) {
-        void storageSet({
-          [CONFIG.STORAGE_KEY_READING_COACH]: readingCoachEnabled,
-          [CONFIG.STORAGE_KEY_IMMERSION]: false,
-        });
-      }
-      setVocabFreqOn(Boolean(result[CONFIG.STORAGE_KEY_VOCAB_FREQ]));
-      const storedDualSubsFeature = result[CONFIG.STORAGE_KEY_DUAL_SUBS_FEATURE];
-      const legacyDualSubsEnabled = Boolean(result[CONFIG.STORAGE_KEY_DUAL_SUBS]);
-      const dualSubsFeatureEnabled = storedDualSubsFeature === undefined
-        ? legacyDualSubsEnabled
-        : Boolean(storedDualSubsFeature);
-      setDualSubsEnabled(dualSubsFeatureEnabled);
-      if (storedDualSubsFeature === undefined && legacyDualSubsEnabled) {
-        storageSet({ [CONFIG.STORAGE_KEY_DUAL_SUBS_FEATURE]: true });
-      }
+      setReadingCoachOn(Boolean(result[CONFIG.STORAGE_KEY_READING_COACH]));
+      setReadingSessionOn(Boolean(result[CONFIG.STORAGE_KEY_READING_SESSION]));
+      setDualSubsEnabled(Boolean(result[CONFIG.STORAGE_KEY_DUAL_SUBS_FEATURE]));
       setSubtitleStudyOn(Boolean(result[CONFIG.STORAGE_KEY_SUBTITLE_STUDY]));
       setAiBlocklist(normalizeAiBlocklist(result[CONFIG.STORAGE_KEY_AI_BLOCKLIST]));
     });
@@ -171,21 +146,6 @@ export function HomeScreen() {
     }
   }
 
-  async function toggleGrammarLens() {
-    const next = !grammarLensOn;
-    if (next && !(await requirePremiumFeature("grammar_lens", t.grammar_memory_title))) return;
-    setGrammarLensOn(next);
-    await storageSet({ [CONFIG.STORAGE_KEY_GRAMMAR_LENS]: next });
-    try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (tab?.id) {
-        await chrome.tabs.sendMessage(tab.id, { type: "VEKSHA_TOGGLE_GRAMMAR_LENS", enabled: next });
-      }
-    } catch {
-      // The saved preference is applied on the next regular page.
-    }
-  }
-
   async function openAreaTranslation() {
     try {
       await chrome.runtime.sendMessage({ type: "VEKSHA_START_REGION_CAPTURE" });
@@ -205,9 +165,8 @@ export function HomeScreen() {
     try {
       await storageSet({
         [CONFIG.STORAGE_KEY_DUAL_SUBS_FEATURE]: next,
-        ...(next
-          ? { [CONFIG.STORAGE_KEY_DUAL_SUBS]: true }
-          : { [CONFIG.STORAGE_KEY_SUBTITLE_STUDY]: false }),
+        [CONFIG.STORAGE_KEY_DUAL_SUBS_VISIBLE]: next,
+        ...(!next ? { [CONFIG.STORAGE_KEY_SUBTITLE_STUDY]: false } : {}),
       });
     } catch {
       setDualSubsEnabled(!next);
@@ -226,7 +185,7 @@ export function HomeScreen() {
         [CONFIG.STORAGE_KEY_SUBTITLE_STUDY]: next,
         ...(next ? {
           [CONFIG.STORAGE_KEY_DUAL_SUBS_FEATURE]: true,
-          [CONFIG.STORAGE_KEY_DUAL_SUBS]: true,
+          [CONFIG.STORAGE_KEY_DUAL_SUBS_VISIBLE]: true,
         } : {}),
       });
       if (next) setDualSubsEnabled(true);
@@ -253,7 +212,6 @@ export function HomeScreen() {
       targetLangs: languages,
       languageSettings: settings.language_settings,
       reminderLevel: settings.reminder_level,
-      overseer: settings.overseer,
     });
     setSettings(updated);
     setLangPair(next, nativeLang);
@@ -394,24 +352,23 @@ export function HomeScreen() {
         {isExtension && (
           <div className="capability-control">
             <button
-              className={`capability-card capability-toggle ${aiBlocked ? "is-blocked" : grammarLensOn ? "is-on" : "is-off"}`}
-              onClick={toggleGrammarLens}
+              className={`capability-card ${aiBlocked ? "is-blocked" : ""}`}
+              onClick={() => setFeatureGuide("pattern_workshop")}
               disabled={aiBlocked}
-              aria-pressed={grammarLensOn}
             >
               <span className="capability-card-icon">{Icons.grammar}</span>
-              <span className="capability-card-label">{t.grammar_memory_title}</span>
+              <span className="capability-card-label">{t.pattern_workshop_title}</span>
               <span className="capability-state">
                 <i aria-hidden="true" />
-                {aiBlocked ? t.feature_blocked : grammarLensOn ? t.feature_enabled : t.feature_disabled}
+                {aiBlocked ? t.feature_blocked : t.pattern_workshop_select_hint}
               </span>
             </button>
             <button
               type="button"
               className="capability-help"
-              aria-label={`${t.feature_guide_open}: ${t.grammar_memory_title}`}
+              aria-label={`${t.feature_guide_open}: ${t.pattern_workshop_title}`}
               title={t.feature_guide_open}
-              onClick={() => setFeatureGuide("grammar_memory")}
+              onClick={() => setFeatureGuide("pattern_workshop")}
             >?</button>
           </div>
         )}
@@ -442,14 +399,14 @@ export function HomeScreen() {
         {isExtension && (
           <div className="capability-control">
             <button
-              className={`capability-card capability-toggle capability-destination ${vocabFreqOn ? "is-on" : "is-off"}`}
+              className={`capability-card capability-toggle capability-destination ${readingSessionOn ? "is-on" : "is-off"}`}
               onClick={() => navigateTo("myWords")}
             >
               <span className="capability-card-icon">{Icons.myWords}</span>
               <span className="capability-card-label">{t.my_words_title}</span>
               <span className="capability-state">
                 <i aria-hidden="true" />
-                {vocabFreqOn ? t.feature_enabled : t.feature_disabled}
+                {readingSessionOn ? t.feature_enabled : t.feature_disabled}
               </span>
             </button>
             <button
@@ -521,7 +478,7 @@ export function HomeScreen() {
             <span className="feature-guide-icon" aria-hidden="true">
               {featureGuide === "reading_coach"
                 ? Icons.readingCoach
-                : featureGuide === "grammar_memory"
+                : featureGuide === "pattern_workshop"
                   ? Icons.grammar
                 : featureGuide === "dual_subtitles"
                   ? Icons.dualSubtitles
@@ -530,8 +487,8 @@ export function HomeScreen() {
             <h2 id="feature-guide-title">
               {featureGuide === "reading_coach"
                 ? t.reading_coach_guide_title
-                : featureGuide === "grammar_memory"
-                  ? t.grammar_memory_guide_title
+                : featureGuide === "pattern_workshop"
+                  ? t.pattern_workshop_guide_title
                 : featureGuide === "dual_subtitles"
                   ? t.dual_subtitles_guide_title
                   : t.my_words_title}
@@ -539,8 +496,8 @@ export function HomeScreen() {
             <p className="feature-guide-intro">
               {featureGuide === "reading_coach"
                 ? t.reading_coach_guide_intro
-                : featureGuide === "grammar_memory"
-                  ? t.grammar_memory_guide_intro
+                : featureGuide === "pattern_workshop"
+                  ? t.pattern_workshop_guide_intro
                 : featureGuide === "dual_subtitles"
                   ? t.dual_subtitles_guide_intro
                   : t.my_words_intro}
@@ -548,8 +505,8 @@ export function HomeScreen() {
             <ol>
               {(featureGuide === "reading_coach"
                 ? [t.reading_coach_guide_step_1, t.reading_coach_guide_step_2, t.reading_coach_guide_step_3]
-                : featureGuide === "grammar_memory"
-                  ? [t.grammar_memory_guide_step_1, t.grammar_memory_guide_step_2, t.grammar_memory_guide_step_3]
+                : featureGuide === "pattern_workshop"
+                  ? [t.pattern_workshop_guide_step_1, t.pattern_workshop_guide_step_2, t.pattern_workshop_guide_step_3]
                 : featureGuide === "dual_subtitles"
                   ? [t.dual_subtitles_guide_step_1, t.dual_subtitles_guide_step_2, t.dual_subtitles_guide_step_3]
                   : [t.my_words_guide_step_1, t.my_words_guide_step_2, t.my_words_guide_step_3]
@@ -558,8 +515,8 @@ export function HomeScreen() {
             <p className="feature-guide-tip">
               {featureGuide === "reading_coach"
                 ? t.reading_coach_guide_tip
-                : featureGuide === "grammar_memory"
-                  ? t.grammar_memory_guide_tip
+                : featureGuide === "pattern_workshop"
+                  ? t.pattern_workshop_guide_tip
                 : featureGuide === "dual_subtitles"
                   ? t.dual_subtitles_guide_tip
                   : t.my_words_guide_tip}

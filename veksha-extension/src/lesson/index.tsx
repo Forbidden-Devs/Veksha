@@ -4,8 +4,7 @@ import { GoalWindow, type GoalTarget } from "../popup/overlays/GoalWindow";
 import { I18nProvider, useT } from "../shared/i18n";
 import { CONFIG } from "../shared/config";
 import "../shared/palette.css";
-import "../popup/popup.css";
-import "../popup/theme.css";
+import "../popup/styles/index.css";
 import { initTheme } from "../shared/theme";
 
 void initTheme();

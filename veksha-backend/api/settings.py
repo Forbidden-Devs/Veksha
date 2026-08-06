@@ -57,7 +57,6 @@ class SettingsRequest(BaseModel):
     target_langs: list[str] | None = None
     language_settings: dict[str, dict[str, str]] | None = None
     reminder_level: int = Field(2, ge=1, le=3)
-    overseer: bool = False
     mining_same_level_examples: int | None = Field(None, ge=1, le=5)
     mining_higher_level_examples: int | None = Field(None, ge=0, le=3)
 
@@ -72,7 +71,6 @@ class SettingsResponse(BaseModel):
     target_langs: list[str] = Field(default_factory=list)
     language_settings: dict[str, dict[str, str]] = Field(default_factory=dict)
     reminder_level: int = 2
-    overseer: bool = False
     mining_same_level_examples: int = 2
     mining_higher_level_examples: int = 1
     is_onboarded: bool = False
@@ -254,7 +252,6 @@ def _settings_response(storage: UserStorage) -> SettingsResponse:
         target_langs=s.target_langs or [s.target_lang],
         language_settings=language_settings,
         reminder_level=s.reminder_level,
-        overseer=s.overseer,
         mining_same_level_examples=s.mining_same_level_examples,
         mining_higher_level_examples=s.mining_higher_level_examples,
         is_onboarded=s.is_onboarded(),
@@ -335,7 +332,6 @@ async def api_post_settings(req: SettingsRequest, username: CurrentUser) -> Sett
         target_lang=req.target_lang,
         language_settings=language_settings,
         reminder_level=req.reminder_level,
-        overseer=req.overseer,
         mining_same_level_examples=(
             req.mining_same_level_examples
             if req.mining_same_level_examples is not None

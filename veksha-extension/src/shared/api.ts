@@ -415,48 +415,60 @@ export interface GrammarAnnotation {
   explanation: string;
 }
 
-export interface GrammarBlockAnalysis {
+export interface PatternWorkshopChoice extends GrammarAnnotation {
+  index: number;
+  contrast_example: string;
+  challenge_prompt: string;
+}
+
+export interface PatternWorkshopDraft {
+  draft_id: string;
+  text: string;
   segments: GrammarSegment[];
-  annotations: GrammarAnnotation[];
+  patterns: PatternWorkshopChoice[];
 }
 
-export function analyzeGrammarLens(
-  blocks: string[],
-  sourceUrl = "",
-): Promise<{ blocks: GrammarBlockAnalysis[]; remembered: number }> {
-  return _post("/api/grammar-lens/analyze", { blocks, source_url: sourceUrl }, 45_000);
-}
-
-export interface GrammarMemoryEncounter {
-  example: string;
-  source_url: string;
-  observed_at: number;
-}
-
-export interface GrammarMemoryItem {
+export interface PatternWorkshopSkill {
   item_id: string;
   category: GrammarCategory;
   label: string;
   explanation: string;
   status: "learning" | "mastered";
-  seen_count: number;
-  first_seen_at: number;
-  last_seen_at: number;
-  encounters: GrammarMemoryEncounter[];
+  practice_count: number;
 }
 
-export function getGrammarMemory(): Promise<{ items: GrammarMemoryItem[] }> {
-  return _get("/api/grammar-memory");
+export function analyzePatternWorkshop(text: string, sourceUrl = ""): Promise<PatternWorkshopDraft> {
+  return _post("/api/pattern-workshop/analyze", { text, source_url: sourceUrl }, 45_000);
 }
 
-export function setGrammarMemoryStatus(
-  itemId: string,
-  status: "learning" | "mastered",
-): Promise<GrammarMemoryItem> {
-  return _post(`/api/grammar-memory/${encodeURIComponent(itemId)}/status`, { status });
+export function completePatternWorkshop(
+  draftId: string,
+  patternIndex: number,
+  answer: string,
+): Promise<PatternWorkshopSkill> {
+  return _post("/api/pattern-workshop/complete", {
+    draft_id: draftId,
+    pattern_index: patternIndex,
+    answer,
+  });
 }
 
-export interface VocabFrequencyEntry {
+export function createPatternErrorDraft(input: {
+  source: "training" | "ai_correction" | "text_check";
+  original: string;
+  correction: string;
+  category: GrammarCategory;
+  label: string;
+  explanation?: string;
+}): Promise<PatternWorkshopDraft> {
+  return _post("/api/pattern-workshop/error-drafts", input);
+}
+
+export function getPatternWorkshopSkills(): Promise<PatternWorkshopSkill[]> {
+  return _get("/api/pattern-workshop/skills");
+}
+
+export interface ReadingVocabularyEntry {
   word: string;
   count: number;
   domains: Record<string, number>;
@@ -464,12 +476,24 @@ export interface VocabFrequencyEntry {
   in_dictionary: boolean;
 }
 
-export function trackVocabFrequency(text: string, domain: string): Promise<{ tracked: number }> {
-  return _post("/api/vocab_frequency/track", { text, domain }, 15_000);
+export function startReadingSession(sourceUrl: string): Promise<{ session_id: string; started_at: number }> {
+  return _post("/api/reading-sessions", { source_url: sourceUrl });
 }
 
-export function getVocabFrequencyTop(limit = 100): Promise<{ words: VocabFrequencyEntry[] }> {
-  return _get("/api/vocab_frequency/top", { limit: String(limit) });
+export function observeReadingSession(
+  sessionId: string,
+  text: string,
+  domain: string,
+): Promise<{ observed: number }> {
+  return _post("/api/reading-sessions/observe", { session_id: sessionId, text, domain }, 15_000);
+}
+
+export function endReadingSession(sessionId: string): Promise<{ ok: boolean }> {
+  return _post("/api/reading-sessions/end", { session_id: sessionId });
+}
+
+export function getReadingVocabulary(limit = 100): Promise<{ words: ReadingVocabularyEntry[] }> {
+  return _get("/api/reading-sessions/vocabulary", { limit: String(limit) });
 }
 
 export interface SubtitleAlignmentGroup {
@@ -822,7 +846,6 @@ export function saveSettings(
     targetLangs?: string[];
     languageSettings?: Record<string, { level: string; goals: string; prompt: string }>;
     reminderLevel?: number;
-    overseer?: boolean;
     miningSameLevelExamples?: number;
     miningHigherLevelExamples?: number;
   }
@@ -835,7 +858,6 @@ export function saveSettings(
     goals: opts.goals ?? "",
     general_prompt: opts.generalPrompt ?? "",
     reminder_level: opts.reminderLevel ?? 2,
-    overseer: opts.overseer ?? false,
   };
   if (opts.englishLevel) body.english_level = opts.englishLevel;
   if (opts.displayName?.trim()) body.display_name = opts.displayName.trim();

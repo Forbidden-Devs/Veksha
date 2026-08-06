@@ -48,7 +48,7 @@ export default defineConfig({
             }
           : {}),
       }),
-      additionalInputs: ["src/capture/index.html"],
+      additionalInputs: ["src/capture/index.html", "src/focus/index.html"],
       watchFilePaths: ["manifest.json"],
       webExtConfig: {
         keepProfileChanges: true,

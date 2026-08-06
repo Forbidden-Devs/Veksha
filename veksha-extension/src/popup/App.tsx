@@ -10,7 +10,6 @@ import { ReminderCard } from "./overlays/ReminderCard";
 import { PracticePlannerWindow } from "./overlays/PracticePlannerWindow";
 import { TranslatorScreen } from "./screens/TranslatorScreen";
 import { HomeScreen } from "./screens/HomeScreen";
-import { DebugScreen } from "./screens/DebugScreen";
 import { DictionaryScreen } from "./screens/DictionaryScreen";
 import { LevelSetupScreen } from "./screens/LevelSetupScreen";
 import { MyWordsScreen } from "./screens/MyWordsScreen";
@@ -588,7 +587,6 @@ export default function App() {
     quizlet: { title: "Quizlet", sub: "" },
     settings: { title: t.nav_settings, sub: t.sub_settings },
     subscription: { title: t.subscription_title, sub: "" },
-    debug: { title: t.debug_title, sub: "" },
   };
   const meta = pageMeta[screen] ?? pageMeta.home;
 
@@ -613,12 +611,6 @@ export default function App() {
             {screen === "home" && <div className="workspace-mark" aria-hidden="true" />}
             <div className="workspace-title">{meta.title}</div>
             {screen === "home" && <span className="workspace-context">{targetLang.toUpperCase()}</span>}
-            {screen === "home" && __DEV_BUILD__ && (
-              <>
-                <div className="workspace-header-spacer" />
-                <button className="workspace-debug" onClick={() => navigateTo("debug")} aria-label={t.debug_title}>&#9881;&#65038;</button>
-              </>
-            )}
           </div>
 
           <div className="workspace-content">
@@ -633,7 +625,6 @@ export default function App() {
             )}
             {screen === "statistics" && <StatisticsScreen />}
             {screen === "quizlet" && <QuizletScreen />}
-            {screen === "debug" && __DEV_BUILD__ && <DebugScreen />}
           </div>
         </div>
 

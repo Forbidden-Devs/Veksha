@@ -1,7 +1,7 @@
 import { explain, quickTranslate } from "../shared/api";
 import { canSpeak, speakText } from "../shared/speech";
-import { analyzeGrammarSelection, isGrammarLensEnabled } from "./grammar-lens";
-import { YT_STUDY_GUARD_SELECTOR } from "./youtube";
+import { openPatternWorkshop } from "./pattern-workshop";
+import { YT_STUDY_GUARD_SELECTOR } from "./youtube-study-runtime";
 import type { PageSession } from "./page-session";
 
 interface TranslationResult {
@@ -123,20 +123,18 @@ export class SelectionAssistant {
     });
     tools.appendChild(translate);
 
-    if (isGrammarLensEnabled()) {
-      const grammar = iconButton(
-        this.session.t("grammar_analyze_selection", "Analyze grammar"),
-        "Aa",
-      );
-      grammar.className = "vk-selection-grammar";
-      grammar.addEventListener("click", (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        analyzeGrammarSelection(text);
-        this.close();
-      });
-      tools.appendChild(grammar);
-    }
+    const grammar = iconButton(
+      this.session.t("grammar_analyze_selection", "Analyze grammar"),
+      "Aa",
+    );
+    grammar.className = "vk-selection-grammar";
+    grammar.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      openPatternWorkshop(text);
+      this.close();
+    });
+    tools.appendChild(grammar);
 
     document.documentElement.appendChild(tools);
     this.tools = tools;

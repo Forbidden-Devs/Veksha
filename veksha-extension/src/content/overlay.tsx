@@ -2,7 +2,12 @@ import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent, type R
 import { createRoot, type Root } from "react-dom/client";
 import { GoalWindow, type GoalTarget } from "../popup/overlays/GoalWindow";
 import { PracticePlannerWindow } from "../popup/overlays/PracticePlannerWindow";
-import rawPopupCss from "../popup/popup.css?inline";
+import rawFoundationCss from "../popup/styles/foundation.css?inline";
+import rawSettingsCss from "../popup/styles/settings-and-lists.css?inline";
+import rawLearningCss from "../popup/styles/learning-windows.css?inline";
+import rawLanguageCss from "../popup/styles/language-and-billing.css?inline";
+import rawWorkbenchCss from "../popup/styles/workbenches.css?inline";
+import rawThemeCss from "../popup/styles/theme.css?inline";
 import { I18nProvider } from "../shared/i18n";
 import rawPaletteCss from "../shared/palette.css?inline";
 
@@ -83,7 +88,9 @@ const PAGE_WINDOW_CSS = `
   }
 `;
 
-const SHADOW_STYLES = `${rawPaletteCss.replace(/:root/g, ":host")}\n${rawPopupCss}\n${PAGE_WINDOW_CSS}`;
+const SHADOW_STYLES = `${rawPaletteCss.replace(/:root/g, ":host")}
+${rawFoundationCss}\n${rawSettingsCss}\n${rawLearningCss}\n${rawLanguageCss}
+${rawWorkbenchCss}\n${rawThemeCss}\n${PAGE_WINDOW_CSS}`;
 
 interface WindowSpec {
   width: number;

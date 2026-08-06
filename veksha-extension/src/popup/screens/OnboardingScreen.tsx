@@ -4,90 +4,55 @@ import { useT } from "../../shared/i18n";
 
 interface Props {
   initialName?: string;
-  onComplete: (username: string) => Promise<void>;
-  /** Google sign-in; omitted when CONFIG.GOOGLE_CLIENT_ID is not set. */
+  onComplete: (name: string) => Promise<void>;
   onGoogle?: () => Promise<void>;
   onBack: () => void;
 }
 
 export function OnboardingScreen({ initialName = "", onComplete, onGoogle, onBack }: Props) {
   const t = useT();
-  const [value, setValue] = useState(initialName);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [name, setName] = useState(initialName);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
 
-  function validateUsername(name: string): string | null {
-    const trimmed = name.trim();
-    if (!trimmed) return t.onboarding_err_empty;
-    if (trimmed.length > 64) return t.onboarding_err_long;
-    // Any name in any language/script is allowed — no character restriction.
-    return null;
+  async function submit(event: React.FormEvent): Promise<void> {
+    event.preventDefault();
+    const value = name.trim();
+    if (!value) return setError(t.onboarding_err_empty);
+    if (value.length > 64) return setError(t.onboarding_err_long);
+    setBusy(true);
+    setError("");
+    try { await onComplete(value); }
+    catch (reason) { setError((reason as Error).message); setBusy(false); }
   }
 
-  async function handleContinue() {
-    const err = validateUsername(value);
-    if (err) { setError(err); return; }
-    setError(null);
-    setLoading(true);
-    try {
-      await onComplete(value.trim());
-    } catch (e) {
-      // Display names don't collide (the account id is generated server-side),
-      // so any failure here is a real error worth showing as-is.
-      setError((e as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleGoogle() {
+  async function useGoogle(): Promise<void> {
     if (!onGoogle) return;
-    setError(null);
-    setLoading(true);
-    try {
-      await onGoogle();
-    } catch (e) {
-      // Closing the Google window is not an error worth showing.
-      if ((e as Error).message !== "google-cancelled") setError(t.onboarding_google_err);
-    } finally {
-      setLoading(false);
+    setBusy(true);
+    setError("");
+    try { await onGoogle(); }
+    catch (reason) {
+      if ((reason as Error).message !== "google-cancelled") setError(t.onboarding_google_err);
+      setBusy(false);
     }
   }
 
   return (
-    <section className="screen screen-onboarding">
-      <div className="onboarding-card">
-        <button className="onboarding-back" type="button" onClick={onBack} disabled={loading}>
-          <span aria-hidden="true">←</span> {t.common_back}
-        </button>
-        <div className="logo-badge">Ve</div>
-        <h1 className="onboarding-title">{t.onboarding_title}</h1>
-        <p className="onboarding-subtitle">{t.onboarding_subtitle}</p>
-        <input
-          className="text-input"
-          type="text"
-          placeholder={t.onboarding_name_placeholder}
-          autoComplete="off"
-          maxLength={64}
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleContinue()}
-          autoFocus
-        />
-        <button className="btn btn-gradient" disabled={loading} onClick={handleContinue}>
-          {loading ? t.onboarding_loading : t.onboarding_continue}
-        </button>
-        {onGoogle && (
-          <>
-            <div className="onboarding-divider">{t.onboarding_or}</div>
-            <button className="btn btn-google" disabled={loading} onClick={handleGoogle}>
-              <GoogleMark />
-              {t.onboarding_google}
-            </button>
-          </>
-        )}
-        {error && <p className="onboarding-error">{error}</p>}
-      </div>
+    <section className="setup-surface" aria-labelledby="setup-welcome-title">
+      <button className="setup-back" type="button" onClick={onBack} disabled={busy}>← {t.common_back}</button>
+      <form className="setup-card" onSubmit={(event) => void submit(event)}>
+        <div className="setup-mark" aria-hidden="true">Ve</div>
+        <p className="setup-kicker">VEKSHA</p>
+        <h1 id="setup-welcome-title">{t.onboarding_title}</h1>
+        <p>{t.onboarding_subtitle}</p>
+        <label className="setup-field">
+          <span>{t.settings_display_name}</span>
+          <input value={name} onChange={(event) => setName(event.target.value)} maxLength={64} autoComplete="name" autoFocus placeholder={t.onboarding_name_placeholder} />
+        </label>
+        {error && <p className="setup-error" role="alert">{error}</p>}
+        <button className="setup-primary" type="submit" disabled={busy}>{busy ? t.onboarding_loading : t.onboarding_continue}</button>
+        {onGoogle && <button className="setup-google" type="button" onClick={() => void useGoogle()} disabled={busy}><GoogleMark />{t.onboarding_google}</button>}
+      </form>
     </section>
   );
 }

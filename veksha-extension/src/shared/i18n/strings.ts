@@ -113,13 +113,12 @@ export interface Strings {
   dual_subtitles_guide_step_2: string;
   dual_subtitles_guide_step_3: string;
   dual_subtitles_guide_tip: string;
-  grammar_memory_title: string;
-  grammar_memory_on: string;
-  grammar_memory_off: string;
-  grammar_memory_scanning: string;
-  grammar_memory_disable: string;
-  grammar_memory_collapse: string;
-  grammar_memory_expand: string;
+  pattern_workshop_title: string;
+  pattern_workshop_select_hint: string;
+  pattern_workshop_choose: string;
+  pattern_workshop_retry: string;
+  pattern_workshop_complete: string;
+  pattern_workshop_saved: string;
   grammar_hint_select: string;
   grammar_analyze_selection: string;
   grammar_analysis_loading: string;
@@ -127,18 +126,12 @@ export interface Strings {
   grammar_analysis_empty: string;
   grammar_roles_title: string;
   grammar_patterns_title: string;
-  grammar_memory_patterns: string;
-  grammar_memory_loading: string;
-  grammar_memory_empty: string;
-  grammar_memory_seen: string;
-  grammar_memory_mastered: string;
-  grammar_memory_reopen: string;
-  grammar_memory_guide_title: string;
-  grammar_memory_guide_intro: string;
-  grammar_memory_guide_step_1: string;
-  grammar_memory_guide_step_2: string;
-  grammar_memory_guide_step_3: string;
-  grammar_memory_guide_tip: string;
+  pattern_workshop_guide_title: string;
+  pattern_workshop_guide_intro: string;
+  pattern_workshop_guide_step_1: string;
+  pattern_workshop_guide_step_2: string;
+  pattern_workshop_guide_step_3: string;
+  pattern_workshop_guide_tip: string;
   grammar_role_subject: string;
   grammar_role_verb: string;
   grammar_role_object: string;
@@ -195,10 +188,15 @@ export interface Strings {
   settings_reminder_level_1: string;
   settings_reminder_level_2: string;
   settings_reminder_level_3: string;
-  settings_persistent: string;
-  settings_persistent_desc: string;
-  settings_focus_guard: string;
-  settings_focus_guard_desc: string;
+  focus_session_title: string;
+  focus_session_desc: string;
+  focus_session_intention: string;
+  focus_session_intention_placeholder: string;
+  focus_session_site_placeholder: string;
+  focus_session_strict: string;
+  focus_session_start: string;
+  focus_session_end: string;
+  focus_session_active: string;
   settings_dual_subtitles: string;
   settings_dual_subtitles_desc: string;
   settings_subtitle_study: string;
@@ -489,24 +487,6 @@ export interface Strings {
   level_setup_subtitle: string;
   level_setup_optional: string;
   // Debug
-  debug_title: string;
-  debug_user: string;
-  debug_backend: string;
-  debug_browser_lang: string;
-  debug_all_langs: string;
-  debug_commands: string;
-  debug_simulate_training_name: string;
-  debug_simulate_training_desc: string;
-  debug_advance_day_name: string;
-  debug_advance_day_desc: string;
-  debug_reset_name: string;
-  debug_reset_desc: string;
-  debug_reset_confirm: string;  // placeholder: {username}
-  debug_regen_name: string;
-  debug_regen_desc: string;
-  debug_regen_done: string;
-  debug_run: string;
-  debug_reloading: string;
 }
 
 export const EN: Strings = {
@@ -612,13 +592,12 @@ export const EN: Strings = {
   dual_subtitles_guide_step_2: "Turn on Dual subtitles in Veksha. The translated line appears above the original one.",
   dual_subtitles_guide_step_3: "Use the globe button beside the captions to hide or show the translation without leaving the video.",
   dual_subtitles_guide_tip: "Hover over a word in the original captions to highlight the matching word in the translation.",
-  grammar_memory_title: "Grammar Memory",
-  grammar_memory_on: "Grammar Memory on",
-  grammar_memory_off: "Grammar Memory",
-  grammar_memory_scanning: "Analyzing visible text…",
-  grammar_memory_disable: "Turn off Grammar Memory",
-  grammar_memory_collapse: "Collapse the analysis",
-  grammar_memory_expand: "Show grammar memory",
+  pattern_workshop_title: "Pattern Workshop",
+  pattern_workshop_select_hint: "Select a sentence to begin",
+  pattern_workshop_choose: "Choose one construction to practise now.",
+  pattern_workshop_retry: "Not yet — use the construction name shown above.",
+  pattern_workshop_complete: "Complete and add to Error Map",
+  pattern_workshop_saved: "Practice complete. This skill is now in your Error Map.",
   grammar_hint_select: "Select a sentence on the page and press the 🔍 button next to it for a detailed grammar analysis.",
   grammar_analyze_selection: "Analyze the grammar of the selection",
   grammar_analysis_loading: "Analyzing the sentence…",
@@ -626,18 +605,12 @@ export const EN: Strings = {
   grammar_analysis_empty: "No notable grammar found in this selection.",
   grammar_roles_title: "Sentence roles",
   grammar_patterns_title: "Grammar in context",
-  grammar_memory_patterns: "Your grammar memory",
-  grammar_memory_loading: "Loading saved patterns…",
-  grammar_memory_empty: "Patterns found while you read will collect here.",
-  grammar_memory_seen: "Seen {n}×",
-  grammar_memory_mastered: "Mark as mastered",
-  grammar_memory_reopen: "Study again",
-  grammar_memory_guide_title: "How Grammar Memory works",
-  grammar_memory_guide_intro: "Grammar Memory turns patterns you encounter while reading into a personal, reusable collection.",
-  grammar_memory_guide_step_1: "Turn on Grammar Memory while reading in your learning language. Veksha highlights sentence roles and detects useful constructions.",
-  grammar_memory_guide_step_2: "Open the page panel to see saved patterns, explanations, real examples, and how often each pattern has appeared.",
-  grammar_memory_guide_step_3: "Mark a pattern as mastered when it feels familiar. You can return it to learning at any time.",
-  grammar_memory_guide_tip: "Select a sentence and use the grammar action to add a focused example to your memory.",
+  pattern_workshop_guide_title: "How Pattern Workshop works",
+  pattern_workshop_guide_intro: "Grammar starts from a sentence you choose or an error you made — never from passive browsing.",
+  pattern_workshop_guide_step_1: "Select a complete sentence and choose the Aa action.",
+  pattern_workshop_guide_step_2: "Inspect up to three constructions and consciously choose one to practise.",
+  pattern_workshop_guide_step_3: "Complete the micro-task. Only then is the skill added to your Error Map.",
+  pattern_workshop_guide_tip: "Unfinished analyses are drafts and expire without changing your long-term profile.",
   grammar_role_subject: "Subject",
   grammar_role_verb: "Verb",
   grammar_role_object: "Object",
@@ -645,10 +618,10 @@ export const EN: Strings = {
   grammar_role_time: "Time",
   grammar_role_modifier: "Modifier",
   my_words_title: "My words",
-  my_words_intro: "A personal frequency list built from the words you actually encounter while browsing, tagged by site — not a generic top-1000 list.",
-  my_words_on: "Tracking on",
-  my_words_off: "Track my browsing",
-  my_words_empty: "No words tracked yet. Turn tracking on and browse a few pages in your target language.",
+  my_words_intro: "Start a Reading Session when you want Veksha to notice vocabulary in what you deliberately read.",
+  my_words_on: "End Reading Session",
+  my_words_off: "Start Reading Session",
+  my_words_empty: "No session vocabulary yet. Start a Reading Session on a text you chose to study.",
   my_words_known: "Known",
   my_words_unknown: "Not yet known",
   my_words_seen_on: "{n}× · mostly on {domain}",
@@ -662,10 +635,10 @@ export const EN: Strings = {
   vocabulary_inbox_known: "I know it",
   vocabulary_inbox_ignore: "Ignore",
   vocabulary_inbox_error: "Could not update this suggestion. Try again.",
-  my_words_guide_step_1: "Open your word list and turn tracking on there. Veksha counts words only on pages in your target language.",
-  my_words_guide_step_2: "As you browse, a personal frequency list grows automatically and shows where each word appeared most often.",
+  my_words_guide_step_1: "Open your word list and consciously start a Reading Session on the text you want to study.",
+  my_words_guide_step_2: "Only pages you visit while that session is active contribute vocabulary; end it whenever you are done.",
   my_words_guide_step_3: "Add an unfamiliar word to your dictionary with one click, then practise it in training.",
-  my_words_guide_tip: "The tile opens your word list, tracking is controlled inside it, and the question-mark button always opens this guide.",
+  my_words_guide_tip: "Ordinary browsing is never analyzed. The session button is the only entry point.",
   settings_title: "Settings",
   settings_intro: "Tell us your languages and level so we can pick the right words and difficulty for you.",
   settings_theme: "Theme",
@@ -693,10 +666,15 @@ export const EN: Strings = {
   settings_reminder_level_1: "Just a notification",
   settings_reminder_level_2: "Noticeable card",
   settings_reminder_level_3: "Focus screen + frequent",
-  settings_persistent: "Persistent reminders",
-  settings_persistent_desc: "Hard-to-dismiss reminders: the close button runs away — finish a quick training or catch it to clear them.",
-  settings_focus_guard: "Focus safeguard",
-  settings_focus_guard_desc: "Turn reminders into a full-page decision: start now, snooze for 15 minutes, or intentionally pause for today.",
+  focus_session_title: "Study Focus Session",
+  focus_session_desc: "Choose an intention, duration, and distracting sites before you begin.",
+  focus_session_intention: "Your intention",
+  focus_session_intention_placeholder: "e.g. Read in Spanish",
+  focus_session_site_placeholder: "Distracting site, e.g. reddit.com",
+  focus_session_strict: "Strict mode (choose before starting)",
+  focus_session_start: "Start focus session",
+  focus_session_end: "End focus session",
+  focus_session_active: "{n} minutes remaining",
   settings_dual_subtitles: "Dual subtitles",
   settings_dual_subtitles_desc: "Enable translated subtitles and their playback control on YouTube.",
   settings_subtitle_study: "Subtitle study",
@@ -968,22 +946,4 @@ export const EN: Strings = {
   level_setup_title: "Almost there!",
   level_setup_subtitle: "Tell us your level so we can pick the right tasks for you.",
   level_setup_optional: "optional",
-  debug_title: "Debug",
-  debug_user: "User",
-  debug_backend: "Backend",
-  debug_browser_lang: "Browser lang",
-  debug_all_langs: "All langs",
-  debug_commands: "Commands",
-  debug_simulate_training_name: "Simulate completed training",
-  debug_simulate_training_desc: "Advances 15 random words and one random topic as if training was completed.",
-  debug_advance_day_name: "Move to tomorrow",
-  debug_advance_day_desc: "Moves all word review dates one day back and triggers a reminder.",
-  debug_reset_name: "Reset user data",
-  debug_reset_desc: "Deletes all KB, session and settings on the server, then clears local storage. Registration starts from scratch.",
-  debug_reset_confirm: "Reset ALL data for \"{username}\"? This cannot be undone.",
-  debug_regen_name: "Regenerate translation",
-  debug_regen_desc: "Re-translates the whole interface for your language from the current source strings. Use after UI text changes.",
-  debug_regen_done: "Interface re-translated for {lang}.",
-  debug_run: "Run",
-  debug_reloading: "Reloading…",
 };

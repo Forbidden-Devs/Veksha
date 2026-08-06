@@ -2,6 +2,7 @@ import { CONFIG } from "../shared/config";
 import { getReminders, getSettings } from "../shared/api";
 import { googleLinkAccount, googleSignIn } from "../shared/googleAuth";
 import type { RemindersData } from "../shared/types";
+import { focusSiteForUrl, sessionBlocksUrl, type FocusSession } from "../shared/focusSession";
 import {
   captionTrackJson3Url,
   extractCaptionTracks,
@@ -131,8 +132,6 @@ chrome.runtime.onConnect.addListener((port) => {
 
 const NOTIFICATION_ID = "veksha-reminder";
 const LAST_REMINDER_AT_KEY = "veksha-last-reminder-at";
-const REMINDERS_PAUSED_UNTIL_KEY = "veksha-reminders-paused-until";
-const SNOOZE_REMINDER_ALARM = "veksha-reminder-snooze";
 // Level 1-2: at most once per 12h. Level 3 ("frequent"): at most once per hour.
 const NORMAL_REMINDER_INTERVAL_MS = 12 * 60 * 60 * 1000;
 const FREQUENT_REMINDER_INTERVAL_MS = 60 * 60 * 1000;
@@ -230,15 +229,6 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 });
 
 chrome.alarms.onAlarm.addListener(async (alarm) => {
-  if (alarm.name === SNOOZE_REMINDER_ALARM) {
-    const username = await getStoredUsername();
-    if (!username) return;
-    try {
-      const result = await getReminders(username);
-      if (result.should_remind) await displayReminder(username, result, true);
-    } catch {}
-    return;
-  }
   if (alarm.name === FIRST_REVIEW_ALARM) {
     await fireFirstReview();
     return;
@@ -256,43 +246,35 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
 
 async function displayReminder(username: string, result: RemindersData, force = false) {
   let level = 2;
-  let overseer = false;
   try {
     const settings = await getSettings(username);
     level = settings.reminder_level ?? 2;
-    overseer = settings.overseer ?? false;
   } catch {}
   if (!force && !(await shouldShowReminderNow(level))) return;
 
-  // Level 1+: plain system notification.
+  // Review reminders are notifications only. Full-page intervention belongs
+  // exclusively to a deliberately started Study Focus Session.
   showReminderNotification(result);
-  // Level 2+: in-page prompt. Level 3 and focus guard use a focus stage.
-  if (level < 2) return;
-
-  const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-  const tab = tabs[0];
-  if (!tab?.id || !tab.url || /^(chrome|chrome-extension|moz-extension|about):/.test(tab.url)) return;
-
-  const message = {
-    type: "VEKSHA_SHOW_PRACTICE_REMINDER",
-    username,
-    reminder_level: level,
-    due_words: result.due_words,
-    due_word_names: result.due_word_names ?? [],
-    due_goal: result.due_goal,
-    overseer,
-  };
-  try {
-    await chrome.tabs.sendMessage(tab.id, message);
-  } catch {
-    try {
-      await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ["src/content/content.js"] });
-      await chrome.scripting.insertCSS({ target: { tabId: tab.id }, files: ["src/content/content.css"] });
-      await new Promise<void>((resolve) => setTimeout(resolve, 150));
-      await chrome.tabs.sendMessage(tab.id, message);
-    } catch {}
-  }
 }
+
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  const url = changeInfo.url ?? tab.url;
+  if (!url || url.startsWith(chrome.runtime.getURL("src/focus/index.html"))) return;
+  void chrome.storage.local.get([CONFIG.STORAGE_KEY_FOCUS_SESSION]).then(async (values) => {
+    const session = values[CONFIG.STORAGE_KEY_FOCUS_SESSION] as FocusSession | undefined;
+    if (!session) return;
+    if (session.endsAt <= Date.now()) {
+      await chrome.storage.local.remove([CONFIG.STORAGE_KEY_FOCUS_SESSION]);
+      return;
+    }
+    if (!sessionBlocksUrl(session, url)) return;
+    const site = focusSiteForUrl(url);
+    if (!site) return;
+    const gate = chrome.runtime.getURL("src/focus/index.html")
+      + `?target=${encodeURIComponent(url)}&site=${encodeURIComponent(site)}`;
+    await chrome.tabs.update(tabId, { url: gate });
+  });
+});
 
 function showReminderNotification(result: { due_words: number; due_goal: string | null; due_word_names?: string[] }) {
   const parts: string[] = [];
@@ -500,24 +482,6 @@ chrome.runtime.onMessage.addListener((msg: Record<string, unknown>, _sender, sen
     return false;
   }
 
-  if (msg.type === "VEKSHA_SNOOZE_PRACTICE_REMINDER") {
-    const requested = Number(msg.minutes ?? 15);
-    const minutes = Math.min(120, Math.max(5, Number.isFinite(requested) ? requested : 15));
-    chrome.alarms.create(SNOOZE_REMINDER_ALARM, { delayInMinutes: minutes });
-    void chrome.storage.local.remove([REMINDERS_PAUSED_UNTIL_KEY]);
-    sendResponse({ ok: true });
-    return false;
-  }
-
-  if (msg.type === "VEKSHA_PAUSE_PRACTICE_REMINDERS") {
-    const requested = Number(msg.hours ?? 24);
-    const hours = Math.min(24, Math.max(1, Number.isFinite(requested) ? requested : 24));
-    void chrome.storage.local.set({ [REMINDERS_PAUSED_UNTIL_KEY]: Date.now() + hours * 60 * 60 * 1000 });
-    void chrome.alarms.clear(SNOOZE_REMINDER_ALARM);
-    sendResponse({ ok: true });
-    return false;
-  }
-
   if (msg.type === "DEBUG_SHOW_REMINDER") {
     const result = msg.reminder as { due_words: number; due_word_names?: string[]; due_goal: string | null; should_remind: boolean };
     // Debug button: always fire the reminder so the user can test notifications,
@@ -541,12 +505,8 @@ chrome.runtime.onMessage.addListener((msg: Record<string, unknown>, _sender, sen
 
 async function shouldShowReminderNow(level: number): Promise<boolean> {
   const interval = level >= 3 ? FREQUENT_REMINDER_INTERVAL_MS : NORMAL_REMINDER_INTERVAL_MS;
-  const stored = await chrome.storage.local.get([
-    LAST_REMINDER_AT_KEY,
-    REMINDERS_PAUSED_UNTIL_KEY,
-  ]).catch(() => ({}) as Record<string, unknown>);
-  const pausedUntil = Number((stored as Record<string, unknown>)[REMINDERS_PAUSED_UNTIL_KEY] ?? 0);
-  if (pausedUntil > Date.now()) return false;
+  const stored = await chrome.storage.local.get([LAST_REMINDER_AT_KEY])
+    .catch(() => ({}) as Record<string, unknown>);
   const last = Number((stored as Record<string, unknown>)[LAST_REMINDER_AT_KEY] ?? 0);
   const now = Date.now();
   if (last && now - last < interval) return false;

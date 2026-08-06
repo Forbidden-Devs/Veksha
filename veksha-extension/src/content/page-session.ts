@@ -1,12 +1,12 @@
 import { getSettings } from "../shared/api";
 import { isAiBlocked, normalizeAiBlocklist } from "../shared/aiBlocklist";
 import { CONFIG } from "../shared/config";
+import { loadStaticCatalog } from "../shared/i18n";
 
 export interface PageFeaturePolicy {
   blocked: boolean;
   readingCoach: boolean;
-  grammarMemory: boolean;
-  vocabularyTracking: boolean;
+  readingSession: { sessionId: string; startedAt: number } | null;
 }
 
 const PROFILE_TIMEOUT_MS = 3_000;
@@ -71,33 +71,25 @@ export class PageSession {
   async readPolicy(): Promise<PageFeaturePolicy> {
     const values = await chrome.storage.local.get([
       CONFIG.STORAGE_KEY_AI_BLOCKLIST,
-      CONFIG.STORAGE_KEY_IMMERSION,
-      CONFIG.STORAGE_KEY_CI_METER,
       CONFIG.STORAGE_KEY_READING_COACH,
-      CONFIG.STORAGE_KEY_GRAMMAR_LENS,
-      CONFIG.STORAGE_KEY_VOCAB_FREQ,
+      CONFIG.STORAGE_KEY_READING_SESSION,
     ]);
     const blocked = isAiBlocked(
       location.href,
       normalizeAiBlocklist(values[CONFIG.STORAGE_KEY_AI_BLOCKLIST]),
     );
-    const grammarMemory = Boolean(values[CONFIG.STORAGE_KEY_GRAMMAR_LENS]);
-    const legacyImmersion = Boolean(values[CONFIG.STORAGE_KEY_IMMERSION]);
-    const legacyReadingCoach = values[CONFIG.STORAGE_KEY_CI_METER];
-    const readingCoach = values[CONFIG.STORAGE_KEY_READING_COACH] === undefined
-      ? (legacyReadingCoach === undefined ? legacyImmersion : Boolean(legacyReadingCoach))
-      : Boolean(values[CONFIG.STORAGE_KEY_READING_COACH]);
-    if (legacyImmersion || values[CONFIG.STORAGE_KEY_READING_COACH] === undefined) {
-      await chrome.storage.local.set({
-        [CONFIG.STORAGE_KEY_READING_COACH]: readingCoach,
-        [CONFIG.STORAGE_KEY_IMMERSION]: false,
-      });
-    }
+    const readingCoach = Boolean(values[CONFIG.STORAGE_KEY_READING_COACH]);
     return {
       blocked,
       readingCoach,
-      grammarMemory,
-      vocabularyTracking: Boolean(values[CONFIG.STORAGE_KEY_VOCAB_FREQ]),
+      readingSession: (() => {
+        const value = values[CONFIG.STORAGE_KEY_READING_SESSION];
+        if (!value || typeof value !== "object") return null;
+        const record = value as Record<string, unknown>;
+        return typeof record.sessionId === "string" && typeof record.startedAt === "number"
+          ? { sessionId: record.sessionId, startedAt: record.startedAt }
+          : null;
+      })(),
     };
   }
 
@@ -107,14 +99,8 @@ export class PageSession {
   }
 
   private async loadCatalogue(lang: string): Promise<void> {
-    if (!lang || lang === "en") {
-      this.catalogue = {};
-      return;
-    }
     try {
-      const key = `vk_i18n_v3_${lang}`;
-      const values = await chrome.storage.local.get([key]);
-      this.catalogue = (values[key] as Record<string, string> | undefined) ?? {};
+      this.catalogue = await loadStaticCatalog(lang) as unknown as Record<string, string>;
     } catch {
       this.catalogue = {};
     }

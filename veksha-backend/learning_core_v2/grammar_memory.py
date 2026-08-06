@@ -97,7 +97,7 @@ class RememberGrammar:
 
         clean_id = item_id.strip()
         if not clean_id:
-            raise ValueError("grammar memory item requires an id")
+            raise ValueError("pattern skill requires an id")
         return (
             *updated,
             GrammarMemoryItem(
@@ -116,7 +116,7 @@ class RememberGrammar:
 class SetGrammarStatus:
     def execute(self, item: GrammarMemoryItem, status: GrammarStatus) -> GrammarMemoryItem:
         if status not in {"learning", "mastered"}:
-            raise ValueError("unknown grammar memory status")
+            raise ValueError("unknown pattern skill status")
         return replace(item, status=status)
 
 

@@ -77,7 +77,7 @@ Comprehension uses `VEKSHA_CORE_V2_READING_MODEL` (default `gpt-5.6-luna`).
 The stable `immersion` billing identifier is
 retained only so existing purchases continue to unlock Reading Coach.
 
-Grammar Memory analysis is independently implemented and grounds every segment
+Pattern Workshop analysis is independently implemented and grounds every segment
 and annotation in the submitted text before saving examples. Its model is
 selected through `VEKSHA_CORE_V2_GRAMMAR_MODEL` (default `gpt-5.6-luna`). The
 existing `POST /api/grammar-lens/analyze` route and `grammar_lens` entitlement
@@ -107,7 +107,7 @@ discarded. Select its model with `VEKSHA_CORE_V2_I18N_MODEL` (default
 `gpt-5.6-luna`).
 
 Local runs grant premium-gated development features automatically, so dual
-subtitles, Grammar Memory, and Reading Coach can be exercised without Telegram
+subtitles, Pattern Workshop, and Reading Coach can be exercised without Telegram
 billing. Set `VEKSHA_DEV_ALL_FEATURES=0` to test the real free-tier gates.
 
 Google login additionally requires a **Web application** OAuth client and:
@@ -163,7 +163,7 @@ testing it can be enabled with
 
 ## Subscriptions (Telegram Stars)
 
-Paid features (Grammar Memory, Reading Coach, dual subtitles — see
+Paid features (Pattern Workshop, Reading Coach, dual subtitles — see
 `entitlements.py`) can be purchased individually; gated endpoints return
 HTTP 402 with `detail.code = "subscription_required"`. Payments are collected
 by the companion bot (`veksha-tgbot/`) in Telegram Stars and reported to
@@ -333,7 +333,7 @@ minutes are spent — time accumulates across the whole goal, not one sitting.
 The report states what the learner can now do, the evidence behind it, what is
 still unstable, examples from their material, and a suggested next goal. Words
 and grammar patterns the lesson surfaced go to the Vocabulary Inbox as
-`suggested` and to Grammar Memory; the lesson decides nothing on the learner's
+`suggested` and to Pattern Workshop; the lesson decides nothing on the learner's
 behalf. Criteria, evidence, and the planned next step are persisted, so
 reopening a goal resumes the route instead of restarting it.
 

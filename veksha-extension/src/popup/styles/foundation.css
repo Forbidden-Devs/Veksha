@@ -1,0 +1,287 @@
+/**
+ * Foundation for extension UI.
+ *
+ * Base layout and legacy palette; the current forest identity
+ * Theme tokens are layered separately.
+ */
+ 
+:root {
+  /* Compatibility names; their values come from shared/palette.css. */
+  --av-ink: var(--m-fg);
+  --av-muted: var(--m-dim);
+  --av-faint: color-mix(in srgb, var(--m-dim) 72%, var(--m-bg));
+  --av-border: var(--m-border);
+  --av-surface: var(--m-surface); 
+  --av-bg: var(--m-bg);
+  --av-pink: var(--m-accent);
+  --av-pink-deep: var(--m-accent-hover);
+  --av-blue: var(--m-accent-2);
+  --av-blue-soft: color-mix(in srgb, var(--m-accent-2) 18%, var(--m-bg));
+  --av-blue-deep: color-mix(in srgb, var(--m-accent-2) 82%, black);
+  --av-accent: var(--m-accent); 
+  --av-accent-soft: var(--m-accent-soft);
+  --av-gradient: linear-gradient(135deg, var(--m-accent), var(--m-accent-2));
+  --av-bubble-user: var(--m-accent-soft);
+  --av-bubble-bot: var(--m-surface-2);
+  --av-error: var(--m-error);
+  --av-ok: var(--m-ok);
+} 
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  margin: 0; 
+  padding: 0;
+  width: 720px;
+  height: 600px;
+  overflow: hidden;
+  font-family: "Inter", -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: var(--av-ink);
+  background: transparent; 
+  border-radius: 22px;
+}
+
+.app {
+  width: 720px;
+  height: 600px;
+  margin: 0; 
+  position: relative;
+  overflow: hidden;
+  background: var(--av-bg);
+  border-radius: 20px;
+  clip-path: inset(0 round 20px);
+  display: flex;
+} 
+
+.screen {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; 
+  border-radius: inherit;
+}
+
+.screen-chat {
+  background: #ffffff;
+  border-radius: 26px;
+  overflow: hidden; 
+}
+
+/* Ensure hidden attribute works correctly */
+[hidden] {
+  display: none !important;
+}
+ 
+/* ---------------------------------------------------------------------- */
+/* Shared elements                                                          */
+/* ---------------------------------------------------------------------- */
+
+.logo-badge {
+  width: 36px;
+  height: 36px; 
+  border-radius: 11px;
+  background: transparent url("/icons/icon48.png") center / contain no-repeat;
+  color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800; 
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+  overflow: hidden;
+  text-indent: -9999px;
+}
+ 
+.logo-badge-sm {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  font-size: 13px;
+}
+ 
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 999px;
+  font-size: 14px; 
+  font-weight: 700;
+  cursor: pointer;
+  padding: 12px 20px;
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+
+.btn:hover { 
+  transform: translateY(-1px);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+ 
+.btn-gradient {
+  background: var(--av-gradient);
+  background-size: 220% 220%;
+  color: #ffffff;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--av-accent) 28%, transparent);
+}
+ 
+.btn-gradient:not(:disabled) {
+  animation: av-gradient-drift 9s ease-in-out infinite;
+}
+
+.btn-gradient:disabled {
+  opacity: 0.55;
+  cursor: default; 
+  transform: none;
+  box-shadow: none;
+  animation: none;
+}
+
+.btn-google {
+  gap: 8px; 
+  background: #ffffff;
+  color: #3c4043;
+  border: 1px solid rgba(60, 64, 67, 0.22);
+  box-shadow: 0 2px 8px rgba(20, 16, 32, 0.08);
+}
+
+.btn-google:disabled { 
+  opacity: 0.55;
+  cursor: default;
+  transform: none;
+}
+
+.google-mark {
+  width: 18px; 
+  height: 18px;
+  flex: none;
+}
+
+.onboarding-divider {
+  display: flex;
+  align-items: center; 
+  gap: 10px;
+  margin: 2px 0;
+  color: rgba(60, 52, 90, 0.45);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: lowercase;
+} 
+
+.onboarding-divider::before,
+.onboarding-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(60, 52, 90, 0.16); 
+}
+
+.settings-account {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 18px; 
+  padding-top: 16px;
+  border-top: 1px solid rgba(60, 52, 90, 0.12);
+}
+
+.settings-account-status {
+  display: flex;
+  align-items: center; 
+  gap: 8px;
+  margin: 0;
+  font-size: 13px;
+  color: rgba(60, 52, 90, 0.75);
+}
+
+.settings-promo-row { 
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.settings-promo-row .text-input {
+  flex: 1; 
+}
+
+.btn-signout {
+  background: transparent;
+  color: #b04a5e;
+  border: 1px solid rgba(176, 74, 94, 0.4);
+} 
+
+.btn-signout:hover {
+  background: rgba(176, 74, 94, 0.06);
+}
+
+@keyframes av-gradient-drift {
+  0%, 100% { background-position: 0% 50%; } 
+  50% { background-position: 100% 50%; }
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--av-muted);
+  font-size: 13px; 
+  font-weight: 600;
+  padding: 8px 16px;
+}
+
+.btn-ghost:hover {
+  color: var(--av-accent);
+  background: color-mix(in srgb, var(--av-accent) 6%, transparent); 
+}
+
+.icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px; 
+  height: 34px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--av-ink);
+  cursor: pointer;
+  position: relative; 
+  flex-shrink: 0;
+}
+
+.icon-btn:hover {
+  background: var(--av-accent-soft);
+}
+ 
+.icon-btn .dot {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px; 
+  background: #ef5a8c;
+  border: 2px solid #ffffff;
+}
+
+.text-input {
+  width: 100%;
+  border: 1px solid var(--av-border); 
+  background: var(--av-surface);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--av-ink);
+} 
+
+.text-input:focus {
+  outline: 2px solid var(--av-accent);
+  outline-offset: 1px;
+}
+
+/* ---------------------------------------------------------------------- */ 

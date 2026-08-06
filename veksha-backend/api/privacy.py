@@ -119,7 +119,7 @@ async def privacy_policy() -> str:
   <h2>Browser permissions and local storage</h2>
   <p>Veksha accesses page content only to provide features the user enables or
   invokes, such as selection translation, Reading Coach analysis, grammar analysis,
-  subtitle tools, vocabulary frequency, reminders, and OCR. The extension
+  subtitle tools, deliberately started Reading Sessions, reminders, and OCR. The extension
   stores an authentication token, account identifier, preferences, and
   feature state in local browser extension storage so it can work across
   sessions. Reading passages used for a comprehension question are kept in
