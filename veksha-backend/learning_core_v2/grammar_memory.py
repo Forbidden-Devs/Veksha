@@ -8,20 +8,21 @@ from urllib.parse import urlsplit, urlunsplit
 
 
 GrammarStatus = Literal["learning", "mastered"]
-GRAMMAR_CATEGORIES = frozenset(
-    {
-        "tense_aspect",
-        "voice",
-        "mood_modality",
-        "clause_link",
-        "negation_question",
-        "agreement_form",
-        "determiner_article",
-        "verb_pattern",
-        "word_order",
-        "comparison",
-    }
+
+#: Ordered so response schemas built from it stay byte-identical between runs.
+GRAMMAR_CATEGORY_ORDER: tuple[str, ...] = (
+    "tense_aspect",
+    "voice",
+    "mood_modality",
+    "clause_link",
+    "negation_question",
+    "agreement_form",
+    "determiner_article",
+    "verb_pattern",
+    "word_order",
+    "comparison",
 )
+GRAMMAR_CATEGORIES = frozenset(GRAMMAR_CATEGORY_ORDER)
 
 
 @dataclass(frozen=True, slots=True)

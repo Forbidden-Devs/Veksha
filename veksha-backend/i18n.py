@@ -435,7 +435,8 @@ BACKEND_STRINGS: dict[str, str] = {
     "education_new_topic": "📚 New topic: <b>{name}</b>\n{desc}",
     "education_interrupted": "⏸ Lesson paused, see you next time!",
     "education_no_topics": "📭 No lesson topics yet. Add one from the Topics screen.",
-    "lesson_no_blocks": "No available blocks for this topic.",
+    "goal_missing": "Describe the result you want to reach.",
+    "goal_no_criteria": "Could not turn this goal into checkable steps.",
 }
 
 # ---------------------------------------------------------------------------

@@ -258,7 +258,7 @@ def _google_link(claims: dict, username: str) -> dict:
         if (
             not previous.settings.is_onboarded()
             and not len(previous.lexicon)
-            and not len(previous.lessons)
+            and not len(previous.goals)
             and not db.user_has_account_activity(owner)
             and db.identity_reassign(_PROVIDER, sub, owner, username, email)
         ):

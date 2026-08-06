@@ -2,6 +2,7 @@ import { CONFIG } from "../shared/config";
 import { initReadingCoach, refreshReadingCoach, setReadingCoachEnabled } from "./reading-coach";
 import { initGrammarLens, setGrammarLensEnabled } from "./grammar-lens";
 import { closeOverlay, showLessonOverlay, showTrainingOverlay } from "./overlay";
+import type { GoalTarget } from "../popup/overlays/GoalWindow";
 import { PageReminder } from "./page-reminder";
 import { PageSession, type PageFeaturePolicy } from "./page-session";
 import { SelectionAssistant } from "./selection-assistant";
@@ -106,8 +107,12 @@ class PageRuntime {
         if (typeof message.username === "string") showTrainingOverlay(message.username);
         return;
       case "VEKSHA_OPEN_LESSON":
-        if (typeof message.username === "string" && typeof message.topic === "string") {
-          showLessonOverlay(message.username, message.topic);
+        if (typeof message.username === "string" && message.target) {
+          showLessonOverlay(
+            message.username,
+            message.target as GoalTarget,
+            typeof message.title === "string" ? message.title : undefined,
+          );
         }
         return;
       case "VEKSHA_AI_BLOCKLIST_UPDATED":

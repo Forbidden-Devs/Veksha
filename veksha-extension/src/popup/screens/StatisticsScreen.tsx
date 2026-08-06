@@ -40,7 +40,7 @@ export function StatisticsScreen() {
           <div className="stat-label">{t.stats_known}</div>
         </div>
         <div className="stat-card">
-          <div className="stat-value">{val(summary?.topics_count)}</div>
+          <div className="stat-value">{val(summary?.goals_count)}</div>
           <div className="stat-label">{t.stats_topics}</div>
         </div>
         <div className="stat-card">

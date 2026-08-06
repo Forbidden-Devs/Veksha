@@ -5,7 +5,7 @@ import { googleSignIn } from "../shared/googleAuth";
 import { useI18n } from "../shared/i18n";
 import { isExtension, sessionGet, sessionSet, storageGet, storageRemove, storageSet } from "../shared/platform";
 import type { Screen, SettingsMode } from "../shared/types";
-import { LessonWindow } from "./overlays/LessonWindow";
+import { GoalWindow, type GoalTarget } from "./overlays/GoalWindow";
 import { ReminderCard } from "./overlays/ReminderCard";
 import { PracticePlannerWindow } from "./overlays/PracticePlannerWindow";
 import { TranslatorScreen } from "./screens/TranslatorScreen";
@@ -72,7 +72,7 @@ interface AppCtx {
   openReminder: () => void;
   closeReminder: () => void;
   openTraining: () => void;
-  openLesson: (topic: string) => void;
+  openLesson: (target: GoalTarget, title?: string) => void;
   requirePremiumFeature: (feature: PremiumFeature, featureName: string) => Promise<boolean>;
   openSubscription: (intent?: SubscriptionIntent) => void;
   targetLang: string;
@@ -489,7 +489,7 @@ export default function App() {
   // On the web the study windows render as local overlays; in the extension
   // they are injected into the active tab so they outlive the popup.
   const [webOverlay, setWebOverlay] = useState<
-    { kind: "training" } | { kind: "lesson"; topic: string } | null
+    { kind: "training" } | { kind: "lesson"; target: GoalTarget; title?: string } | null
   >(null);
 
   const openTraining = useCallback(async () => {
@@ -501,9 +501,9 @@ export default function App() {
     else window.close();
   }, [username]);
 
-  const openLesson = useCallback(async (topic: string) => {
-    if (!isExtension) { setWebOverlay({ kind: "lesson", topic }); return; }
-    const status = await sendToActiveTab({ type: "VEKSHA_OPEN_LESSON", username, topic });
+  const openLesson = useCallback(async (target: GoalTarget, title?: string) => {
+    if (!isExtension) { setWebOverlay({ kind: "lesson", target, title }); return; }
+    const status = await sendToActiveTab({ type: "VEKSHA_OPEN_LESSON", username, target, title });
     if (status === "restricted") setToastMsg("Open any webpage first, then try Lesson again.");
     else if (status === "error") setToastMsg("Could not open Lesson. Please refresh the page.");
     else window.close();
@@ -663,9 +663,10 @@ export default function App() {
           <PracticePlannerWindow username={username} onClose={() => setWebOverlay(null)} />
         )}
         {webOverlay?.kind === "lesson" && (
-          <LessonWindow
+          <GoalWindow
             username={username}
-            topicName={webOverlay.topic}
+            target={webOverlay.target}
+            title={webOverlay.title}
             onClose={() => setWebOverlay(null)}
           />
         )}

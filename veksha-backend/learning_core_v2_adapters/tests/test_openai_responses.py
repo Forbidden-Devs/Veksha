@@ -14,15 +14,20 @@ from learning_core_v2.catalog_translation import (
 from learning_core_v2.dictionary import DictionaryLookupRequest
 from learning_core_v2.explanation import ExplanationRequest
 from learning_core_v2.grammar_analysis import GrammarAnalysisRequest
-from learning_core_v2.lesson import (
-    AnswerRequest as LessonAnswerRequest,
-    CurriculumRequest,
+from learning_core_v2.goal import (
+    CriterionProgress,
+    Evidence,
+    FramingRequest,
+    GoalGap,
+    GoalMaterial,
+    GoalStep,
     LearnerProfile,
-    LessonMaterial,
-    LessonSection,
-    LessonUnit,
-    MaterialRequest,
-    QuestionRequest,
+    StepAnswerRequest,
+    StepMaterial,
+    StepRequest,
+    StepSection,
+    SuccessCriterion,
+    SummaryRequest,
 )
 from learning_core_v2.phrase_mining import PhraseMiningRequest
 from learning_core_v2.practice import (
@@ -265,38 +270,14 @@ async def test_answer_check_sends_the_server_task_with_its_reference_answer():
 
 
 @pytest.mark.asyncio
-async def test_lesson_curriculum_uses_separate_call_and_limits_units():
-    transport = StubTransport(completed_response({"units": ["One", "Two", "Three"]}))
-    provider = OpenAIResponsesLanguageProvider(
-        api_key="test-key", model="test-model", transport=transport
-    )
-    profile = LearnerProfile("b1", "ru", "en", "travel")
-
-    units = await provider.propose_units(
-        CurriculumRequest("Small talk", (), 2, profile)
-    )
-
-    assert units == ["One", "Two"]
-    payload = transport.calls[0]["payload"]
-    assert payload["text"]["format"]["name"] == "lesson_curriculum"
-    assert json.loads(payload["input"])["learner_goals"] == "travel"
-
-
-@pytest.mark.asyncio
-async def test_lesson_material_maps_structured_sections():
+async def test_goal_framing_maps_criteria_and_carries_the_source_material():
     transport = StubTransport(
         completed_response(
             {
-                "title": "Introductions",
-                "intro": "Start here.",
-                "sections": [
-                    {
-                        "icon": "💬",
-                        "header": "Pattern",
-                        "items": ["Hello, I am …"],
-                        "text": "",
-                        "highlight": True,
-                    }
+                "statement": "Понять Past Perfect в рассказах",
+                "criteria": [
+                    {"statement": "Узнать форму", "depth": 1},
+                    {"statement": "Написать свой рассказ", "depth": 4},
                 ],
             }
         )
@@ -305,58 +286,200 @@ async def test_lesson_material_maps_structured_sections():
         api_key="test-key", model="test-model", transport=transport
     )
 
-    material = await provider.write_material(
-        MaterialRequest(
-            "Small talk",
-            "Introductions",
-            ("Introductions",),
-            LearnerProfile("b1", "ru", "en"),
+    framing = await provider.frame_goal(
+        FramingRequest(
+            "Понять Past Perfect в рассказах",
+            GoalMaterial("Once he had left, the room went quiet."),
+            LearnerProfile("b1", "ru", "en", minutes=20),
         )
     )
 
-    assert material.sections[0].items == ("Hello, I am …",)
-    assert material.sections[0].highlight is True
+    assert [item.depth for item in framing.criteria] == [1, 4]
+    payload = transport.calls[0]["payload"]
+    assert payload["text"]["format"]["name"] == "goal_framing"
+    sent = json.loads(payload["input"])
+    assert sent["source_material"].startswith("Once he had left")
+    assert sent["available_minutes"] == 20
 
 
 @pytest.mark.asyncio
-async def test_lesson_question_and_check_include_server_material():
-    profile = LearnerProfile("b1", "ru", "en")
-    material = LessonMaterial(
-        "Introductions",
-        "Start here.",
-        (LessonSection("Pattern", items=("Hello, I am …",)),),
-    )
-    unit = LessonUnit("Introductions", material)
-    question_transport = StubTransport(
-        completed_response({"question": "Как представиться?"})
+async def test_goal_step_maps_structured_sections_and_reports_the_gaps():
+    transport = StubTransport(
+        completed_response(
+            {
+                "material": {
+                    "title": "Порядок событий",
+                    "intro": "Смотрите на сигнал.",
+                    "sections": [
+                        {
+                            "icon": "💬",
+                            "header": "Пример",
+                            "items": ["He had left before she arrived."],
+                            "text": "",
+                            "highlight": True,
+                        }
+                    ],
+                },
+                "question": "Что произошло раньше?",
+            }
+        )
     )
     provider = OpenAIResponsesLanguageProvider(
-        api_key="test-key", model="test-model", transport=question_transport
+        api_key="test-key", model="test-model", transport=transport
     )
 
-    question = await provider.write_question(
-        QuestionRequest("Small talk", unit, (), profile)
+    draft = await provider.write_step(
+        StepRequest(
+            goal="Понять Past Perfect",
+            criterion=SuccessCriterion("c2", "Объяснить последовательность", 2),
+            activity="explain_example",
+            reason="nearest_gap",
+            material=GoalMaterial("Once he had left, the room went quiet."),
+            profile=LearnerProfile("b1", "ru", "en"),
+            observed_gaps=(GoalGap("c1", "Узнать форму", "gap", "missed_signal"),),
+        )
     )
 
-    assert question == "Как представиться?"
-    sent = json.loads(question_transport.calls[0]["payload"]["input"])
-    assert sent["material"]["title"] == "Introductions"
+    assert draft.material.sections[0].items == ("He had left before she arrived.",)
+    assert draft.material.sections[0].highlight is True
+    sent = json.loads(transport.calls[0]["payload"]["input"])
+    assert sent["activity"] == "explain_example"
+    assert sent["required_demand"] == "receptive"
+    assert sent["observed_gaps"] == [
+        {"criterion": "Узнать форму", "status": "gap", "difficulty": "missed_signal"}
+    ]
 
-    check_transport = StubTransport(
-        completed_response({"outcome": "correct", "feedback": "Верно"})
+
+@pytest.mark.asyncio
+async def test_goal_answer_check_returns_a_cause_and_what_it_surfaced():
+    transport = StubTransport(
+        completed_response(
+            {
+                "outcome": "vague",
+                "cause": "explains_not_produces",
+                "feedback": "Объяснили верно, но пример не построили.",
+                "terms": [
+                    {"term": "had left", "translation": "уже ушёл", "context": "he had left"}
+                ],
+                "patterns": [
+                    {
+                        "category": "tense_aspect",
+                        "label": "Past Perfect",
+                        "explanation": "Более раннее прошлое",
+                        "example": "he had left",
+                    }
+                ],
+            }
+        )
     )
-    checker = OpenAIResponsesLanguageProvider(
-        api_key="test-key", model="test-model", transport=check_transport
+    provider = OpenAIResponsesLanguageProvider(
+        api_key="test-key", model="test-model", transport=transport
     )
-    result = await checker.evaluate_lesson_answer(
-        LessonAnswerRequest("Small talk", unit, question, "Hello, I am Sam", profile)
+    step = GoalStep(
+        "step-1",
+        "c2",
+        "explain_example",
+        "nearest_gap",
+        StepMaterial("Порядок", "", (StepSection("Пример", text="he had left"),)),
+        "Что произошло раньше?",
     )
 
-    assert result.outcome == "correct"
-    assert json.loads(check_transport.calls[0]["payload"]["input"])["learner_answer"] == (
-        "Hello, I am Sam"
+    result = await provider.evaluate_step_answer(
+        StepAnswerRequest(
+            goal="Понять Past Perfect",
+            criterion=SuccessCriterion("c2", "Объяснить последовательность", 2),
+            step=step,
+            answer="Сначала он ушёл",
+            material=GoalMaterial("Once he had left, the room went quiet."),
+            profile=LearnerProfile("b1", "ru", "en"),
+        )
     )
 
+    assert result.outcome == "vague"
+    assert result.cause == "explains_not_produces"
+    assert result.terms[0].term == "had left"
+    assert result.patterns[0].category == "tense_aspect"
+    sent = json.loads(transport.calls[0]["payload"]["input"])
+    assert sent["learner_answer"] == "Сначала он ушёл"
+    assert sent["step_material"]["title"] == "Порядок"
+
+
+@pytest.mark.asyncio
+async def test_goal_answer_check_rejects_an_unknown_cause():
+    transport = StubTransport(
+        completed_response(
+            {
+                "outcome": "correct",
+                "cause": "vibes",
+                "feedback": "ok",
+                "terms": [],
+                "patterns": [],
+            }
+        )
+    )
+    provider = OpenAIResponsesLanguageProvider(
+        api_key="test-key", model="test-model", transport=transport
+    )
+    step = GoalStep(
+        "step-1",
+        "c2",
+        "explain_example",
+        "nearest_gap",
+        StepMaterial("Порядок", "", (StepSection("Пример", text="he had left"),)),
+        "Что произошло раньше?",
+    )
+
+    with pytest.raises(LanguageProviderError, match="invalid cause"):
+        await provider.evaluate_step_answer(
+            StepAnswerRequest(
+                goal="Понять Past Perfect",
+                criterion=SuccessCriterion("c2", "Объяснить последовательность", 2),
+                step=step,
+                answer="ответ",
+                material=GoalMaterial(),
+                profile=LearnerProfile("b1", "ru", "en"),
+            )
+        )
+
+
+@pytest.mark.asyncio
+async def test_goal_summary_sends_only_the_recent_evidence():
+    transport = StubTransport(
+        completed_response(
+            {
+                "narrative": "Вы различаете времена.",
+                "next_goal": "Использовать Past Perfect в письме",
+                "examples": ["he had left"],
+            }
+        )
+    )
+    provider = OpenAIResponsesLanguageProvider(
+        api_key="test-key", model="test-model", transport=transport
+    )
+    criterion = SuccessCriterion("c1", "Узнать форму", 1)
+    evidence = tuple(
+        Evidence("c1", "compare_forms", "correct", "transfers_confidently", f"Q{index}", "A")
+        for index in range(15)
+    )
+
+    draft = await provider.write_goal_summary(
+        SummaryRequest(
+            goal="Понять Past Perfect",
+            profile=LearnerProfile("b1", "ru", "en"),
+            material=GoalMaterial(),
+            achieved=True,
+            progress=(
+                CriterionProgress(criterion, "met", 0.9, 3, "transfers_confidently", "correct"),
+            ),
+            evidence=evidence,
+        )
+    )
+
+    assert draft.next_goal == "Использовать Past Perfect в письме"
+    sent = json.loads(transport.calls[0]["payload"]["input"])
+    assert len(sent["evidence"]) == 12
+    assert sent["evidence"][0]["question"] == "Q3"
+    assert sent["criteria"][0]["status"] == "met"
 
 @pytest.mark.asyncio
 async def test_grammar_memory_uses_grounded_structured_contract():

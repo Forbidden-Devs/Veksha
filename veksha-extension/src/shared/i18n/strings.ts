@@ -346,18 +346,53 @@ export interface Strings {
   practice_summary_consolidated: string;
   practice_summary_needs_work: string;
   practice_summary_limited_by: string;    // placeholder: {skill}
-  // Lesson window
-  lesson_preparing: string;
-  lesson_loading_question: string;
-  lesson_done: string;        // placeholder: {n}
+  // Goal-oriented lesson window
+  lesson_framing: string;
+  lesson_loading_step: string;
   lesson_err_connect: string;
   lesson_err_lost: string;
   lesson_err_server: string;
-  lesson_err_no_topic: string;
-  lesson_block_of: string;    // placeholders: {n}, {total}
-  lesson_scroll_next: string;
-  lesson_practice: string;
+  lesson_err_no_goal: string;
+  lesson_resumed: string;
+  lesson_criteria_title: string;
+  lesson_criteria_done: string;   // placeholders: {n}, {total}
+  lesson_time_left: string;       // placeholder: {n}
   lesson_practice_hint: string;
+  lesson_finish_early: string;
+  lesson_next_step: string;
+  // Criterion status chips
+  lesson_status_untested: string;
+  lesson_status_gap: string;
+  lesson_status_emerging: string;
+  lesson_status_implied: string;
+  lesson_status_met: string;
+  // What this step is asking for
+  lesson_activity_find_in_material: string;
+  lesson_activity_explain_example: string;
+  lesson_activity_compare_forms: string;
+  lesson_activity_correct_error: string;
+  lesson_activity_predict_continuation: string;
+  lesson_activity_paraphrase: string;
+  lesson_activity_create_example: string;
+  lesson_activity_role_reply: string;
+  lesson_activity_apply_unaided: string;
+  // Why the answer went the way it did
+  lesson_cause_unknown_term: string;
+  lesson_cause_missed_signal: string;
+  lesson_cause_rule_not_applied: string;
+  lesson_cause_lucky_guess: string;
+  lesson_cause_explains_not_produces: string;
+  lesson_cause_transfers_confidently: string;
+  // Closing report
+  lesson_summary_achieved: string;
+  lesson_summary_out_of_time: string;
+  lesson_summary_stopped: string;
+  lesson_summary_proven: string;
+  lesson_summary_shaky: string;
+  lesson_summary_examples: string;
+  lesson_summary_next_goal: string;
+  lesson_summary_new_words: string;
+  lesson_summary_new_patterns: string;
   dictionary_empty: string;
   // Quizlet import/export
   quizlet_loading: string;
@@ -394,6 +429,9 @@ export interface Strings {
   lesson_goals_prompt: string;
   lesson_goals_hint: string;
   lesson_goals_placeholder: string;
+  lesson_goals_material_toggle: string;
+  lesson_goals_material_placeholder: string;
+  lesson_goals_minutes: string;
   lesson_goals_start: string;
   lesson_goals_active: string;
   lesson_goals_loading: string;
@@ -798,17 +836,48 @@ export const EN: Strings = {
   practice_summary_consolidated: "Consolidated",
   practice_summary_needs_work: "Still shaky",
   practice_summary_limited_by: "limited by {skill}",
-  lesson_preparing: "Preparing material...",
-  lesson_loading_question: "Loading question...",
-  lesson_done: "Session complete — {n} question(s) done!",
+  lesson_framing: "Working out what you need to be able to do…",
+  lesson_loading_step: "Choosing your next step…",
   lesson_err_connect: "Could not connect to server.",
   lesson_err_lost: "Connection lost.",
   lesson_err_server: "Server error",
-  lesson_err_no_topic: "Topic not specified.",
-  lesson_block_of: "Block {n} of {total}",
-  lesson_scroll_next: "Keep scrolling for the next block",
-  lesson_practice: "Practice",
+  lesson_err_no_goal: "Objective not specified.",
+  lesson_resumed: "Picking up where you left off.",
+  lesson_criteria_title: "To reach this objective",
+  lesson_criteria_done: "{n} of {total} settled",
+  lesson_time_left: "{n} min left",
   lesson_practice_hint: "Answer in your own words",
+  lesson_finish_early: "Wrap up",
+  lesson_next_step: "Next step",
+  lesson_status_untested: "not checked yet",
+  lesson_status_gap: "needs work",
+  lesson_status_emerging: "coming along",
+  lesson_status_implied: "shown by a harder answer",
+  lesson_status_met: "demonstrated",
+  lesson_activity_find_in_material: "Find it in your text",
+  lesson_activity_explain_example: "Worked example",
+  lesson_activity_compare_forms: "Tell them apart",
+  lesson_activity_correct_error: "Fix the mistake",
+  lesson_activity_predict_continuation: "Predict what follows",
+  lesson_activity_paraphrase: "Say it another way",
+  lesson_activity_create_example: "Build your own example",
+  lesson_activity_role_reply: "Reply in role",
+  lesson_activity_apply_unaided: "Final check — no hints",
+  lesson_cause_unknown_term: "A word got in the way",
+  lesson_cause_missed_signal: "The cue was there and went unnoticed",
+  lesson_cause_rule_not_applied: "You know the rule — it just was not used here",
+  lesson_cause_lucky_guess: "Right answer, but the reasoning is missing",
+  lesson_cause_explains_not_produces: "You can explain it, not yet build it",
+  lesson_cause_transfers_confidently: "Carried into a new situation",
+  lesson_summary_achieved: "Objective reached",
+  lesson_summary_out_of_time: "Time is up for this objective",
+  lesson_summary_stopped: "Session ended",
+  lesson_summary_proven: "What you can now do",
+  lesson_summary_shaky: "Still unstable",
+  lesson_summary_examples: "From your material",
+  lesson_summary_next_goal: "Suggested next objective",
+  lesson_summary_new_words: "New words saved as suggestions",
+  lesson_summary_new_patterns: "New grammar patterns remembered",
   dictionary_empty: "Your dictionary has no saved entries yet.",
   quizlet_loading: "Loading Quizlet data…",
   quizlet_status_title: "Export status",
@@ -842,12 +911,15 @@ export const EN: Strings = {
   quizlet_error_import: "Could not import this file. Check its format and try again.",
   lesson_goals_kicker: "Learning objective",
   lesson_goals_prompt: "What should you be able to do?",
-  lesson_goals_hint: "Describe a result, situation, or text you want to understand. The lesson will build a route toward it.",
+  lesson_goals_hint: "Describe a result you want to reach. The lesson turns it into checkable steps and adapts to your answers.",
   lesson_goals_placeholder: "For example: prepare for a project update call",
+  lesson_goals_material_toggle: "Work from a text or situation",
+  lesson_goals_material_placeholder: "Paste the article, message, or describe the situation",
+  lesson_goals_minutes: "Minutes",
   lesson_goals_start: "Build lesson",
   lesson_goals_active: "Objectives in progress",
   lesson_goals_loading: "Loading your objectives…",
-  lesson_goals_evidence: "{n} learning step(s) recorded",
+  lesson_goals_evidence: "{n} of {total} criteria settled",
   lesson_goals_continue: "Continue",
   lesson_goals_empty: "Your first objective will appear here after the lesson begins.",
   lesson_goals_load_failed: "Objectives could not be loaded. You can still start a new one.",

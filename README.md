@@ -8,20 +8,21 @@
 
 Learn foreign-language vocabulary from the pages you actually read: select a
 word → get a translation → the word becomes a spaced-repetition card
-automatically. Plus LLM-generated topic lessons ("blocks") for grammar,
-usage patterns, and interview-style topics.
+automatically. Plus goal-oriented lessons: state the result you want —
+"understand Past Perfect in stories", "get ready for the client call" — and the
+lesson builds a checkable route to it and adapts to every answer.
 
 ## Repository layout
 
 ```
 veksha-backend/    FastAPI backend: PostgreSQL storage (users, KB), token auth,
-                    spaced repetition, LLM calls (OpenAI), training/lesson
+                    spaced repetition, LLM calls (OpenAI), training/goal
                     WebSocket sessions, translation, Reading Coach.
 veksha-extension/  Chrome + Firefox extension (MV3, React + TypeScript,
                     Vite) — the capture surface: selection-translate popup,
                     Reading Coach, YouTube subtitles, OCR capture,
                     plus the popup app.
-veksha-web/        The same study app (chat / training / lessons / stats)
+veksha-web/        The same study app (chat / training / goals / stats)
                     as a standalone PWA-installable web page; reuses the
                     extension popup source via shared/platform.ts.
 veksha-tgbot/      Telegram companion bot: sells subscriptions in Telegram
@@ -70,8 +71,8 @@ delete the local PostgreSQL and Redis data.
   `veksha-backend/learning_core_v2/` package. OpenAI Responses API, storage,
   caching, and HTTP composition live in `learning_core_v2_adapters/` and
   `api/`; there is no parallel legacy LLM implementation.
-- Trainings and lessons run over WebSocket (`/api/training/ws`,
-  `/api/lesson/ws`); everything else is plain HTTP (see
+- Trainings and goal lessons run over WebSocket (`/api/training/ws`,
+  `/api/learning-goals/ws`); everything else is plain HTTP (see
   `veksha-backend/README.md` for the endpoint list).
 - The extension is the *capture* surface; the web app is the *study* surface.
   Extension-only APIs are isolated behind

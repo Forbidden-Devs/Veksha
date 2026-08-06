@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { LessonWindow } from "../popup/overlays/LessonWindow";
+import { GoalWindow, type GoalTarget } from "../popup/overlays/GoalWindow";
 import { PracticePlannerWindow } from "../popup/overlays/PracticePlannerWindow";
 import rawPopupCss from "../popup/popup.css?inline";
 import { I18nProvider } from "../shared/i18n";
@@ -234,9 +234,9 @@ export function showTrainingOverlay(username: string): void {
   );
 }
 
-export function showLessonOverlay(username: string, topic: string): void {
+export function showLessonOverlay(username: string, target: GoalTarget, title?: string): void {
   renderWindow(
-    <LessonWindow username={username} topicName={topic} onClose={closeOverlay} />,
+    <GoalWindow username={username} target={target} title={title} onClose={closeOverlay} />,
     { width: 720, height: 740 },
   );
 }

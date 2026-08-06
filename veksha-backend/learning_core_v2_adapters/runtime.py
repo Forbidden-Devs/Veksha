@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import os
 from collections.abc import Mapping
+from dataclasses import dataclass
 from functools import lru_cache
 from typing import Any
 
@@ -13,10 +14,12 @@ from learning_core_v2.catalog_translation import TranslateCatalog
 from learning_core_v2.dictionary import EnrichDictionaryEntry
 from learning_core_v2.explanation import ExplainText
 from learning_core_v2.grammar_analysis import AnalyzeGrammar
-from learning_core_v2.lesson import (
-    BuildLessonQuestion,
-    CheckLessonAnswer,
-    PrepareLesson,
+from learning_core_v2.goal import (
+    BuildGoalStep,
+    CheckGoalAnswer,
+    CloseGoal,
+    FrameGoal,
+    GoalRoute,
 )
 from learning_core_v2.phrase_mining import MinePhraseVocabulary
 from learning_core_v2.practice import (
@@ -150,14 +153,25 @@ def build_practice_services() -> tuple[BuildPracticeTask, CheckPracticeAnswer]:
     return BuildPracticeTask(provider, UuidIdentifierSource()), CheckPracticeAnswer(provider)
 
 
-def build_lesson_services() -> tuple[
-    PrepareLesson, BuildLessonQuestion, CheckLessonAnswer
-]:
+@dataclass(frozen=True, slots=True)
+class GoalServices:
+    """Everything one goal-oriented lesson session needs."""
+
+    framer: FrameGoal
+    route: GoalRoute
+    step_builder: BuildGoalStep
+    answer_checker: CheckGoalAnswer
+    closer: CloseGoal
+
+
+def build_goal_services() -> GoalServices:
     provider = _provider("VEKSHA_CORE_V2_LESSON_MODEL", "gpt-5.6-terra")
-    return (
-        PrepareLesson(provider),
-        BuildLessonQuestion(provider, UuidIdentifierSource()),
-        CheckLessonAnswer(provider),
+    return GoalServices(
+        framer=FrameGoal(provider),
+        route=GoalRoute(),
+        step_builder=BuildGoalStep(provider, UuidIdentifierSource()),
+        answer_checker=CheckGoalAnswer(provider),
+        closer=CloseGoal(provider),
     )
 
 

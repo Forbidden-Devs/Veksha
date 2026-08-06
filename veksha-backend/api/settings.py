@@ -32,7 +32,7 @@ from learning_core_v2.acquisition import (
     lexical_item_id,
 )
 from learning_core_v2.dictionary import DictionaryLookupRequest
-from learning_core_v2.lesson import TopicReviewPolicy
+from learning_core_v2.goal import GoalReviewPolicy
 from learning_core_v2.sentence_mining import SentenceMiningRequest as MiningCoreRequest
 from learning_core_v2_adapters.openai_responses import LanguageProviderError
 from learning_core_v2_adapters.runtime import (
@@ -81,7 +81,7 @@ class SettingsResponse(BaseModel):
 class RemindersResponse(BaseModel):
     due_words: int
     due_word_names: list[str] = Field(default_factory=list)
-    due_topic: str | None = None
+    due_goal: str | None = None
     should_remind: bool
     poll_interval_minutes: int = SCHEDULER_INTERVAL_MINUTES
 
@@ -89,7 +89,7 @@ class RemindersResponse(BaseModel):
 class KBSummaryResponse(BaseModel):
     learning_count: int
     known_count: int
-    topics_count: int
+    goals_count: int
     anki_reviews: int
     training_reviews: int
 
@@ -144,9 +144,9 @@ class SentenceMiningRequest(BaseModel):
     force: bool = False
 
 
-def _topic_needing_review(storage: UserStorage) -> str | None:
-    topics = storage.lessons.topics()
-    return TopicReviewPolicy().first_due(topics)
+def _goal_needing_review(storage: UserStorage) -> str | None:
+    goals = storage.goals.for_language(storage.settings.target_lang or "en")
+    return GoalReviewPolicy().first_due(goals)
 
 
 async def _dictionary_details(storage: UserStorage, entry) -> dict[str, str]:
@@ -364,12 +364,12 @@ async def api_reminders(username: CurrentUser) -> RemindersResponse:
         log.info("[reminders] user %r: %d word(s) decayed", username, len(decayed))
     due_words = storage.lexicon.due_count()
     due_word_names = _due_word_names(storage)
-    due_topic = _topic_needing_review(storage)
+    due_goal = _goal_needing_review(storage)
     return RemindersResponse(
         due_words=due_words,
         due_word_names=due_word_names,
-        due_topic=due_topic,
-        should_remind=due_words >= REMINDER_MIN_WORDS or due_topic is not None,
+        due_goal=due_goal,
+        should_remind=due_words >= REMINDER_MIN_WORDS or due_goal is not None,
     )
 
 
@@ -380,7 +380,7 @@ async def api_kb_summary(username: CurrentUser) -> KBSummaryResponse:
     return KBSummaryResponse(
         learning_count=storage.lexicon.learning_count(),
         known_count=storage.lexicon.known_count(),
-        topics_count=len(storage.lessons),
+        goals_count=len(storage.goals),
         **review_counts,
     )
 

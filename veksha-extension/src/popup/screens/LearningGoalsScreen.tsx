@@ -1,31 +1,40 @@
 import { useEffect, useState } from "react";
 import * as api from "../../shared/api";
 import { useT } from "../../shared/i18n";
-import type { LessonTopicSummary } from "../../shared/types";
+import type { LearningGoalSummary } from "../../shared/types";
 import { useApp } from "../App";
+
+const MINUTE_CHOICES = [10, 15, 25];
 
 export function LearningGoalsScreen() {
   const { username, openLesson } = useApp();
   const t = useT();
-  const [goals, setGoals] = useState<LessonTopicSummary[] | null>(null);
+  const [goals, setGoals] = useState<LearningGoalSummary[] | null>(null);
   const [draft, setDraft] = useState("");
+  const [material, setMaterial] = useState("");
+  const [showMaterial, setShowMaterial] = useState(false);
+  const [minutes, setMinutes] = useState(MINUTE_CHOICES[1]);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    api.getLessonTopics(username)
-      .then((response) => setGoals(response.topics))
+    api.getLearningGoals(username)
+      .then((response) => setGoals(response.goals))
       .catch(() => setError(t.lesson_goals_load_failed));
   }, [t.lesson_goals_load_failed, username]);
 
   async function startGoal() {
-    const goal = draft.trim();
-    if (!goal || creating) return;
+    const statement = draft.trim();
+    if (!statement || creating) return;
     setCreating(true);
     setError("");
     try {
-      await api.createLessonTopic(username, goal);
-      openLesson(goal);
+      const created = await api.createLearningGoal(username, {
+        statement,
+        material: material.trim(),
+        minutes,
+      });
+      openLesson({ goalId: created.goal_id }, created.statement);
     } catch {
       setError(t.lesson_goals_create_failed);
       setCreating(false);
@@ -41,7 +50,7 @@ export function LearningGoalsScreen() {
         <div className="goal-composer-row">
           <input
             value={draft}
-            maxLength={120}
+            maxLength={200}
             placeholder={t.lesson_goals_placeholder}
             onChange={(event) => setDraft(event.target.value)}
             onKeyDown={(event) => {
@@ -56,6 +65,36 @@ export function LearningGoalsScreen() {
             {creating ? t.translator_working : t.lesson_goals_start}
           </button>
         </div>
+
+        <div className="goal-composer-options">
+          <button
+            type="button"
+            className={`goal-composer-toggle${showMaterial ? " is-open" : ""}`}
+            onClick={() => setShowMaterial((open) => !open)}
+          >
+            {showMaterial ? "− " : "+ "}{t.lesson_goals_material_toggle}
+          </button>
+          <label className="goal-composer-minutes">
+            <span>{t.lesson_goals_minutes}</span>
+            <select value={minutes} onChange={(event) => setMinutes(Number(event.target.value))}>
+              {MINUTE_CHOICES.map((value) => (
+                <option key={value} value={value}>{value}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        {showMaterial && (
+          <textarea
+            className="goal-composer-material"
+            rows={4}
+            value={material}
+            maxLength={20000}
+            placeholder={t.lesson_goals_material_placeholder}
+            onChange={(event) => setMaterial(event.target.value)}
+          />
+        )}
+
         {error && <p className="goal-error" role="alert">{error}</p>}
       </header>
 
@@ -70,16 +109,30 @@ export function LearningGoalsScreen() {
         ) : goals?.length ? (
           <ol className="goal-list">
             {goals.map((goal) => {
-              const progress = Math.round(goal.mastery * 100);
+              const settled = goal.criteria.filter(
+                (c) => c.status === "met" || c.status === "implied",
+              ).length;
               return (
-                <li key={goal.name}>
-                  <button type="button" onClick={() => openLesson(goal.name)}>
-                    <span className="goal-progress" style={{ "--goal-progress": `${progress}%` } as React.CSSProperties}>
-                      <b>{progress}</b><small>%</small>
+                <li key={goal.goal_id}>
+                  <button
+                    type="button"
+                    onClick={() => openLesson({ goalId: goal.goal_id }, goal.statement)}
+                  >
+                    <span
+                      className="goal-progress"
+                      style={{ "--goal-progress": `${Math.round(goal.progress * 100)}%` } as React.CSSProperties}
+                    >
+                      <b>{Math.round(goal.progress * 100)}</b><small>%</small>
                     </span>
                     <span className="goal-copy">
-                      <strong>{goal.name}</strong>
-                      <small>{t.lesson_goals_evidence.replace("{n}", String(goal.block_count))}</small>
+                      <strong>{goal.statement}</strong>
+                      <small>
+                        {goal.framed
+                          ? t.lesson_goals_evidence
+                              .replace("{n}", String(settled))
+                              .replace("{total}", String(goal.criteria.length))
+                          : t.lesson_goals_continue}
+                      </small>
                     </span>
                     <span className="goal-next">{t.lesson_goals_continue} →</span>
                   </button>

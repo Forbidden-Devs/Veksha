@@ -5,7 +5,7 @@ Endpoints are split by domain into api/:
   api/translate.py  — /api/translate, /api/quick_translate, /api/explain
   api/settings.py   — /api/settings, /api/reminders, /api/kb_summary
   api/training.py   — /api/training/*
-  api/lesson.py     — /api/lesson-topics, /api/lesson/ws
+  api/goal_v2.py    — /api/learning-goals, /api/learning-goals/ws
   api/i18n.py       — /api/i18n/*
   api/debug.py      — /api/debug/*
 """
@@ -27,7 +27,7 @@ from api import admin
 from api import billing
 from api import debug, settings
 from api import i18n as api_i18n
-from api import lesson_v2 as lesson
+from api import goal_v2 as goals
 from api import ocr
 from api import privacy
 from api import reading_coach
@@ -101,7 +101,7 @@ app.include_router(translate.router)
 app.include_router(ocr.router)
 app.include_router(settings.router)
 app.include_router(training.router)
-app.include_router(lesson.router)
+app.include_router(goals.router)
 app.include_router(api_i18n.router)
 app.include_router(grammar_lens.router)
 app.include_router(quizlet.router)

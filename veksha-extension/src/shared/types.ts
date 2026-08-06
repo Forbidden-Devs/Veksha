@@ -36,7 +36,7 @@ export interface LanguageSettings {
 export interface RemindersData {
   due_words: number;
   due_word_names: string[];
-  due_topic: string | null;
+  due_goal: string | null;
   should_remind: boolean;
   poll_interval_minutes: number;
 }
@@ -44,7 +44,7 @@ export interface RemindersData {
 export interface KBSummaryData {
   learning_count: number;
   known_count: number;
-  topics_count: number;
+  goals_count: number;
   anki_reviews: number;
   training_reviews: number;
 }
@@ -146,7 +146,7 @@ export interface SessionSummary {
 }
 
 // ---------------------------------------------------------------------------
-// Lesson window (topic-based learning)
+// Goal-oriented lessons
 // ---------------------------------------------------------------------------
 
 export interface ContentSection {
@@ -157,15 +157,72 @@ export interface ContentSection {
   highlight: boolean;
 }
 
-export interface BlockContent {
+export interface StepMaterial {
   title: string;
   intro: string;
   sections: ContentSection[];
 }
 
-export interface LessonBlock {
-  name: string;
-  content: BlockContent;
+/** Why an answer went the way it did — what the next step is aimed at. */
+export type DifficultyCause =
+  | "unknown_term"
+  | "missed_signal"
+  | "rule_not_applied"
+  | "lucky_guess"
+  | "explains_not_produces"
+  | "transfers_confidently"
+  | "unclear";
+
+export type ActivityKind =
+  | "find_in_material"
+  | "explain_example"
+  | "compare_forms"
+  | "correct_error"
+  | "predict_continuation"
+  | "paraphrase"
+  | "create_example"
+  | "role_reply"
+  | "apply_unaided";
+
+export type CriterionStatus = "untested" | "gap" | "emerging" | "implied" | "met";
+
+export interface CriterionView {
+  criterion_id: string;
+  statement: string;
+  depth: number;
+  status: CriterionStatus;
+  attempts: number;
+  cause: DifficultyCause | null;
+}
+
+export interface GoalStep {
+  step_id: string;
+  criterion_id: string;
+  criterion: string;
+  activity: ActivityKind;
+  reason: string;
+  material: StepMaterial;
+  question: string;
+}
+
+export interface GoalSummaryEntry {
+  criterion_id: string;
+  statement: string;
+  status: CriterionStatus;
+  attempts: number;
+  cause: DifficultyCause | null;
+}
+
+export interface GoalReport {
+  achieved: boolean;
+  stopped_on_time: boolean;
+  narrative: string;
+  next_goal: string;
+  proven: GoalSummaryEntry[];
+  shaky: GoalSummaryEntry[];
+  examples: string[];
+  terms: { term: string; translation: string }[];
+  patterns: { label: string; category: string; example: string }[];
 }
 
 export interface WordEntry {
@@ -200,15 +257,15 @@ export interface SentenceMiningCard {
   config: Record<string, string | number>;
 }
 
-export interface LessonTopicSummary {
-  name: string;
-  block_count: number;
-  mastery: number;
-  last_reviewed: number | null;
-}
-
-export interface LessonQuestion {
-  question_id: string;
-  block_name: string;
-  question: string;
+export interface LearningGoalSummary {
+  goal_id: string;
+  statement: string;
+  framed: boolean;
+  achieved: boolean;
+  progress: number;
+  minutes: number;
+  spent_seconds: number;
+  has_material: boolean;
+  criteria: CriterionView[];
+  last_worked_at: number | null;
 }

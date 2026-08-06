@@ -12,7 +12,7 @@ export class PageReminder {
     this.close();
     const username = typeof message.username === "string" ? message.username : "";
     const dueWords = Math.max(0, Number(message.due_words ?? 0));
-    const dueTopic = typeof message.due_topic === "string" ? message.due_topic : "";
+    const dueGoal = typeof message.due_goal === "string" ? message.due_goal : "";
     const level = Math.min(3, Math.max(1, Number(message.reminder_level ?? 2)));
     const focusGuard = Boolean(message.overseer) || level >= 3;
 
@@ -32,7 +32,7 @@ export class PageReminder {
     const summary = document.createElement("p");
     const parts: string[] = [];
     if (dueWords) parts.push(this.session.t("reminder_words", "{n} words").replace("{n}", String(dueWords)));
-    if (dueTopic) parts.push(`${this.session.t("reminder_topic", "lesson")}: ${dueTopic}`);
+    if (dueGoal) parts.push(`${this.session.t("reminder_topic", "objective")}: ${dueGoal}`);
     summary.textContent = parts.length
       ? parts.join(" · ")
       : this.session.t("reminder_subtitle_default", "Your next review is ready.");

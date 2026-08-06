@@ -8,7 +8,7 @@ import { useApp } from "../App";
 function buildSubtitle(d: RemindersData, t: Strings): string {
   const parts: string[] = [];
   if (d.due_words > 0) parts.push(t.reminder_words.replace("{n}", String(d.due_words)));
-  if (d.due_topic) parts.push(`${t.reminder_topic}: "${d.due_topic}"`);
+  if (d.due_goal) parts.push(`${t.reminder_topic}: "${d.due_goal}"`);
   return parts.length
     ? t.reminder_have.replace("{items}", parts.join(" and "))
     : t.reminder_subtitle_default;

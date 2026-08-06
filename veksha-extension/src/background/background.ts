@@ -279,7 +279,7 @@ async function displayReminder(username: string, result: RemindersData, force = 
     reminder_level: level,
     due_words: result.due_words,
     due_word_names: result.due_word_names ?? [],
-    due_topic: result.due_topic,
+    due_goal: result.due_goal,
     overseer,
   };
   try {
@@ -294,10 +294,10 @@ async function displayReminder(username: string, result: RemindersData, force = 
   }
 }
 
-function showReminderNotification(result: { due_words: number; due_topic: string | null; due_word_names?: string[] }) {
+function showReminderNotification(result: { due_words: number; due_goal: string | null; due_word_names?: string[] }) {
   const parts: string[] = [];
   if (result.due_words > 0) parts.push(`${result.due_words} word${result.due_words === 1 ? "" : "s"} to review`);
-  if (result.due_topic) parts.push(`an unfinished topic "${result.due_topic}"`);
+  if (result.due_goal) parts.push(`an unfinished objective "${result.due_goal}"`);
   const message = parts.length ? `You have ${parts.join(" and ")}.` : "You have words to review.";
 
   chrome.notifications.create(NOTIFICATION_ID, {
@@ -519,7 +519,7 @@ chrome.runtime.onMessage.addListener((msg: Record<string, unknown>, _sender, sen
   }
 
   if (msg.type === "DEBUG_SHOW_REMINDER") {
-    const result = msg.reminder as { due_words: number; due_word_names?: string[]; due_topic: string | null; should_remind: boolean };
+    const result = msg.reminder as { due_words: number; due_word_names?: string[]; due_goal: string | null; should_remind: boolean };
     // Debug button: always fire the reminder so the user can test notifications,
     // regardless of whether words are actually due (should_remind).
     getStoredUsername()

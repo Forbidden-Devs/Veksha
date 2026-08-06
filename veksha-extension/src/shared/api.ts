@@ -4,7 +4,7 @@ import { onStorageKeyChanged, runtimeSend, storageGet } from "./platform";
 export const BACKEND_URL = CONFIG.BACKEND_URL;
 import type {
   KBSummaryData,
-  LessonTopicSummary,
+  LearningGoalSummary,
   RemindersData,
   SettingsData,
   SkillProgress,
@@ -634,12 +634,19 @@ export function trainingValidate(username: string, itemIds: string[]): Promise<{
   return _post("/api/training/validate", { item_ids: itemIds });
 }
 
-export function getLessonTopics(username: string): Promise<{ topics: LessonTopicSummary[] }> {
-  return _get("/api/lesson-topics");
+export function getLearningGoals(username: string): Promise<{ goals: LearningGoalSummary[] }> {
+  return _get("/api/learning-goals");
 }
 
-export function createLessonTopic(username: string, name: string): Promise<LessonTopicSummary> {
-  return _post("/api/lesson-topics", { name });
+export function createLearningGoal(
+  username: string,
+  goal: { statement: string; material?: string; material_url?: string; minutes?: number },
+): Promise<LearningGoalSummary> {
+  return _post("/api/learning-goals", goal);
+}
+
+export function deleteLearningGoal(username: string, goalId: string): Promise<{ ok: boolean }> {
+  return _delete(`/api/learning-goals/${encodeURIComponent(goalId)}`);
 }
 
 // ---------------------------------------------------------------------------

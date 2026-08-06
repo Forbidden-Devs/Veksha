@@ -2,7 +2,7 @@
 
 HTTP + WebSocket API for the Veksha extension: vocabulary knowledge base
 with spaced repetition, LLM-backed translation/explanation, word-training and
-topic-lesson sessions, and an actionable Reading Coach.
+goal-oriented lesson sessions, and an actionable Reading Coach.
 
 ## Running
 
@@ -63,10 +63,10 @@ API model is configured via
 Practice is planned, not drawn at random — see
 [Adaptive Practice Planner](#adaptive-practice-planner) below.
 
-The rewritten topic-lesson core keeps `/api/lesson-topics` and
-`/api/lesson/ws` unchanged. Select its model with
-`VEKSHA_CORE_V2_LESSON_MODEL` (default `gpt-5.6-terra`). Existing lesson data
-is mapped at the storage boundary.
+Lessons are goal-oriented: a stated result becomes checkable criteria, and the
+next step is chosen from the last answer rather than from a fixed list of
+blocks — see [Goal-Oriented Lessons](#goal-oriented-lessons) below. Select the
+model with `VEKSHA_CORE_V2_LESSON_MODEL` (default `gpt-5.6-terra`).
 
 Reading Coach estimates page difficulty from CEFR bands and the learner's
 LexicalItem collection, identifies high-impact blockers, and prepares selected
@@ -192,7 +192,7 @@ main.py               app entry point, routers, CORS, error handler
 config.py             env-based configuration
 db.py                 PostgreSQL: users/tokens, KB documents, review log
 auth.py               bearer-token dependencies (HTTP + WebSocket)
-models.py             transitional settings/lesson/message records
+models.py             transitional settings records
 storage.py            adapters for the versioned user knowledge document
 fsrs.py               FSRS-4.5 scheduler (pure functions; default weights)
 learning_core_v2/     independent domain use cases
@@ -212,11 +212,11 @@ api/                  routers (one file per domain)
 | `POST /api/translate`, `/api/quick_translate` | selection translation (+background KB update) |
 | `POST /api/explain` | expanded explanation for a selection |
 | `GET/POST /api/settings` | user settings |
-| `GET /api/reminders` | due words / topics for extension alarms |
+| `GET /api/reminders` | due words / unfinished goals for extension alarms |
 | `GET /api/kb_summary`, `/api/kb_words`, `DELETE /api/kb_word` | vocabulary UI |
 | `GET /api/training/init`, `POST /api/training/validate`, `WS /api/training/ws` | word training |
 | `GET /api/training/review_log` | recent FSRS reviews (`?item_id=`, `?word=`, `?limit=`) |
-| `GET/POST /api/lesson-topics`, `WS /api/lesson/ws` | topic lessons |
+| `GET/POST /api/learning-goals`, `DELETE /api/learning-goals/{goal_id}`, `WS /api/learning-goals/ws` | goal-oriented lessons |
 | `POST /api/reading-coach/analyze` | page readiness and vocabulary blockers (premium) |
 | `POST /api/reading-coach/prepare` | enrich selected blockers into the Vocabulary Inbox (premium) |
 | `POST /api/subtitles/translate` | dual-subtitle line translation with word alignment (premium) |
@@ -232,7 +232,7 @@ api/                  routers (one file per domain)
 | `POST /api/debug/*` | development helpers (reset, simulate, advance-day) |
 
 WebSocket protocols are documented in the module docstrings of
-`api/training_v2.py` and `api/lesson_v2.py`.
+`api/training_v2.py` and `api/goal_v2.py`.
 
 ## Adaptive Practice Planner
 
@@ -268,6 +268,60 @@ rescheduling again would distort the interval.
 Answers are graded in two steps over the socket: `answer` returns the verdict
 and a suggested rating, `commit` applies it. Nothing reaches FSRS until the
 commit, so the learner can override the suggestion.
+
+## Goal-Oriented Lessons
+
+`learning_core_v2/goal.py` starts a lesson from a result the learner wants —
+"understand Past Perfect in stories", "get ready for the client call", "work
+through this article" — rather than from a topic sliced into a fixed list of
+blocks.
+
+**Checkable criteria.** "Learn Past Perfect" is not a stop condition. `FrameGoal`
+turns the wish into ordered criteria the learner can demonstrate in one answer
+— recognize the form, explain the sequence, tell it apart from Past Simple, use
+it in a fresh story — each with a depth of 1–4. Depth sets the minimum demand
+that counts: recognizing a form never proves you can write with it, so a
+depth-4 criterion is only met by a productive answer. The domain rejects a
+framing with nothing to demonstrate and always keeps one criterion at
+production depth.
+
+**Evidence, not verdicts.** One answer never settles a criterion. Every answer
+is stored as `Evidence` carrying the outcome *and* why it went that way:
+`unknown_term`, `missed_signal`, `rule_not_applied`, `lucky_guess`,
+`explains_not_produces`, `transfers_confidently`, `unclear`. Status is derived
+from the whole run — a right answer the learner cannot account for moves a
+criterion far less than one they can explain, and a criterion counts as met
+only after several answers with at least one correct at the required demand.
+
+**Routing from the last answer.** `GoalRoute` is pure: given the goal and its
+evidence it names the next criterion, the next activity, and the reason. The
+first step diagnoses near the top of the goal, so clearing it marks the
+shallower criteria `implied` and the lesson never walks a capable learner back
+through basic theory; missing it drops the route to the shallowest untested
+criterion. After that the route repairs the *cause* — a blocking word leads to
+a worked example, an unnoticed cue to finding the phenomenon in the learner's
+own text, an unapplied rule to fixing a wrong sentence, a guess to a re-probe
+in a different shape, "explains but cannot build" to writing their own example.
+The same activity is never used twice in a row, and `find_in_material` is only
+planned when the goal has source material.
+
+Activities span `find_in_material`, `explain_example`, `compare_forms`,
+`correct_error`, `predict_continuation`, `paraphrase`, `create_example`,
+`role_reply`, and `apply_unaided`. A goal is reached only when every criterion
+is settled *and* the deepest one has been demonstrated unaided.
+
+**Closing and resuming.** A session ends when the goal is reached or the chosen
+minutes are spent — time accumulates across the whole goal, not one sitting.
+The report states what the learner can now do, the evidence behind it, what is
+still unstable, examples from their material, and a suggested next goal. Words
+and grammar patterns the lesson surfaced go to the Vocabulary Inbox as
+`suggested` and to Grammar Memory; the lesson decides nothing on the learner's
+behalf. Criteria, evidence, and the planned next step are persisted, so
+reopening a goal resumes the route instead of restarting it.
+
+Steps live server-side keyed by `step_id`: the criterion and question a client
+echoes back are ignored when the answer is judged. A `garbage` verdict leaves
+the step open to answer again and is not written into the evidence.
 
 ## Spaced repetition (FSRS)
 

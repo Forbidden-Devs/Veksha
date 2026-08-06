@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { LessonWindow } from "../popup/overlays/LessonWindow";
+import { GoalWindow, type GoalTarget } from "../popup/overlays/GoalWindow";
 import { I18nProvider, useT } from "../shared/i18n";
 import { CONFIG } from "../shared/config";
 import "../shared/palette.css";
@@ -14,7 +14,14 @@ import "../shared/standalone.css";
 function LessonApp() {
   const t = useT();
   const [username, setUsername] = useState<string | null>(null);
-  const topicName = new URLSearchParams(window.location.search).get("topic") ?? "";
+  const params = new URLSearchParams(window.location.search);
+  const goalId = params.get("goal") ?? "";
+  const statement = params.get("statement") ?? "";
+  const target: GoalTarget | null = goalId
+    ? { goalId }
+    : statement
+      ? { statement }
+      : null;
 
   useEffect(() => {
     chrome.storage.local.get([CONFIG.STORAGE_KEY_USERNAME], (result) => {
@@ -30,15 +37,22 @@ function LessonApp() {
     );
   }
 
-  if (!topicName) {
+  if (!target) {
     return (
       <div style={{ padding: 20, fontFamily: "sans-serif", color: "#888" }}>
-        {t.lesson_err_no_topic}
+        {t.lesson_err_no_goal}
       </div>
     );
   }
 
-  return <LessonWindow username={username} topicName={topicName} onClose={() => window.close()} />;
+  return (
+    <GoalWindow
+      username={username}
+      target={target}
+      title={statement || undefined}
+      onClose={() => window.close()}
+    />
+  );
 }
 
 createRoot(document.getElementById("root")!).render(
