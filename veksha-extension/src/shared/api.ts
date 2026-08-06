@@ -63,6 +63,13 @@ const IS_CONTENT_SCRIPT =
   typeof chrome !== "undefined" && !!chrome.runtime?.id &&
   typeof location !== "undefined" && /^https?:$/.test(location.protocol);
 
+export function canRequestSpeech(): boolean {
+  // Content scripts keep the local Web Speech fallback: direct cross-origin
+  // requests can be blocked by the host page CSP, while popup/web contexts
+  // can safely stream binary audio from the authenticated Veksha backend.
+  return !IS_CONTENT_SCRIPT && typeof fetch !== "undefined";
+}
+
 interface ProxiedFetchResult {
   ok: boolean;
   status: number;
@@ -147,6 +154,38 @@ async function _get<T>(path: string, params?: Record<string, string>): Promise<T
     headers: await _authHeaders(),
   }, 30_000);
   return _parse<T>(path, res);
+}
+
+export async function synthesizeSpeech(
+  text: string,
+  language: string,
+  operationId: string,
+): Promise<Blob> {
+  if (!canRequestSpeech()) throw new Error("Backend speech is unavailable in this context");
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 65_000);
+  try {
+    const res = await fetch(`${CONFIG.BACKEND_URL}/api/speech/synthesize`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...(await _authHeaders()) },
+      body: JSON.stringify({
+        text,
+        language,
+        operation_id: operationId,
+        quality: "balanced",
+      }),
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      const detail = await res.text().catch(() => "");
+      throw new Error(`/api/speech/synthesize -> HTTP ${res.status}: ${detail.slice(0, 300)}`);
+    }
+    // Keep the response binary end-to-end. In particular, never inflate audio
+    // into base64 just to move it between Veksha layers.
+    return await res.blob();
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 // ---------------------------------------------------------------------------

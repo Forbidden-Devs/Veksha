@@ -16,12 +16,23 @@ python main.py                     # or: uvicorn main:app --reload
 
 Listens on `127.0.0.1:8000` by default. Swagger UI: `http://127.0.0.1:8000/docs`.
 
-Required env vars: `OPENAI_API_KEY`, `DATABASE_URL`.
+Required env vars: `OPENAI_API_KEY`, `DATABASE_URL`. Speech features additionally
+require `SPEECH_SHARED_SECRET` and `SPEECH_DEFAULT_VOICE_ID`.
 
 Optional env vars: `OPENAI_MODEL`, `OPENAI_SMART_MODEL`, `REDIS_URL`
 (shared translation cache), `HOST`, `PORT`, `LOG_LEVEL`,
 `VEKSHA_DATA_DIR` (downloaded runtime files), `CORS_ALLOW_ORIGINS`,
 `VEKSHA_DEBUG_API`, `DATABASE_POOL_MIN_SIZE`, `DATABASE_POOL_MAX_SIZE`.
+
+Speech is an external HTTP dependency; Veksha neither imports its code nor
+accesses its database. Configure `SPEECH_BASE_URL` (default
+`http://localhost:8080`) and `SPEECH_TIMEOUT` (default `60s`). The
+consumer shared secret and current provider-specific default voice stay in the backend
+environment. The browser calls only Veksha's authenticated `/api/speech/*`
+routes. TTS remains binary throughout and is streamed through the backend;
+temporary `429`, `502`, and `503` responses are retried before streaming begins.
+Successful response units from `X-Speech-*` are persisted per Veksha user in
+`speech_usage`; streamed TTS bytes are counted locally when trailers are unavailable.
 
 Region translation uses `GOOGLE_CLOUD_VISION_API_KEY` for primary OCR when it
 is configured and falls back to OpenAI vision. Select the fallback model with
@@ -223,6 +234,8 @@ api/                  routers (one file per domain)
 | `GET /api/auth/google/callback`, `GET /api/auth/google/*/status/{flow_id}` | Google HTTPS callback / one-time result |
 | `POST /api/translate`, `/api/quick_translate` | selection translation (+background KB update) |
 | `POST /api/explain` | expanded explanation for a selection |
+| `POST /api/speech/synthesize` | stream configured-platform TTS audio |
+| `POST /api/speech/transcribe` | transcribe a PCM WAV recording (up to the platform's 30-second limit) |
 | `GET/POST /api/settings` | user settings |
 | `GET /api/reminders` | due words / unfinished goals for extension alarms |
 | `GET /api/kb_summary`, `/api/kb_words`, `DELETE /api/kb_word` | vocabulary UI |
@@ -270,9 +283,10 @@ The planner scores the due queue on review urgency, skill weakness, recent
 errors, formats already used this session, and the material each format needs
 — a reverse translation needs a saved translation, a context task needs an
 observed sentence, a listening task needs a client that can speak. Listening
-audio is voiced by the client through the Web Speech API; the client declares
-`audio` support in the `init` message and the planner omits listening
-otherwise. Each task carries a structured `reason` the client localizes into
+audio uses Speech Platform through the Veksha backend in popup/web contexts,
+with the Web Speech API as an availability fallback. The client declares
+`audio` support in the `init` message and the planner omits listening otherwise.
+Each task carries a structured `reason` the client localizes into
 "why am I seeing this".
 
 A wrong answer opens a bounded corrective chain rather than only lowering the

@@ -7,8 +7,8 @@
  *
  * An answer is graded in two steps. The server returns a verdict plus a
  * suggested FSRS rating; the learner can accept it or pick another of the four
- * before anything is scheduled. Listening tasks are voiced here — the backend
- * has no audio pipeline, so the client declares whether it can speak at all.
+ * before anything is scheduled. Listening tasks are voiced here through the
+ * backend speech boundary, with local browser speech as an availability fallback.
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";

@@ -59,6 +59,10 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-5.4-mini}
       OPENAI_SMART_MODEL: ${OPENAI_SMART_MODEL:-gpt-4.1}
+      SPEECH_BASE_URL: ${SPEECH_BASE_URL:-http://speech-platform:8080}
+      SPEECH_SHARED_SECRET: ${SPEECH_SHARED_SECRET:-}
+      SPEECH_DEFAULT_VOICE_ID: ${SPEECH_DEFAULT_VOICE_ID:-}
+      SPEECH_TIMEOUT: ${SPEECH_TIMEOUT:-60s}
       VEKSHA_PHRASE_MINING_ENABLED: ${VEKSHA_PHRASE_MINING_ENABLED:-1}
       VEKSHA_CORE_V2_LLM_TIMEOUT_SECONDS: ${VEKSHA_CORE_V2_LLM_TIMEOUT_SECONDS:-30}
       VEKSHA_CORE_V2_TRANSLATION_MODEL: ${VEKSHA_CORE_V2_TRANSLATION_MODEL:-gpt-5.6-luna}
@@ -80,6 +84,9 @@ services:
       ADMIN_DATABASE_SECRET: ${ADMIN_DATABASE_SECRET:-local-database-secret}
     ports:
       - "127.0.0.1:8000:8000"
+    networks:
+      - default
+      - speech-platform
     depends_on:
       postgres:
         condition: service_healthy
@@ -160,3 +167,8 @@ services:
 volumes:
   veksha-postgres:
   veksha-redis:
+
+networks:
+  speech-platform:
+    external: true
+    name: ${SPEECH_DOCKER_NETWORK:-speech-platform-local}

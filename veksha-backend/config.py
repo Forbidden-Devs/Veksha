@@ -4,6 +4,7 @@ config.py — Veksha backend configuration.
 OPENAI_API_KEY must be provided via environment variable (never commit keys).
 """
 import os
+import re
 from dataclasses import dataclass
 
 TRUTHY = frozenset({"1", "true", "yes", "on"})
@@ -23,7 +24,30 @@ def env_enabled(name: str, default: bool = False) -> bool:
     return value.lower() in TRUTHY if value else default
 
 
+_DURATION = re.compile(r"^(\d+(?:\.\d+)?)(ms|s|m|h)?$")
+
+
+def env_duration_seconds(name: str, default: float) -> float:
+    """Read a small Go-style duration such as ``500ms``, ``60s`` or ``2m``."""
+    value = env_text(name)
+    if not value:
+        return default
+    match = _DURATION.fullmatch(value.lower())
+    if not match:
+        raise ValueError(f"{name} must be a duration such as 60s or 2m")
+    amount = float(match.group(1))
+    multiplier = {None: 1.0, "ms": 0.001, "s": 1.0, "m": 60.0, "h": 3600.0}[match.group(2)]
+    return amount * multiplier
+
+
 OPENAI_API_KEY: str = env_text("OPENAI_API_KEY")
+
+# Provider-neutral speech service. The per-consumer shared secret is server-only
+# and must never be included in browser-facing build variables or API responses.
+SPEECH_BASE_URL = env_text("SPEECH_BASE_URL", "http://localhost:8080").rstrip("/")
+SPEECH_SHARED_SECRET = env_text("SPEECH_SHARED_SECRET")
+SPEECH_DEFAULT_VOICE_ID = env_text("SPEECH_DEFAULT_VOICE_ID")
+SPEECH_TIMEOUT_SECONDS = env_duration_seconds("SPEECH_TIMEOUT", 60.0)
 
 # Directory for runtime files such as downloaded i18n catalogue caches.
 DATA_DIR: str = os.getenv(

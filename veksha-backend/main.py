@@ -35,6 +35,7 @@ from api import subtitle_study as api_subtitle_study
 from api import training_v2 as training
 from api import translate_v2 as translate
 from api import reading_sessions
+from api import speech
 from api import vocabulary_inbox
 from config import CORS_ALLOW_ORIGINS, DEBUG_API, HOST, LOG_LEVEL, PORT, RELOAD
 
@@ -104,6 +105,7 @@ app.include_router(api_subtitles.router)
 app.include_router(api_subtitle_study.router)
 app.include_router(privacy.router)
 app.include_router(reading_coach.router)
+app.include_router(speech.router)
 if DEBUG_API:
     app.include_router(debug.router)
     log.warning("Debug API is enabled (/api/debug/*) — do not use in production.")

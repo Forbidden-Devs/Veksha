@@ -65,3 +65,33 @@ def test_core_provider_usage_records_by_active_user(monkeypatch):
         "cached_tokens": 4,
         "reasoning_tokens": 2,
     }]
+
+
+def test_speech_usage_records_platform_units_by_user():
+    username = _user("speech_usage_user")
+    db.speech_usage_record(
+        username=username,
+        operation="tts",
+        request_id="req_speech_test",
+        provider="elevenlabs",
+        model="eleven_flash_v2_5",
+        characters=12,
+        audio_bytes=3456,
+        provider_request_id="provider_req_test",
+    )
+
+    row = db._conn().execute(
+        "SELECT username, operation, request_id, provider, model, characters, "
+        "audio_bytes, provider_request_id FROM speech_usage WHERE request_id=%s",
+        ("req_speech_test",),
+    ).fetchone()
+    assert row == (
+        username,
+        "tts",
+        "req_speech_test",
+        "elevenlabs",
+        "eleven_flash_v2_5",
+        12,
+        3456,
+        "provider_req_test",
+    )

@@ -358,6 +358,32 @@ def _conn():
         conn.execute(
             "CREATE INDEX IF NOT EXISTS ix_ai_usage_created ON ai_usage (created DESC)"
         )
+        # Speech Platform reports normalized usage units in response headers.
+        # Keep these separate from LLM token usage: their dimensions and
+        # reconciliation identifiers have different meanings.
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS speech_usage (
+                   id                  BIGSERIAL PRIMARY KEY,
+                   username            TEXT NOT NULL,
+                   operation           TEXT NOT NULL,
+                   request_id           TEXT NOT NULL DEFAULT '',
+                   provider             TEXT NOT NULL DEFAULT '',
+                   model                TEXT NOT NULL DEFAULT '',
+                   characters           BIGINT NOT NULL DEFAULT 0,
+                   audio_bytes          BIGINT NOT NULL DEFAULT 0,
+                   provider_request_id  TEXT NOT NULL DEFAULT '',
+                   created              DOUBLE PRECISION NOT NULL,
+                   FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
+               )"""
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS ix_speech_usage_user_created "
+            "ON speech_usage (username, created DESC)"
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS ix_speech_usage_request "
+            "ON speech_usage (request_id)"
+        )
         conn.execute(
             """CREATE TABLE IF NOT EXISTS admin_query_audit (
                    id          BIGSERIAL PRIMARY KEY,
@@ -434,6 +460,7 @@ def user_has_account_activity(username: str) -> bool:
         ("star_payments", "username"),
         ("promo_redemptions", "username"),
         ("ai_usage", "username"),
+        ("speech_usage", "username"),
     )
     conn = _conn()
     return any(
@@ -634,9 +661,45 @@ def purge_all_users() -> None:
             "reading_sessions",
             "kb", "user_languages", "user_settings",
             "subscriptions", "telegram_links", "telegram_link_codes",
-            "star_payments", "promo_redemptions", "promo_codes", "ai_usage", "users",
+            "star_payments", "promo_redemptions", "promo_codes", "speech_usage",
+            "ai_usage", "users",
         ):
             c.execute(f"DELETE FROM {table}")
+
+
+# ---------------------------------------------------------------------------
+# Speech usage
+# ---------------------------------------------------------------------------
+
+def speech_usage_record(
+    username: str,
+    operation: str,
+    request_id: str,
+    provider: str,
+    model: str,
+    characters: int,
+    audio_bytes: int,
+    provider_request_id: str = "",
+) -> None:
+    """Persist Speech Platform units for one successful HTTP response."""
+    with _conn() as c:
+        c.execute(
+            "INSERT INTO speech_usage "
+            "(username, operation, request_id, provider, model, characters, "
+            "audio_bytes, provider_request_id, created) "
+            "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+            (
+                username,
+                operation[:20],
+                request_id[:160],
+                provider[:120],
+                model[:120],
+                max(0, int(characters or 0)),
+                max(0, int(audio_bytes or 0)),
+                provider_request_id[:160],
+                time.time(),
+            ),
+        )
 
 
 # ---------------------------------------------------------------------------
