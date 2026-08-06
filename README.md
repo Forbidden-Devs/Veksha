@@ -77,17 +77,19 @@ directory:
 | `veksha-tgbot/` | `python -m pytest -q` | `python -m compileall -q . && python -m ruff check --select E9,F63,F7,F82 . && python -m pytest -q` |
 | `veksha-admin/` | `pnpm run test` | `pnpm run typecheck && pnpm run test && pnpm run build` |
 
-Backend API tests require PostgreSQL and erase the contents of the database
-given by `DATABASE_URL`. Always use a disposable test database, never the local
-development or production database. For example:
+Backend API tests use a disposable PostgreSQL service on port `55432`. Start it
+before the tests from the repository root:
 
 ```bash
-docker compose up -d postgres
-docker compose exec postgres createdb -U veksha veksha_test  # first run only
+docker compose --profile test up -d --wait postgres-test
 cd veksha-backend
-DATABASE_URL=postgresql://veksha:veksha@localhost:5432/veksha_test \
-  python -m pytest -q
+python -m pytest -q
 ```
+
+The service stores its data in temporary container storage. The test fixture
+also refuses to run against a database whose name does not end in `_test`,
+because the API suite clears the selected database before it starts. Override
+`DATABASE_URL` only when using another disposable test database.
 
 The backend command discovers all three backend suites: `tests/`,
 `learning_core_v2/tests/`, and `learning_core_v2_adapters/tests/`. When extension

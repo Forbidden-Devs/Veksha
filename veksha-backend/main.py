@@ -67,7 +67,11 @@ async def healthz():
     except Exception as error:
         log.warning("Database health probe failed: %s", type(error).__name__)
         return JSONResponse(status_code=503, content={"status": "unavailable"})
-    return {"status": "ok", "revision": os.getenv("VEKSHA_REVISION", "local")}
+    return {
+        "status": "ok",
+        "service": "backend",
+        "revision": os.getenv("VEKSHA_REVISION", "local"),
+    }
 
 
 @app.exception_handler(Exception)
