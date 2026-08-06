@@ -62,6 +62,39 @@ Set `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME` and
 `docker compose down`; add `--volumes` only when you intentionally want to
 delete the local PostgreSQL and Redis data.
 
+## Tests and local checks
+
+Install each module's dependencies before running its checks (`requirements.txt`
+plus `requirements-dev.txt` for Python modules, the lockfile-backed package
+manager for JavaScript modules). Run these commands from the indicated module
+directory:
+
+| Module | Test command | Full local check |
+|---|---|---|
+| `veksha-backend/` | `python -m pytest -q` | `python -m compileall -q . && python -m ruff check --select E9,F63,F7,F82 . && python -m pytest -q` |
+| `veksha-extension/` | `npm run test:architecture && npm run test:version` | `npm run check` |
+| `veksha-web/` | No separate automated test suite yet | `npm run typecheck && npm run build` |
+| `veksha-tgbot/` | `python -m pytest -q` | `python -m compileall -q . && python -m ruff check --select E9,F63,F7,F82 . && python -m pytest -q` |
+| `veksha-admin/` | `pnpm run test` | `pnpm run typecheck && pnpm run test && pnpm run build` |
+
+Backend API tests require PostgreSQL and erase the contents of the database
+given by `DATABASE_URL`. Always use a disposable test database, never the local
+development or production database. For example:
+
+```bash
+docker compose up -d postgres
+docker compose exec postgres createdb -U veksha veksha_test  # first run only
+cd veksha-backend
+DATABASE_URL=postgresql://veksha:veksha@localhost:5432/veksha_test \
+  python -m pytest -q
+```
+
+The backend command discovers all three backend suites: `tests/`,
+`learning_core_v2/tests/`, and `learning_core_v2_adapters/tests/`. When extension
+shared or popup code changes, also run the web checks because the web app imports
+those sources directly. See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the checks
+expected before a pull request.
+
 ## Architecture notes
 
 - User data lives in PostgreSQL; clients

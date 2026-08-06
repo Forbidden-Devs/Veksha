@@ -17,7 +17,9 @@
 
 - backend: `python -m compileall -q .`,
   `python -m ruff check --select E9,F63,F7,F82 .` и
-  `python -m pytest -q tests` в `veksha-backend/`;
+  `DATABASE_URL=postgresql://veksha:veksha@localhost:5432/veksha_test python -m pytest -q`
+  в `veksha-backend/` (только с отдельной тестовой БД; набор очищает её перед
+  запуском);
 - Telegram-бот: те же compile/Ruff/pytest проверки в `veksha-tgbot/`;
 - extension: `npm run typecheck`, `npm run test:version`,
   `npm run version:check` и `npm run release` в `veksha-extension/`;
