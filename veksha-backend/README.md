@@ -89,6 +89,18 @@ missing cues. A bounded process-local cache avoids retaining subtitle text in
 PostgreSQL. Select the model with `VEKSHA_CORE_V2_SUBTITLES_MODEL` (default
 `gpt-5.6-luna`).
 
+Subtitle study sessions (`learning_core_v2/subtitle_study.py`) build on the same
+track. A dialogue line is addressed by a stable temporal id derived from
+`(media_key, start_ms, text)`, so clients only ever send cues; a saved word, a
+comprehension check and a generated cloze all carry the timecode they came from.
+Two of the six comprehension checks — "which word was spoken" and "which line
+continues" — are assembled from the caption track itself and never reach a
+model; the other four are authored through
+`VEKSHA_CORE_V2_SUBTITLE_STUDY_MODEL` (default `gpt-5.6-luna`) and graded server
+side, so a client never receives the expected answer before it answers. Sessions
+persist in the user document under `subtitle_sessions` and resume on the line
+they stopped on.
+
 Generated UI catalogues use the rewritten catalogue translator. Unknown keys,
 empty values, and translations that alter placeholders such as `{name}` are
 discarded. Select its model with `VEKSHA_CORE_V2_I18N_MODEL` (default
@@ -221,6 +233,12 @@ api/                  routers (one file per domain)
 | `POST /api/reading-coach/prepare` | enrich selected blockers into the Vocabulary Inbox (premium) |
 | `POST /api/subtitles/translate` | dual-subtitle line translation with word alignment (premium) |
 | `POST /api/subtitles/translate-batch` | contextual pretranslation of adjacent timed subtitle cues (premium) |
+| `POST /api/subtitle-study/session`, `.../{id}/progress`, `.../{id}/display` | start or resume a study session, flush watched/replay events, change what is shown (premium) |
+| `GET /api/subtitle-study/session/{id}/summary`, `POST .../{id}/close` | session difficulties, with and without closing (premium) |
+| `POST /api/subtitle-study/fragment` | padded replay window for one dialogue line (premium) |
+| `POST /api/subtitle-study/comprehension/question`, `.../check` | ask and grade a question about a real fragment (premium) |
+| `POST /api/subtitle-study/word/senses`, `POST /api/subtitle-study/word` | meanings a form already carries / save one sense with its timecode (premium) |
+| `POST /api/subtitle-study/cloze` | fill-in-the-blank generated from the spoken line (premium) |
 | `GET /api/billing/status`, `GET /api/billing/features` | active selection / feature prices |
 | `POST /api/billing/telegram/link`, `DELETE /api/billing/subscription` | checkout deep link / cancel subscription |
 | `POST /api/billing/promo/redeem` | redeem a promo code for temporary Premium |

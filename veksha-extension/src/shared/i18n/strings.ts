@@ -201,6 +201,8 @@ export interface Strings {
   settings_focus_guard_desc: string;
   settings_dual_subtitles: string;
   settings_dual_subtitles_desc: string;
+  settings_subtitle_study: string;
+  settings_subtitle_study_desc: string;
   settings_subscription: string;
   settings_sub_free: string;
   settings_sub_premium: string;
@@ -697,6 +699,8 @@ export const EN: Strings = {
   settings_focus_guard_desc: "Turn reminders into a full-page decision: start now, snooze for 15 minutes, or intentionally pause for today.",
   settings_dual_subtitles: "Dual subtitles",
   settings_dual_subtitles_desc: "Enable translated subtitles and their playback control on YouTube.",
+  settings_subtitle_study: "Subtitle study",
+  settings_subtitle_study_desc: "Turn subtitles into a session: hide either text, loop a line, answer a question about it, and save words with their timecode.",
   settings_subscription: "Subscription",
   settings_sub_free: "Free plan",
   settings_sub_premium: "Premium — active until",

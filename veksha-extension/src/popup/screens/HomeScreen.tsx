@@ -44,6 +44,7 @@ export function HomeScreen() {
   const [grammarLensOn, setGrammarLensOn] = useState(false);
   const [vocabFreqOn, setVocabFreqOn] = useState(false);
   const [dualSubsEnabled, setDualSubsEnabled] = useState(false);
+  const [subtitleStudyOn, setSubtitleStudyOn] = useState(false);
   const [activeUrl, setActiveUrl] = useState("");
   const [aiBlocklist, setAiBlocklist] = useState<AiBlocklist>({ sites: [], pages: [], allowedPages: [] });
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
@@ -103,6 +104,7 @@ export function HomeScreen() {
       CONFIG.STORAGE_KEY_VOCAB_FREQ,
       CONFIG.STORAGE_KEY_DUAL_SUBS_FEATURE,
       CONFIG.STORAGE_KEY_DUAL_SUBS,
+      CONFIG.STORAGE_KEY_SUBTITLE_STUDY,
       CONFIG.STORAGE_KEY_AI_BLOCKLIST,
     ]).then((result) => {
       const legacyImmersion = Boolean(result[CONFIG.STORAGE_KEY_IMMERSION]);
@@ -128,6 +130,7 @@ export function HomeScreen() {
       if (storedDualSubsFeature === undefined && legacyDualSubsEnabled) {
         storageSet({ [CONFIG.STORAGE_KEY_DUAL_SUBS_FEATURE]: true });
       }
+      setSubtitleStudyOn(Boolean(result[CONFIG.STORAGE_KEY_SUBTITLE_STUDY]));
       setAiBlocklist(normalizeAiBlocklist(result[CONFIG.STORAGE_KEY_AI_BLOCKLIST]));
     });
     if (isExtension) {
@@ -194,14 +197,41 @@ export function HomeScreen() {
   async function toggleDualSubtitles() {
     const next = !dualSubsEnabled;
     if (next && !(await requirePremiumFeature("dual_subtitles", t.settings_dual_subtitles))) return;
+    const studyWas = subtitleStudyOn;
     setDualSubsEnabled(next);
+    // A study session has no translated track to work with once dual subtitles
+    // are off, so it goes with them — the mirror of switching them on together.
+    if (!next) setSubtitleStudyOn(false);
     try {
       await storageSet({
         [CONFIG.STORAGE_KEY_DUAL_SUBS_FEATURE]: next,
-        ...(next ? { [CONFIG.STORAGE_KEY_DUAL_SUBS]: true } : {}),
+        ...(next
+          ? { [CONFIG.STORAGE_KEY_DUAL_SUBS]: true }
+          : { [CONFIG.STORAGE_KEY_SUBTITLE_STUDY]: false }),
       });
     } catch {
       setDualSubsEnabled(!next);
+      setSubtitleStudyOn(studyWas);
+    }
+  }
+
+  async function toggleSubtitleStudy() {
+    const next = !subtitleStudyOn;
+    if (next && !(await requirePremiumFeature("dual_subtitles", t.settings_subtitle_study))) return;
+    setSubtitleStudyOn(next);
+    try {
+      // The study session needs a translated track to hide, so switching it on
+      // switches dual subtitles on with it.
+      await storageSet({
+        [CONFIG.STORAGE_KEY_SUBTITLE_STUDY]: next,
+        ...(next ? {
+          [CONFIG.STORAGE_KEY_DUAL_SUBS_FEATURE]: true,
+          [CONFIG.STORAGE_KEY_DUAL_SUBS]: true,
+        } : {}),
+      });
+      if (next) setDualSubsEnabled(true);
+    } catch {
+      setSubtitleStudyOn(!next);
     }
   }
 
@@ -342,6 +372,23 @@ export function HomeScreen() {
               title={t.feature_guide_open}
               onClick={() => setFeatureGuide("dual_subtitles")}
             >?</button>
+          </div>
+        )}
+        {isExtension && (
+          <div className="capability-control">
+            <button
+              className={`capability-card capability-toggle ${aiBlocked ? "is-blocked" : subtitleStudyOn ? "is-on" : "is-off"}`}
+              onClick={toggleSubtitleStudy}
+              disabled={aiBlocked}
+              aria-pressed={subtitleStudyOn}
+            >
+              <span className="capability-card-icon">{Icons.dualSubtitles}</span>
+              <span className="capability-card-label">{t.settings_subtitle_study}</span>
+              <span className="capability-state">
+                <i aria-hidden="true" />
+                {aiBlocked ? t.feature_blocked : subtitleStudyOn ? t.feature_enabled : t.feature_disabled}
+              </span>
+            </button>
           </div>
         )}
         {isExtension && (

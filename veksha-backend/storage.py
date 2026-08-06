@@ -7,7 +7,12 @@ import logging
 import db
 from learning_core_v2.goal import LearnerProfile
 from models import UserSettings
-from repositories import GoalRepository, GrammarMemoryRepository, LexiconRepository
+from repositories import (
+    GoalRepository,
+    GrammarMemoryRepository,
+    LexiconRepository,
+    SubtitleSessionRepository,
+)
 
 
 log = logging.getLogger(__name__)
@@ -32,12 +37,18 @@ class UserStorage:
         lexicon: LexiconRepository | None = None,
         goals: GoalRepository | None = None,
         grammar: GrammarMemoryRepository | None = None,
+        subtitle_sessions: SubtitleSessionRepository | None = None,
         settings: UserSettings | None = None,
     ) -> None:
         self.username = username
         self.lexicon = lexicon if lexicon is not None else LexiconRepository(username)
         self.goals = goals if goals is not None else GoalRepository()
         self.grammar = grammar if grammar is not None else GrammarMemoryRepository()
+        self.subtitle_sessions = (
+            subtitle_sessions
+            if subtitle_sessions is not None
+            else SubtitleSessionRepository()
+        )
         self.settings = settings if settings is not None else UserSettings()
 
     @classmethod
@@ -60,6 +71,9 @@ class UserStorage:
             lexicon=lexicon,
             goals=goals,
             grammar=GrammarMemoryRepository.from_document(document.get("grammar_memory")),
+            subtitle_sessions=SubtitleSessionRepository.from_document(
+                document.get("subtitle_sessions")
+            ),
             settings=settings,
         )
         log.info(
@@ -78,10 +92,11 @@ class UserStorage:
         db.kb_set(
             self.username,
             {
-                "schema_version": 3,
+                "schema_version": 4,
                 "lexical_items": self.lexicon.to_document(),
                 "learning_goals": self.goals.to_document(),
                 "grammar_memory": self.grammar.to_document(),
+                "subtitle_sessions": self.subtitle_sessions.to_document(),
             },
         )
         db.settings_set(self.username, self.settings)

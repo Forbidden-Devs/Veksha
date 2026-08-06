@@ -94,7 +94,7 @@ def test_legacy_word_schedule_is_cloned_to_each_known_sense(monkeypatch):
     ]
     assert [item.schedule.review_count for item in loaded.lexicon.all()] == [4, 4]
     assert loaded.lexicon.all()[0].schedule is not loaded.lexicon.all()[1].schedule
-    assert stored["schema_version"] == 3
+    assert stored["schema_version"] == 4
     assert "words" not in stored
 
 

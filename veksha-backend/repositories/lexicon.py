@@ -22,6 +22,7 @@ from learning_core_v2.acquisition import (
     VocabularyEncounter,
     lexical_item_id,
 )
+from learning_core_v2.subtitle_study import MediaAnchor
 from learning_core_v2.skills import (
     NEUTRAL_CONFIDENCE,
     SKILLS,
@@ -277,6 +278,7 @@ def _item_from_dict(data: dict) -> LexicalItem:
                 context=str(value.get("context", "")),
                 source_url=str(value.get("source_url", "")),
                 observed_at=float(value.get("observed_at", 0.0) or 0.0),
+                media=_media_from_dict(value.get("media")),
             )
             for value in data.get("encounters", [])
             if isinstance(value, dict)
@@ -314,6 +316,7 @@ def _item_to_dict(item: LexicalItem) -> dict:
                 "context": value.context,
                 "source_url": value.source_url,
                 "observed_at": value.observed_at,
+                **({"media": _media_to_dict(value.media)} if value.media else {}),
             }
             for value in item.encounters
         ],
@@ -330,6 +333,41 @@ def _item_to_dict(item: LexicalItem) -> dict:
         "skills": _skills_to_dict(item.skills),
         "extra_data": item.extra_data,
         "sentence_mining": item.sentence_mining or {},
+    }
+
+
+def _media_from_dict(data: object) -> MediaAnchor | None:
+    """Read a stored timecode. Words saved from a page simply have none."""
+    if not isinstance(data, dict):
+        return None
+    media_key = str(data.get("media_key", ""))
+    if not media_key:
+        return None
+    start = max(0, int(data.get("start_ms", 0) or 0))
+    return MediaAnchor(
+        media_key=media_key,
+        media_url=str(data.get("media_url", "")),
+        start_ms=start,
+        end_ms=max(start, int(data.get("end_ms", 0) or 0)),
+        line_text=str(data.get("line_text", "")),
+        line_translation=str(data.get("line_translation", "")),
+        language=str(data.get("language", "")),
+        speaker=str(data.get("speaker", "")),
+        audio_url=str(data.get("audio_url", "")),
+    )
+
+
+def _media_to_dict(anchor: MediaAnchor) -> dict:
+    return {
+        "media_key": anchor.media_key,
+        "media_url": anchor.media_url,
+        "start_ms": anchor.start_ms,
+        "end_ms": anchor.end_ms,
+        "line_text": anchor.line_text,
+        "line_translation": anchor.line_translation,
+        "language": anchor.language,
+        "speaker": anchor.speaker,
+        "audio_url": anchor.audio_url,
     }
 
 

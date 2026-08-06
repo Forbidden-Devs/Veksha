@@ -20,8 +20,8 @@ veksha-backend/    FastAPI backend: PostgreSQL storage (users, KB), token auth,
                     WebSocket sessions, translation, Reading Coach.
 veksha-extension/  Chrome + Firefox extension (MV3, React + TypeScript,
                     Vite) — the capture surface: selection-translate popup,
-                    Reading Coach, YouTube subtitles, OCR capture,
-                    plus the popup app.
+                    Reading Coach, YouTube subtitles and subtitle study
+                    sessions, OCR capture, plus the popup app.
 veksha-web/        The same study app (chat / training / goals / stats)
                     as a standalone PWA-installable web page; reuses the
                     extension popup source via shared/platform.ts.

@@ -509,6 +509,276 @@ export function subtitleTranslateBatch(
   }, 45_000);
 }
 
+// ---------------------------------------------------------------------------
+// Subtitle study sessions
+//
+// The backend derives every line id from (media_key, start_ms, text), so the
+// client always sends cues and never invents an id of its own.
+// ---------------------------------------------------------------------------
+
+export interface StudyCue {
+  start_ms: number;
+  end_ms: number;
+  text: string;
+  translation?: string;
+  speaker?: string;
+}
+
+export interface StudyDisplay {
+  show_original: boolean;
+  show_translation: boolean;
+  reveal_on_tap: boolean;
+  auto_pause: boolean;
+}
+
+export interface StudyAnchor {
+  media_key: string;
+  media_url: string;
+  start_ms: number;
+  end_ms: number;
+  line_text: string;
+  line_translation: string;
+  language: string;
+  speaker: string;
+}
+
+export interface StudySession {
+  session_id: string;
+  media_key: string;
+  media_title: string;
+  display: StudyDisplay;
+  check_interval: number;
+  cursor_line_id: string;
+  cursor_ms: number;
+  lines_watched: number;
+  lines_since_check: number;
+  checks_asked: number;
+  checks_passed: number;
+  saved_items: number;
+  check_due: boolean;
+  resumed: boolean;
+}
+
+export interface StudyLineStat {
+  line_id: string;
+  start_ms: number;
+  replays: number;
+  slowed: number;
+  errors: number;
+  saves: number;
+  difficulty: number;
+}
+
+export interface StudySummary {
+  session_id: string;
+  media_key: string;
+  media_title: string;
+  lines_watched: number;
+  checks_asked: number;
+  checks_passed: number;
+  saved_items: number;
+  accuracy: number;
+  hardest: StudyLineStat[];
+}
+
+export interface StudyFragment {
+  line_id: string;
+  start_ms: number;
+  end_ms: number;
+  playback_rate: number;
+  repeats: number;
+  looping: boolean;
+}
+
+export interface StudyCheck {
+  check_id: string;
+  kind: string;
+  line_id: string;
+  question: string;
+  options: string[];
+  anchor: StudyAnchor;
+}
+
+export interface StudyCheckResult {
+  outcome: string;
+  passed: boolean;
+  feedback: string;
+  expected_answer: string;
+  display: StudyDisplay | null;
+}
+
+export interface StudySense {
+  item_id: string;
+  term: string;
+  translation: string;
+  transcription: string;
+  status: string;
+  encounter_count: number;
+  latest_context: string;
+}
+
+export interface StudySenses {
+  term: string;
+  language: string;
+  known_senses: StudySense[];
+  suggestion: StudySense | null;
+  needs_disambiguation: boolean;
+}
+
+export interface StudySavedWord {
+  item_id: string;
+  term: string;
+  translation: string;
+  status: string;
+  encounter_count: number;
+  anchor: StudyAnchor;
+}
+
+export interface StudyCloze {
+  line_id: string;
+  prompt: string;
+  answer: string;
+  first_letter: string;
+  letter_count: number;
+  blank_count: number;
+  translation: string;
+  anchor: StudyAnchor;
+}
+
+export interface StudyMediaRef {
+  media_key: string;
+  media_url?: string;
+  media_title?: string;
+}
+
+export function studyStartSession(
+  media: StudyMediaRef,
+  display?: StudyDisplay,
+  checkInterval = 5,
+): Promise<StudySession> {
+  return _post("/api/subtitle-study/session", {
+    ...media,
+    display,
+    check_interval: checkInterval,
+  }, 15_000);
+}
+
+export function studyRecordProgress(
+  sessionId: string,
+  mediaKey: string,
+  events: Array<{ kind: "watched" | "replayed"; cue: StudyCue; slowed?: boolean }>,
+): Promise<StudySession> {
+  return _post(`/api/subtitle-study/session/${encodeURIComponent(sessionId)}/progress`, {
+    media_key: mediaKey,
+    events,
+  }, 15_000);
+}
+
+export function studySetDisplay(sessionId: string, display: StudyDisplay): Promise<StudySession> {
+  return _post(`/api/subtitle-study/session/${encodeURIComponent(sessionId)}/display`, {
+    display,
+  }, 15_000);
+}
+
+export function studySessionSummary(sessionId: string): Promise<StudySummary> {
+  return _get(`/api/subtitle-study/session/${encodeURIComponent(sessionId)}/summary`);
+}
+
+export function studyCloseSession(sessionId: string): Promise<StudySummary> {
+  return _post(`/api/subtitle-study/session/${encodeURIComponent(sessionId)}/close`, {}, 15_000);
+}
+
+export function studyPlanFragment(
+  media: StudyMediaRef,
+  lines: StudyCue[],
+  cue: StudyCue,
+  options: {
+    playbackRate?: number;
+    repeats?: number;
+    mediaDurationMs?: number;
+    afterError?: boolean;
+    sessionId?: string;
+  } = {},
+): Promise<StudyFragment> {
+  return _post("/api/subtitle-study/fragment", {
+    ...media,
+    lines,
+    cue,
+    playback_rate: options.playbackRate ?? 1,
+    repeats: options.repeats ?? 1,
+    media_duration_ms: options.mediaDurationMs ?? 0,
+    after_error: options.afterError ?? false,
+    session_id: options.sessionId ?? "",
+  }, 15_000);
+}
+
+export function studyCreateCheck(
+  media: StudyMediaRef,
+  lines: StudyCue[],
+  cue: StudyCue,
+  options: { expression?: string; sessionId?: string; kind?: string } = {},
+): Promise<StudyCheck> {
+  return _post("/api/subtitle-study/comprehension/question", {
+    ...media,
+    lines,
+    cue,
+    expression: options.expression ?? "",
+    session_id: options.sessionId ?? "",
+    kind: options.kind ?? "",
+  }, 30_000);
+}
+
+export function studyCheckAnswer(
+  checkId: string,
+  answer: string,
+  sessionId = "",
+): Promise<StudyCheckResult> {
+  return _post("/api/subtitle-study/comprehension/check", {
+    check_id: checkId,
+    answer,
+    session_id: sessionId,
+  }, 30_000);
+}
+
+export function studyWordSenses(
+  media: StudyMediaRef,
+  term: string,
+  cue: StudyCue,
+): Promise<StudySenses> {
+  return _post("/api/subtitle-study/word/senses", { ...media, term, cue }, 30_000);
+}
+
+export function studySaveWord(
+  media: StudyMediaRef,
+  term: string,
+  translation: string,
+  cue: StudyCue,
+  options: { transcription?: string; sessionId?: string } = {},
+): Promise<StudySavedWord> {
+  return _post("/api/subtitle-study/word", {
+    ...media,
+    term,
+    translation,
+    transcription: options.transcription ?? "",
+    cue,
+    session_id: options.sessionId ?? "",
+  }, 20_000);
+}
+
+export function studyBuildCloze(
+  media: StudyMediaRef,
+  cue: StudyCue,
+  surface: string,
+  itemId = "",
+): Promise<StudyCloze> {
+  return _post("/api/subtitle-study/cloze", {
+    ...media,
+    cue,
+    surface,
+    item_id: itemId,
+  }, 15_000);
+}
+
 export function explain(username: string, text: string, translation: string): Promise<{ explanation: string }> {
   return _post("/api/explain", { text, translation });
 }

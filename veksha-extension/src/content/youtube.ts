@@ -23,6 +23,13 @@ import {
   sync as syncDualSubs,
   syncAtTime as syncDualSubsAtTime,
 } from "./dualsubs";
+import {
+  initSubtitleStudy,
+  saveSelectedTerm,
+  setStudyMedia,
+  studyActive,
+  studyTick,
+} from "./subtitle-study";
 import type { TimedCaptionCue } from "../shared/youtubeCaptions";
 
 export interface YouTubeStudyDeps {
@@ -41,7 +48,8 @@ const SEL = {
 // Anything that belongs to our own UI or to the captions we made interactive.
 // content.ts uses this to keep the page-wide selection popup out of the way.
 export const YT_STUDY_GUARD_SELECTOR =
-  ".ytp-caption-window-container, .av-yt-layer, .av-yt-popup, .av-dualsub, .av-dualsub-toggle";
+  ".ytp-caption-window-container, .av-yt-layer, .av-yt-popup, .av-dualsub, .av-dualsub-toggle,"
+  + " .av-study-bar, .av-study-card";
 
 let deps: YouTubeStudyDeps;
 
@@ -196,6 +204,7 @@ async function loadTimedCaptions(): Promise<void> {
       timelineReady = false;
       captionLoadSeq += 1;
       setDualSubsTimeline([]);
+      setStudyMedia(null);
     }
     return;
   }
@@ -207,6 +216,7 @@ async function loadTimedCaptions(): Promise<void> {
   loadedVideoId = videoId;
   timelineReady = false;
   setDualSubsTimeline([]);
+  setStudyMedia(null);
   const seq = ++captionLoadSeq;
   try {
     const response = await chrome.runtime.sendMessage({
@@ -233,6 +243,18 @@ async function loadTimedCaptions(): Promise<void> {
       response.translatedCues ?? [],
       response.track?.kind === "asr",
     );
+    // The media key names one caption *track*, not just the video: line ids are
+    // derived from it, and an ASR track and an authored track are different
+    // transcriptions of the same speech.
+    setStudyMedia(
+      {
+        media_key: `youtube:${videoId}:${response.track?.languageCode ?? "unknown"}:${response.track?.kind ?? "manual"}`,
+        media_url: `https://www.youtube.com/watch?v=${videoId}`,
+        media_title: document.title.replace(/\s*-\s*YouTube\s*$/, "").slice(0, 300),
+      },
+      response.cues,
+      response.translatedCues ?? [],
+    );
   } catch {
     // DOM observation remains as a compatibility fallback for restricted,
     // private, live, or otherwise unavailable timed-text tracks.
@@ -240,10 +262,18 @@ async function loadTimedCaptions(): Promise<void> {
   }
 }
 
+function getVideo(): HTMLVideoElement | null {
+  return getPlayer()?.querySelector<HTMLVideoElement>("video") ?? null;
+}
+
 function driveTimeline(): void {
   if (timelineReady) {
-    const video = getPlayer()?.querySelector<HTMLVideoElement>("video");
-    if (video) syncDualSubsAtTime(video.currentTime * 1000, currentCaptionRect());
+    const video = getVideo();
+    if (video) {
+      const timeMs = video.currentTime * 1000;
+      syncDualSubsAtTime(timeMs, currentCaptionRect());
+      studyTick(timeMs);
+    }
   }
   timelineFrame = window.requestAnimationFrame(driveTimeline);
 }
@@ -468,7 +498,22 @@ function openPopup(text: string, anchor: DOMRect): void {
   breakdownBtn.className = "av-yt-breakdown";
   breakdownBtn.textContent = deps.t("content_explain", "More details");
 
-  actions.append(listenBtn, breakdownBtn);
+  // Saving from here is what ties a word to the second it was spoken; the
+  // button only appears while a study session is actually running.
+  const saveBtn = document.createElement("button");
+  saveBtn.className = "av-yt-save";
+  saveBtn.textContent = deps.t("content_save_timecode", "Save with timecode");
+  saveBtn.hidden = !studyActive();
+  saveBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    removePopup();
+    clearWordHighlights();
+    // The selection as it was spoken, not whatever a language swap left on
+    // screen: the saved card has to match the audio at that timecode.
+    void saveSelectedTerm(text);
+  });
+
+  actions.append(listenBtn, breakdownBtn, saveBtn);
 
   const explainBox = document.createElement("div");
   explainBox.className = "av-yt-explain";
@@ -715,6 +760,15 @@ export function initYouTubeStudy(d: YouTubeStudyDeps): void {
     state: d.state,
     getLayer: ensureLayer,
     getPlayer,
+  });
+
+  initSubtitleStudy({
+    getUsername: d.getUsername,
+    t: d.t,
+    state: d.state,
+    getLayer: ensureLayer,
+    getPlayer,
+    getVideo,
   });
 
   // Media events don't bubble, but the capture phase still reaches the

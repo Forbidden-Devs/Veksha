@@ -34,6 +34,7 @@ from api import reading_coach
 from api import grammar_lens
 from api import quizlet
 from api import subtitles as api_subtitles
+from api import subtitle_study as api_subtitle_study
 from api import training_v2 as training
 from api import translate_v2 as translate
 from api import vocab_frequency
@@ -108,6 +109,7 @@ app.include_router(quizlet.router)
 app.include_router(vocab_frequency.router)
 app.include_router(vocabulary_inbox.router)
 app.include_router(api_subtitles.router)
+app.include_router(api_subtitle_study.router)
 app.include_router(privacy.router)
 app.include_router(reading_coach.router)
 if DEBUG_API:

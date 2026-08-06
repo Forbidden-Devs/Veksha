@@ -996,6 +996,231 @@
   background: rgba(120, 82, 169, 0.75);
 }
 
+/* ---------------------------------------------------------------------------
+   Subtitle study session — toolbar and cards (subtitle-study.ts)
+
+   Hidden rows keep their box and their pointer targets: in "reveal on tap"
+   mode the invisible subtitle bar is exactly what the learner clicks.
+   --------------------------------------------------------------------------- */
+
+.av-study-hide-original .ytp-caption-window-container,
+.av-study-hide-translation .av-dualsub {
+  opacity: 0;
+}
+
+.av-study-bar {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 70;
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 10px;
+  background: rgba(14, 12, 24, 0.66);
+  backdrop-filter: blur(6px);
+  pointer-events: auto;
+  opacity: 0.5;
+  transition: opacity 0.12s ease;
+}
+
+.av-study-bar:hover {
+  opacity: 1;
+}
+
+.av-study-btn {
+  min-width: 28px;
+  height: 26px;
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: #f4efff;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.av-study-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.av-study-btn.av-study-on {
+  background: rgba(120, 82, 169, 0.85);
+}
+
+.av-study-card {
+  position: absolute;
+  z-index: 80;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(520px, 82%);
+  max-height: 76%;
+  overflow-y: auto;
+  border-radius: 14px;
+  background: rgba(14, 12, 24, 0.94);
+  backdrop-filter: blur(10px);
+  color: #f4efff;
+  font-size: 15px;
+  line-height: 1.45;
+  pointer-events: auto;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.5);
+}
+
+.av-study-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  font-weight: 600;
+}
+
+.av-study-close {
+  border: none;
+  background: transparent;
+  color: rgba(244, 239, 255, 0.7);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.av-study-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px 18px;
+}
+
+.av-study-question,
+.av-study-cloze,
+.av-study-line {
+  margin: 0;
+  font-size: 17px;
+}
+
+.av-study-cloze {
+  font-weight: 600;
+}
+
+.av-study-line {
+  color: rgba(244, 239, 255, 0.82);
+  font-style: italic;
+}
+
+.av-study-note {
+  margin: 0;
+  color: rgba(244, 239, 255, 0.7);
+  font-size: 13px;
+}
+
+.av-study-options,
+.av-study-senses {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.av-study-hints {
+  display: flex;
+  gap: 6px;
+}
+
+.av-study-option,
+.av-study-sense {
+  padding: 9px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.05);
+  color: inherit;
+  font-size: 15px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.av-study-option:hover:not(:disabled),
+.av-study-sense:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.av-study-option:disabled,
+.av-study-sense:disabled,
+.av-study-primary:disabled,
+.av-study-secondary:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.av-study-input {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 9px;
+  background: rgba(0, 0, 0, 0.3);
+  color: inherit;
+  font: inherit;
+  resize: vertical;
+}
+
+.av-study-primary,
+.av-study-secondary {
+  align-self: flex-start;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 9px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.av-study-primary {
+  background: rgba(120, 82, 169, 0.9);
+  color: #fff;
+}
+
+.av-study-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: inherit;
+}
+
+.av-study-verdict {
+  margin: 0;
+  font-weight: 600;
+}
+
+.av-study-verdict.av-study-wrong {
+  color: #ffb4c4;
+}
+
+.av-study-hardest {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.av-study-jump {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: underline dotted;
+  cursor: pointer;
+}
+
+.av-yt-save {
+  margin-left: auto;
+}
+
 /* ---------------------------------------------------------------------- */
 /* Reading Coach — page-readiness badge and vocabulary preparation         */
 /* ---------------------------------------------------------------------- */

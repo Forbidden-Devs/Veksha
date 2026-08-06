@@ -21,6 +21,7 @@ export const CONFIG = {
     : "veksha_google_signin_result",
   STORAGE_KEY_DUAL_SUBS_FEATURE: "veksha_dualsubs_feature_enabled",
   STORAGE_KEY_DUAL_SUBS: "veksha_dualsubs_on",
+  STORAGE_KEY_SUBTITLE_STUDY: "veksha_subtitle_study_on",
   STORAGE_KEY_LANG_PAIR: "veksha_lang_pair",
   STORAGE_KEY_NATIVE_LANG: "veksha_native_lang",
   STORAGE_KEY_IMMERSION: "veksha_immersion_on",
