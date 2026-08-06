@@ -19,6 +19,7 @@ Companion-bot endpoints (X-Veksha-Bot-Secret header, no user token):
 Admin endpoints (X-Veksha-Admin-Secret header, see config.ADMIN_API_SECRET):
   GET  /api/billing/admin/overview               → prices and recent promos
   POST /api/billing/promo/create                 → scoped promo code
+  PUT  /api/billing/promo/{code}/pause           → pause or resume promo code
   PUT  /api/billing/features/{feature}/price     → change future checkout price
 
 Money never touches this backend: the bot collects Telegram Stars and reports
@@ -154,7 +155,7 @@ class PromoRedeemResponse(BaseModel):
     ok: bool
     tier: str
     expires_at: Optional[float] = None
-    error: Optional[str] = None  # "invalid" | "exhausted" | "already_redeemed"
+    error: Optional[str] = None  # "invalid" | "paused" | "exhausted" | "already_redeemed"
 
 
 @router.post("/api/billing/promo/redeem", response_model=PromoRedeemResponse)
@@ -359,6 +360,10 @@ class PromoCreateRequest(BaseModel):
     features: list[str] = Field(default_factory=list)
 
 
+class PromoPauseRequest(BaseModel):
+    paused: bool = True
+
+
 @router.get("/api/billing/admin/overview")
 async def api_billing_admin_overview(
     x_veksha_admin_secret: Optional[str] = Header(None),
@@ -401,7 +406,28 @@ async def api_billing_promo_create(
         "days": req.days,
         "max_redemptions": req.max_redemptions,
         "features": sorted(selected),
+        "paused": True,
     }
+
+
+@router.put("/api/billing/promo/{code}/pause")
+async def api_billing_promo_pause(
+    code: str,
+    req: PromoPauseRequest,
+    x_veksha_admin_secret: Optional[str] = Header(None),
+) -> dict:
+    await admin_auth(x_veksha_admin_secret)
+    normalized_code = code.strip().upper()
+    if not normalized_code:
+        raise HTTPException(status_code=400, detail="Missing code.")
+    if not db.promo_code_pause(normalized_code, req.paused):
+        raise HTTPException(status_code=404, detail="Promo code not found.")
+    log.info(
+        "[billing] promo code %r %s",
+        normalized_code,
+        "paused" if req.paused else "resumed",
+    )
+    return {"ok": True, "code": normalized_code, "paused": req.paused}
 
 
 class FeaturePriceUpdateRequest(BaseModel):

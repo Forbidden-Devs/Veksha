@@ -360,6 +360,7 @@ export const EN = {
   settings_promo_error_exhausted: "This promo code has already been fully claimed.",
   settings_promo_error_generic: "Could not redeem the promo code. Try again later.",
   settings_promo_error_invalid: "This promo code doesn't exist.",
+  settings_promo_error_paused: "This promo code is temporarily paused.",
   settings_promo_label: "Promo code",
   settings_promo_placeholder: "Enter a promo code",
   settings_promo_submit: "Redeem",

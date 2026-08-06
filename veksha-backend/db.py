@@ -229,13 +229,15 @@ def _conn():
         # grants Premium for `days` via the same subscriptions table payment
         # does. `redemptions` is a denormalized counter capped at
         # `max_redemptions`, kept in sync with promo_redemptions under the
-        # same transaction.
+        # same transaction. New codes start paused so an administrator can
+        # review them before explicitly launching the campaign.
         conn.execute(
             """CREATE TABLE IF NOT EXISTS promo_codes (
                    code            TEXT PRIMARY KEY,
                    days            DOUBLE PRECISION NOT NULL,
                    max_redemptions INTEGER NOT NULL,
                    redemptions     INTEGER NOT NULL DEFAULT 0,
+                   paused          BOOLEAN NOT NULL DEFAULT TRUE,
                    features        TEXT NOT NULL DEFAULT '',
                    created         DOUBLE PRECISION NOT NULL,
                    note            TEXT NOT NULL DEFAULT ''
@@ -244,6 +246,16 @@ def _conn():
         conn.execute(
             "ALTER TABLE promo_codes ADD COLUMN IF NOT EXISTS "
             "features TEXT NOT NULL DEFAULT ''"
+        )
+        # Preserve the behaviour of codes issued before this migration. The
+        # column is initially added with FALSE for their rows, then the default
+        # is changed so only newly issued codes start paused.
+        conn.execute(
+            "ALTER TABLE promo_codes ADD COLUMN IF NOT EXISTS "
+            "paused BOOLEAN NOT NULL DEFAULT FALSE"
+        )
+        conn.execute(
+            "ALTER TABLE promo_codes ALTER COLUMN paused SET DEFAULT TRUE"
         )
         # One row per (code, username): the primary key stops a user from
         # redeeming the same code twice.
@@ -1243,9 +1255,10 @@ def promo_code_redeem(code: str, username: str) -> tuple[str, Optional[float]]:
     """Atomically claim one use of `code` for `username`.
 
     Returns (status, days): status is "ok", "invalid" (unknown code),
-    "exhausted" (all uses already claimed), or "already_redeemed" (this user
-    redeemed this code before). `days` is only set when status == "ok" — the
-    caller still has to grant it via subscription_extend.
+    "paused", "exhausted" (all uses already claimed), or
+    "already_redeemed" (this user redeemed this code before). `days` is only
+    set when status == "ok" — the caller still has to grant it via
+    subscription_extend.
 
     The redemption count is claimed via a conditional UPDATE rather than a
     read-then-write, so two concurrent redemptions of the same code can't
@@ -1254,13 +1267,17 @@ def promo_code_redeem(code: str, username: str) -> tuple[str, Optional[float]]:
     with _conn() as c:
         cur = c.execute(
             "UPDATE promo_codes SET redemptions = redemptions + 1 "
-            "WHERE code=%s AND redemptions < max_redemptions",
+            "WHERE code=%s AND paused=FALSE AND redemptions < max_redemptions",
             (code,),
         )
         if cur.rowcount == 0:
-            exists = c.execute("SELECT 1 FROM promo_codes WHERE code=%s", (code,)).fetchone()
-            if not exists:
+            promo = c.execute(
+                "SELECT paused FROM promo_codes WHERE code=%s", (code,),
+            ).fetchone()
+            if not promo:
                 return "invalid", None
+            if promo[0]:
+                return "paused", None
             # An exhausted code the user themselves redeemed should read as
             # "already redeemed", not "someone claimed it all".
             mine = c.execute(
@@ -1283,6 +1300,16 @@ def promo_code_redeem(code: str, username: str) -> tuple[str, Optional[float]]:
     return "ok", days
 
 
+def promo_code_pause(code: str, paused: bool = True) -> bool:
+    """Pause or resume a promo code. Returns False for an unknown code."""
+    with _conn() as c:
+        cur = c.execute(
+            "UPDATE promo_codes SET paused=%s WHERE code=%s",
+            (paused, code),
+        )
+    return cur.rowcount == 1
+
+
 def promo_code_features(code: str) -> list[str]:
     row = _conn().execute("SELECT features FROM promo_codes WHERE code=%s", (code,)).fetchone()
     if not row or not row[0]:
@@ -1293,7 +1320,7 @@ def promo_code_features(code: str) -> list[str]:
 def promo_codes_get(limit: int = 100) -> list[dict]:
     """Return recent promo codes for the authenticated admin dashboard."""
     rows = _conn().execute(
-        "SELECT code, days, max_redemptions, redemptions, features, created, note "
+        "SELECT code, days, max_redemptions, redemptions, paused, features, created, note "
         "FROM promo_codes ORDER BY created DESC LIMIT %s",
         (max(1, min(limit, 500)),),
     ).fetchall()
@@ -1303,9 +1330,10 @@ def promo_codes_get(limit: int = 100) -> list[dict]:
             "days": row[1],
             "max_redemptions": row[2],
             "redemptions": row[3],
-            "features": json.loads(row[4] or "[]"),
-            "created": row[5],
-            "note": row[6],
+            "paused": bool(row[4]),
+            "features": json.loads(row[5] or "[]"),
+            "created": row[6],
+            "note": row[7],
         }
         for row in rows
     ]
