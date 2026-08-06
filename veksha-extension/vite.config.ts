@@ -12,7 +12,10 @@ import webExtension from "vite-plugin-web-extension";
 const browser = process.env.TARGET_BROWSER === "firefox" ? "firefox" : "chrome";
 
 // Optional path to the browser executable web-ext launches in watch mode
-// (Brave, Zen, …). Set via `scripts/build.mjs --binary <path>`.
+// (Brave, Zen, …). Set via `scripts/build.mjs --binary <path>` or
+// `--app <name>` (resolved per platform by scripts/browser-binary.mjs);
+// empty when that browser is not installed, and web-ext then launches the
+// stock browser of the family.
 const browserBinary = process.env.BROWSER_BINARY;
 
 // Persistent dev profile per launched browser, so the extension keeps its

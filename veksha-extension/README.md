@@ -14,16 +14,20 @@ npm run build            # both targets → dist/chrome + dist/firefox
 npm run build:chrome     # Chrome only
 npm run build:firefox    # Firefox only
 npm run release          # both store ZIPs + AMO source ZIP → artifacts/
-npm run dev              # watch mode, launches Brave with the extension loaded
+npm run dev              # watch mode, launches Zen (Firefox build)
+npm run dev:brave        # watch mode, launches Brave (Chrome build)
 npm run dev:zen          # watch mode, launches Zen (Firefox build)
+npm run dev:chrome       # watch mode, launches stock Chrome
 npm run dev:firefox      # watch mode, launches stock Firefox
 ```
 
-Watch mode auto-launches the browser via web-ext with a fresh profile and
-reloads the extension on rebuild. `dev`/`dev:zen` point at the macOS Brave
-and Zen executables; for another machine, adjust the `--binary` path in
-package.json (or run `node scripts/build.mjs chrome --watch` for the
-default browser of the target family).
+Watch mode auto-launches the browser via web-ext with a persistent profile and
+reloads the extension on rebuild. `dev:brave`/`dev:zen` locate the executable
+on the current OS (`scripts/browser-binary.mjs`: PATH, then the usual macOS /
+Linux / Windows install locations); when that browser is not installed they
+fall back to the stock browser of the same family with a warning. For a
+non-standard install set `BRAVE_BINARY` / `ZEN_BINARY` to its path, or pass
+one explicitly: `node scripts/build.mjs firefox --watch --binary <path>`.
 
 Load in Chrome: `chrome://extensions` → Developer mode → Load unpacked →
 select `veksha-extension/dist/chrome`.
