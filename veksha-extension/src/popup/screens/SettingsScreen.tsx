@@ -26,7 +26,7 @@ function detectNativeLang(): string {
 
 export function SettingsScreen() {
   const { username, settingsMode, navigateTo, openSubscription, setLangPair, signOut, targetLang: appTargetLang, nativeLang: appNativeLang } = useApp(); 
-  const { switchLanguage, translating } = useI18n();
+  const { switchLanguage } = useI18n();
   const t = useT();
 
   const [displayName, setDisplayName] = useState("");
@@ -400,7 +400,6 @@ export function SettingsScreen() {
   }
 
   function btnLabel() {
-    if (translating) return t.settings_translating;
     if (saving) return t.settings_saving;
     return t.settings_save;
   } 
@@ -776,7 +775,7 @@ export function SettingsScreen() {
       </div>
  
       <div className="settings-footer">
-        <button className="btn btn-gradient btn-block" disabled={saving || translating || loadingSettings || !settingsLoaded} onClick={handleSave}>
+        <button className="btn btn-gradient btn-block" disabled={saving || loadingSettings || !settingsLoaded} onClick={handleSave}>
           {btnLabel()}
         </button>
       </div>

@@ -148,13 +148,13 @@ export interface SessionSummary {
 // Goal-oriented lessons
 // ---------------------------------------------------------------------------
 
-export interface ContentSection {
-  icon?: string;
+export type ContentSection = {
   header: string;
-  items?: string[];
-  text?: string;
   highlight: boolean;
-}
+  text?: string;
+  items?: string[];
+  icon?: string;
+};
 
 export interface StepMaterial {
   title: string;

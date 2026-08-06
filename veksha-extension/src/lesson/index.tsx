@@ -1,18 +1,16 @@
-import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { GoalWindow, type GoalTarget } from "../popup/overlays/GoalWindow";
 import { I18nProvider, useT } from "../shared/i18n";
-import { CONFIG } from "../shared/config";
+import { useStoredUsername } from "../shared/useStoredUsername";
+import { initTheme } from "../shared/theme";
+import { StandaloneMessage } from "../shared/StandaloneMessage";
 import "../shared/palette.css";
 import "../popup/styles/index.css";
-import { initTheme } from "../shared/theme";
-
-void initTheme();
 import "../shared/standalone.css";
 
 function LessonApp() {
   const t = useT();
-  const [username, setUsername] = useState<string | null>(null);
+  const username = useStoredUsername();
   const params = new URLSearchParams(window.location.search);
   const goalId = params.get("goal") ?? "";
   const statement = params.get("statement") ?? "";
@@ -22,26 +20,12 @@ function LessonApp() {
       ? { statement }
       : null;
 
-  useEffect(() => {
-    chrome.storage.local.get([CONFIG.STORAGE_KEY_USERNAME], (result) => {
-      setUsername((result[CONFIG.STORAGE_KEY_USERNAME] as string) ?? null);
-    });
-  }, []);
-
   if (!username) {
-    return (
-      <div style={{ padding: 20, fontFamily: "sans-serif", color: "#888" }}>
-        {t.app_loading}
-      </div>
-    );
+    return <StandaloneMessage>{t.app_loading}</StandaloneMessage>;
   }
 
   if (!target) {
-    return (
-      <div style={{ padding: 20, fontFamily: "sans-serif", color: "#888" }}>
-        {t.lesson_err_no_goal}
-      </div>
-    );
+    return <StandaloneMessage>{t.lesson_err_no_goal}</StandaloneMessage>;
   }
 
   return (
@@ -54,8 +38,8 @@ function LessonApp() {
   );
 }
 
-createRoot(document.getElementById("root")!).render(
-  <I18nProvider>
-    <LessonApp />
-  </I18nProvider>
-);
+const host = document.querySelector<HTMLElement>("#root");
+if (!host) throw new Error("Lesson root is missing");
+void initTheme().finally(() => {
+  createRoot(host).render(<I18nProvider><LessonApp /></I18nProvider>);
+});

@@ -135,11 +135,11 @@ def test_unknown_plan_is_400():
 
 def test_feature_gating_and_expiry():
     username = _user("gate")
-    assert entitlements.has_feature(username, "grammar_lens") is False
+    assert entitlements.has_feature(username, "pattern_workshop") is False
     assert entitlements.has_feature(username, "anything_ungated") is True
 
     db.subscription_extend(username, entitlements.TIER_PREMIUM, 31)
-    assert entitlements.has_feature(username, "grammar_lens") is True
+    assert entitlements.has_feature(username, "pattern_workshop") is True
     tier, expires_at = entitlements.subscription_of(username)
     assert tier == "premium" and expires_at is not None
 
@@ -148,10 +148,10 @@ def test_feature_gating_and_expiry():
         c.execute("UPDATE subscriptions SET expires_at=%s WHERE username=%s",
                   (time.time() - 1, username))
     assert entitlements.subscription_of(username) == ("free", None)
-    assert entitlements.has_feature(username, "grammar_lens") is False
+    assert entitlements.has_feature(username, "pattern_workshop") is False
 
     # The gating dependency raises 402 with a machine-readable code.
-    check = entitlements.require_feature("grammar_lens")
+    check = entitlements.require_feature("pattern_workshop")
     try:
         asyncio.run(check(username))
         assert False, "expected 402"
@@ -181,12 +181,12 @@ def test_billing_status_endpoint():
     db.subscription_extend(username, entitlements.TIER_PREMIUM, 31)
     out = asyncio.run(billing.api_billing_status(username))
     assert out.tier == "premium" and out.telegram_linked is True
-    assert "grammar_lens" in out.features
+    assert "pattern_workshop" in out.features
 
 
 def test_feature_checkout_grants_only_selected_features():
     username = _user("feature_checkout")
-    requested = ["grammar_lens", "dual_subtitles"]
+    requested = ["pattern_workshop", "dual_subtitles"]
     link = asyncio.run(billing.api_billing_telegram_link(
         username, billing.TelegramLinkRequest(features=requested),
     ))
@@ -207,9 +207,9 @@ def test_feature_checkout_grants_only_selected_features():
         "plan_id": f"checkout:{link.code}", "stars_amount": 65,
     })
     assert set(paid["features"]) == set(requested)
-    assert entitlements.has_feature(username, "grammar_lens") is True
+    assert entitlements.has_feature(username, "pattern_workshop") is True
     assert entitlements.has_feature(username, "dual_subtitles") is True
-    assert entitlements.has_feature(username, "immersion") is False
+    assert entitlements.has_feature(username, "reading_coach") is False
 
     # The same Telegram charge remains idempotent, while a second charge
     # cannot replay an already completed checkout.
@@ -232,21 +232,21 @@ def test_feature_checkout_grants_only_selected_features():
 
 def test_feature_prices_are_stored_and_admin_mutable():
     catalog = asyncio.run(billing.api_billing_features(_user("catalog")))
-    assert {item.id: item.stars_monthly for item in catalog}["immersion"] == 35
+    assert {item.id: item.stars_monthly for item in catalog}["reading_coach"] == 35
 
     changed = asyncio.run(billing.api_billing_feature_price_update(
-        "immersion", billing.FeaturePriceUpdateRequest(stars_monthly=37),
+        "reading_coach", billing.FeaturePriceUpdateRequest(stars_monthly=37),
         x_veksha_admin_secret=ADMIN_SECRET,
     ))
     assert changed["stars_monthly"] == 37
-    assert {row["feature"]: row["stars_monthly"] for row in db.feature_prices_get()}["immersion"] == 37
-    db.feature_price_set("immersion", 35)
+    assert {row["feature"]: row["stars_monthly"] for row in db.feature_prices_get()}["reading_coach"] == 37
+    db.feature_price_set("reading_coach", 35)
 
 
 def test_subscription_can_be_cancelled():
     username = _user("cancel")
-    db.subscription_extend(username, entitlements.TIER_PREMIUM, 31, ["immersion"])
-    assert entitlements.has_feature(username, "immersion") is True
+    db.subscription_extend(username, entitlements.TIER_PREMIUM, 31, ["reading_coach"])
+    assert entitlements.has_feature(username, "reading_coach") is True
     out = asyncio.run(billing.api_billing_cancel(username))
     assert out.tier == "free" and out.features == [] and out.expires_at is None
 
@@ -309,13 +309,13 @@ def test_promo_can_grant_selected_features_only():
     username = _user("promo_features")
     asyncio.run(billing.api_billing_promo_create(
         billing.PromoCreateRequest(
-            code="GRAMMARONLY", days=10, features=["grammar_lens"],
+            code="GRAMMARONLY", days=10, features=["pattern_workshop"],
         ),
         x_veksha_admin_secret=ADMIN_SECRET,
     ))
     out = _redeem_promo("GRAMMARONLY", username)
     assert out.ok is True
-    assert entitlements.features_of_user(username) == ["grammar_lens"]
+    assert entitlements.features_of_user(username) == ["pattern_workshop"]
 
 def test_promo_redeem_is_single_use_per_account():
     _create_promo("ONETIME", 7, max_redemptions=5)

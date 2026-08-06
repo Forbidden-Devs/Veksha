@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useT } from "../../shared/i18n";
 import { LANGUAGES } from "../../shared/languages";
+import { LanguagePicker } from "../components/LanguagePicker";
 
 export function TargetLangScreen({
   nativeLang,
@@ -18,67 +19,34 @@ export function TargetLangScreen({
   const [selected, setSelected] = useState<string[]>(() => {
     return (initialLangs ?? []).filter((code) => options.some((l) => l.code === code));
   });
-  const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
-  const normalizedQuery = query.trim().toLocaleLowerCase();
-  const visibleOptions = normalizedQuery
-    ? options.filter((language) =>
-        language.name.toLocaleLowerCase().includes(normalizedQuery)
-        || language.code.includes(normalizedQuery)
-      )
-    : options;
 
-  async function handleContinue() {
+  function toggleLanguage(code: string) {
+    setSelected((current) => current.includes(code)
+      ? current.filter((selectedCode) => selectedCode !== code)
+      : current.concat(code));
+  }
+
+  function handleContinue() {
     setLoading(true);
-    try {
-      await onContinue(selected);
-    } finally {
-      setLoading(false);
-    }
+    void onContinue(selected).finally(() => setLoading(false));
   }
 
   return (
-    <section className="screen screen-lang-pick">
-      <div className="lang-pick-header">
+    <LanguagePicker
+      title={t.target_lang_title}
+      subtitle={t.target_lang_subtitle}
+      searchLabel={t.settings_add_language}
+      emptyLabel={t.language_search_no_results}
+      options={options}
+      selectedCodes={new Set(selected)}
+      onSelect={toggleLanguage}
+      headerAction={
         <button className="onboarding-back" type="button" onClick={onBack} disabled={loading}>
           <span aria-hidden="true">←</span> {t.common_back}
         </button>
-        <div className="logo-badge">Ve</div>
-        <h1 className="lang-pick-title">{t.target_lang_title}</h1>
-        <p className="lang-pick-subtitle">{t.target_lang_subtitle}</p>
-      </div>
-
-      <input
-        className="text-input lang-pick-search"
-        type="search"
-        value={query}
-        placeholder={t.settings_add_language}
-        aria-label={t.settings_add_language}
-        onChange={(event) => setQuery(event.target.value)}
-      />
-
-      <div className="lang-pick-grid">
-        {visibleOptions.map((lang) => (
-          <button
-            key={lang.code}
-            className={`lang-card${selected.includes(lang.code) ? " lang-card--selected" : ""}`}
-            aria-pressed={selected.includes(lang.code)}
-            onClick={() => setSelected((current) =>
-              current.includes(lang.code)
-                ? current.filter((code) => code !== lang.code)
-                : [...current, lang.code]
-            )}
-            type="button"
-          >
-            <span className="lang-card-name">{lang.name}</span>
-          </button>
-        ))}
-        {visibleOptions.length === 0 && (
-          <p className="lang-pick-empty">{t.language_search_no_results}</p>
-        )}
-      </div>
-
-      <div className="lang-pick-footer">
+      }
+      footer={
         <button
           className="btn btn-gradient btn-block"
           onClick={handleContinue}
@@ -87,7 +55,7 @@ export function TargetLangScreen({
         >
           {loading ? t.onboarding_loading : t.target_lang_start}
         </button>
-      </div>
-    </section>
+      }
+    />
   );
 }

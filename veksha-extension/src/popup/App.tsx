@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import * as api from "../shared/api";
 import { CONFIG } from "../shared/config";
 import { googleSignIn } from "../shared/googleAuth";
@@ -26,32 +26,36 @@ import { QuizletScreen } from "./screens/QuizletScreen";
 // Content-script relay — sends a message, reinjecting the script if stale
 // ---------------------------------------------------------------------------
 
-async function sendToActiveTab(message: Record<string, unknown>): Promise<"ok" | "restricted" | "error"> {
+type RelayResult = "ok" | "restricted" | "error";
+
+function canHostContentScript(url?: string): boolean {
+  if (!url) return false;
+  return !["chrome:", "chrome-extension:", "moz-extension:", "about:"].includes(new URL(url).protocol);
+}
+
+async function installPageRuntime(tabId: number): Promise<void> {
+  const target = { tabId };
+  await chrome.scripting.executeScript({ target, files: ["src/content/content.js"] });
+  await chrome.scripting.insertCSS({ target, files: ["src/content/content.css"] });
+  await new Promise<void>((resolve) => window.setTimeout(resolve, 150));
+}
+
+async function sendToActiveTab(message: Record<string, unknown>): Promise<RelayResult> {
   if (!isExtension) return "error";
-  const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-  const tab = tabs[0];
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab?.id) return "error";
-
+  if (!canHostContentScript(tab.url)) return "restricted";
   const tabId = tab.id;
-  const url = tab.url ?? "";
-  if (!url || url.startsWith("chrome://") || url.startsWith("chrome-extension://") || url.startsWith("moz-extension://") || url.startsWith("about:")) {
-    return "restricted";
-  }
 
+  const deliver = () => chrome.tabs.sendMessage(tabId, message);
   try {
-    await chrome.tabs.sendMessage(tabId, message);
+    await deliver().catch(async () => {
+      await installPageRuntime(tabId);
+      await deliver();
+    });
     return "ok";
   } catch {
-    // Content script missing or stale — reinject and retry
-    try {
-      await chrome.scripting.executeScript({ target: { tabId }, files: ["src/content/content.js"] });
-      await chrome.scripting.insertCSS({ target: { tabId }, files: ["src/content/content.css"] });
-      await new Promise<void>((r) => setTimeout(r, 150));
-      await chrome.tabs.sendMessage(tabId, message);
-      return "ok";
-    } catch {
-      return "error";
-    }
+    return "error";
   }
 }
 
@@ -60,44 +64,39 @@ async function sendToActiveTab(message: Record<string, unknown>): Promise<"ok" |
 // ---------------------------------------------------------------------------
 
 type ReminderOverlay = "reminder" | null;
-type PremiumFeature = "grammar_lens" | "immersion" | "dual_subtitles";
+type PremiumFeature = "pattern_workshop" | "reading_coach" | "dual_subtitles";
 
-interface AppCtx {
+interface AppState {
   username: string;
   screen: Screen;
-  navigateTo: (s: Screen, opts?: { settingsMode?: SettingsMode }) => void;
   settingsMode: SettingsMode;
   reminderOpen: ReminderOverlay;
+  targetLang: string;
+  nativeLang: string;
+}
+
+interface AppActions {
+  navigateTo: (s: Screen, opts?: { settingsMode?: SettingsMode }) => void;
   openReminder: () => void;
   closeReminder: () => void;
   openTraining: () => void;
   openLesson: (target: GoalTarget, title?: string) => void;
   requirePremiumFeature: (feature: PremiumFeature, featureName: string) => Promise<boolean>;
   openSubscription: (intent?: SubscriptionIntent) => void;
-  targetLang: string;
-  nativeLang: string;
   setLangPair: (targetLang: string, nativeLang: string) => void;
-  /** Clear local credentials and return to onboarding (login/new profile). */
   signOut: () => Promise<void>;
 }
 
+type AppCtx = AppState & AppActions;
+type ObStep = "native_lang" | "username" | "target_lang" | "level_setup";
+
 const AppContext = createContext<AppCtx | null>(null);
 
-export function useApp(): AppCtx {
-  const ctx = useContext(AppContext);
-  if (!ctx) throw new Error("useApp must be used inside AppProvider");
-  return ctx;
-}
-
-// ---------------------------------------------------------------------------
-// Sidebar / topbar (app shell)
-// ---------------------------------------------------------------------------
-
-// ---------------------------------------------------------------------------
-// Root component
-// ---------------------------------------------------------------------------
-
-type ObStep = "native_lang" | "username" | "target_lang" | "level_setup";
+export const useApp = (): AppCtx => {
+  const value = useContext(AppContext);
+  if (value === null) throw new Error("App context is unavailable");
+  return value;
+};
 
 // ---------------------------------------------------------------------------
 // Resumable UI state — the browser closes the action popup on ANY focus loss
@@ -134,6 +133,61 @@ interface GoogleSigninHandoff {
   display_name: string;
   created: boolean;
   ts: number;
+}
+
+interface OnboardingStepProps {
+  step: ObStep;
+  nativeLang: string;
+  displayName: string;
+  targetLangs: string[];
+  levelIndex: number;
+  levelSetup: SavedObState["levelSetup"];
+  onNative: (language: string) => Promise<void>;
+  onName: (name: string) => Promise<void>;
+  onGoogle?: () => Promise<void>;
+  onTargets: (languages: string[]) => Promise<void>;
+  onLevel: (values: { level: string; goals: string; prompt: string }) => Promise<void>;
+  setStep: Dispatch<SetStateAction<ObStep>>;
+  setLevelIndex: Dispatch<SetStateAction<number>>;
+}
+
+function renderOnboardingStep(props: OnboardingStepProps) {
+  switch (props.step) {
+    case "native_lang":
+      return <NativeLangScreen initialLang={props.nativeLang} onContinue={props.onNative} />;
+    case "username":
+      return (
+        <OnboardingScreen
+          initialName={props.displayName}
+          onComplete={props.onName}
+          onGoogle={props.onGoogle}
+          onBack={() => props.setStep("native_lang")}
+        />
+      );
+    case "target_lang":
+      return (
+        <TargetLangScreen
+          nativeLang={props.nativeLang}
+          initialLangs={props.targetLangs}
+          onContinue={props.onTargets}
+          onBack={() => props.setStep("username")}
+        />
+      );
+    case "level_setup": {
+      const language = props.targetLangs[props.levelIndex];
+      return (
+        <LevelSetupScreen
+          key={language}
+          targetLang={language}
+          initialValues={props.levelSetup[language]}
+          onComplete={props.onLevel}
+          onBack={() => props.levelIndex
+            ? props.setLevelIndex((index) => index - 1)
+            : props.setStep("target_lang")}
+        />
+      );
+    }
+  }
 }
 
 async function loadSavedUiState(): Promise<SavedUiState | null> {
@@ -300,24 +354,10 @@ export default function App() {
         switchLanguage(settings.native_lang).catch(() => {});
       }
       if (settings.target_lang) setTargetLang(settings.target_lang);
-      if (!settings.is_onboarded) {
-        setSettingsMode("onboarding");
-        setScreen("settings");
-      } else if (saved) {
-        // Reopened shortly after a focus-loss close — resume where they were.
-        setSettingsMode(saved.settingsMode);
-        // Resume useful destinations while retiring names from previous UI models.
-        const previousScreen = saved.screen as string;
-        setScreen(
-          previousScreen === "chat"
-            ? "translator"
-            : previousScreen === "topics"
-              ? "goals"
-              : saved.screen,
-        );
-      } else {
-        setScreen("home");
-      }
+      const destination = settings.is_onboarded ? saved?.screen ?? "home" : "settings";
+      const mode = settings.is_onboarded ? saved?.settingsMode ?? "menu" : "onboarding";
+      setSettingsMode(mode);
+      setScreen(destination);
       setInitialRouteReady(true);
     } catch (err) {
       // Stale credentials (account wiped server-side) — back to onboarding.
@@ -521,61 +561,33 @@ export default function App() {
     return <div className="app" />;
   }
 
-  // New user — welcome + 4-step onboarding
   if (username === null) {
     return (
       <div className="app">
-        {obStep === "native_lang" && (
-          <NativeLangScreen initialLang={pendingNativeLang} onContinue={handleNativeLangSelected} />
-        )}
-        {obStep === "username" && (
-          <OnboardingScreen
-            initialName={pendingDisplayName}
-            onComplete={handleUsernameEntered}
-            onGoogle={CONFIG.GOOGLE_CLIENT_ID ? handleGoogleSignIn : undefined}
-            onBack={() => setObStep("native_lang")}
-          />
-        )}
-        {obStep === "target_lang" && (
-          <TargetLangScreen
-            nativeLang={pendingNativeLang}
-            initialLangs={pendingTargetLangs}
-            onContinue={handleTargetLangSelected}
-            onBack={() => setObStep("username")}
-          />
-        )}
-        {obStep === "level_setup" && (
-          <LevelSetupScreen
-            key={pendingTargetLangs[pendingLevelIndex]}
-            targetLang={pendingTargetLangs[pendingLevelIndex]}
-            initialValues={pendingLevelSetup[pendingTargetLangs[pendingLevelIndex]]}
-            onComplete={handleLevelSetupComplete}
-            onBack={() => pendingLevelIndex > 0
-              ? setPendingLevelIndex((index) => index - 1)
-              : setObStep("target_lang")}
-          />
-        )}
+        {renderOnboardingStep({
+          step: obStep,
+          nativeLang: pendingNativeLang,
+          displayName: pendingDisplayName,
+          targetLangs: pendingTargetLangs,
+          levelIndex: pendingLevelIndex,
+          levelSetup: pendingLevelSetup,
+          onNative: handleNativeLangSelected,
+          onName: handleUsernameEntered,
+          onGoogle: CONFIG.GOOGLE_CLIENT_ID ? handleGoogleSignIn : undefined,
+          onTargets: handleTargetLangSelected,
+          onLevel: handleLevelSetupComplete,
+          setStep: setObStep,
+          setLevelIndex: setPendingLevelIndex,
+        })}
       </div>
     );
   }
 
-  const ctx: AppCtx = {
-    username,
-    screen,
-    navigateTo,
-    settingsMode,
-    reminderOpen,
-    openReminder,
-    closeReminder,
-    openTraining,
-    openLesson,
-    requirePremiumFeature,
-    openSubscription,
-    targetLang,
-    nativeLang,
-    setLangPair,
-    signOut,
-  };
+  const ctx = {
+    username, screen, settingsMode, reminderOpen, targetLang, nativeLang,
+    navigateTo, openReminder, closeReminder, openTraining, openLesson,
+    requirePremiumFeature, openSubscription, setLangPair, signOut,
+  } satisfies AppCtx;
 
   const pageMeta: Record<string, { title: string; sub: string }> = {
     home: { title: "veksha", sub: "" },

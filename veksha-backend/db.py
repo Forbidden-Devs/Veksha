@@ -264,13 +264,31 @@ def _conn():
                    updated       DOUBLE PRECISION NOT NULL
                )"""
         )
+        # Canonical product identifiers describe the feature users buy. Move
+        # prices from the two retired implementation-era identifiers once,
+        # before inserting defaults for new databases.
+        conn.execute(
+            """INSERT INTO feature_prices (feature, stars_monthly, updated)
+               SELECT CASE feature
+                        WHEN 'grammar_lens' THEN 'pattern_workshop'
+                        WHEN 'immersion' THEN 'reading_coach'
+                      END,
+                      stars_monthly,
+                      updated
+                 FROM feature_prices
+                WHERE feature IN ('grammar_lens', 'immersion')
+               ON CONFLICT (feature) DO NOTHING"""
+        )
+        conn.execute(
+            "DELETE FROM feature_prices WHERE feature IN ('grammar_lens', 'immersion')"
+        )
         now = time.time()
         conn.executemany(
             "INSERT INTO feature_prices (feature, stars_monthly, updated) "
             "VALUES (%s,%s,%s) ON CONFLICT (feature) DO NOTHING",
             [
-                ("grammar_lens", 40, now),
-                ("immersion", 35, now),
+                ("pattern_workshop", 40, now),
+                ("reading_coach", 35, now),
                 ("dual_subtitles", 25, now),
             ],
         )
@@ -288,6 +306,19 @@ def _conn():
                    created          DOUBLE PRECISION NOT NULL
                )"""
         )
+        # Feature selections are JSON arrays stored as text. This one-way data
+        # migration lets the rest of the application speak only in current
+        # product terms; no runtime alias or fallback remains afterward.
+        for table in ("subscriptions", "promo_codes", "billing_checkouts"):
+            conn.execute(
+                f"""UPDATE {table}
+                       SET features = replace(
+                           replace(features, '\"grammar_lens\"', '\"pattern_workshop\"'),
+                           '\"immersion\"', '\"reading_coach\"'
+                       )
+                     WHERE features LIKE '%\"grammar_lens\"%'
+                        OR features LIKE '%\"immersion\"%'"""
+            )
         # Quizlet exports tracking: records which words have been exported to Quizlet
         conn.execute(
             """CREATE TABLE IF NOT EXISTS quizlet_exports (

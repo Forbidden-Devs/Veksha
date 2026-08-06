@@ -6,10 +6,32 @@ const LANGUAGE_LOCALES: Record<string, string> = {
   el: "el-GR", ka: "ka-GE", vi: "vi-VN", th: "th-TH", id: "id-ID",
 };
 
-export function canSpeak(): boolean {
-  return typeof window !== "undefined"
-    && "speechSynthesis" in window
-    && typeof SpeechSynthesisUtterance !== "undefined";
+export const canSpeak = (): boolean => Boolean(
+  typeof window !== "undefined"
+  && window.speechSynthesis
+  && globalThis.SpeechSynthesisUtterance,
+);
+
+function voiceQuality(voice: SpeechSynthesisVoice, locale: string): number {
+  const descriptor = voice.name.toLowerCase();
+  const exactLocale = voice.lang.toLowerCase() === locale.toLowerCase();
+  const natural = /google|microsoft|apple|samantha|daniel|anna|milena/.test(descriptor);
+  const enhanced = /compact|enhanced|natural|premium/.test(descriptor);
+  const novelty = /zarvox|whisper|bells|boing|bubbles|cellos|organ|trinoids/.test(descriptor);
+  return Number(exactLocale) * 20
+    + Number(voice.localService) * 8
+    + Number(natural) * 6
+    + Number(enhanced) * 3
+    - Number(novelty) * 50;
+}
+
+function preferredVoice(synth: SpeechSynthesis, locale: string): SpeechSynthesisVoice | null {
+  const language = locale.split("-", 1)[0].toLowerCase();
+  return synth.getVoices()
+    .filter(({ lang }) => lang.toLowerCase().startsWith(language))
+    .reduce<SpeechSynthesisVoice | null>((best, candidate) => (
+      !best || voiceQuality(candidate, locale) > voiceQuality(best, locale) ? candidate : best
+    ), null);
 }
 
 export function speakText(text: string, languageCode: string): boolean {
@@ -17,26 +39,14 @@ export function speakText(text: string, languageCode: string): boolean {
   if (!cleanText || !canSpeak()) return false;
 
   const locale = LANGUAGE_LOCALES[languageCode] ?? languageCode;
-  const prefix = locale.split("-")[0].toLowerCase();
   const synth = window.speechSynthesis;
   const utterance = new SpeechSynthesisUtterance(cleanText);
-  utterance.lang = locale;
-  utterance.rate = 0.86;
-  utterance.pitch = 1;
-
-  const voices = synth.getVoices();
-  const matching = voices.filter((voice) => voice.lang.toLowerCase().startsWith(prefix));
-  const score = (voice: SpeechSynthesisVoice) => {
-    const name = voice.name.toLowerCase();
-    let value = 0;
-    if (voice.lang.toLowerCase() === locale.toLowerCase()) value += 20;
-    if (voice.localService) value += 8;
-    if (/google|microsoft|apple|samantha|daniel|anna|milena/.test(name)) value += 6;
-    if (/compact|enhanced|natural|premium/.test(name)) value += 3;
-    if (/zarvox|whisper|bells|boing|bubbles|cellos|organ|trinoids/.test(name)) value -= 50;
-    return value;
-  };
-  utterance.voice = matching.sort((a, b) => score(b) - score(a))[0] ?? null;
+  Object.assign(utterance, {
+    lang: locale,
+    rate: 0.86,
+    pitch: 1,
+    voice: preferredVoice(synth, locale),
+  });
 
   synth.cancel();
   synth.speak(utterance);

@@ -79,7 +79,7 @@ export function HomeScreen() {
     setQuickError(false);
     setQuickResult(null);
     try {
-      const result = await api.quickTranslate(username, text, nativeLang, targetLang, true);
+      const result = await api.quickTranslate(text, nativeLang, targetLang, true);
       setQuickResult(result.translation);
       setQuickVocabularyMode(result.vocabulary_mode ?? "saved");
       const [kb, reminders] = await Promise.all([

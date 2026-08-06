@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import * as api from "../../shared/api";
 import { useT } from "../../shared/i18n";
 import { canSpeak, speakText } from "../../shared/speech";
@@ -35,7 +35,6 @@ export function TranslatorScreen() {
     setSheet(EMPTY_SHEET);
     try {
       const response = await api.translate(
-        username,
         source,
         nativeLang,
         targetLang,
@@ -155,12 +154,12 @@ export function TranslatorScreen() {
 function RemindersButton({ username, onOpen }: { username: string; onOpen: () => void }) {
   const t = useT();
   const [hasDue, setHasDue] = useState(false);
-  const checkedRef = useRef(false);
-
   useEffect(() => {
-    if (checkedRef.current) return;
-    checkedRef.current = true;
-    api.getReminders(username).then((result) => setHasDue(result.should_remind)).catch(() => {});
+    let active = true;
+    void api.getReminders(username)
+      .then(({ should_remind }) => { if (active) setHasDue(should_remind); })
+      .catch(() => undefined);
+    return () => { active = false; };
   }, [username]);
 
   async function openIfNeeded() {

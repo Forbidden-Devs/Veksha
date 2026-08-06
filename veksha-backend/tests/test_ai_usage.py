@@ -21,7 +21,7 @@ def test_ai_usage_aggregates_by_user_and_period():
     second = _user("ai_usage_second")
     db.ai_usage_record(first, "translate_selection", "gpt-test", 100, 20, 120, 30, 5)
     db.ai_usage_record(first, "translate_selection", "gpt-test", 50, 10, 60)
-    db.ai_usage_record(second, "grammar_lens", "gpt-smart", 200, 80, 280)
+    db.ai_usage_record(second, "pattern_workshop", "gpt-smart", 200, 80, 280)
 
     stats = db.ai_usage_stats()
     assert stats["all_time"]["requests"] >= 3

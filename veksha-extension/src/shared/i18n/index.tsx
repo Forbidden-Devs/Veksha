@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { LANGUAGES } from "../languages";
 import { storageGet, storageSet } from "../platform";
 import { catalogFor } from "./catalogs";
@@ -19,24 +19,22 @@ interface I18nCtx {
   t: Strings;
   lang: string;
   switchLanguage: (lang: string) => Promise<void>;
-  regenerate: () => Promise<string>;
-  translating: boolean;
 }
 
-const I18nContext = createContext<I18nCtx>({
-  t: EN,
-  lang: "en",
-  switchLanguage: async () => {},
-  regenerate: async () => "en",
-  translating: false,
-});
+const I18nContext = createContext<I18nCtx | null>(null);
+
+function currentI18n(): I18nCtx {
+  const context = useContext(I18nContext);
+  if (!context) throw new Error("I18nProvider is missing");
+  return context;
+}
 
 export function useT(): Strings {
-  return useContext(I18nContext).t;
+  return currentI18n().t;
 }
 
 export function useI18n(): I18nCtx {
-  return useContext(I18nContext);
+  return currentI18n();
 }
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
@@ -51,22 +49,16 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  async function switchLanguage(next: string): Promise<void> {
+  const switchLanguage = useCallback(async (next: string): Promise<void> => {
     const selected = next || "en";
     await storageSet({ [CURRENT_LANG_KEY]: selected });
     setLang(selected);
     setT(catalogFor(selected));
-  }
+  }, []);
+
+  const context = useMemo<I18nCtx>(() => ({ t, lang, switchLanguage }), [lang, switchLanguage, t]);
 
   return (
-    <I18nContext.Provider value={{
-      t,
-      lang,
-      switchLanguage,
-      regenerate: async () => lang,
-      translating: false,
-    }}>
-      {children}
-    </I18nContext.Provider>
+    <I18nContext.Provider value={context}>{children}</I18nContext.Provider>
   );
 }

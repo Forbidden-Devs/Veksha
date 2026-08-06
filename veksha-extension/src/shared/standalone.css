@@ -23,3 +23,12 @@ body,
   border-radius: 0;
   box-shadow: none;
 }
+
+.standalone-message {
+  display: grid;
+  min-height: 100vh;
+  padding: 24px;
+  place-items: center;
+  color: var(--m-dim, #6f6a62);
+  font: 600 14px/1.5 system-ui, sans-serif;
+}

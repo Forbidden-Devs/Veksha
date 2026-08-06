@@ -32,9 +32,9 @@ TIER_PREMIUM = "premium"
 
 # Feature flags gated behind the premium tier. Everything else is free.
 PREMIUM_FEATURES: frozenset[str] = frozenset({
-    "grammar_lens",     # POST /api/grammar-lens/analyze
-    "immersion",        # Stable billing ID for Reading Coach
-    "dual_subtitles",   # POST /api/subtitles/translate
+    "pattern_workshop",
+    "reading_coach",
+    "dual_subtitles",
 })
 
 # Purchasable plans. `stars` is the Telegram Stars (XTR) price; `days` the

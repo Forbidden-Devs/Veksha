@@ -21,7 +21,7 @@ def clean_database():
         connection.execute("DELETE FROM billing_checkouts")
         connection.execute(
             "UPDATE feature_prices SET stars_monthly = CASE feature "
-            "WHEN 'grammar_lens' THEN 40 WHEN 'immersion' THEN 35 "
+            "WHEN 'pattern_workshop' THEN 40 WHEN 'reading_coach' THEN 35 "
             "WHEN 'dual_subtitles' THEN 25 ELSE stars_monthly END"
         )
     yield

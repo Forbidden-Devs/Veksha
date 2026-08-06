@@ -1,5 +1,5 @@
 import { CONFIG } from "../shared/config";
-import { getReminders, getSettings } from "../shared/api";
+import { getReminders } from "../shared/api";
 import { googleLinkAccount, googleSignIn } from "../shared/googleAuth";
 import type { RemindersData } from "../shared/types";
 import { focusSiteForUrl, sessionBlocksUrl, type FocusSession } from "../shared/focusSession";
@@ -132,24 +132,16 @@ chrome.runtime.onConnect.addListener((port) => {
 
 const NOTIFICATION_ID = "veksha-reminder";
 const LAST_REMINDER_AT_KEY = "veksha-last-reminder-at";
-// Level 1-2: at most once per 12h. Level 3 ("frequent"): at most once per hour.
-const NORMAL_REMINDER_INTERVAL_MS = 12 * 60 * 60 * 1000;
-const FREQUENT_REMINDER_INTERVAL_MS = 60 * 60 * 1000;
+const REMINDER_INTERVAL_MS = 12 * 60 * 60 * 1000;
 
-function getStoredUsername(): Promise<string | null> {
-  return new Promise((resolve) => {
-    chrome.storage.local.get([CONFIG.STORAGE_KEY_USERNAME], (result) => {
-      resolve((result[CONFIG.STORAGE_KEY_USERNAME] as string) || null);
-    });
-  });
+async function getStoredUsername(): Promise<string | null> {
+  const values = await chrome.storage.local.get(CONFIG.STORAGE_KEY_USERNAME);
+  const stored = values[CONFIG.STORAGE_KEY_USERNAME];
+  return typeof stored === "string" && stored ? stored : null;
 }
 
 const CTX_TRANSLATE_ID = "veksha-translate-selection";
 const CTX_TRANSLATE_AREA_ID = "veksha-translate-area";
-const FIRST_REVIEW_ALARM = "veksha-first-review";
-const FIRST_WORDS_KEY = "vk_first_words";
-const FIRST_REVIEW_SCHEDULED_KEY = "vk_first_review_scheduled";
-
 async function openRegionCapture(windowId: number): Promise<void> {
   const image = await chrome.tabs.captureVisibleTab(windowId, { format: "png" });
   const token = crypto.randomUUID();
@@ -158,32 +150,17 @@ async function openRegionCapture(windowId: number): Promise<void> {
   await chrome.tabs.create({ url: chrome.runtime.getURL(`src/capture/index.html#${token}`) });
 }
 
-/** After the user's first 3 translated words, call them back for a short
- *  review half an hour later — the "come close the loop" nudge. */
-async function handleFirstWordSaved(): Promise<void> {
-  const st = await chrome.storage.local.get([FIRST_WORDS_KEY, FIRST_REVIEW_SCHEDULED_KEY]);
-  if (st[FIRST_REVIEW_SCHEDULED_KEY]) return;
-  const n = ((st[FIRST_WORDS_KEY] as number) || 0) + 1;
-  await chrome.storage.local.set({ [FIRST_WORDS_KEY]: n });
-  if (n >= 3) {
-    chrome.alarms.create(FIRST_REVIEW_ALARM, { delayInMinutes: 30 });
-    await chrome.storage.local.set({ [FIRST_REVIEW_SCHEDULED_KEY]: true });
-  }
-}
-
-async function fireFirstReview(): Promise<void> {
-  const username = await getStoredUsername();
-  if (!username) return;
+async function deliverSelection(tabId: number, text: string): Promise<void> {
+  const payload = { type: "VEKSHA_TRANSLATE_SELECTION", text };
   try {
-    const result = await getReminders(username);
-    await displayReminder(username, result, true);
+    await chrome.tabs.sendMessage(tabId, payload);
+    return;
   } catch {
-    chrome.notifications.create("veksha-first-review-note", {
-      type: "basic",
-      iconUrl: "icons/icon128.png",
-      title: "Time to review! 💪",
-      message: "Your first words are ready for a quick training.",
-    });
+    const target = { tabId };
+    await chrome.scripting.executeScript({ target, files: ["src/content/content.js"] });
+    await chrome.scripting.insertCSS({ target, files: ["src/content/content.css"] });
+    await new Promise<void>((resolve) => globalThis.setTimeout(resolve, 150));
+    await chrome.tabs.sendMessage(tabId, payload);
   }
 }
 
@@ -191,19 +168,12 @@ chrome.runtime.onInstalled.addListener(() => {
   chrome.alarms.create(CONFIG.REMINDERS_ALARM_NAME, {
     periodInMinutes: CONFIG.REMINDERS_INTERVAL_MINUTES,
   });
-  // Right-click "Translate" on selected text — the reliable way to grab text
-  // from places the page DOM can't reach (e.g. Chrome's built-in PDF viewer).
   chrome.contextMenus.removeAll(() => {
-    chrome.contextMenus.create({
-      id: CTX_TRANSLATE_ID,
-      title: "Translate selection with Veksha",
-      contexts: ["selection"],
-    });
-    chrome.contextMenus.create({
-      id: CTX_TRANSLATE_AREA_ID,
-      title: "Translate an area with Veksha",
-      contexts: ["page", "image"],
-    });
+    const entries: chrome.contextMenus.CreateProperties[] = [
+      { id: CTX_TRANSLATE_ID, title: "Translate selection with Veksha", contexts: ["selection"] },
+      { id: CTX_TRANSLATE_AREA_ID, title: "Translate an area with Veksha", contexts: ["page", "image"] },
+    ];
+    entries.forEach((entry) => chrome.contextMenus.create(entry));
   });
 });
 
@@ -215,24 +185,10 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId !== CTX_TRANSLATE_ID || !tab?.id) return;
   const text = (info.selectionText ?? "").trim();
   if (!text) return;
-  const message = { type: "VEKSHA_TRANSLATE_SELECTION", text };
-  try {
-    await chrome.tabs.sendMessage(tab.id, message);
-  } catch {
-    try {
-      await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ["src/content/content.js"] });
-      await chrome.scripting.insertCSS({ target: { tabId: tab.id }, files: ["src/content/content.css"] });
-      await new Promise<void>((resolve) => setTimeout(resolve, 150));
-      await chrome.tabs.sendMessage(tab.id, message);
-    } catch {}
-  }
+  await deliverSelection(tab.id, text).catch(() => undefined);
 });
 
 chrome.alarms.onAlarm.addListener(async (alarm) => {
-  if (alarm.name === FIRST_REVIEW_ALARM) {
-    await fireFirstReview();
-    return;
-  }
   if (alarm.name !== CONFIG.REMINDERS_ALARM_NAME) return;
 
   const username = await getStoredUsername();
@@ -240,17 +196,12 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
 
   try {
     const result = await getReminders(username);
-    if (result.should_remind) await displayReminder(username, result);
+    if (result.should_remind) await displayReminder(result);
   } catch {}
 });
 
-async function displayReminder(username: string, result: RemindersData, force = false) {
-  let level = 2;
-  try {
-    const settings = await getSettings(username);
-    level = settings.reminder_level ?? 2;
-  } catch {}
-  if (!force && !(await shouldShowReminderNow(level))) return;
+async function displayReminder(result: RemindersData, force = false) {
+  if (!force && !(await shouldShowReminderNow())) return;
 
   // Review reminders are notifications only. Full-page intervention belongs
   // exclusively to a deliberately started Study Focus Session.
@@ -276,25 +227,29 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   });
 });
 
-function showReminderNotification(result: { due_words: number; due_goal: string | null; due_word_names?: string[] }) {
-  const parts: string[] = [];
-  if (result.due_words > 0) parts.push(`${result.due_words} word${result.due_words === 1 ? "" : "s"} to review`);
-  if (result.due_goal) parts.push(`an unfinished objective "${result.due_goal}"`);
-  const message = parts.length ? `You have ${parts.join(" and ")}.` : "You have words to review.";
+function showReminderNotification(result: Pick<RemindersData, "due_words" | "due_goal">) {
+  const wordNote = result.due_words
+    ? `${result.due_words} ${result.due_words === 1 ? "word" : "words"} to review`
+    : "";
+  const goalNote = result.due_goal ? `objective “${result.due_goal}” waiting` : "";
+  const due = [wordNote, goalNote].filter(Boolean).join(" · ");
 
-  chrome.notifications.create(NOTIFICATION_ID, {
+  const notification: chrome.notifications.NotificationOptions<true> = {
     type: "basic",
     iconUrl: "icons/icon128.png",
     title: "Time to practice! \u{1F4AA}",
-    message,
-  });
+    message: due || "Your scheduled practice is ready.",
+  };
+  chrome.notifications.create(NOTIFICATION_ID, notification);
 }
 
-chrome.notifications.onClicked.addListener((notificationId) => {
+function openReminderFromNotification(notificationId: string): void {
   if (notificationId !== NOTIFICATION_ID) return;
-  chrome.notifications.clear(notificationId);
+  void chrome.notifications.clear(notificationId);
   chrome.action?.openPopup?.().catch(() => {});
-});
+}
+
+chrome.notifications.onClicked.addListener(openReminderFromNotification);
 
 chrome.runtime.onMessage.addListener((msg: Record<string, unknown>, _sender, sendResponse) => {
   if (msg.type === "VEKSHA_START_REGION_CAPTURE") {
@@ -476,40 +431,15 @@ chrome.runtime.onMessage.addListener((msg: Record<string, unknown>, _sender, sen
     return true;
   }
 
-  if (msg.type === "VEKSHA_WORD_SAVED") {
-    void handleFirstWordSaved();
-    sendResponse({ ok: true });
-    return false;
-  }
-
-  if (msg.type === "DEBUG_SHOW_REMINDER") {
-    const result = msg.reminder as { due_words: number; due_word_names?: string[]; due_goal: string | null; should_remind: boolean };
-    // Debug button: always fire the reminder so the user can test notifications,
-    // regardless of whether words are actually due (should_remind).
-    getStoredUsername()
-      .then((username) => {
-        if (!username) return;
-        return displayReminder(username, {
-          ...result,
-          due_word_names: result.due_word_names ?? [],
-          poll_interval_minutes: CONFIG.REMINDERS_INTERVAL_MINUTES,
-        } as RemindersData, true);
-      })
-      .then(() => sendResponse({ ok: true, shown: true }))
-      .catch((err) => sendResponse({ ok: false, error: String(err) }));
-    return true;
-  }
-
   return false;
 });
 
-async function shouldShowReminderNow(level: number): Promise<boolean> {
-  const interval = level >= 3 ? FREQUENT_REMINDER_INTERVAL_MS : NORMAL_REMINDER_INTERVAL_MS;
+async function shouldShowReminderNow(): Promise<boolean> {
   const stored = await chrome.storage.local.get([LAST_REMINDER_AT_KEY])
     .catch(() => ({}) as Record<string, unknown>);
   const last = Number((stored as Record<string, unknown>)[LAST_REMINDER_AT_KEY] ?? 0);
   const now = Date.now();
-  if (last && now - last < interval) return false;
+  if (last && now - last < REMINDER_INTERVAL_MS) return false;
 
   await chrome.storage.local.set({ [LAST_REMINDER_AT_KEY]: now }).catch(() => {});
   return true;

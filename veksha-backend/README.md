@@ -80,7 +80,7 @@ retained only so existing purchases continue to unlock Reading Coach.
 Pattern Workshop analysis is independently implemented and grounds every segment
 and annotation in the submitted text before saving examples. Its model is
 selected through `VEKSHA_CORE_V2_GRAMMAR_MODEL` (default `gpt-5.6-luna`). The
-existing `POST /api/grammar-lens/analyze` route and `grammar_lens` entitlement
+the Pattern Workshop API and its `pattern_workshop` entitlement
 remain compatible.
 
 Dual subtitles use the rewritten structured-output translator. Alignment is
@@ -182,7 +182,7 @@ testers), mint a promo code with `ADMIN_API_SECRET` set and:
 ```
 curl -X POST $API/api/billing/promo/create \
   -H "X-Veksha-Admin-Secret: $ADMIN_API_SECRET" -H "Content-Type: application/json" \
-  -d '{"code": "BETA30", "days": 30, "max_redemptions": 20, "features": ["grammar_lens"]}'
+  -d '{"code": "BETA30", "days": 30, "max_redemptions": 20, "features": ["pattern_workshop"]}'
 ```
 
 Users redeem it once each via `POST /api/billing/promo/redeem` (Bearer

@@ -104,7 +104,7 @@ def _clean_expired_drafts(now: float) -> None:
 @router.post(
     "/api/pattern-workshop/analyze",
     response_model=AnalyzeResponse,
-    dependencies=[Depends(require_feature("grammar_lens"))],
+    dependencies=[Depends(require_feature("pattern_workshop"))],
 )
 async def analyze_pattern_workshop(req: AnalyzeRequest, username: CurrentUser) -> AnalyzeResponse:
     storage = get_storage(username)
@@ -159,7 +159,7 @@ async def analyze_pattern_workshop(req: AnalyzeRequest, username: CurrentUser) -
 @router.post(
     "/api/pattern-workshop/complete",
     response_model=SkillResponse,
-    dependencies=[Depends(require_feature("grammar_lens"))],
+    dependencies=[Depends(require_feature("pattern_workshop"))],
 )
 async def complete_pattern_workshop(req: CompleteRequest, username: CurrentUser) -> SkillResponse:
     now = time.time()
@@ -197,7 +197,7 @@ async def complete_pattern_workshop(req: CompleteRequest, username: CurrentUser)
 @router.post(
     "/api/pattern-workshop/error-drafts",
     response_model=AnalyzeResponse,
-    dependencies=[Depends(require_feature("grammar_lens"))],
+    dependencies=[Depends(require_feature("pattern_workshop"))],
 )
 async def create_error_draft(req: ErrorDraftRequest, username: CurrentUser) -> AnalyzeResponse:
     """Turn a learner error into a temporary workshop draft, not a saved skill."""
@@ -240,7 +240,7 @@ async def create_error_draft(req: ErrorDraftRequest, username: CurrentUser) -> A
 @router.get(
     "/api/pattern-workshop/skills",
     response_model=list[SkillResponse],
-    dependencies=[Depends(require_feature("grammar_lens"))],
+    dependencies=[Depends(require_feature("pattern_workshop"))],
 )
 async def pattern_workshop_skills(username: CurrentUser) -> list[SkillResponse]:
     storage = get_storage(username)

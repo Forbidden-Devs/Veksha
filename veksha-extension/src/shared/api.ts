@@ -18,8 +18,8 @@ import type {
 // The bearer token is issued once by POST /api/auth/register and stored in
 // chrome.storage.local. Every context (popup, content script, background)
 // reads it lazily from storage and caches it in-module.
-// The legacy `username` parameters on the functions below are kept so call
-// sites stay unchanged — the server derives the user from the token.
+// Identity never travels in request bodies or query strings: the server
+// derives the account exclusively from the bearer token.
 // ---------------------------------------------------------------------------
 
 let _token: string | null = null;
@@ -94,11 +94,11 @@ async function _request(
   try {
     const res = await fetch(`${CONFIG.BACKEND_URL}${path}`, { ...init, signal: controller.signal });
     return { ok: res.ok, status: res.status, text: await res.text() };
-  } catch (err) {
-    if ((err as Error).name === "AbortError") {
+  } catch (error) {
+    if (controller.signal.aborted) {
       throw new Error(`${path} timed out after ${Math.round(timeoutMs / 1000)}s`);
     }
-    throw err;
+    throw error;
   } finally {
     clearTimeout(timer);
   }
@@ -224,7 +224,7 @@ export function getBillingStatus(): Promise<BillingStatus> {
 }
 
 export interface BillingFeature {
-  id: "grammar_lens" | "immersion" | "dual_subtitles";
+  id: "pattern_workshop" | "reading_coach" | "dual_subtitles";
   stars_monthly: number;
 }
 
@@ -261,7 +261,6 @@ export function redeemPromoCode(code: string): Promise<PromoRedeemResult> {
 // ---------------------------------------------------------------------------
 
 export function translate(
-  username: string,
   text: string,
   sourceLang: string,
   targetLang: string,
@@ -276,7 +275,6 @@ export function translate(
 }
 
 export async function quickTranslate(
-  username: string,
   text: string,
   sourceLang: string,
   targetLang: string,

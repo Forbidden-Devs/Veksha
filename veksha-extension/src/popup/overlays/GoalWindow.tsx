@@ -3,6 +3,9 @@ import * as api from "../../shared/api";
 import { CONFIG } from "../../shared/config";
 import { useT } from "../../shared/i18n";
 import { createSessionSocket, type SessionSocket } from "../../shared/wsProxy";
+import { OverlayHeader } from "../components/OverlayHeader";
+import { RichText } from "../components/RichText";
+import { feedbackTone } from "../components/trainingPresentation";
 import type {
   ActivityKind,
   ContentSection,
@@ -33,33 +36,20 @@ function initPayload(target: GoalTarget): Record<string, unknown> {
     : { type: "init", statement: target.statement, material: target.material ?? "" };
 }
 
-function sanitize(text: string): string {
-  return text
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-    .replace(/\r\n|\r|\n/g, "<br>");
-}
-
-function outcomeClass(outcome: TrainingOutcome): string {
-  if (outcome === "correct") return "feedback-correct";
-  if (outcome === "incorrect" || outcome === "garbage") return "feedback-incorrect";
-  return "feedback-vague";
-}
-
-function SectionView({ s }: { s: ContentSection }) {
+function SectionView({ section }: { section: ContentSection }) {
   return (
-    <div className={`lesson-section${s.highlight ? " lesson-section-hl" : ""}`}>
-      <div className="lesson-section-header">
-        {s.icon && <span className="lesson-section-icon">{s.icon}</span>}
-        <strong>{s.header}</strong>
-      </div>
-      {s.items && s.items.length > 0 && (
+    <section className={`lesson-section${section.highlight ? " lesson-section-hl" : ""}`}>
+      <h3 className="lesson-section-header">
+        {section.icon && <span className="lesson-section-icon" aria-hidden="true">{section.icon}</span>}
+        {section.header}
+      </h3>
+      {!!section.items?.length && (
         <ul className="lesson-section-items">
-          {s.items.map((item, i) => <li key={i}>{item}</li>)}
+          {section.items.map((item) => <li key={item}>{item}</li>)}
         </ul>
       )}
-      {s.text && <p className="lesson-section-text">{s.text}</p>}
-    </div>
+      {section.text && <p className="lesson-section-text">{section.text}</p>}
+    </section>
   );
 }
 
@@ -68,7 +58,9 @@ function MaterialView({ material }: { material: StepMaterial }) {
     <div className="lesson-block-content">
       <h2 className="lesson-block-title">{material.title}</h2>
       {material.intro && <p className="lesson-block-intro">{material.intro}</p>}
-      {material.sections.map((s, i) => <SectionView key={i} s={s} />)}
+      {material.sections.map((section, index) => (
+        <SectionView key={`${index}:${section.header}`} section={section} />
+      ))}
     </div>
   );
 }
@@ -215,31 +207,32 @@ export function GoalWindow({
   const minutesLeft = Math.max(0, Math.ceil(budget.minutes - budget.spent / 60));
   const activityLabel = step ? ACTIVITY_LABEL(t, step.activity) : "";
   const causeLabel = result && result.outcome !== "garbage" ? CAUSE_LABEL(t, result.cause) : "";
+  const submitLabel = isChecking
+    ? t.training_checking
+    : isFeedback ? t.lesson_next_step : t.training_check;
 
   return (
-    <div className="lesson-overlay">
+    <section className="lesson-overlay" aria-label={statement}>
 
-      <div className="lesson-header" data-drag-handle>
-        <div className="logo-badge logo-badge-sm">Ve</div>
-        <span className="lesson-header-title">{statement}</span>
-        <button className="icon-btn" style={{ marginLeft: "auto" }} aria-label="Close" onClick={onClose}>
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M18 6L6 18M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
+      <OverlayHeader
+        headerClass="lesson-header"
+        titleClass="lesson-header-title"
+        title={statement}
+        closeLabel={t.training_close}
+        onClose={onClose}
+      />
 
       {phase === "framing" && (
-        <div className="lesson-center">
+        <section className="lesson-center" aria-live="polite">
           <p className="lesson-status">{t.lesson_framing}</p>
-        </div>
+        </section>
       )}
 
       {phase === "error" && (
-        <div className="lesson-center">
+        <section className="lesson-center" role="alert">
           <p className="lesson-status lesson-status-error">{errorMsg}</p>
-          <button className="btn btn-gradient" onClick={onClose}>{t.training_close}</button>
-        </div>
+          <button type="button" className="btn btn-gradient" onClick={onClose}>{t.training_close}</button>
+        </section>
       )}
 
       {phase === "summary" && report && (
@@ -253,10 +246,7 @@ export function GoalWindow({
                   : t.lesson_summary_stopped}
             </h2>
             {report.narrative && (
-              <p
-                className="lesson-block-intro"
-                dangerouslySetInnerHTML={{ __html: sanitize(report.narrative) }}
-              />
+              <p className="lesson-block-intro"><RichText text={report.narrative} /></p>
             )}
 
             <ReportList title={t.lesson_summary_proven} entries={report.proven} t={t} />
@@ -363,16 +353,13 @@ export function GoalWindow({
             </div>
 
             {step && (
-              <p
-                className="lesson-question"
-                dangerouslySetInnerHTML={{ __html: sanitize(step.question) }}
-              />
+              <p className="lesson-question"><RichText text={step.question} /></p>
             )}
 
             {result && (
-              <div className={`training-feedback ${outcomeClass(result.outcome)}`}>
+              <div className={`training-feedback ${feedbackTone(result.outcome)}`}>
                 {causeLabel && <span className="goal-cause-chip">{causeLabel}</span>}
-                <span dangerouslySetInnerHTML={{ __html: sanitize(result.feedback) }} />
+                <span><RichText text={result.feedback} /></span>
               </div>
             )}
 
@@ -397,18 +384,19 @@ export function GoalWindow({
                 </div>
 
                 <button
+                  type="button"
                   className="btn btn-gradient btn-block"
                   onClick={isFeedback ? nextStep : submitAnswer}
                   disabled={isChecking || (isAsking && !answer.trim())}
                 >
-                  {isChecking ? t.training_checking : isFeedback ? t.lesson_next_step : t.training_check}
+                  {submitLabel}
                 </button>
               </>
             )}
           </div>
         </>
       )}
-    </div>
+    </section>
   );
 }
 

@@ -24,6 +24,15 @@ export function StatisticsScreen() {
     return String(n);
   }
 
+  const cards = [
+    [summary?.learning_count, t.stats_in_progress],
+    [summary?.known_count, t.stats_known],
+    [summary?.goals_count, t.stats_topics],
+    [reminders?.due_words, t.stats_ready],
+    [summary?.anki_reviews, t.stats_anki_reviews],
+    [summary?.training_reviews, t.stats_training_reviews],
+  ] as const;
+
   return (
     <section className="screen screen-statistics">
       <header className="menu-header">
@@ -31,32 +40,13 @@ export function StatisticsScreen() {
       </header>
 
       <div className="stats-cards">
-        <div className="stat-card">
-          <div className="stat-value">{val(summary?.learning_count)}</div>
-          <div className="stat-label">{t.stats_in_progress}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-value">{val(summary?.known_count)}</div>
-          <div className="stat-label">{t.stats_known}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-value">{val(summary?.goals_count)}</div>
-          <div className="stat-label">{t.stats_topics}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-value">{val(reminders?.due_words)}</div>
-          <div className="stat-label">{t.stats_ready}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-value">{val(summary?.anki_reviews)}</div>
-          <div className="stat-label">{t.stats_anki_reviews}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-value">{val(summary?.training_reviews)}</div>
-          <div className="stat-label">{t.stats_training_reviews}</div>
-        </div>
+        {cards.map(([value, label]) => (
+          <article className="stat-card" key={label}>
+            <strong className="stat-value">{val(value)}</strong>
+            <span className="stat-label">{label}</span>
+          </article>
+        ))}
       </div>
-
     </section>
   );
 }

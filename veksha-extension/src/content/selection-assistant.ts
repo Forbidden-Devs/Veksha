@@ -202,11 +202,11 @@ export class SelectionAssistant {
     const username = await this.session.getUsername();
     if (!username) throw new Error("profile required");
     const nativeTarget = this.session.nativeLang || this.session.translationState.targetLang;
-    const first = await quickTranslate(username, text, "auto", nativeTarget, false, location.href);
+    const first = await quickTranslate(text, "auto", nativeTarget, false, location.href);
     const detected = (first.detected_source_lang || "").toLowerCase();
     const studied = this.session.studiedLang.toLowerCase();
     if (detected && studied && studied !== nativeTarget.toLowerCase() && detected === nativeTarget.toLowerCase()) {
-      const reverse = await quickTranslate(username, text, "auto", studied, false, location.href);
+      const reverse = await quickTranslate(text, "auto", studied, false, location.href);
       return { text: reverse.translation, detected, target: studied };
     }
     return { text: first.translation, detected, target: nativeTarget };

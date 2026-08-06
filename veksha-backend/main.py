@@ -47,41 +47,39 @@ log = logging.getLogger(__name__)
 
 app = FastAPI(title="Veksha Backend", version="0.1.0")
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=CORS_ALLOW_ORIGINS,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+def configure_http(application: FastAPI) -> None:
+    application.add_middleware(
+        CORSMiddleware,
+        allow_origins=CORS_ALLOW_ORIGINS,
+        allow_methods=("GET", "POST", "PUT", "DELETE", "OPTIONS"),
+        allow_headers=("Authorization", "Content-Type", "X-Veksha-Admin-Secret", "X-Veksha-Bot-Secret"),
+    )
+
+
+configure_http(app)
 
 
 @app.get("/healthz", include_in_schema=False)
 async def healthz():
-    """Lightweight deployment healthcheck without external API calls."""
+    """Probe only the durable dependency required to serve user state."""
     try:
         db.healthcheck()
-    except Exception:
-        log.exception("Backend healthcheck failed")
-        return JSONResponse(
-            status_code=503,
-            content={"status": "unhealthy", "service": "backend"},
-        )
-    return {
-        "status": "ok",
-        "service": "backend",
-        "revision": os.getenv("VEKSHA_REVISION", "local"),
-    }
+    except Exception as error:
+        log.warning("Database health probe failed: %s", type(error).__name__)
+        return JSONResponse(status_code=503, content={"status": "unavailable"})
+    return {"status": "ok", "revision": os.getenv("VEKSHA_REVISION", "local")}
 
 
 @app.exception_handler(Exception)
 async def _unhandled(request: Request, exc: Exception):
     """Fallback handler so unhandled 500s carry CORS headers."""
-    origin = request.headers.get("origin", "*")
-    log.error("Unhandled exception on %s: %s", request.url.path, exc, exc_info=True)
+    origin = request.headers.get("origin")
+    incident = type(exc).__name__
+    log.exception("Unhandled %s on %s", incident, request.url.path)
     return JSONResponse(
         status_code=500,
-        content={"detail": f"{type(exc).__name__}: {exc}"},
-        headers={"Access-Control-Allow-Origin": origin},
+        content={"detail": "Internal server error", "incident": incident},
+        headers={"Access-Control-Allow-Origin": origin} if origin else {},
     )
 
 

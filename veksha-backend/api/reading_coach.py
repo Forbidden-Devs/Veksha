@@ -171,7 +171,7 @@ async def analyze_reading(req: ReadingCoachRequest, username: CurrentUser) -> Re
 @router.post(
     "/api/reading-coach/paragraph-help",
     response_model=ParagraphHelpResponse,
-    dependencies=[Depends(require_feature("immersion"))],
+    dependencies=[Depends(require_feature("reading_coach"))],
 )
 async def help_with_paragraph(
     req: ParagraphHelpRequest, username: CurrentUser
@@ -210,7 +210,7 @@ async def help_with_paragraph(
 @router.post(
     "/api/reading-coach/comprehension/question",
     response_model=ComprehensionQuestionResponse,
-    dependencies=[Depends(require_feature("immersion"))],
+    dependencies=[Depends(require_feature("reading_coach"))],
 )
 async def create_comprehension_question(
     req: ComprehensionQuestionRequest, username: CurrentUser
@@ -244,7 +244,7 @@ async def create_comprehension_question(
 @router.post(
     "/api/reading-coach/comprehension/check",
     response_model=ComprehensionAnswerResponse,
-    dependencies=[Depends(require_feature("immersion"))],
+    dependencies=[Depends(require_feature("reading_coach"))],
 )
 async def check_comprehension_answer(
     req: ComprehensionAnswerRequest, username: CurrentUser
@@ -274,7 +274,7 @@ async def check_comprehension_answer(
 @router.post(
     "/api/reading-coach/prepare",
     response_model=PrepareReadingResponse,
-    dependencies=[Depends(require_feature("immersion"))],
+    dependencies=[Depends(require_feature("reading_coach"))],
 )
 async def prepare_reading(req: PrepareReadingRequest, username: CurrentUser) -> PrepareReadingResponse:
     storage = get_storage(username)

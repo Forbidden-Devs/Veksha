@@ -17,6 +17,9 @@ import { CONFIG } from "../../shared/config";
 import { useT } from "../../shared/i18n";
 import { canSpeak, speakText } from "../../shared/speech";
 import { createSessionSocket, type SessionSocket } from "../../shared/wsProxy";
+import { OverlayHeader } from "../components/OverlayHeader";
+import { RichText } from "../components/RichText";
+import { feedbackTone } from "../components/trainingPresentation";
 import type {
   FsrsRating,
   PracticeReason,
@@ -46,19 +49,6 @@ interface CheckResult {
   suggestedRating: FsrsRating | null;
 }
 
-function sanitize(text: string): string {
-  return text
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-    .replace(/\r\n|\r|\n/g, "<br>");
-}
-
-function outcomeClass(outcome: TrainingOutcome): string {
-  if (outcome === "correct") return "feedback-correct";
-  if (outcome === "incorrect" || outcome === "garbage") return "feedback-incorrect";
-  return "feedback-vague";
-}
-
 export function PracticePlannerWindow({
   username,
   onClose,
@@ -77,6 +67,11 @@ export function PracticePlannerWindow({
   const [skills, setSkills] = useState<SkillProgress[]>([]);
   const [summary, setSummary] = useState<SessionSummary | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
+
+  function fail(message: string) {
+    setErrorMsg(message);
+    setPhase("error");
+  }
 
   const wsRef = useRef<SessionSocket | null>(null);
   const taskRef = useRef<TrainingTask | null>(null);
@@ -138,14 +133,12 @@ export function PracticePlannerWindow({
 
       ws.onerror = () => {
         if (phaseRef.current === "loading") {
-          setPhase("error");
-          setErrorMsg(t.training_err_connect);
+          fail(t.training_err_connect);
         }
       };
 
-    } catch (err) {
-      setPhase("error");
-      setErrorMsg(String(err));
+    } catch (error) {
+      fail(error instanceof Error ? error.message : t.training_err_connect);
     }
   }
 
@@ -285,24 +278,15 @@ export function PracticePlannerWindow({
   return (
     <div className="training-window">
 
-      <div className="training-window-header" data-drag-handle>
-        <div className="logo-badge logo-badge-sm">Ve</div>
-        <span className="training-window-title">{t.practice_title}</span>
-        <button className="icon-btn" style={{ marginLeft: "auto" }} aria-label="Close" onClick={onClose}>
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M18 6L6 18M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
+      <OverlayHeader
+        headerClass="training-window-header"
+        titleClass="training-window-title"
+        title={t.practice_title}
+        closeLabel={t.training_close}
+        onClose={onClose}
+      />
 
-      {phase !== "empty" && phase !== "error" && (
-        <div className="training-progress-row" style={{ padding: "8px 14px 0" }}>
-          <div className="training-progress-track">
-            <div className="training-progress-fill" style={{ width: `${pct}%` }} />
-          </div>
-          <span className="training-progress-label">{progress.done} / {progress.target}</span>
-        </div>
-      )}
+      {phase !== "empty" && phase !== "error" && <PracticeProgress percent={pct} {...progress} />}
 
       {skills.length > 0 && phase !== "empty" && phase !== "error" && (
         <div className="practice-skillbar">
@@ -320,15 +304,9 @@ export function PracticePlannerWindow({
         </div>
       )}
 
-      <div className="training-window-body">
-
-        {phase === "loading" && (
-          <p className="training-window-status">{t.practice_planning}</p>
-        )}
-
-        {phase === "error" && (
-          <p className="training-window-status training-window-error">{errorMsg}</p>
-        )}
+      <main className="training-window-body">
+        {phase === "loading" && <PracticeStatus>{t.practice_planning}</PracticeStatus>}
+        {phase === "error" && <PracticeStatus error>{errorMsg}</PracticeStatus>}
 
         {phase === "done" && summary && (
           <SessionReport
@@ -342,7 +320,9 @@ export function PracticePlannerWindow({
           <div className="training-empty">
             <div className="training-empty-icon">📚</div>
             <p className="training-window-status">{t.training_empty}</p>
-            <button className="btn btn-gradient btn-block" onClick={onClose}>{t.training_close}</button>
+            <button type="button" className="btn btn-gradient btn-block" onClick={onClose}>
+              {t.training_close}
+            </button>
           </div>
         )}
 
@@ -364,10 +344,7 @@ export function PracticePlannerWindow({
 
             <p className="practice-why">{reasonText(task.reason)}</p>
 
-            <p
-              className="training-prompt"
-              dangerouslySetInnerHTML={{ __html: sanitize(task.question) }}
-            />
+            <p className="training-prompt"><RichText text={task.question} /></p>
 
             {task.audio_text && (
               <button
@@ -380,11 +357,8 @@ export function PracticePlannerWindow({
             )}
 
             {checkResult && (
-              <div className={`training-feedback practice-feedback ${outcomeClass(checkResult.outcome)}`}>
-                <div
-                  className="practice-feedback-text"
-                  dangerouslySetInnerHTML={{ __html: sanitize(checkResult.feedback) }}
-                />
+              <div className={`training-feedback practice-feedback ${feedbackTone(checkResult.outcome)}`}>
+                <div className="practice-feedback-text"><RichText text={checkResult.feedback} /></div>
                 {checkResult.expectedAnswer && (
                   <div className="practice-expected">
                     {t.practice_expected_answer}: <strong>{checkResult.expectedAnswer}</strong>
@@ -465,26 +439,42 @@ export function PracticePlannerWindow({
               </div>
             )}
 
-            {!isChoice || isFeedback ? (
+            {(!isChoice || isFeedback) && (
               <button
+                type="button"
                 className="btn btn-gradient btn-block"
                 onClick={isFeedback ? commit : () => submitAnswer()}
                 disabled={isChecking || (isAsking && !answer.trim())}
               >
                 {isChecking ? t.training_checking : isFeedback ? t.training_next : t.training_check}
               </button>
-            ) : null}
+            )}
 
             {task.counter === -1 && isAsking && (
-              <button className="btn btn-ghost btn-block" onClick={markKnown}>
+              <button type="button" className="btn btn-ghost btn-block" onClick={markKnown}>
                 {t.training_already_know}
               </button>
             )}
           </>
         )}
-      </div>
+      </main>
     </div>
   );
+}
+
+function PracticeProgress({ done, target, percent }: { done: number; target: number; percent: number }) {
+  return (
+    <div className="training-progress-row" style={{ padding: "8px 14px 0" }}>
+      <div className="training-progress-track" role="progressbar" aria-valuenow={done} aria-valuemax={target}>
+        <span className="training-progress-fill" style={{ width: `${percent}%` }} />
+      </div>
+      <span className="training-progress-label">{done} / {target}</span>
+    </div>
+  );
+}
+
+function PracticeStatus({ children, error = false }: { children: string; error?: boolean }) {
+  return <p className={`training-window-status${error ? " training-window-error" : ""}`}>{children}</p>;
 }
 
 function SessionReport({

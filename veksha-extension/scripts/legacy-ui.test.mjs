@@ -24,8 +24,10 @@ function longestMatchingBlock(left, right) {
   return longest;
 }
 
-function committedSource(relativePath) {
-  return execFileSync("git", ["show", `HEAD:veksha-extension/${relativePath}`], {
+const CLEAN_ROOM_BASELINE = "2d6393b";
+
+function legacySource(relativePath) {
+  return execFileSync("git", ["show", `${CLEAN_ROOM_BASELINE}:veksha-extension/${relativePath}`], {
     cwd: path.resolve(root, ".."),
     encoding: "utf8",
   });
@@ -36,15 +38,16 @@ test("clean-room replacements share no source block longer than eight lines", ()
     "foundation.css", "onboarding.css", "settings-and-lists.css",
     "learning-windows.css", "language-and-billing.css", "workbenches.css",
   ].map((name) => source(`src/popup/styles/${name}`)).join("\n");
-  assert.ok(longestMatchingBlock(committedSource("src/popup/popup.css"), popupLayers) <= 8);
+  assert.ok(longestMatchingBlock(legacySource("src/popup/popup.css"), popupLayers) <= 8);
   const youtubeRuntime = `${source("src/content/youtube.ts")}\n${source("src/content/youtube-study-runtime.ts")}`;
-  assert.ok(longestMatchingBlock(committedSource("src/content/youtube.ts"), youtubeRuntime) <= 8);
+  assert.ok(longestMatchingBlock(legacySource("src/content/youtube.ts"), youtubeRuntime) <= 8);
   for (const screen of ["SettingsScreen.tsx", "LevelSetupScreen.tsx", "OnboardingScreen.tsx"]) {
     assert.ok(longestMatchingBlock(
-      committedSource(`src/popup/screens/${screen}`),
+      legacySource(`src/popup/screens/${screen}`),
       source(`src/popup/screens/${screen}`),
     ) <= 8, screen);
   }
+
   assert.equal(existsSync(path.join(root, "src/popup/screens/DebugScreen.tsx")), false);
 });
 

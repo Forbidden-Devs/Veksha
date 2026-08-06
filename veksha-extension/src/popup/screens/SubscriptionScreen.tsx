@@ -2,13 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import * as api from "../../shared/api";
 import { useT } from "../../shared/i18n";
 
-export type PaidFeature = "grammar_lens" | "immersion" | "dual_subtitles";
+export type PaidFeature = "pattern_workshop" | "reading_coach" | "dual_subtitles";
 export type SubscriptionIntent = {
   mode: "new" | "manage" | "add";
   feature?: PaidFeature;
 };
 
-const FEATURE_ORDER: PaidFeature[] = ["grammar_lens", "immersion", "dual_subtitles"];
+const FEATURE_ORDER: PaidFeature[] = ["pattern_workshop", "reading_coach", "dual_subtitles"];
 
 export function SubscriptionScreen({
   intent,
@@ -54,14 +54,14 @@ export function SubscriptionScreen({
   );
 
   function titleFor(feature: PaidFeature): string {
-    if (feature === "grammar_lens") return t.pattern_workshop_title;
-    if (feature === "immersion") return t.ci_meter_off;
+    if (feature === "pattern_workshop") return t.pattern_workshop_title;
+    if (feature === "reading_coach") return t.ci_meter_off;
     return t.settings_dual_subtitles;
   }
 
   function descriptionFor(feature: PaidFeature): string {
-    if (feature === "grammar_lens") return t.subscription_grammar_desc;
-    if (feature === "immersion") return t.reading_coach_guide_intro;
+    if (feature === "pattern_workshop") return t.subscription_grammar_desc;
+    if (feature === "reading_coach") return t.reading_coach_guide_intro;
     return t.settings_dual_subtitles_desc;
   }
 

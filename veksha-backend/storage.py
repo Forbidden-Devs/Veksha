@@ -112,14 +112,27 @@ def _load_goals(
     return legacy, len(legacy) > 0
 
 
-_storages: dict[str, UserStorage] = {}
+class _StorageRegistry:
+    def __init__(self) -> None:
+        self._entries: dict[str, UserStorage] = {}
+
+    def obtain(self, username: str) -> UserStorage:
+        storage = self._entries.get(username)
+        if storage is None:
+            storage = UserStorage.load(username)
+            self._entries[username] = storage
+        return storage
+
+    def discard(self, username: str) -> None:
+        self._entries.pop(username, None)
+
+
+_registry = _StorageRegistry()
 
 
 def get_storage(username: str) -> UserStorage:
-    if username not in _storages:
-        _storages[username] = UserStorage.load(username)
-    return _storages[username]
+    return _registry.obtain(username)
 
 
 def drop_storage(username: str) -> None:
-    _storages.pop(username, None)
+    _registry.discard(username)

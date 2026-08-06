@@ -7,30 +7,29 @@ All models are dataclasses with to_dict/from_dict for JSON serialization
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Literal, Optional
+from typing import Optional
 
 
 # ---------------------------------------------------------------------------
 # UserSettings — user preferences (English level, goals, general prompt)
 # ---------------------------------------------------------------------------
 
-EnglishLevel = Literal["beginner", "elementary", "intermediate", "upper_intermediate", "advanced"]
-
-VALID_ENGLISH_LEVELS: tuple[str, ...] = (
-    "a1", "a1_a2", "a2", "a2_b1", "b1", "b1_b2", "b2", "b2_c1", "c1", "c1_c2", "c2",
+VALID_ENGLISH_LEVELS = tuple(
+    f"{left}_{right}" if right else left
+    for left, right in (
+        ("a1", ""), ("a1", "a2"), ("a2", ""), ("a2", "b1"),
+        ("b1", ""), ("b1", "b2"), ("b2", ""), ("b2", "c1"),
+        ("c1", ""), ("c1", "c2"), ("c2", ""),
+    )
 )
 
 
-@dataclass
+@dataclass(slots=True)
 class UserSettings:
-    display_name: str = ""                 # user-facing name; the account id (username) is internal
-    native_lang: str = ""                  # ISO 639-1, e.g. "ru" — user's native language
-    target_lang: str = ""                  # active language being studied
+    display_name: str = ""
+    native_lang: str = ""
+    target_lang: str = ""
     language_settings: dict[str, dict[str, str]] = field(default_factory=dict)
-    # Reminder intensity (single slider):
-    #   1 = plain system notification only
-    #   2 = + in-page pop-up with page blur
-    #   3 = + shown frequently (hourly instead of every 12h)
     reminder_level: int = 2
     mining_same_level_examples: int = 2
     mining_higher_level_examples: int = 1
