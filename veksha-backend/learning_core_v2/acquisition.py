@@ -9,6 +9,8 @@ from typing import Any
 from typing import Literal, Sequence
 from urllib.parse import urlsplit, urlunsplit
 
+from .skills import SkillProfile
+
 
 InboxStatus = Literal["suggested", "learning", "known", "ignored"]
 InboxDecision = Literal["learn", "known", "ignore"]
@@ -44,12 +46,27 @@ class LexicalItem:
     status: InboxStatus = "suggested"
     encounters: tuple[VocabularyEncounter, ...] = ()
     schedule: ReviewSchedule = ReviewSchedule()
+    skills: SkillProfile = SkillProfile()
     extra_data: str = ""
     sentence_mining: dict[str, Any] | None = None
 
     @property
     def latest_context(self) -> str:
         return self.encounters[-1].context if self.encounters else ""
+
+    @property
+    def contexts(self) -> tuple[str, ...]:
+        """Distinct observed sentences, newest first."""
+        seen: set[str] = set()
+        ordered: list[str] = []
+        for encounter in reversed(self.encounters):
+            context = encounter.context.strip()
+            key = context.casefold()
+            if not context or key in seen:
+                continue
+            seen.add(key)
+            ordered.append(context)
+        return tuple(ordered)
 
 
 @dataclass(frozen=True, slots=True)

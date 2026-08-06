@@ -60,6 +60,9 @@ The rewritten training core is the only training implementation. Its Responses
 API model is configured via
 `VEKSHA_CORE_V2_TRAINING_MODEL` (default `gpt-5.6-terra`).
 
+Practice is planned, not drawn at random — see
+[Adaptive Practice Planner](#adaptive-practice-planner) below.
+
 The rewritten topic-lesson core keeps `/api/lesson-topics` and
 `/api/lesson/ws` unchanged. Select its model with
 `VEKSHA_CORE_V2_LESSON_MODEL` (default `gpt-5.6-terra`). Existing lesson data
@@ -229,15 +232,58 @@ api/                  routers (one file per domain)
 | `POST /api/debug/*` | development helpers (reset, simulate, advance-day) |
 
 WebSocket protocols are documented in the module docstrings of
-`api/training.py` and `api/lesson.py`.
+`api/training_v2.py` and `api/lesson_v2.py`.
+
+## Adaptive Practice Planner
+
+`learning_core_v2/practice.py` plans each exercise as a triple — lexical sense
+× trained skill × a task format that can train it — instead of taking the next
+due word and a random format.
+
+Every sense tracks four skills independently (`learning_core_v2/skills.py`):
+`recognition`, `recall`, `contextual_meaning`, `listening`. Each holds its own
+attempts, errors, streak, last-practice time, and a confidence that is an
+exponential moving average over the four FSRS ratings. FSRS still decides
+*when* a sense returns; the planner decides *which of its skills is weakest
+right now*. Senses stored before the planner have no profile and start
+neutral (0.5), so they rank by their schedule rather than as failures.
+
+The planner scores the due queue on review urgency, skill weakness, recent
+errors, formats already used this session, and the material each format needs
+— a reverse translation needs a saved translation, a context task needs an
+observed sentence, a listening task needs a client that can speak. Listening
+audio is voiced by the client through the Web Speech API; the client declares
+`audio` support in the `init` message and the planner omits listening
+otherwise. Each task carries a structured `reason` the client localizes into
+"why am I seeing this".
+
+A wrong answer opens a bounded corrective chain rather than only lowering the
+interval: the right answer plus a specific error note, an eased task on the
+same skill, then a transfer check using a different format and a fresh
+example. The chain is capped at `MAX_CORRECTION_STEPS` per sense, and a failed
+support step ends it. Corrective tasks move skill confidence only — the sense
+was already rescheduled by the review that triggered the repair, so
+rescheduling again would distort the interval.
+
+Answers are graded in two steps over the socket: `answer` returns the verdict
+and a suggested rating, `commit` applies it. Nothing reaches FSRS until the
+commit, so the learner can override the suggestion.
 
 ## Spaced repetition (FSRS)
 
 Scheduling is FSRS-4.5 (`fsrs.py`, published default weights). Each lexical
 meaning carries its own memory state — `stability` (interval in days at 90%
-recall), `difficulty` (1–10), `last_review`, `lapses` — updated per review from the
-LLM answer-check outcome: `correct` → Good, `vague` → Hard, `incorrect` →
-Again (`garbage` is not a review). `next_review = now + interval` for
+recall), `difficulty` (1–10), `last_review`, `lapses` — updated per review from
+a graded rating that uses all four FSRS values
+(`learning_core_v2.practice.suggest_rating`): `incorrect` → Again, `vague` →
+Hard, and a correct answer → Easy when it arrives quickly with no help, Hard
+when it needed a hint, a repair, or an unusually long pause, Good otherwise
+(`garbage` is not a review). Response-time windows are per format, so picking
+an option is held to a tighter clock than writing a sentence. The learner may
+replace the suggested rating before it is committed. Surfaces that only
+produce a verdict, such as the Anki-style `/api/kb_word_review`, still map
+`outcome` directly via `fsrs.outcome_to_rating`.
+`next_review = now + interval` for
 `config.FSRS_DESIRED_RETENTION` (0.9), clamped to
 `FSRS_MIN/MAX_INTERVAL_DAYS`. A lexical item is due once `next_review` is less than
 `REVIEW_WINDOW_HOURS` away or overdue — lateness needs no special handling

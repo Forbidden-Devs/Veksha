@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { LessonWindow } from "../popup/overlays/LessonWindow";
-import { TrainingWindow } from "../popup/overlays/TrainingWindow";
+import { PracticePlannerWindow } from "../popup/overlays/PracticePlannerWindow";
 import rawPopupCss from "../popup/popup.css?inline";
 import { I18nProvider } from "../shared/i18n";
 import rawPaletteCss from "../shared/palette.css?inline";
@@ -229,8 +229,8 @@ function renderWindow(content: ReactNode, spec: WindowSpec): void {
 
 export function showTrainingOverlay(username: string): void {
   renderWindow(
-    <TrainingWindow username={username} onClose={closeOverlay} />,
-    { width: 470, height: 620, contentSized: true },
+    <PracticePlannerWindow username={username} onClose={closeOverlay} />,
+    { width: 470, height: 680, contentSized: true },
   );
 }
 

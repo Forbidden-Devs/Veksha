@@ -19,7 +19,12 @@ from learning_core_v2.lesson import (
     PrepareLesson,
 )
 from learning_core_v2.phrase_mining import MinePhraseVocabulary
-from learning_core_v2.practice import BuildPracticeTask, CheckPracticeAnswer
+from learning_core_v2.practice import (
+    BuildPracticeTask,
+    CheckPracticeAnswer,
+    PracticePlanner,
+    PracticeQueue,
+)
 from learning_core_v2.reading_coach import BuildReadingQuestion, CheckReadingAnswer
 from learning_core_v2.sentence_mining import BuildSentenceMiningCard
 from learning_core_v2.subtitles import TranslateSubtitles
@@ -136,10 +141,13 @@ def build_catalog_translator() -> TranslateCatalog:
     return TranslateCatalog(provider)
 
 
+def build_practice_planner(queue: PracticeQueue) -> PracticePlanner:
+    return PracticePlanner(queue, RandomChoiceSource())
+
+
 def build_practice_services() -> tuple[BuildPracticeTask, CheckPracticeAnswer]:
     provider = _provider("VEKSHA_CORE_V2_TRAINING_MODEL", "gpt-5.6-terra")
-    builder = BuildPracticeTask(provider, RandomChoiceSource(), UuidIdentifierSource())
-    return builder, CheckPracticeAnswer(provider)
+    return BuildPracticeTask(provider, UuidIdentifierSource()), CheckPracticeAnswer(provider)
 
 
 def build_lesson_services() -> tuple[

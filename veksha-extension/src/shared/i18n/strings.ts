@@ -299,7 +299,7 @@ export interface Strings {
   reminder_focus_note: string;
   reminder_snooze: string;
   reminder_skip_today: string;
-  // Training window
+  // Adaptive Practice Planner
   training_title: string;
   training_loading: string;
   training_done: string;     // placeholder: {n}
@@ -314,6 +314,38 @@ export interface Strings {
   training_err_connect: string;
   training_err_lost: string;
   training_err_server: string;
+  practice_title: string;
+  practice_planning: string;
+  // The four skills tracked per lexical sense
+  practice_skill_recognition: string;
+  practice_skill_recall: string;
+  practice_skill_contextual_meaning: string;
+  practice_skill_listening: string;
+  practice_training_skill: string;   // placeholder: {skill}
+  // Why the planner chose this exercise
+  practice_why_new_word: string;             // placeholder: {skill}
+  practice_why_recent_error: string;         // placeholder: {skill}
+  practice_why_weakest_skill: string;        // placeholder: {skill}
+  practice_why_due_review: string;           // placeholder: {skill}
+  practice_why_skill_rotation: string;       // placeholder: {skill}
+  practice_why_correction_support: string;   // placeholder: {skill}
+  practice_why_correction_transfer: string;  // placeholder: {skill}
+  practice_stage_support: string;
+  practice_stage_transfer: string;
+  practice_expected_answer: string;
+  practice_show_hint: string;
+  practice_replay: string;
+  // The four FSRS ratings
+  practice_rating_label: string;
+  practice_rating_again: string;
+  practice_rating_hard: string;
+  practice_rating_good: string;
+  practice_rating_easy: string;
+  practice_rating_suggested: string;  // placeholder: {rating}
+  practice_summary_corrections: string;   // placeholder: {n}
+  practice_summary_consolidated: string;
+  practice_summary_needs_work: string;
+  practice_summary_limited_by: string;    // placeholder: {skill}
   // Lesson window
   lesson_preparing: string;
   lesson_loading_question: string;
@@ -737,6 +769,35 @@ export const EN: Strings = {
   training_err_connect: "Could not connect to server.",
   training_err_lost: "Connection lost.",
   training_err_server: "Server error",
+  practice_title: "Practice",
+  practice_planning: "Choosing your next exercise...",
+  practice_skill_recognition: "recognition",
+  practice_skill_recall: "recall",
+  practice_skill_contextual_meaning: "meaning in context",
+  practice_skill_listening: "listening",
+  practice_training_skill: "Training {skill}",
+  practice_why_new_word: "A new word — let's start with {skill}.",
+  practice_why_recent_error: "You missed this one last time, so {skill} again.",
+  practice_why_weakest_skill: "You know this word, but {skill} is still behind.",
+  practice_why_due_review: "Due for review, practising {skill}.",
+  practice_why_skill_rotation: "Keeping {skill} fresh on this word.",
+  practice_why_correction_support: "Working on the mistake — an easier {skill} task.",
+  practice_why_correction_transfer: "Now the same {skill} on a new example.",
+  practice_stage_support: "Working on the mistake",
+  practice_stage_transfer: "Checking it stuck",
+  practice_expected_answer: "Expected",
+  practice_show_hint: "Show a hint",
+  practice_replay: "Play again",
+  practice_rating_label: "How well did you know it?",
+  practice_rating_again: "Again",
+  practice_rating_hard: "Hard",
+  practice_rating_good: "Good",
+  practice_rating_easy: "Easy",
+  practice_rating_suggested: "Suggested: {rating}. Change it if you disagree.",
+  practice_summary_corrections: "{n} mistake(s) worked on right away.",
+  practice_summary_consolidated: "Consolidated",
+  practice_summary_needs_work: "Still shaky",
+  practice_summary_limited_by: "limited by {skill}",
   lesson_preparing: "Preparing material...",
   lesson_loading_question: "Loading question...",
   lesson_done: "Session complete — {n} question(s) done!",

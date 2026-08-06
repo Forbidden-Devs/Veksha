@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { TrainingWindow } from "../popup/overlays/TrainingWindow";
+import { PracticePlannerWindow } from "../popup/overlays/PracticePlannerWindow";
 import { I18nProvider, useT } from "../shared/i18n";
 import { CONFIG } from "../shared/config";
 import "../shared/palette.css";
@@ -29,7 +29,7 @@ function TrainingApp() {
     );
   }
 
-  return <TrainingWindow username={username} onClose={() => window.close()} />;
+  return <PracticePlannerWindow username={username} onClose={() => window.close()} />;
 }
 
 createRoot(document.getElementById("root")!).render(

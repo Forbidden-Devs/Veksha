@@ -1764,6 +1764,252 @@ html, body, #root {
 }
 
 /* ---------------------------------------------------------------------- */
+/* Adaptive Practice Planner                                                */
+/* ---------------------------------------------------------------------- */
+
+/* Per-skill confidence, one bar per tracked skill. */
+.practice-skillbar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  padding: 8px 14px 0;
+}
+
+.practice-skillbar-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.practice-skillbar-name {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--av-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.practice-skillbar-track {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--av-border);
+  overflow: hidden;
+}
+
+.practice-skillbar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--av-gradient);
+  transition: width 0.25s ease;
+}
+
+/* A skill with no answers yet shows its neutral start, not a score. */
+.practice-skillbar-fill.is-untested {
+  background: var(--av-border);
+}
+
+.practice-task-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.practice-skill-tag {
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: var(--m-surface-2);
+  color: var(--m-dim);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.practice-repair-tag {
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(200, 160, 50, 0.16);
+  color: #8a6a12;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.practice-why {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--av-muted);
+}
+
+.practice-replay {
+  align-self: flex-start;
+  font-size: 12px;
+  padding: 6px 12px;
+}
+
+.practice-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.practice-option {
+  justify-content: flex-start;
+  text-align: left;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+/* A ring survives the theme's !important button fill; a border colour does not. */
+.practice-option.is-chosen {
+  font-weight: 700;
+  box-shadow: 0 0 0 2px var(--av-surface), 0 0 0 4px var(--av-accent);
+}
+
+.practice-hint-btn {
+  font-size: 12px;
+}
+
+.practice-hint {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px dashed var(--av-border);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--av-muted);
+}
+
+/* The feedback panel is pre-wrap for the model's own line breaks; the rows
+   added below it are ordinary blocks and must not inherit that. Themes flip
+   this panel to a dark fill, so these rows tint the inherited text colour
+   instead of naming one that only reads on a light background. */
+.practice-feedback {
+  white-space: normal;
+}
+
+.practice-feedback-text {
+  white-space: pre-wrap;
+}
+
+.practice-expected,
+.practice-error-note {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.practice-error-note {
+  color: inherit;
+  opacity: 0.8;
+  font-style: italic;
+}
+
+/* The four FSRS ratings — the suggestion is preselected, not enforced. */
+.practice-rating {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.practice-rating-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--av-muted);
+}
+
+.practice-rating-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+/* Themes repaint every .btn with !important, so each rating states its own
+   colour the same way the Anki rating row does. Selection is shown with a
+   ring and full opacity rather than a fill the theme would take back. */
+.practice-rating-btn {
+  padding: 8px 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff !important;
+  opacity: 0.5;
+  transition: opacity 0.15s ease, box-shadow 0.15s ease;
+}
+
+.practice-rating-btn.rating-again { background: #a63243 !important; }
+.practice-rating-btn.rating-hard  { background: #b3813a !important; }
+.practice-rating-btn.rating-good  { background: #267a48 !important; }
+.practice-rating-btn.rating-easy  { background: #2f6fa8 !important; }
+
+.practice-rating-btn:hover { opacity: 0.8; }
+
+.practice-rating-btn.is-selected {
+  opacity: 1;
+  box-shadow: 0 0 0 2px var(--av-surface), 0 0 0 4px currentColor;
+}
+
+.practice-rating-hint {
+  font-size: 11px;
+  color: var(--av-muted);
+}
+
+.practice-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.practice-summary-line {
+  margin: 0;
+  font-size: 13px;
+  text-align: center;
+  color: var(--av-muted);
+}
+
+.practice-summary-skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+}
+
+.practice-summary-block h4 {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--av-muted);
+}
+
+.practice-summary-block ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.practice-summary-block li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.practice-summary-limit {
+  font-size: 11px;
+  color: var(--av-muted);
+  text-align: right;
+}
+
+/* ---------------------------------------------------------------------- */
 /* Reminder card                                                            */
 /* ---------------------------------------------------------------------- */
 

@@ -150,6 +150,37 @@ test("region translation uses a clean capture workspace", () => {
   assert.doesNotMatch(capture, /tesseract|offscreen/i);
 });
 
+test("practice runs through the Adaptive Practice Planner, not a training window", () => {
+  const planner = source("src/popup/overlays/PracticePlannerWindow.tsx");
+  const app = source("src/popup/App.tsx");
+  const overlay = source("src/content/overlay.tsx");
+  const strings = source("src/shared/i18n/strings.ts");
+  const backendStrings = source("../veksha-backend/i18n.py");
+
+  assert.equal(existsSync(path.join(root, "src/popup/overlays/TrainingWindow.tsx")), false);
+  for (const consumer of [app, overlay, source("src/training/index.tsx")]) {
+    assert.match(consumer, /PracticePlannerWindow/);
+    assert.doesNotMatch(consumer, /TrainingWindow/);
+  }
+
+  // The four skills, the four FSRS ratings, and the reason shown to the
+  // learner are all part of the surface — not implicit server behaviour.
+  assert.match(planner, /practice_skill_recognition|skillName/);
+  assert.match(planner, /RATINGS: FsrsRating\[\] = \["again", "hard", "good", "easy"\]/);
+  assert.match(planner, /reasonText/);
+  assert.match(planner, /type: "commit"/);
+  for (const key of [
+    "practice_skill_listening",
+    "practice_training_skill",
+    "practice_rating_easy",
+    "practice_why_weakest_skill",
+    "practice_summary_limited_by",
+  ]) {
+    assert.match(strings, new RegExp(`${key}:`));
+    assert.match(backendStrings, new RegExp(`"${key}":`));
+  }
+});
+
 test("Reading Coach fully replaces page immersion", () => {
   const home = source("src/popup/screens/HomeScreen.tsx");
   const runtime = source("src/content/page-runtime.ts");

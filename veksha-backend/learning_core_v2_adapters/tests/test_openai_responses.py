@@ -27,6 +27,7 @@ from learning_core_v2.lesson import (
 from learning_core_v2.phrase_mining import PhraseMiningRequest
 from learning_core_v2.practice import (
     AnswerCheckRequest,
+    PlanReason,
     PracticeTask,
     TaskDraftRequest,
 )
@@ -185,10 +186,16 @@ async def test_missing_key_is_rejected_before_transport_call():
 
 
 @pytest.mark.asyncio
-async def test_practice_task_uses_its_own_structured_schema():
+async def test_practice_task_carries_the_planned_skill_and_format():
     transport = StubTransport(
         completed_response(
-            {"question": "Переведите run", "skill": "Recall", "reverse_text": ""}
+            {
+                "question": "Какое слово пропущено?",
+                "expected_answer": "run",
+                "options": ["run", "walk", "swim"],
+                "audio_text": "",
+                "hint": "Начинается на r",
+            }
         )
     )
     provider = OpenAIResponsesLanguageProvider(
@@ -198,23 +205,36 @@ async def test_practice_task_uses_its_own_structured_schema():
     draft = await provider.draft_task(
         TaskDraftRequest(
             LexicalItem("item-run", "run", "en", "бежать", status="learning"),
-            "translation",
+            "word_bank",
+            "recall",
+            "support",
             "b1",
             "ru",
             "en",
+            avoid_contexts=("He runs fast.",),
+            option_count=3,
         )
     )
 
-    assert draft.question == "Переведите run"
+    assert draft.expected_answer == "run"
+    assert draft.options == ("run", "walk", "swim")
+    assert draft.hint == "Начинается на r"
     payload = transport.calls[0]["payload"]
     assert payload["text"]["format"]["name"] == "practice_task"
     assert payload["reasoning"] == {"effort": "none"}
+    sent = json.loads(payload["input"])
+    assert sent["trained_skill"] == "recall"
+    assert sent["task_kind"] == "word_bank"
+    assert sent["option_count"] == 3
+    assert sent["avoid_contexts"] == ["He runs fast."]
 
 
 @pytest.mark.asyncio
-async def test_answer_check_includes_server_task_and_reverse_cue():
+async def test_answer_check_sends_the_server_task_with_its_reference_answer():
     transport = StubTransport(
-        completed_response({"outcome": "correct", "feedback": "Верно"})
+        completed_response(
+            {"outcome": "correct", "feedback": "Верно", "error_note": ""}
+        )
     )
     provider = OpenAIResponsesLanguageProvider(
         api_key="test-key", model="test-model", transport=transport
@@ -225,10 +245,12 @@ async def test_answer_check_includes_server_task_and_reverse_cue():
         "run",
         "context",
         "reverse_translation",
+        "recall",
+        "core",
         "Назовите слово",
         1,
-        "Recall",
-        "бежать",
+        PlanReason("weakest_skill", "recall"),
+        expected_answer="run",
     )
 
     result = await provider.evaluate_answer(
@@ -238,7 +260,8 @@ async def test_answer_check_includes_server_task_and_reverse_cue():
     assert result.outcome == "correct"
     sent = json.loads(transport.calls[0]["payload"]["input"])
     assert sent["word"] == "run"
-    assert sent["reverse_text"] == "бежать"
+    assert sent["trained_skill"] == "recall"
+    assert sent["reference_answer"] == "run"
 
 
 @pytest.mark.asyncio

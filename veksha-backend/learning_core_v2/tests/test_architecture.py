@@ -25,6 +25,22 @@ FORBIDDEN_ROOTS = {
 }
 
 
+def test_practice_formats_are_planned_rather_than_drawn_at_random():
+    """The planner owns format choice; the domain must not roll its own dice."""
+    from learning_core_v2 import practice
+
+    source = (CORE / "practice.py").read_text(encoding="utf-8")
+    assert "import random" not in source
+
+    # A format is only ever offered for the skill it actually trains, and every
+    # skill keeps a second core format so a transfer check can differ.
+    for skill, formats in practice.SKILL_FORMATS.items():
+        assert len(formats.core) >= 2
+        for kind in (*formats.core, formats.support):
+            assert practice.TASK_SKILL[kind] == skill
+            assert kind in practice.TASK_REQUIREMENTS
+
+
 def test_new_core_does_not_import_legacy_or_transport_modules():
     violations: list[str] = []
 

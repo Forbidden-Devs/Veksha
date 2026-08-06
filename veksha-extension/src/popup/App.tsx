@@ -7,7 +7,7 @@ import { isExtension, sessionGet, sessionSet, storageGet, storageRemove, storage
 import type { Screen, SettingsMode } from "../shared/types";
 import { LessonWindow } from "./overlays/LessonWindow";
 import { ReminderCard } from "./overlays/ReminderCard";
-import { TrainingWindow } from "./overlays/TrainingWindow";
+import { PracticePlannerWindow } from "./overlays/PracticePlannerWindow";
 import { TranslatorScreen } from "./screens/TranslatorScreen";
 import { HomeScreen } from "./screens/HomeScreen";
 import { DebugScreen } from "./screens/DebugScreen";
@@ -660,7 +660,7 @@ export default function App() {
         {reminderOpen === "reminder" && <ReminderCard />}
 
         {webOverlay?.kind === "training" && (
-          <TrainingWindow username={username} onClose={() => setWebOverlay(null)} />
+          <PracticePlannerWindow username={username} onClose={() => setWebOverlay(null)} />
         )}
         {webOverlay?.kind === "lesson" && (
           <LessonWindow

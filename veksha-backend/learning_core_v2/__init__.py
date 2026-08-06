@@ -59,8 +59,14 @@ from .practice import (
     AnswerEvaluation,
     BuildPracticeTask,
     CheckPracticeAnswer,
+    LearnerCapabilities,
+    PracticePlan,
+    PracticePlanner,
     PracticeQueue,
+    PracticeSession,
     PracticeTask,
+    SessionSummary,
+    suggest_rating,
 )
 from .reading_coach import (
     AssessReading,
@@ -78,6 +84,7 @@ from .sentence_mining import (
     SentenceMiningCard,
     SentenceMiningRequest,
 )
+from .skills import SKILLS, Skill, SkillProfile, SkillState
 from .subtitles import (
     Alignment,
     SubtitleBatchTranslation,
@@ -139,8 +146,18 @@ __all__ = [
     "AnswerEvaluation",
     "BuildPracticeTask",
     "CheckPracticeAnswer",
+    "LearnerCapabilities",
+    "PracticePlan",
+    "PracticePlanner",
     "PracticeQueue",
+    "PracticeSession",
     "PracticeTask",
+    "SessionSummary",
+    "suggest_rating",
+    "Skill",
+    "SkillProfile",
+    "SkillState",
+    "SKILLS",
     "AssessReading",
     "BuildReadingQuestion",
     "CheckReadingAnswer",

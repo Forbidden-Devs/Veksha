@@ -50,29 +50,99 @@ export interface KBSummaryData {
 }
 
 // ---------------------------------------------------------------------------
-// Training window
+// Adaptive Practice Planner
 // ---------------------------------------------------------------------------
 
-export type TaskType = "translation" | "synonym" | "example" | "reverse_translation";
+/** The four skills tracked separately for every lexical sense. */
+export type PracticeSkill =
+  | "recognition"
+  | "recall"
+  | "contextual_meaning"
+  | "listening";
+
+export type TaskType =
+  | "translation" | "synonym" | "multiple_choice"
+  | "reverse_translation" | "cloze" | "word_bank"
+  | "context_meaning" | "usage_example" | "sense_choice"
+  | "listening_recall" | "listening_cloze" | "listening_choice";
+
+/** "core" is the planned task; the others are steps of a corrective chain. */
+export type TaskStage = "core" | "support" | "transfer";
+
+export type PracticeReasonCode =
+  | "new_word"
+  | "recent_error"
+  | "weakest_skill"
+  | "due_review"
+  | "skill_rotation"
+  | "correction_support"
+  | "correction_transfer";
+
+export type FsrsRating = "again" | "hard" | "good" | "easy";
 
 export type TrainingOutcome = "correct" | "incorrect" | "vague" | "garbage";
+
+export interface PracticeReason {
+  code: PracticeReasonCode;
+  skill: PracticeSkill;
+}
+
+export interface SkillProgress {
+  skill: PracticeSkill;
+  confidence: number;
+  attempts: number;
+}
 
 export interface TrainingTask {
   task_id: string;
   item_id: string;
-  word: string;
-  context: string;
-  task_type: TaskType;
+  task_kind: TaskType;
+  skill: PracticeSkill;
+  stage: TaskStage;
   question: string;
-  reverse_text?: string;
+  /** Non-empty only for the option-based formats. */
+  options: string[];
+  /** Learning-language text the client speaks for listening tasks. */
+  audio_text: string;
+  hint: string;
   counter?: number;
-  skill?: string;
+  reason: PracticeReason;
+  is_correction: boolean;
 }
 
 export interface TrainingResult {
   task_id: string;
   outcome: TrainingOutcome;
   feedback: string;
+  error_note: string;
+  /** Null when the input was not an answer at all — nothing to schedule. */
+  suggested_rating: FsrsRating | null;
+  /** Sent once the learner has answered and only when they missed. */
+  expected_answer: string;
+}
+
+export interface TrainingCommitted {
+  task_id: string;
+  rating: FsrsRating;
+  counts_as_review: boolean;
+  correction: { stage: TaskStage; skill: PracticeSkill } | null;
+  skills: SkillProgress[];
+  progress: { done: number; target: number };
+}
+
+export interface SessionItemReport {
+  item_id: string;
+  term: string;
+  consolidated: boolean;
+  limiting_skill: PracticeSkill;
+  limiting_confidence: number;
+}
+
+export interface SessionSummary {
+  reviewed: number;
+  corrections: number;
+  skills: { skill: PracticeSkill; count: number }[];
+  items: SessionItemReport[];
 }
 
 // ---------------------------------------------------------------------------

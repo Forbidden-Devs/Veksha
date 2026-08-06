@@ -7,6 +7,7 @@ import type {
   LessonTopicSummary,
   RemindersData,
   SettingsData,
+  SkillProgress,
   TranslateResponse,
   WordEntry,
 } from "./types";
@@ -623,7 +624,9 @@ export function deleteKbWord(username: string, itemId: string): Promise<{ ok: bo
   return _delete("/api/kb_word", { item_id: itemId });
 }
 
-export function trainingInit(username: string): Promise<{ available_words: number }> {
+export function trainingInit(
+  username: string,
+): Promise<{ available_words: number; skills: SkillProgress[] }> {
   return _get("/api/training/init");
 }
 

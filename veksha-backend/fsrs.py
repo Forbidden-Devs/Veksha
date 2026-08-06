@@ -8,9 +8,11 @@ parameters; the review_log table (db.py) stores everything needed to fit
 per-user weights later.
 
 Ratings follow the FSRS convention:
-  1 = Again (incorrect), 2 = Hard (vague), 3 = Good (correct), 4 = Easy.
-The LLM answer checker never emits Easy today; the mapping lives in
-outcome_to_rating().
+  1 = Again, 2 = Hard, 3 = Good, 4 = Easy.
+The Adaptive Practice Planner grades every review on all four (see
+learning_core_v2.practice.suggest_rating) and passes the name through
+rating_from_name(); outcome_to_rating() remains for surfaces that only
+produce a verdict, such as the Anki-style review endpoint.
 """
 from __future__ import annotations
 
@@ -39,9 +41,30 @@ class MemoryState:
     difficulty: float
 
 
+RATING_NAMES: dict[str, int] = {
+    "again": AGAIN,
+    "hard": HARD,
+    "good": GOOD,
+    "easy": EASY,
+}
+
+
 def outcome_to_rating(outcome: str) -> Optional[int]:
     """Map an LLM answer-check outcome to an FSRS rating (None = not a review)."""
     return {"correct": GOOD, "vague": HARD, "incorrect": AGAIN}.get(outcome)
+
+
+def rating_from_name(name: str) -> Optional[int]:
+    """Map a graded rating name to an FSRS rating (None = unknown name)."""
+    return RATING_NAMES.get(name.strip().lower())
+
+
+def rating_name(rating: int) -> str:
+    """Inverse of rating_from_name, for logs and stored review rows."""
+    for name, value in RATING_NAMES.items():
+        if value == rating:
+            return name
+    return ""
 
 
 def retrievability(elapsed_days: float, stability: float) -> float:
