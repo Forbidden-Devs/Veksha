@@ -98,36 +98,70 @@ export function GoalWindow({
 
   useEffect(() => {
     let cancelled = false;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let reconnectAttempts = 0;
 
-    (async () => {
-      const wsBase = CONFIG.BACKEND_URL.replace(/^http/, "ws");
-      const token = await api.getAuthToken();
-      if (cancelled) return;
-      const ws = createSessionSocket(`${wsBase}/api/learning-goals/ws`);
-      wsRef.current = ws;
+    async function connect() {
+      try {
+        const wsBase = CONFIG.BACKEND_URL.replace(/^http/, "ws");
+        const token = await api.getAuthToken();
+        if (cancelled) return;
+        const ws = createSessionSocket(`${wsBase}/api/learning-goals/ws`);
+        wsRef.current = ws;
 
-      ws.onopen = () => {
-        // Auth must be the first message — the token never travels in the
-        // URL (query strings leak into server/proxy logs).
-        ws.send(JSON.stringify({ type: "auth", token }));
-        ws.send(JSON.stringify(initPayload(target)));
-      };
+        ws.onopen = () => {
+          if (cancelled || wsRef.current !== ws) return;
+          // Auth must be the first message — the token never travels in the
+          // URL (query strings leak into server/proxy logs).
+          ws.send(JSON.stringify({ type: "auth", token }));
+          ws.send(JSON.stringify(initPayload(target)));
+        };
 
-      ws.onmessage = (e) => {
-        handleWsMessage(JSON.parse(e.data as string) as Record<string, unknown>);
-      };
+        ws.onmessage = (e) => {
+          if (cancelled || wsRef.current !== ws) return;
+          reconnectAttempts = 0;
+          try {
+            handleWsMessage(JSON.parse(e.data as string) as Record<string, unknown>);
+          } catch {
+            setPhase("error");
+            setErrorMsg(t.lesson_err_server);
+          }
+        };
 
-      ws.onerror = () => {
-        if (phaseRef.current === "framing") {
-          setPhase("error");
-          setErrorMsg(t.lesson_err_connect);
-        }
-      };
-    })();
+        const recoverConnection = () => {
+          if (cancelled || wsRef.current !== ws) return;
+          wsRef.current = null;
+          ws.close();
+          if (phaseRef.current === "summary" || phaseRef.current === "error") return;
+          if (reconnectAttempts >= 2) {
+            setPhase("error");
+            setErrorMsg(t.lesson_err_lost);
+            return;
+          }
+          const delay = 400 * (2 ** reconnectAttempts);
+          reconnectAttempts += 1;
+          setPhase("planning");
+          reconnectTimer = setTimeout(() => { void connect(); }, delay);
+        };
+
+        // Browsers commonly emit both events for one failure. Clearing wsRef
+        // makes recovery idempotent for raw sockets and the Firefox proxy.
+        ws.onclose = recoverConnection;
+        ws.onerror = recoverConnection;
+      } catch {
+        if (cancelled) return;
+        setPhase("error");
+        setErrorMsg(t.lesson_err_connect);
+      }
+    }
+
+    void connect();
 
     return () => {
       cancelled = true;
+      if (reconnectTimer !== null) clearTimeout(reconnectTimer);
       wsRef.current?.close();
+      wsRef.current = null;
     };
   }, []);
 

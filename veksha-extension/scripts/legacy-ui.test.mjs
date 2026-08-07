@@ -180,6 +180,16 @@ test("the page translation card is draggable and expands for explanations", () =
   assert.match(contentStyles, /\.vk-assistant-details[\s\S]*?min-height: min\(260px/);
 });
 
+test("goal lessons recover when their WebSocket closes mid-session", () => {
+  const lesson = source("src/popup/overlays/GoalWindow.tsx");
+
+  assert.match(lesson, /ws\.onclose\s*=\s*recoverConnection/);
+  assert.match(lesson, /ws\.onerror\s*=\s*recoverConnection/);
+  assert.match(lesson, /reconnectAttempts\s*>=\s*2/);
+  assert.match(lesson, /setTimeout\(\(\)\s*=>\s*\{\s*void connect\(\)/);
+  assert.match(lesson, /JSON\.parse[\s\S]*?catch\s*\{/);
+});
+
 test("retired OCR implementation and coercive reminder code are absent", () => {
   const files = [
     "src/content/content.ts",
