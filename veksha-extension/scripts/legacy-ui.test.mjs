@@ -24,6 +24,14 @@ function longestMatchingBlock(left, right) {
   return longest;
 }
 
+function parseStringCatalogue(body) {
+  const entries = {};
+  for (const match of body.matchAll(/^\s+"?([a-z0-9_]+)"?:\s*("(?:[^"\\]|\\.)*"),?$/gm)) {
+    entries[match[1]] = JSON.parse(match[2]);
+  }
+  return entries;
+}
+
 const CLEAN_ROOM_BASELINE = "2d6393b";
 
 function legacySource(relativePath) {
@@ -297,6 +305,27 @@ test("localization uses bundled static catalogues", () => {
   assert.match(source("src/shared/languages.ts"), /Intl\.DisplayNames/);
   assert.match(source("src/shared/i18n/locales.ts"), /normalizeUiLocale/);
   assert.doesNotMatch(source("src/popup/screens/NativeLangScreen.tsx"), /switchLanguage/);
+});
+
+test("the extension English catalogue exactly matches the canonical backend source", () => {
+  const extensionSource = source("src/shared/i18n/strings.ts");
+  const backendSource = source("../veksha-backend/i18n.py");
+  const extensionBody = extensionSource.match(/export const EN = \{([\s\S]*?)\n\} satisfies Record<string, string>;/)?.[1];
+  const backendBody = backendSource.match(/UI_STRINGS: dict\[str, str\] = \{([\s\S]*?)\n\}/)?.[1];
+  assert.ok(extensionBody, "extension EN catalogue");
+  assert.ok(backendBody, "backend UI_STRINGS catalogue");
+  assert.deepEqual(parseStringCatalogue(extensionBody), parseStringCatalogue(backendBody));
+});
+
+test("dynamic localization does not reintroduce English fragments", () => {
+  const goals = source("src/popup/screens/LearningGoalsScreen.tsx");
+  const reminder = source("src/popup/overlays/ReminderCard.tsx");
+  assert.match(goals, /getLanguageName\(currentSettings\.target_lang, lang\)/);
+  assert.match(goals, /getScriptName\(writing\.script, lang, writing\.script_name\)/);
+  assert.match(goals, /kind === "latin_extended"[\s\S]*?literacy_course_latin_desc/);
+  assert.match(reminder, /Intl\.ListFormat\(locale/);
+  assert.match(reminder, /t\.reminder_kicker/);
+  assert.doesNotMatch(reminder, /join\(" and "\)|VEKSHA \/ PRACTICE/);
 });
 
 test("bundled catalogues stay in sync with the reviewed sources", () => {

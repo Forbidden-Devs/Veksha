@@ -333,6 +333,7 @@ export const EN = {
   reminder_dismiss: "Dismiss reminder",
   reminder_focus_note: "Choose what happens next so this review does not disappear unnoticed.",
   reminder_have: "You have {items}.",
+  reminder_kicker: "PRACTICE",
   reminder_label: "Review queue",
   reminder_skip_today: "Pause for today",
   reminder_snooze: "Remind me in 15 minutes",

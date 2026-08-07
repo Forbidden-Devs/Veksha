@@ -1,22 +1,23 @@
 import { useEffect, useMemo, useState } from "react";
 import { getReminders } from "../../shared/api";
-import { useT } from "../../shared/i18n";
+import { useI18n } from "../../shared/i18n";
 import type { Strings } from "../../shared/i18n/strings";
 import type { RemindersData } from "../../shared/types";
 import { useApp } from "../App";
 
-function buildSubtitle(d: RemindersData, t: Strings): string {
+function buildSubtitle(d: RemindersData, t: Strings, locale: string): string {
   const wordReview = d.due_words > 0
     ? t.reminder_words.replace("{n}", String(d.due_words))
     : "";
   const goalReview = d.due_goal ? `${t.reminder_topic}: "${d.due_goal}"` : "";
   const due = [wordReview, goalReview].filter(Boolean);
-  return due.length ? t.reminder_have.replace("{items}", due.join(" and ")) : t.reminder_subtitle_default;
+  const items = new Intl.ListFormat(locale, { style: "long", type: "conjunction" }).format(due);
+  return due.length ? t.reminder_have.replace("{items}", items) : t.reminder_subtitle_default;
 }
 
 export function ReminderCard() {
   const { username, closeReminder, openTraining } = useApp();
-  const t = useT();
+  const { t, lang } = useI18n();
   const [data, setData] = useState<RemindersData | null>(null);
 
   useEffect(() => {
@@ -28,8 +29,8 @@ export function ReminderCard() {
   }, [username]);
 
   const subtitle = useMemo(
-    () => data ? buildSubtitle(data, t) : t.reminder_subtitle_default,
-    [data, t],
+    () => data ? buildSubtitle(data, t, lang) : t.reminder_subtitle_default,
+    [data, lang, t],
   );
 
   function handleStartTraining() {
@@ -39,7 +40,7 @@ export function ReminderCard() {
 
   return (
     <aside className="overlay overlay-bottom" id="reminder-card" aria-labelledby="practice-reminder-title">
-      <p className="reminder-kicker">VEKSHA / PRACTICE</p>
+      <p className="reminder-kicker">VEKSHA / {t.reminder_kicker}</p>
       <div className="reminder-content">
         <span className="reminder-icon" aria-hidden="true">V</span>
         <div className="reminder-text" aria-live="polite">

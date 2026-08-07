@@ -227,6 +227,17 @@ export function getLanguageName(code: string, locale = "en"): string {
   }
 }
 
+export function getScriptName(code: string, locale = "en", fallback = code): string {
+  const normalized = code.trim();
+  if (!normalized) return fallback;
+  try {
+    const script = normalized[0].toUpperCase() + normalized.slice(1).toLowerCase();
+    return new Intl.DisplayNames([locale], { type: "script" }).of(script) ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 const OTHER_LANGUAGES = ISO_639_1_CODES
   .filter((code) => !featuredCodes.has(code))
   .map((code) => ({ code, name: getLanguageName(code) }))

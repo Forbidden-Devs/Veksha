@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react";
 import * as api from "../../shared/api";
-import { useT } from "../../shared/i18n";
+import { useI18n } from "../../shared/i18n";
 import type { LearningGoalSummary, SettingsData } from "../../shared/types";
-import { getLanguageName } from "../../shared/languages";
+import { getLanguageName, getScriptName } from "../../shared/languages";
 import { useApp } from "../App";
 
 const MINUTE_CHOICES = [10, 15, 25];
 
 export function LearningGoalsScreen() {
   const { username, openLesson } = useApp();
-  const t = useT();
+  const { t, lang } = useI18n();
   const [goals, setGoals] = useState<LearningGoalSummary[] | null>(null);
   const [draft, setDraft] = useState("");
   const [material, setMaterial] = useState("");
@@ -60,8 +60,8 @@ export function LearningGoalsScreen() {
     setError("");
     try {
       const statement = t.literacy_course_goal
-        .replace("{language}", getLanguageName(currentSettings.target_lang))
-        .replace("{script}", writing.script_name);
+        .replace("{language}", getLanguageName(currentSettings.target_lang, lang))
+        .replace("{script}", getScriptName(writing.script, lang, writing.script_name));
       const created = await api.createLearningGoal(username, {
         statement,
         minutes: 15,
@@ -84,7 +84,9 @@ export function LearningGoalsScreen() {
             <p>
               {settings.writing_system.literacy_stage === "mastered"
                 ? t.literacy_course_mastered
-                : settings.writing_system.kind === "latin_extended" || settings.writing_system.kind === "script_variant"
+                : settings.writing_system.kind === "latin_extended"
+                  ? t.literacy_course_latin_desc
+                  : settings.writing_system.kind === "script_variant"
                   ? t.literacy_course_variant_desc
                   : t.literacy_course_new_desc}
             </p>
