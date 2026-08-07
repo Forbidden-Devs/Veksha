@@ -34,12 +34,21 @@ veksha-admin/      Internal billing dashboard: per-feature Stars prices and
 
 ## Quick start
 
-The complete local stack is built and started with Docker:
+The complete local Veksha stack is built and started with Docker. To include
+speech features, keep `speech-platform` next to this repository, configure its
+`.env`, and use the local launcher so both Compose projects receive the same
+network and Veksha consumer secret:
 
 ```bash
 cp .env.example .env             # add OPENAI_API_KEY for LLM features
-docker compose up --build
+cp ../speech-platform/.env.example ../speech-platform/.env
+# add ELEVENLABS_API_KEY and SPEECH_DEFAULT_VOICE_ID to the respective .env files
+./ops/local-stack.sh up
 ```
+
+`./ops/local-stack.sh down` stops both projects. If speech features are not
+needed, `docker compose up --build` still starts Veksha by itself. The checked-in
+local secret is deliberately development-only; replace it in deployed environments.
 
 This starts PostgreSQL, Redis, the backend, the PWA and the admin panel. It also
 builds both browser extensions into `veksha-extension/dist/` without requiring
