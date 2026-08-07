@@ -12,6 +12,7 @@ interface TranslationResult {
 
 const MAX_SELECTION_LENGTH = 2_000;
 const PANEL_WIDTH = 360;
+const VIEWPORT_GUTTER = 12;
 
 function eventBelongsToAssistant(target: EventTarget | null): boolean {
   return Boolean((target as HTMLElement | null)?.closest?.(".vk-selection-tools, .vk-assistant-card"));
@@ -104,11 +105,44 @@ export class SelectionAssistant {
   private readonly keepCardInViewport = (): void => {
     if (!this.card) return;
     const rect = this.card.getBoundingClientRect();
-    const maxLeft = Math.max(12, window.innerWidth - rect.width - 12);
-    const maxTop = Math.max(12, window.innerHeight - Math.min(rect.height, window.innerHeight - 24) - 12);
-    this.card.style.left = `${Math.min(maxLeft, Math.max(12, rect.left))}px`;
-    this.card.style.top = `${Math.min(maxTop, Math.max(12, rect.top))}px`;
+    const maxLeft = Math.max(VIEWPORT_GUTTER, window.innerWidth - rect.width - VIEWPORT_GUTTER);
+    const maxTop = Math.max(VIEWPORT_GUTTER, window.innerHeight - Math.min(rect.height, window.innerHeight - VIEWPORT_GUTTER * 2) - VIEWPORT_GUTTER);
+    this.card.style.left = `${Math.min(maxLeft, Math.max(VIEWPORT_GUTTER, rect.left))}px`;
+    this.card.style.top = `${Math.min(maxTop, Math.max(VIEWPORT_GUTTER, rect.top))}px`;
   };
+
+  private makeCardDraggable(card: HTMLElement, handle: HTMLElement): void {
+    let dragOffset: { x: number; y: number } | null = null;
+
+    handle.addEventListener("pointerdown", (event) => {
+      if (event.button !== 0 || (event.target as HTMLElement).closest("button")) return;
+      const rect = card.getBoundingClientRect();
+      dragOffset = { x: event.clientX - rect.left, y: event.clientY - rect.top };
+      handle.setPointerCapture(event.pointerId);
+      card.classList.add("is-dragging");
+      event.preventDefault();
+    });
+
+    handle.addEventListener("pointermove", (event) => {
+      if (!dragOffset || !handle.hasPointerCapture(event.pointerId)) return;
+      const rect = card.getBoundingClientRect();
+      const maxLeft = Math.max(VIEWPORT_GUTTER, window.innerWidth - rect.width - VIEWPORT_GUTTER);
+      const maxTop = Math.max(VIEWPORT_GUTTER, window.innerHeight - rect.height - VIEWPORT_GUTTER);
+      const left = Math.min(maxLeft, Math.max(VIEWPORT_GUTTER, event.clientX - dragOffset.x));
+      const top = Math.min(maxTop, Math.max(VIEWPORT_GUTTER, event.clientY - dragOffset.y));
+      card.style.left = `${left}px`;
+      card.style.top = `${top}px`;
+    });
+
+    const stopDragging = (event: PointerEvent): void => {
+      if (!dragOffset) return;
+      dragOffset = null;
+      card.classList.remove("is-dragging");
+      if (handle.hasPointerCapture(event.pointerId)) handle.releasePointerCapture(event.pointerId);
+    };
+    handle.addEventListener("pointerup", stopDragging);
+    handle.addEventListener("pointercancel", stopDragging);
+  }
 
   private readonly handleKey = (event: KeyboardEvent): void => {
     if (event.key === "Escape") this.close();
@@ -166,6 +200,7 @@ export class SelectionAssistant {
     const close = iconButton(this.session.t("content_close", "Close"), "×");
     close.addEventListener("click", this.close);
     header.append(brand, route, close);
+    this.makeCardDraggable(card, header);
 
     const quote = document.createElement("q");
     quote.textContent = text;
@@ -227,10 +262,12 @@ export class SelectionAssistant {
     container: HTMLElement,
     button: HTMLButtonElement,
   ): Promise<void> {
+    this.card?.classList.add("is-expanded");
     container.hidden = false;
     container.classList.remove("is-error");
     container.textContent = this.session.t("content_translating", "Loading…");
     button.disabled = true;
+    requestAnimationFrame(this.keepCardInViewport);
     try {
       const username = await this.session.getUsername();
       if (!username) throw new Error("profile required");
@@ -240,6 +277,8 @@ export class SelectionAssistant {
       container.classList.add("is-error");
       container.textContent = this.session.t("content_explanation_failed", "Explanation is unavailable.");
       button.disabled = false;
+    } finally {
+      requestAnimationFrame(this.keepCardInViewport);
     }
   }
 }

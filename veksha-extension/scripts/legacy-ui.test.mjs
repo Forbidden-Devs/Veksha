@@ -169,6 +169,17 @@ test("translated content stays available while the page scrolls", () => {
   assert.match(shellStyles, /\.capability-card-label[\s\S]*?white-space: normal/);
 });
 
+test("the page translation card is draggable and expands for explanations", () => {
+  const assistant = source("src/content/selection-assistant.ts");
+  const contentStyles = source("src/content/content.css");
+
+  assert.match(assistant, /makeCardDraggable\(card, header\)/);
+  assert.match(assistant, /setPointerCapture/);
+  assert.match(assistant, /classList\.add\("is-expanded"\)/);
+  assert.match(contentStyles, /\.vk-assistant-card\.is-expanded[\s\S]*?width: min\(600px/);
+  assert.match(contentStyles, /\.vk-assistant-details[\s\S]*?min-height: min\(260px/);
+});
+
 test("retired OCR implementation and coercive reminder code are absent", () => {
   const files = [
     "src/content/content.ts",

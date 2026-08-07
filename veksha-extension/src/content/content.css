@@ -72,6 +72,11 @@
   animation: vk-assistant-arrive 140ms ease-out;
 }
 
+.vk-assistant-card.is-expanded {
+  width: min(600px, calc(100vw - 24px));
+  max-height: min(720px, calc(100vh - 24px));
+}
+
 .vk-assistant-card header {
   position: sticky;
   top: 0;
@@ -82,7 +87,12 @@
   padding: 11px 12px;
   border-bottom: 1px solid var(--m-border);
   background: var(--m-surface);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
 }
+
+.vk-assistant-card.is-dragging header { cursor: grabbing; }
 
 .vk-assistant-card header span {
   color: var(--m-accent-2);
@@ -170,7 +180,8 @@
 .vk-assistant-card footer button:disabled { cursor: default; opacity: .4; }
 
 .vk-assistant-details {
-  max-height: min(200px, 30vh);
+  min-height: min(260px, 42vh);
+  max-height: min(440px, 58vh);
   margin: 0 12px 4px;
   padding: 11px;
   overflow: hidden auto;
@@ -182,6 +193,8 @@
   line-height: 1.5;
   white-space: pre-wrap;
 }
+
+.vk-assistant-details[hidden] { display: none; }
 
 @keyframes vk-assistant-arrive { from { opacity: 0; transform: translateY(-5px) scale(.98); } }
 @keyframes vk-assistant-pulse { 50% { opacity: .45; } }
