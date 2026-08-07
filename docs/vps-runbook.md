@@ -15,6 +15,13 @@
 - ежедневный PostgreSQL dump копируется во внешнее S3-compatible хранилище;
 - VPS не содержит репозиторий, Git credentials или build toolchain.
 
+Speech-platform разворачивается отдельным Compose-проектом и подключается к
+backend через внешнюю Docker-сеть `veksha-speech`. Она не является `internal` в
+терминах Docker, потому что speech-platform нужен исходящий доступ к ElevenLabs,
+но ни один её порт не публикуется на host. Сеть создаёт установщик
+speech-platform; поэтому при первом запуске сначала установите speech release,
+затем Veksha.
+
 ## 1. Базовая подготовка VPS
 
 Создайте пользователя `deploy`, настройте вход только по SSH key, отключите
@@ -61,6 +68,14 @@ ssh deploy@<server> chmod 600 /srv/veksha/shared/.env.production
 Заполните файл на VPS. Оставьте `VEKSHA_ENVIRONMENT=staging` до прохождения всех
 проверок. `VEKSHA_REVISION` и `VEKSHA_IMAGE_TAG` являются validation-заглушками:
 установщик экспортирует проверенные значения из release manifest.
+
+Для встроенной речи задайте:
+
+```dotenv
+SPEECH_BASE_URL=http://speech-platform:8080
+SPEECH_DOCKER_NETWORK=veksha-speech
+SPEECH_SHARED_SECRET=<тот же секрет, что указан после veksha: в speech-platform>
+```
 
 Создайте новые значения для `POSTGRES_PASSWORD`, `ADMIN_API_SECRET`,
 `ADMIN_DATABASE_SECRET` и `VEKSHA_BOT_WEBHOOK_SECRET`; они должны отличаться.

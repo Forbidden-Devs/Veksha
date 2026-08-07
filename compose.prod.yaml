@@ -116,6 +116,7 @@ services:
     networks:
       - edge
       - data
+      - speech
     depends_on:
       postgres:
         condition: service_healthy
@@ -203,6 +204,9 @@ networks:
   edge:
   data:
     internal: true
+  speech:
+    external: true
+    name: ${SPEECH_DOCKER_NETWORK:-veksha-speech}
 
 volumes:
   postgres-data:
