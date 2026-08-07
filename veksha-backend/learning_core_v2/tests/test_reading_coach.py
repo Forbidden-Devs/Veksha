@@ -1,4 +1,14 @@
-from learning_core_v2.reading_coach import AssessReading, ReadingToken
+import pytest
+
+from learning_core_v2.reading_coach import (
+    AssessReading,
+    BuildReadingQuestion,
+    CheckReadingAnswer,
+    ReadingAnswerEvaluation,
+    ReadingAnswerRequest,
+    ReadingQuestionRequest,
+    ReadingToken,
+)
 
 
 def test_finds_high_impact_obstacles_and_projects_the_gain():
@@ -55,3 +65,50 @@ def test_empty_sample_returns_a_low_confidence_result():
 
     assert result.unique_terms == 0
     assert result.confidence == "low"
+
+
+def test_sentence_structure_can_raise_the_page_difficulty():
+    result = AssessReading().execute(
+        [ReadingToken("simple", 80, "A1")],
+        learner_cefr="B1",
+        structure_cefr="C1",
+    )
+
+    assert result.page_cefr == "C1"
+    assert result.verdict == "too_hard"
+
+
+class ComprehensionProvider:
+    async def create_reading_question(self, request):
+        assert request.passage == "A complete passage with enough detail to understand the central idea."
+        return "What is the central idea?"
+
+    async def evaluate_reading_answer(self, request):
+        assert request.answer == "The central idea"
+        return ReadingAnswerEvaluation("correct", "Верно")
+
+
+@pytest.mark.asyncio
+async def test_comprehension_question_and_answer_are_separate_steps():
+    provider = ComprehensionProvider()
+    question = await BuildReadingQuestion(provider).execute(
+        ReadingQuestionRequest(
+            "A complete passage with enough detail to understand the central idea.",
+            "B1",
+            "en",
+            "ru",
+        )
+    )
+    result = await CheckReadingAnswer(provider).execute(
+        ReadingAnswerRequest(
+            "A complete passage with enough detail to understand the central idea.",
+            question,
+            "The central idea",
+            "B1",
+            "en",
+            "ru",
+        )
+    )
+
+    assert question == "What is the central idea?"
+    assert result == ReadingAnswerEvaluation("correct", "Верно")

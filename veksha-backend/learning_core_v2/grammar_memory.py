@@ -8,20 +8,21 @@ from urllib.parse import urlsplit, urlunsplit
 
 
 GrammarStatus = Literal["learning", "mastered"]
-GRAMMAR_CATEGORIES = frozenset(
-    {
-        "tense_aspect",
-        "voice",
-        "mood_modality",
-        "clause_link",
-        "negation_question",
-        "agreement_form",
-        "determiner_article",
-        "verb_pattern",
-        "word_order",
-        "comparison",
-    }
+
+#: Ordered so response schemas built from it stay byte-identical between runs.
+GRAMMAR_CATEGORY_ORDER: tuple[str, ...] = (
+    "tense_aspect",
+    "voice",
+    "mood_modality",
+    "clause_link",
+    "negation_question",
+    "agreement_form",
+    "determiner_article",
+    "verb_pattern",
+    "word_order",
+    "comparison",
 )
+GRAMMAR_CATEGORIES = frozenset(GRAMMAR_CATEGORY_ORDER)
 
 
 @dataclass(frozen=True, slots=True)
@@ -96,7 +97,7 @@ class RememberGrammar:
 
         clean_id = item_id.strip()
         if not clean_id:
-            raise ValueError("grammar memory item requires an id")
+            raise ValueError("pattern skill requires an id")
         return (
             *updated,
             GrammarMemoryItem(
@@ -115,7 +116,7 @@ class RememberGrammar:
 class SetGrammarStatus:
     def execute(self, item: GrammarMemoryItem, status: GrammarStatus) -> GrammarMemoryItem:
         if status not in {"learning", "mastered"}:
-            raise ValueError("unknown grammar memory status")
+            raise ValueError("unknown pattern skill status")
         return replace(item, status=status)
 
 

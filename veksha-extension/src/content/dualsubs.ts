@@ -7,9 +7,8 @@
  * /api/subtitles/translate). Settings enable the feature; while enabled, a
  * small chip next to the row can show or hide translations during playback.
  *
- * youtube.ts normally installs the complete timed-text track at video open and
- * drives it from media time. DOM observation remains a fallback for tracks that
- * YouTube does not expose (for example some live or restricted videos).
+ * The Subtitle Study runtime installs the timed-text track and drives it from
+ * media time.
  */
 import { subtitleTranslate, subtitleTranslateBatch, type SubtitleTranslation } from "../shared/api";
 import { CONFIG } from "../shared/config";
@@ -26,7 +25,7 @@ export interface DualSubsDeps {
   t: (key: string, fallback: string) => string;
   /** sourceLang is usually "auto"; targetLang is the user's native language. */
   state: { sourceLang: string; targetLang: string };
-  /** Player-relative overlay layer (created by youtube.ts). */
+  /** Player-relative overlay layer created by the study runtime. */
   getLayer: () => HTMLElement | null;
   getPlayer: () => HTMLElement | null;
 }
@@ -69,26 +68,21 @@ export function initDualSubs(d: DualSubsDeps): void {
   deps = d;
   chrome.storage.local.get([
     CONFIG.STORAGE_KEY_DUAL_SUBS_FEATURE,
-    CONFIG.STORAGE_KEY_DUAL_SUBS,
+    CONFIG.STORAGE_KEY_DUAL_SUBS_VISIBLE,
     CONFIG.STORAGE_KEY_NATIVE_LANG,
   ], (res) => {
     const nativeLang = res[CONFIG.STORAGE_KEY_NATIVE_LANG];
     if (typeof nativeLang === "string" && nativeLang) deps.state.targetLang = nativeLang;
-    const storedFeature = res[CONFIG.STORAGE_KEY_DUAL_SUBS_FEATURE];
-    const legacyEnabled = Boolean(res[CONFIG.STORAGE_KEY_DUAL_SUBS]);
-    setFeatureEnabled(storedFeature === undefined ? legacyEnabled : Boolean(storedFeature));
-    setEnabled(legacyEnabled);
-    if (storedFeature === undefined && legacyEnabled) {
-      chrome.storage.local.set({ [CONFIG.STORAGE_KEY_DUAL_SUBS_FEATURE]: true });
-    }
+    setFeatureEnabled(Boolean(res[CONFIG.STORAGE_KEY_DUAL_SUBS_FEATURE]));
+    setEnabled(Boolean(res[CONFIG.STORAGE_KEY_DUAL_SUBS_VISIBLE]));
   });
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== "local") return;
     if (changes[CONFIG.STORAGE_KEY_DUAL_SUBS_FEATURE]) {
       setFeatureEnabled(Boolean(changes[CONFIG.STORAGE_KEY_DUAL_SUBS_FEATURE].newValue));
     }
-    if (changes[CONFIG.STORAGE_KEY_DUAL_SUBS]) {
-      setEnabled(Boolean(changes[CONFIG.STORAGE_KEY_DUAL_SUBS].newValue));
+    if (changes[CONFIG.STORAGE_KEY_DUAL_SUBS_VISIBLE]) {
+      setEnabled(Boolean(changes[CONFIG.STORAGE_KEY_DUAL_SUBS_VISIBLE].newValue));
     }
     if (changes[CONFIG.STORAGE_KEY_NATIVE_LANG]) {
       const target = changes[CONFIG.STORAGE_KEY_NATIVE_LANG].newValue;
@@ -504,7 +498,7 @@ function ensureToggle(captionRect: DOMRect | null): void {
       e.stopPropagation();
       const next = !enabled;
       setEnabled(next);
-      chrome.storage.local.set({ [CONFIG.STORAGE_KEY_DUAL_SUBS]: next });
+      chrome.storage.local.set({ [CONFIG.STORAGE_KEY_DUAL_SUBS_VISIBLE]: next });
       if (!enabled) {
         hideRow();
         clearHighlights();

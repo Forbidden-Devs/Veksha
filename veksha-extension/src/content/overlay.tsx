@@ -1,206 +1,253 @@
-import React, { useLayoutEffect, useRef, useState } from "react";
-import { createRoot, Root } from "react-dom/client";
-import { TrainingWindow } from "../popup/overlays/TrainingWindow";
-import { LessonWindow } from "../popup/overlays/LessonWindow";
-import { TopicPickerOverlay } from "../popup/overlays/TopicPickerOverlay";
+import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent, type ReactNode } from "react";
+import { createRoot, type Root } from "react-dom/client";
+import { GoalWindow, type GoalTarget } from "../popup/overlays/GoalWindow";
+import { PracticePlannerWindow } from "../popup/overlays/PracticePlannerWindow";
+import rawFoundationCss from "../popup/styles/foundation.css?inline";
+import rawSettingsCss from "../popup/styles/settings-and-lists.css?inline";
+import rawLearningCss from "../popup/styles/learning-windows.css?inline";
+import rawLanguageCss from "../popup/styles/language-and-billing.css?inline";
+import rawWorkbenchCss from "../popup/styles/workbenches.css?inline";
+import rawThemeCss from "../popup/styles/theme.css?inline";
 import { I18nProvider } from "../shared/i18n";
 import rawPaletteCss from "../shared/palette.css?inline";
-import rawPopupCss from "../popup/popup.css?inline";
 
-// In Shadow DOM :root doesn't resolve to the document root, use :host instead.
-// Also override lesson-overlay positioning which is designed for the in-popup context.
-const SHADOW_CSS =
-  `${rawPaletteCss}\n${rawPopupCss}`.replace(/:root/g, ":host") +
-  `
-  /* === page-overlay context overrides === */
-  .training-window, .lesson-overlay {
-    flex: 1 1 0;
-    min-height: 0;
+const PAGE_WINDOW_CSS = `
+  :host {
+    position: fixed;
+    inset: 0;
+    z-index: 2147483646;
+    pointer-events: none;
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  .vk-page-window {
+    position: fixed;
+    z-index: 1;
+    display: flex;
+    min-width: min(320px, calc(100vw - 24px));
+    min-height: 240px;
+    max-width: calc(100vw - 24px);
+    max-height: calc(100vh - 24px);
+    overflow: hidden;
+    resize: both;
+    border: 1px solid color-mix(in srgb, var(--m-accent-2) 28%, var(--m-border));
+    border-radius: 18px;
+    background: var(--m-surface);
+    box-shadow: 0 24px 70px color-mix(in srgb, var(--m-fg) 25%, transparent);
+    color: var(--m-fg);
+    pointer-events: auto;
+    isolation: isolate;
+  }
+
+  .vk-page-window::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    z-index: 4;
+    height: 3px;
+    background: linear-gradient(90deg, var(--m-accent-2), var(--m-accent));
+    pointer-events: none;
+  }
+
+  .vk-page-window.is-content-sized {
+    height: auto !important;
+    resize: horizontal;
+  }
+
+  .vk-page-window > .training-window,
+  .vk-page-window > .lesson-overlay {
     position: static !important;
-    inset: unset !important;
+    inset: auto !important;
+    flex: 1 1 auto;
     width: 100% !important;
     height: auto !important;
-    z-index: unset !important;
-  }
-  /* Fit-content overlays (e.g. training): don't stretch the child to fill a
-     fixed height — size the window to its content so there's no dead space. */
-  .av-overlay-auto .training-window {
-    flex: 0 0 auto !important;
-  }
-  `;
-
-let shadowHost: HTMLElement | null = null;
-let overlayRoot: Root | null = null;
-
-function getShadowContainer(): HTMLElement {
-  if (!shadowHost) {
-    shadowHost = document.createElement("div");
-    shadowHost.id = "veksha-overlay-host";
-    // Host has no layout impact
-    shadowHost.style.cssText = "position:fixed;top:0;left:0;width:0;height:0;pointer-events:none;z-index:2147483646;";
-    document.documentElement.appendChild(shadowHost);
+    min-height: 0;
+    border: 0 !important;
+    border-radius: inherit;
+    box-shadow: none !important;
   }
 
-  const shadow = shadowHost.shadowRoot ?? shadowHost.attachShadow({ mode: "open" });
+  .vk-page-window.is-content-sized > .training-window {
+    flex: 0 0 auto;
+  }
 
-  let style = shadow.querySelector("style#av-css") as HTMLStyleElement | null;
+  @media (max-width: 520px) {
+    .vk-page-window {
+      left: 8px !important;
+      width: calc(100vw - 16px) !important;
+      max-width: none;
+      border-radius: 14px;
+      resize: vertical;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .vk-page-window { scroll-behavior: auto; }
+  }
+`;
+
+const SHADOW_STYLES = `${rawPaletteCss.replace(/:root/g, ":host")}
+${rawFoundationCss}\n${rawSettingsCss}\n${rawLearningCss}\n${rawLanguageCss}
+${rawWorkbenchCss}\n${rawThemeCss}\n${PAGE_WINDOW_CSS}`;
+
+interface WindowSpec {
+  width: number;
+  height: number;
+  contentSized?: boolean;
+}
+
+let host: HTMLElement | null = null;
+let root: Root | null = null;
+let themeListenerBound = false;
+
+function clamp(value: number, low: number, high: number): number {
+  return Math.min(Math.max(value, low), Math.max(low, high));
+}
+
+function syncHostTheme(name: unknown): void {
+  if (host) host.dataset.vekshaTheme = String(name ?? "light");
+}
+
+function ensureRoot(): Root {
+  if (!host) {
+    host = document.createElement("div");
+    host.id = "veksha-page-workspace";
+    document.documentElement.appendChild(host);
+  }
+  const shadow = host.shadowRoot ?? host.attachShadow({ mode: "open" });
+  let style = shadow.querySelector<HTMLStyleElement>("style[data-veksha-page-styles]");
   if (!style) {
     style = document.createElement("style");
-    style.id = "av-css";
-    style.textContent = SHADOW_CSS;
+    style.dataset.vekshaPageStyles = "true";
+    style.textContent = SHADOW_STYLES;
     shadow.appendChild(style);
   }
-
-  let container = shadow.querySelector("#av-container") as HTMLElement | null;
-  if (!container) {
-    container = document.createElement("div");
-    container.id = "av-container";
-    container.style.cssText = "pointer-events:auto;";
-    shadow.appendChild(container);
+  let mount = shadow.querySelector<HTMLElement>("[data-veksha-page-mount]");
+  if (!mount) {
+    mount = document.createElement("div");
+    mount.dataset.vekshaPageMount = "true";
+    shadow.appendChild(mount);
   }
+  root ??= createRoot(mount);
 
-  return container;
+  if (!themeListenerBound) {
+    themeListenerBound = true;
+    void chrome.storage.local.get(["vk_theme"]).then((values) => syncHostTheme(values.vk_theme));
+    chrome.storage.onChanged.addListener((changes, area) => {
+      if (area === "local" && changes.vk_theme) syncHostTheme(changes.vk_theme.newValue);
+    });
+  }
+  return root;
 }
 
-export function showTopicPickerOverlay(username: string): void {
-  const container = getShadowContainer();
-  overlayRoot?.unmount();
-  overlayRoot = createRoot(container);
-  overlayRoot.render(
-    <I18nProvider>
-      <PageOverlay initWidth={460} initHeight={520}>
-        <TopicPickerOverlay
-          username={username}
-          onSelect={(topic) => showLessonOverlay(username, topic)}
-          onClose={closeOverlay}
-        />
-      </PageOverlay>
-    </I18nProvider>
-  );
+function initialPosition(width: number): { x: number; y: number } {
+  return {
+    x: Math.max(12, Math.round((window.innerWidth - Math.min(width, window.innerWidth - 24)) / 2)),
+    y: Math.max(12, Math.min(56, window.innerHeight - 260)),
+  };
 }
 
-export function showTrainingOverlay(username: string): void {
-  const container = getShadowContainer();
-  overlayRoot?.unmount();
-  overlayRoot = createRoot(container);
-  overlayRoot.render(
-    <I18nProvider>
-      <PageOverlay initWidth={460} initHeight={580} autoHeight>
-        <TrainingWindow username={username} onClose={closeOverlay} />
-      </PageOverlay>
-    </I18nProvider>
-  );
-}
+function FloatingWorkspace({ children, spec }: { children: ReactNode; spec: WindowSpec }) {
+  const frame = useRef<HTMLDivElement>(null);
+  const drag = useRef<{ pointerId: number; x: number; y: number; originX: number; originY: number } | null>(null);
+  const [position, setPosition] = useState(() => initialPosition(spec.width));
 
-export function showLessonOverlay(username: string, topic: string): void {
-  const container = getShadowContainer();
-  overlayRoot?.unmount();
-  overlayRoot = createRoot(container);
-  overlayRoot.render(
-    <I18nProvider>
-      <PageOverlay initWidth={700} initHeight={720}>
-        <LessonWindow username={username} topicName={topic} onClose={closeOverlay} />
-      </PageOverlay>
-    </I18nProvider>
-  );
-}
-
-export function closeOverlay(): void {
-  overlayRoot?.unmount();
-  overlayRoot = null;
-}
-
-// ---------------------------------------------------------------------------
-// PageOverlay — draggable by [data-drag-handle], resizable via CSS resize
-// ---------------------------------------------------------------------------
-
-function PageOverlay({
-  children,
-  initWidth,
-  initHeight,
-  autoHeight = false,
-}: {
-  children: React.ReactNode;
-  initWidth: number;
-  initHeight: number;
-  autoHeight?: boolean;
-}) {
-  const [pos, setPos] = useState(() => ({
-    x: Math.max(20, Math.round((window.innerWidth - initWidth) / 2)),
-    y: 60,
-  }));
-  const ref = useRef<HTMLDivElement>(null);
-  const drag = useRef<{ sx: number; sy: number; px: number; py: number } | null>(null);
-
-  // Set initial size imperatively so CSS resize can change it freely
-  // without React overriding it on re-renders.
   useLayoutEffect(() => {
-    if (ref.current) {
-      ref.current.style.width = `${initWidth}px`;
-      if (autoHeight) {
-        // Fit content; initHeight becomes a cap so tall content still fits the screen.
-        ref.current.style.height = "auto";
-        ref.current.style.maxHeight = `min(${initHeight}px, calc(100vh - 80px))`;
-      } else {
-        ref.current.style.height = `${initHeight}px`;
-      }
+    const element = frame.current;
+    if (!element) return;
+    element.style.width = `${Math.min(spec.width, window.innerWidth - 24)}px`;
+    if (spec.contentSized) {
+      element.style.maxHeight = `min(${spec.height}px, calc(100vh - 24px))`;
+    } else {
+      element.style.height = `${Math.min(spec.height, window.innerHeight - 24)}px`;
     }
+  }, [spec.contentSized, spec.height, spec.width]);
+
+  useEffect(() => {
+    const keepInViewport = () => {
+      const rect = frame.current?.getBoundingClientRect();
+      if (!rect) return;
+      setPosition((current) => ({
+        x: clamp(current.x, 8, window.innerWidth - Math.min(rect.width, window.innerWidth - 16) - 8),
+        y: clamp(current.y, 8, window.innerHeight - Math.min(rect.height, window.innerHeight - 16) - 8),
+      }));
+    };
+    window.addEventListener("resize", keepInViewport);
+    return () => window.removeEventListener("resize", keepInViewport);
   }, []);
 
-  function onPointerDown(e: React.PointerEvent<HTMLDivElement>) {
-    const target = e.target as HTMLElement;
-    if (target.closest("button, input, textarea, select")) return;
-    if (!target.closest("[data-drag-handle]")) return;
-    e.currentTarget.setPointerCapture(e.pointerId);
-    drag.current = { sx: e.clientX, sy: e.clientY, px: pos.x, py: pos.y };
+  function beginDrag(event: PointerEvent<HTMLDivElement>): void {
+    const target = event.target as HTMLElement;
+    if (!target.closest("[data-drag-handle]") || target.closest("button, input, textarea, select, a")) return;
+    drag.current = {
+      pointerId: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      originX: position.x,
+      originY: position.y,
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
   }
 
-  function onPointerMove(e: React.PointerEvent<HTMLDivElement>) {
-    if (!drag.current) return;
-    setPos({
-      x: Math.max(0, drag.current.px + e.clientX - drag.current.sx),
-      y: Math.max(0, drag.current.py + e.clientY - drag.current.sy),
+  function moveDrag(event: PointerEvent<HTMLDivElement>): void {
+    const current = drag.current;
+    if (!current || current.pointerId !== event.pointerId) return;
+    const rect = frame.current?.getBoundingClientRect();
+    if (!rect) return;
+    setPosition({
+      x: clamp(current.originX + event.clientX - current.x, 8, window.innerWidth - rect.width - 8),
+      y: clamp(current.originY + event.clientY - current.y, 8, window.innerHeight - 44),
     });
   }
 
-  function onPointerUp() {
-    drag.current = null;
+  function endDrag(event: PointerEvent<HTMLDivElement>): void {
+    if (drag.current?.pointerId === event.pointerId) drag.current = null;
   }
 
   return (
     <div
-      ref={ref}
-      className={autoHeight ? "av-overlay-auto" : undefined}
-      // Keyboard events are composed, so they cross the Shadow DOM boundary
-      // unless we stop them here.  Let child controls handle the event first
-      // (including TrainingWindow's Enter shortcut), then keep it away from
-      // host-page shortcuts such as YouTube's Space and GitHub's A/C/L keys.
-      onKeyDown={(e) => e.stopPropagation()}
-      onKeyUp={(e) => e.stopPropagation()}
-      onKeyPress={(e) => e.stopPropagation()}
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      style={{
-        position: "fixed",
-        left: pos.x,
-        top: pos.y,
-        resize: "both",
-        overflow: "hidden",
-        zIndex: 2147483647,
-        display: "flex",
-        flexDirection: "column",
-        borderRadius: 16,
-        boxShadow: "0 12px 40px rgba(43,36,56,0.35)",
-        border: "1px solid #ece8f6",
-        background: "#fff",
-        minWidth: 300,
-        minHeight: 250,
-        fontFamily: '-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif',
-        color: "#2b2438",
+      ref={frame}
+      className={`vk-page-window${spec.contentSized ? " is-content-sized" : ""}`}
+      style={{ left: position.x, top: position.y }}
+      onPointerDown={beginDrag}
+      onPointerMove={moveDrag}
+      onPointerUp={endDrag}
+      onPointerCancel={endDrag}
+      onKeyDown={(event) => {
+        if (event.key === "Escape") closeOverlay();
+        event.stopPropagation();
       }}
+      onKeyUp={(event) => event.stopPropagation()}
     >
       {children}
     </div>
   );
+}
+
+function renderWindow(content: ReactNode, spec: WindowSpec): void {
+  ensureRoot().render(
+    <I18nProvider>
+      <FloatingWorkspace spec={spec}>{content}</FloatingWorkspace>
+    </I18nProvider>,
+  );
+}
+
+export function showTrainingOverlay(username: string): void {
+  renderWindow(
+    <PracticePlannerWindow username={username} onClose={closeOverlay} />,
+    { width: 470, height: 680, contentSized: true },
+  );
+}
+
+export function showLessonOverlay(username: string, target: GoalTarget, title?: string): void {
+  renderWindow(
+    <GoalWindow username={username} target={target} title={title} onClose={closeOverlay} />,
+    { width: 720, height: 740 },
+  );
+}
+
+export function closeOverlay(): void {
+  root?.render(null);
 }

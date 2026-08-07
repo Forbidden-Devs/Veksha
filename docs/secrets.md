@@ -8,6 +8,12 @@
 ## Backend
 
 - `OPENAI_API_KEY` — доступ backend к OpenAI.
+- `SPEECH_SHARED_SECRET` — отдельный consumer secret клиента Veksha в Speech Platform;
+  передаётся только backend и никогда не встраивается в браузерный bundle.
+- `SPEECH_DEFAULT_VOICE_ID` — временная серверная привязка голоса до
+  появления provider-neutral voice registry в платформе.
+- `SPEECH_BASE_URL`, `SPEECH_TIMEOUT` — несекретные параметры
+  HTTP-подключения к платформе.
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_OAUTH_REDIRECT_URI` — OAuth.
 - `TELEGRAM_BOT_USERNAME`, `TELEGRAM_BOT_WEBHOOK_SECRET` — интеграция с ботом.
 - `ADMIN_API_SECRET` — временная защита служебных endpoint.

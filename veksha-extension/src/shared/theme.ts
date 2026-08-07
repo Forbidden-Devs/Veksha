@@ -9,7 +9,7 @@
  */
 import { storageGet, storageSet } from "./platform";
 
-export const THEMES = ["light", "dark"] as const;
+export const THEMES = ["light", "grove", "dark"] as const;
 export type ThemeName = (typeof THEMES)[number];
 
 export const THEME_STORAGE_KEY = "vk_theme";

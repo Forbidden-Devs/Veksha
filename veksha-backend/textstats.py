@@ -18,6 +18,7 @@ things instantly, with no LLM call:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import re
 
 from wordfreq import available_languages, tokenize, zipf_frequency
 
@@ -60,6 +61,38 @@ class EstimateResult:
     sample_size: int
     confidence: str  # "low" | "high"
     coverage_by_band: dict[str, float] = field(default_factory=dict)
+
+
+@dataclass(frozen=True, slots=True)
+class StructureResult:
+    cefr: str
+    average_sentence_words: float
+    long_sentence_ratio: float
+
+
+def estimate_structure(text: str, lang: str) -> StructureResult:
+    """Estimate syntactic load without sending page text to a model."""
+    sentences = [part.strip() for part in re.split(r"(?<=[.!?])\s+|\n+", text) if part.strip()]
+    lengths = [
+        len([token for token in tokenize(sentence, lang) if any(char.isalpha() for char in token)])
+        for sentence in sentences
+    ]
+    lengths = [length for length in lengths if length]
+    if not lengths:
+        return StructureResult("A1", 0.0, 0.0)
+    average = sum(lengths) / len(lengths)
+    long_ratio = sum(length >= 24 for length in lengths) / len(lengths)
+    if average >= 28 or long_ratio >= 0.5:
+        band = "C1"
+    elif average >= 22 or long_ratio >= 0.3:
+        band = "B2"
+    elif average >= 16:
+        band = "B1"
+    elif average >= 10:
+        band = "A2"
+    else:
+        band = "A1"
+    return StructureResult(band, round(average, 2), round(long_ratio, 4))
 
 
 def estimate(

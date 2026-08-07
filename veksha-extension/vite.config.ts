@@ -12,7 +12,10 @@ import webExtension from "vite-plugin-web-extension";
 const browser = process.env.TARGET_BROWSER === "firefox" ? "firefox" : "chrome";
 
 // Optional path to the browser executable web-ext launches in watch mode
-// (Brave, Zen, …). Set via `scripts/build.mjs --binary <path>`.
+// (Brave, Zen, …). Set via `scripts/build.mjs --binary <path>` or
+// `--app <name>` (resolved per platform by scripts/browser-binary.mjs);
+// empty when that browser is not installed, and web-ext then launches the
+// stock browser of the family.
 const browserBinary = process.env.BROWSER_BINARY;
 
 // Persistent dev profile per launched browser, so the extension keeps its
@@ -45,11 +48,7 @@ export default defineConfig({
             }
           : {}),
       }),
-      // The offscreen document is Chrome-only; Firefox runs capture in the
-      // background event page (see src/shared/capture.ts).
-      additionalInputs: [
-        ...(browser === "chrome" ? ["src/offscreen/offscreen.html"] : []),
-      ],
+      additionalInputs: ["src/capture/index.html", "src/focus/index.html"],
       watchFilePaths: ["manifest.json"],
       webExtConfig: {
         keepProfileChanges: true,
@@ -68,11 +67,9 @@ export default defineConfig({
       },
     }),
   ],
-  // Build-time constant so the Chrome background tree-shakes the Firefox-only
-  // direct-capture path (and its tesseract.js import) out of the service worker.
   define: {
-    __BROWSER__: JSON.stringify(browser),
     __DEV_BUILD__: JSON.stringify(process.env.DEV_BUILD === "1"),
+    __BROWSER__: JSON.stringify(browser),
   },
   build: {
     outDir: `dist/${browser}`,

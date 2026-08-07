@@ -123,7 +123,7 @@ export function DictionaryScreen() {
       </div>
       <div className="word-list">
         {words === null && <p className="word-list-placeholder">…</p>}
-        {words?.length === 0 && <p className="word-list-placeholder">{t.topics_empty}</p>}
+        {words?.length === 0 && <p className="word-list-placeholder">{t.dictionary_empty}</p>}
         {!!words?.length && visibleWords?.length === 0 && <p className="word-list-placeholder">{t.dictionary_no_results}</p>}
         {visibleWords?.map((word) => {
           const isSelected = selectedWord === word.item_id;
@@ -138,7 +138,7 @@ export function DictionaryScreen() {
                 <span className="dictionary-row-translation">{word.translation || "…"}</span>
                 <div className="dictionary-word-actions">
                   <button type="button" className="icon-btn" onClick={(event) => { event.stopPropagation(); void openMiningCard(word); }} aria-label={t.sentence_mining_title}>✨</button>
-                  <button type="button" className="icon-btn" onClick={(event) => { event.stopPropagation(); speakText(word.name, targetLang); }} aria-label={t.chat_listen}>🔊</button>
+                  <button type="button" className="icon-btn" onClick={(event) => { event.stopPropagation(); speakText(word.name, targetLang); }} aria-label={t.translator_listen}>🔊</button>
                   <button type="button" className="icon-btn" onClick={(event) => { event.stopPropagation(); remove(word.item_id); }} aria-label="Delete">🗑️</button>
                 </div>
               </div>

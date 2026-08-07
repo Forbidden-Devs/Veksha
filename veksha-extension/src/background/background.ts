@@ -1,8 +1,8 @@
 import { CONFIG } from "../shared/config";
-import { getReminders, getSettings } from "../shared/api";
+import { getReminders } from "../shared/api";
 import { googleLinkAccount, googleSignIn } from "../shared/googleAuth";
 import type { RemindersData } from "../shared/types";
-import type { CaptureController } from "../shared/capture";
+import { focusSiteForUrl, sessionBlocksUrl, type FocusSession } from "../shared/focusSession";
 import {
   captionTrackJson3Url,
   extractCaptionTracks,
@@ -14,6 +14,7 @@ import {
 // closes as soon as the OAuth window takes focus, so the result must survive
 // until the popup is opened again.
 const GOOGLE_LINK_RESULT_KEY = "vk_google_link_result";
+const CAPTURE_KEY_PREFIX = "vk_region_capture_";
 
 /** Runs in YouTube's MAIN world so signed caption URLs use the exact player
  * response, cookies and visitor state of the video being watched. Keep this
@@ -130,116 +131,36 @@ chrome.runtime.onConnect.addListener((port) => {
 });
 
 const NOTIFICATION_ID = "veksha-reminder";
-const OFFSCREEN_DOCUMENT_PATH = "src/offscreen/offscreen.html";
 const LAST_REMINDER_AT_KEY = "veksha-last-reminder-at";
-// Level 1-2: at most once per 12h. Level 3 ("frequent"): at most once per hour.
-const NORMAL_REMINDER_INTERVAL_MS = 12 * 60 * 60 * 1000;
-const FREQUENT_REMINDER_INTERVAL_MS = 60 * 60 * 1000;
+const REMINDER_INTERVAL_MS = 12 * 60 * 60 * 1000;
 
-// Chrome backgrounds are service workers and must delegate OCR to an
-// offscreen document. Firefox has no offscreen API, but its MV3 background
-// is an event page with DOM access — run the capture controller right here.
-// Build-time constant: on Chrome the whole direct-capture path (including the
-// tesseract.js import below) is tree-shaken out of the service worker.
-const supportsOffscreen = __BROWSER__ === "chrome";
-let creatingOffscreen: Promise<void> | null = null;
-
-let localCapturePromise: Promise<CaptureController> | null = null;
-
-function getLocalCapture(): Promise<CaptureController> {
-  if (!localCapturePromise) {
-    localCapturePromise = import("../shared/capture").then((m) =>
-      m.createCaptureController((msg) => {
-        if (msg.type === "OCR_RESULT" || msg.type === "OCR_ERROR") relayOcrResult(msg);
-      }),
-    );
-  }
-  return localCapturePromise;
-}
-
-// OCR-region requests in flight: requestId -> originating tab.
-const ocrRequests = new Map<string, number>();
-
-async function handleOcrCapture(
-  requestId: string,
-  rect: unknown,
-  viewportW: number,
-  viewportH: number,
-  tab?: chrome.tabs.Tab,
-): Promise<void> {
-  if (!tab?.id) return;
-  ocrRequests.set(requestId, tab.id);
-  try {
-    const dataUrl = await chrome.tabs.captureVisibleTab(tab.windowId, { format: "png" });
-    const payload = { type: "OCR_REGION", requestId, dataUrl, rect, viewportW, viewportH };
-    if (supportsOffscreen) {
-      await ensureOffscreenDocument();
-      await chrome.runtime.sendMessage({ target: "offscreen", ...payload });
-    } else {
-      const capture = await getLocalCapture();
-      void capture.handleOcrRegion(payload);
-    }
-  } catch (err) {
-    ocrRequests.delete(requestId);
-    chrome.tabs.sendMessage(tab.id, { type: "VEKSHA_OCR_DONE", requestId, error: String(err) }).catch(() => {});
-  }
-}
-
-function relayOcrResult(msg: Record<string, unknown>): void {
-  const requestId = String(msg.requestId || "");
-  const tabId = ocrRequests.get(requestId);
-  if (tabId === undefined) return;
-  ocrRequests.delete(requestId);
-  chrome.tabs.sendMessage(tabId, {
-    type: "VEKSHA_OCR_DONE",
-    requestId,
-    text: typeof msg.text === "string" ? msg.text : "",
-    lines: msg.lines,
-    bg: msg.bg,
-    tmpl: msg.tmpl,
-    error: typeof msg.error === "string" ? msg.error : undefined,
-  }).catch(() => {});
-}
-
-function getStoredUsername(): Promise<string | null> {
-  return new Promise((resolve) => {
-    chrome.storage.local.get([CONFIG.STORAGE_KEY_USERNAME], (result) => {
-      resolve((result[CONFIG.STORAGE_KEY_USERNAME] as string) || null);
-    });
-  });
+async function getStoredUsername(): Promise<string | null> {
+  const values = await chrome.storage.local.get(CONFIG.STORAGE_KEY_USERNAME);
+  const stored = values[CONFIG.STORAGE_KEY_USERNAME];
+  return typeof stored === "string" && stored ? stored : null;
 }
 
 const CTX_TRANSLATE_ID = "veksha-translate-selection";
-const FIRST_REVIEW_ALARM = "veksha-first-review";
-const FIRST_WORDS_KEY = "vk_first_words";
-const FIRST_REVIEW_SCHEDULED_KEY = "vk_first_review_scheduled";
-
-/** After the user's first 3 translated words, call them back for a short
- *  review half an hour later — the "come close the loop" nudge. */
-async function handleFirstWordSaved(): Promise<void> {
-  const st = await chrome.storage.local.get([FIRST_WORDS_KEY, FIRST_REVIEW_SCHEDULED_KEY]);
-  if (st[FIRST_REVIEW_SCHEDULED_KEY]) return;
-  const n = ((st[FIRST_WORDS_KEY] as number) || 0) + 1;
-  await chrome.storage.local.set({ [FIRST_WORDS_KEY]: n });
-  if (n >= 3) {
-    chrome.alarms.create(FIRST_REVIEW_ALARM, { delayInMinutes: 30 });
-    await chrome.storage.local.set({ [FIRST_REVIEW_SCHEDULED_KEY]: true });
-  }
+const CTX_TRANSLATE_AREA_ID = "veksha-translate-area";
+async function openRegionCapture(windowId: number): Promise<void> {
+  const image = await chrome.tabs.captureVisibleTab(windowId, { format: "png" });
+  const token = crypto.randomUUID();
+  const key = `${CAPTURE_KEY_PREFIX}${token}`;
+  await chrome.storage.session.set({ [key]: { image, expiresAt: Date.now() + 2 * 60 * 1000 } });
+  await chrome.tabs.create({ url: chrome.runtime.getURL(`src/capture/index.html#${token}`) });
 }
 
-async function fireFirstReview(): Promise<void> {
-  const username = await getStoredUsername();
-  if (!username) return;
+async function deliverSelection(tabId: number, text: string): Promise<void> {
+  const payload = { type: "VEKSHA_TRANSLATE_SELECTION", text };
   try {
-    const result = await getReminders(username);
-    await displayReminder(username, result, true);
+    await chrome.tabs.sendMessage(tabId, payload);
+    return;
   } catch {
-    chrome.notifications.create("veksha-first-review-note", {
-      type: "basic",
-      iconUrl: "icons/icon128.png",
-      title: "Time to review! 💪",
-      message: "Your first words are ready for a quick training.",
-    });
+    const target = { tabId };
+    await chrome.scripting.executeScript({ target, files: ["src/content/content.js"] });
+    await chrome.scripting.insertCSS({ target, files: ["src/content/content.css"] });
+    await new Promise<void>((resolve) => globalThis.setTimeout(resolve, 150));
+    await chrome.tabs.sendMessage(tabId, payload);
   }
 }
 
@@ -247,39 +168,27 @@ chrome.runtime.onInstalled.addListener(() => {
   chrome.alarms.create(CONFIG.REMINDERS_ALARM_NAME, {
     periodInMinutes: CONFIG.REMINDERS_INTERVAL_MINUTES,
   });
-  // Right-click "Translate" on selected text — the reliable way to grab text
-  // from places the page DOM can't reach (e.g. Chrome's built-in PDF viewer).
   chrome.contextMenus.removeAll(() => {
-    chrome.contextMenus.create({
-      id: CTX_TRANSLATE_ID,
-      title: "Translate selection with Veksha",
-      contexts: ["selection"],
-    });
+    const entries: chrome.contextMenus.CreateProperties[] = [
+      { id: CTX_TRANSLATE_ID, title: "Translate selection with Veksha", contexts: ["selection"] },
+      { id: CTX_TRANSLATE_AREA_ID, title: "Translate an area with Veksha", contexts: ["page", "image"] },
+    ];
+    entries.forEach((entry) => chrome.contextMenus.create(entry));
   });
 });
 
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+  if (info.menuItemId === CTX_TRANSLATE_AREA_ID && tab?.windowId !== undefined) {
+    try { await openRegionCapture(tab.windowId); } catch {}
+    return;
+  }
   if (info.menuItemId !== CTX_TRANSLATE_ID || !tab?.id) return;
   const text = (info.selectionText ?? "").trim();
   if (!text) return;
-  const message = { type: "VEKSHA_TRANSLATE_SELECTION", text };
-  try {
-    await chrome.tabs.sendMessage(tab.id, message);
-  } catch {
-    try {
-      await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ["src/content/content.js"] });
-      await chrome.scripting.insertCSS({ target: { tabId: tab.id }, files: ["src/content/content.css"] });
-      await new Promise<void>((resolve) => setTimeout(resolve, 150));
-      await chrome.tabs.sendMessage(tab.id, message);
-    } catch {}
-  }
+  await deliverSelection(tab.id, text).catch(() => undefined);
 });
 
 chrome.alarms.onAlarm.addListener(async (alarm) => {
-  if (alarm.name === FIRST_REVIEW_ALARM) {
-    await fireFirstReview();
-    return;
-  }
   if (alarm.name !== CONFIG.REMINDERS_ALARM_NAME) return;
 
   const username = await getStoredUsername();
@@ -287,70 +196,83 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
 
   try {
     const result = await getReminders(username);
-    if (result.should_remind) await displayReminder(username, result);
+    if (result.should_remind) await displayReminder(result);
   } catch {}
 });
 
-async function displayReminder(username: string, result: RemindersData, force = false) {
-  let level = 2;
-  let overseer = false;
-  try {
-    const settings = await getSettings(username);
-    level = settings.reminder_level ?? 2;
-    overseer = settings.overseer ?? false;
-  } catch {}
-  if (!force && !(await shouldShowReminderNow(level))) return;
+async function displayReminder(result: RemindersData, force = false) {
+  if (!force && !(await shouldShowReminderNow())) return;
 
-  // Level 1+: plain system notification.
+  // Review reminders are notifications only. Full-page intervention belongs
+  // exclusively to a deliberately started Study Focus Session.
   showReminderNotification(result);
-  // Level 2+: in-page pop-up with page blur (and optional overseer behaviour).
-  if (level < 2) return;
-
-  const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-  const tab = tabs[0];
-  if (!tab?.id || !tab.url || /^(chrome|chrome-extension|moz-extension|about):/.test(tab.url)) return;
-
-  const message = {
-    type: "VEKSHA_AGGRESSIVE_REMINDER",
-    username,
-    due_words: result.due_words,
-    due_word_names: result.due_word_names ?? [],
-    due_topic: result.due_topic,
-    overseer,
-  };
-  try {
-    await chrome.tabs.sendMessage(tab.id, message);
-  } catch {
-    try {
-      await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ["src/content/content.js"] });
-      await chrome.scripting.insertCSS({ target: { tabId: tab.id }, files: ["src/content/content.css"] });
-      await new Promise<void>((resolve) => setTimeout(resolve, 150));
-      await chrome.tabs.sendMessage(tab.id, message);
-    } catch {}
-  }
 }
 
-function showReminderNotification(result: { due_words: number; due_topic: string | null; due_word_names?: string[] }) {
-  const parts: string[] = [];
-  if (result.due_words > 0) parts.push(`${result.due_words} word${result.due_words === 1 ? "" : "s"} to review`);
-  if (result.due_topic) parts.push(`an unfinished topic "${result.due_topic}"`);
-  const message = parts.length ? `You have ${parts.join(" and ")}.` : "You have words to review.";
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  const url = changeInfo.url ?? tab.url;
+  if (!url || url.startsWith(chrome.runtime.getURL("src/focus/index.html"))) return;
+  void chrome.storage.local.get([CONFIG.STORAGE_KEY_FOCUS_SESSION]).then(async (values) => {
+    const session = values[CONFIG.STORAGE_KEY_FOCUS_SESSION] as FocusSession | undefined;
+    if (!session) return;
+    if (session.endsAt <= Date.now()) {
+      await chrome.storage.local.remove([CONFIG.STORAGE_KEY_FOCUS_SESSION]);
+      return;
+    }
+    if (!sessionBlocksUrl(session, url)) return;
+    const site = focusSiteForUrl(url);
+    if (!site) return;
+    const gate = chrome.runtime.getURL("src/focus/index.html")
+      + `?target=${encodeURIComponent(url)}&site=${encodeURIComponent(site)}`;
+    await chrome.tabs.update(tabId, { url: gate });
+  });
+});
 
-  chrome.notifications.create(NOTIFICATION_ID, {
+function showReminderNotification(result: Pick<RemindersData, "due_words" | "due_goal">) {
+  const wordNote = result.due_words
+    ? `${result.due_words} ${result.due_words === 1 ? "word" : "words"} to review`
+    : "";
+  const goalNote = result.due_goal ? `objective “${result.due_goal}” waiting` : "";
+  const due = [wordNote, goalNote].filter(Boolean).join(" · ");
+
+  const notification: chrome.notifications.NotificationOptions<true> = {
     type: "basic",
     iconUrl: "icons/icon128.png",
     title: "Time to practice! \u{1F4AA}",
-    message,
-  });
+    message: due || "Your scheduled practice is ready.",
+  };
+  chrome.notifications.create(NOTIFICATION_ID, notification);
 }
 
-chrome.notifications.onClicked.addListener((notificationId) => {
+function openReminderFromNotification(notificationId: string): void {
   if (notificationId !== NOTIFICATION_ID) return;
-  chrome.notifications.clear(notificationId);
+  void chrome.notifications.clear(notificationId);
   chrome.action?.openPopup?.().catch(() => {});
-});
+}
+
+chrome.notifications.onClicked.addListener(openReminderFromNotification);
 
 chrome.runtime.onMessage.addListener((msg: Record<string, unknown>, _sender, sendResponse) => {
+  if (msg.type === "VEKSHA_START_REGION_CAPTURE") {
+    chrome.tabs.query({ active: true, currentWindow: true })
+      .then(([tab]) => {
+        if (tab?.windowId === undefined) throw new Error("no active tab");
+        return openRegionCapture(tab.windowId);
+      })
+      .then(() => sendResponse({ ok: true }))
+      .catch((error) => sendResponse({ ok: false, error: String(error) }));
+    return true;
+  }
+  if (msg.type === "VEKSHA_GET_REGION_CAPTURE") {
+    const token = typeof msg.token === "string" ? msg.token : "";
+    const key = `${CAPTURE_KEY_PREFIX}${token}`;
+    chrome.storage.session.get([key]).then(async (values) => {
+      await chrome.storage.session.remove([key]);
+      const capture = values[key] as { image?: string; expiresAt?: number } | undefined;
+      const image = capture && Number(capture.expiresAt) > Date.now() ? capture.image ?? "" : "";
+      sendResponse({ ok: Boolean(image), image });
+    }).catch(() => sendResponse({ ok: false, image: "" }));
+    return true;
+  }
   if (msg.type === "VEKSHA_GOOGLE_SIGNIN") {
     // The whole OAuth flow runs here (not in the popup): the popup dies when
     // the auth window takes focus, the background survives. Credentials are
@@ -509,89 +431,15 @@ chrome.runtime.onMessage.addListener((msg: Record<string, unknown>, _sender, sen
     return true;
   }
 
-  if (msg.type === "VEKSHA_CAPTURE") {
-    const tab = _sender.tab;
-    if (!tab?.id) { sendResponse({ error: "no-tab" }); return false; }
-    chrome.tabs.captureVisibleTab(tab.windowId, { format: "jpeg", quality: 85 })
-      .then((dataUrl) => sendResponse({ dataUrl }))
-      .catch((err) => sendResponse({ error: String(err) }));
-    return true; // async
-  }
-
-  if (msg.type === "VEKSHA_WORD_SAVED") {
-    void handleFirstWordSaved();
-    sendResponse({ ok: true });
-    return false;
-  }
-
-  if (msg.type === "VEKSHA_OCR_CAPTURE") {
-    handleOcrCapture(
-      String(msg.requestId || ""),
-      msg.rect,
-      Number(msg.viewportW) || 0,
-      Number(msg.viewportH) || 0,
-      _sender.tab,
-    );
-    sendResponse({ ok: true });
-    return false;
-  }
-
-  if (msg.target === "background" && (msg.type === "OCR_RESULT" || msg.type === "OCR_ERROR")) {
-    relayOcrResult(msg);
-    sendResponse({ ok: true });
-    return false;
-  }
-
-  if (msg.type === "DEBUG_SHOW_REMINDER") {
-    const result = msg.reminder as { due_words: number; due_word_names?: string[]; due_topic: string | null; should_remind: boolean };
-    // Debug button: always fire the reminder so the user can test notifications,
-    // regardless of whether words are actually due (should_remind).
-    getStoredUsername()
-      .then((username) => {
-        if (!username) return;
-        return displayReminder(username, {
-          ...result,
-          due_word_names: result.due_word_names ?? [],
-          poll_interval_minutes: CONFIG.REMINDERS_INTERVAL_MINUTES,
-        } as RemindersData, true);
-      })
-      .then(() => sendResponse({ ok: true, shown: true }))
-      .catch((err) => sendResponse({ ok: false, error: String(err) }));
-    return true;
-  }
-
   return false;
 });
 
-async function ensureOffscreenDocument() {
-  const offscreen = chrome.offscreen;
-  if (!offscreen) throw new Error("chrome.offscreen is unavailable");
-
-  const offscreenUrl = chrome.runtime.getURL(OFFSCREEN_DOCUMENT_PATH);
-  const contexts = await chrome.runtime.getContexts({
-    contextTypes: [chrome.runtime.ContextType.OFFSCREEN_DOCUMENT],
-    documentUrls: [offscreenUrl],
-  });
-  if (contexts.length > 0) return;
-
-  // Chrome allows only one offscreen document, so concurrent createDocument
-  // calls must share one promise.
-  if (!creatingOffscreen) {
-    creatingOffscreen = offscreen.createDocument({
-      url: OFFSCREEN_DOCUMENT_PATH,
-      reasons: [chrome.offscreen.Reason.DOM_PARSER],
-      justification: "Run OCR on captured screenshots for Veksha translations.",
-    }).finally(() => { creatingOffscreen = null; });
-  }
-  await creatingOffscreen;
-}
-
-async function shouldShowReminderNow(level: number): Promise<boolean> {
-  const interval = level >= 3 ? FREQUENT_REMINDER_INTERVAL_MS : NORMAL_REMINDER_INTERVAL_MS;
-  const stored = await chrome.storage.local.get([LAST_REMINDER_AT_KEY]).catch(() => ({}) as Record<string, unknown>);
+async function shouldShowReminderNow(): Promise<boolean> {
+  const stored = await chrome.storage.local.get([LAST_REMINDER_AT_KEY])
+    .catch(() => ({}) as Record<string, unknown>);
   const last = Number((stored as Record<string, unknown>)[LAST_REMINDER_AT_KEY] ?? 0);
   const now = Date.now();
-  if (last && now - last < interval) return false;
+  if (last && now - last < REMINDER_INTERVAL_MS) return false;
 
   await chrome.storage.local.set({ [LAST_REMINDER_AT_KEY]: now }).catch(() => {});
   return true;

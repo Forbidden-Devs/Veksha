@@ -32,7 +32,7 @@ from learning_core_v2.acquisition import (
     lexical_item_id,
 )
 from learning_core_v2.dictionary import DictionaryLookupRequest
-from learning_core_v2.lesson import TopicReviewPolicy
+from learning_core_v2.goal import GoalReviewPolicy
 from learning_core_v2.sentence_mining import SentenceMiningRequest as MiningCoreRequest
 from learning_core_v2_adapters.openai_responses import LanguageProviderError
 from learning_core_v2_adapters.runtime import (
@@ -57,7 +57,6 @@ class SettingsRequest(BaseModel):
     target_langs: list[str] | None = None
     language_settings: dict[str, dict[str, str]] | None = None
     reminder_level: int = Field(2, ge=1, le=3)
-    overseer: bool = False
     mining_same_level_examples: int | None = Field(None, ge=1, le=5)
     mining_higher_level_examples: int | None = Field(None, ge=0, le=3)
 
@@ -72,7 +71,6 @@ class SettingsResponse(BaseModel):
     target_langs: list[str] = Field(default_factory=list)
     language_settings: dict[str, dict[str, str]] = Field(default_factory=dict)
     reminder_level: int = 2
-    overseer: bool = False
     mining_same_level_examples: int = 2
     mining_higher_level_examples: int = 1
     is_onboarded: bool = False
@@ -81,7 +79,7 @@ class SettingsResponse(BaseModel):
 class RemindersResponse(BaseModel):
     due_words: int
     due_word_names: list[str] = Field(default_factory=list)
-    due_topic: str | None = None
+    due_goal: str | None = None
     should_remind: bool
     poll_interval_minutes: int = SCHEDULER_INTERVAL_MINUTES
 
@@ -89,7 +87,7 @@ class RemindersResponse(BaseModel):
 class KBSummaryResponse(BaseModel):
     learning_count: int
     known_count: int
-    topics_count: int
+    goals_count: int
     anki_reviews: int
     training_reviews: int
 
@@ -144,9 +142,9 @@ class SentenceMiningRequest(BaseModel):
     force: bool = False
 
 
-def _topic_needing_review(storage: UserStorage) -> str | None:
-    topics = storage.lessons.topics()
-    return TopicReviewPolicy().first_due(topics)
+def _goal_needing_review(storage: UserStorage) -> str | None:
+    goals = storage.goals.for_language(storage.settings.target_lang or "en")
+    return GoalReviewPolicy().first_due(goals)
 
 
 async def _dictionary_details(storage: UserStorage, entry) -> dict[str, str]:
@@ -254,7 +252,6 @@ def _settings_response(storage: UserStorage) -> SettingsResponse:
         target_langs=s.target_langs or [s.target_lang],
         language_settings=language_settings,
         reminder_level=s.reminder_level,
-        overseer=s.overseer,
         mining_same_level_examples=s.mining_same_level_examples,
         mining_higher_level_examples=s.mining_higher_level_examples,
         is_onboarded=s.is_onboarded(),
@@ -335,7 +332,6 @@ async def api_post_settings(req: SettingsRequest, username: CurrentUser) -> Sett
         target_lang=req.target_lang,
         language_settings=language_settings,
         reminder_level=req.reminder_level,
-        overseer=req.overseer,
         mining_same_level_examples=(
             req.mining_same_level_examples
             if req.mining_same_level_examples is not None
@@ -364,12 +360,12 @@ async def api_reminders(username: CurrentUser) -> RemindersResponse:
         log.info("[reminders] user %r: %d word(s) decayed", username, len(decayed))
     due_words = storage.lexicon.due_count()
     due_word_names = _due_word_names(storage)
-    due_topic = _topic_needing_review(storage)
+    due_goal = _goal_needing_review(storage)
     return RemindersResponse(
         due_words=due_words,
         due_word_names=due_word_names,
-        due_topic=due_topic,
-        should_remind=due_words >= REMINDER_MIN_WORDS or due_topic is not None,
+        due_goal=due_goal,
+        should_remind=due_words >= REMINDER_MIN_WORDS or due_goal is not None,
     )
 
 
@@ -380,7 +376,7 @@ async def api_kb_summary(username: CurrentUser) -> KBSummaryResponse:
     return KBSummaryResponse(
         learning_count=storage.lexicon.learning_count(),
         known_count=storage.lexicon.known_count(),
-        topics_count=len(storage.lessons),
+        goals_count=len(storage.goals),
         **review_counts,
     )
 

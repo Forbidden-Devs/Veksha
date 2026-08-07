@@ -7,7 +7,10 @@ import uuid
 from dataclasses import dataclass, replace
 from typing import Any
 from typing import Literal, Sequence
-from urllib.parse import urlsplit, urlunsplit
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
+
+from .skills import SkillProfile
+from .subtitle_study import MediaAnchor
 
 
 InboxStatus = Literal["suggested", "learning", "known", "ignored"]
@@ -20,6 +23,12 @@ class VocabularyEncounter:
     context: str
     source_url: str = ""
     observed_at: float = 0.0
+    media: MediaAnchor | None = None
+    """Where the sentence was *spoken*, when it came from timed media.
+
+    Page selections leave this empty. A subtitle line fills it in, which is what
+    lets a review play back the moment instead of only reading the sentence.
+    """
 
 
 @dataclass(frozen=True, slots=True)
@@ -44,12 +53,39 @@ class LexicalItem:
     status: InboxStatus = "suggested"
     encounters: tuple[VocabularyEncounter, ...] = ()
     schedule: ReviewSchedule = ReviewSchedule()
+    skills: SkillProfile = SkillProfile()
     extra_data: str = ""
     sentence_mining: dict[str, Any] | None = None
 
     @property
     def latest_context(self) -> str:
         return self.encounters[-1].context if self.encounters else ""
+
+    @property
+    def latest_media(self) -> MediaAnchor | None:
+        """The most recent moment this sense was heard, if any."""
+        return next(
+            (
+                encounter.media
+                for encounter in reversed(self.encounters)
+                if encounter.media is not None
+            ),
+            None,
+        )
+
+    @property
+    def contexts(self) -> tuple[str, ...]:
+        """Distinct observed sentences, newest first."""
+        seen: set[str] = set()
+        ordered: list[str] = []
+        for encounter in reversed(self.encounters):
+            context = encounter.context.strip()
+            key = context.casefold()
+            if not context or key in seen:
+                continue
+            seen.add(key)
+            ordered.append(context)
+        return tuple(ordered)
 
 
 @dataclass(frozen=True, slots=True)
@@ -60,6 +96,7 @@ class VocabularyProposal:
     transcription: str = ""
     context: str = ""
     source_url: str = ""
+    media: MediaAnchor | None = None
 
 
 class SuggestVocabulary:
@@ -82,6 +119,7 @@ class SuggestVocabulary:
             context=normalized.context,
             source_url=normalized.source_url,
             observed_at=max(0.0, observed_at),
+            media=normalized.media,
         )
         key = _sense_key(
             normalized.term,
@@ -152,6 +190,29 @@ def _normalize_proposal(proposal: VocabularyProposal) -> VocabularyProposal:
         transcription=proposal.transcription.strip()[:200],
         context=" ".join(proposal.context.split())[:1000],
         source_url=_clean_source_url(proposal.source_url),
+        media=_normalize_media(proposal.media),
+    )
+
+
+def _normalize_media(anchor: MediaAnchor | None) -> MediaAnchor | None:
+    """Keep an anchor only when it can actually take the learner back."""
+    if anchor is None:
+        return None
+    media_key = " ".join(anchor.media_key.split())[:200]
+    start = max(0, int(anchor.start_ms))
+    end = max(start, int(anchor.end_ms))
+    if not media_key or end <= start:
+        return None
+    return MediaAnchor(
+        media_key=media_key,
+        media_url=_clean_media_url(anchor.media_url),
+        start_ms=start,
+        end_ms=end,
+        line_text=" ".join(anchor.line_text.split())[:1000],
+        line_translation=" ".join(anchor.line_translation.split())[:1000],
+        language=anchor.language.strip().lower().replace("_", "-")[:8],
+        speaker=" ".join(anchor.speaker.split())[:80],
+        audio_url=_clean_source_url(anchor.audio_url),
     )
 
 
@@ -172,6 +233,35 @@ def lexical_item_id(term: str, language: str, translation: str) -> str:
     return str(uuid.uuid5(_LEXICAL_ITEM_NAMESPACE, canonical))
 
 
+# Everything a media URL does not need to reach the video again.
+_TRACKING_PARAMETERS = frozenset(
+    {"si", "pp", "feature", "ab_channel", "gclid", "fbclid", "igshid", "ref", "ref_src"}
+)
+
+
+def _clean_media_url(value: str) -> str:
+    """Like :func:`_clean_source_url`, but keeps the query that names the video.
+
+    Page URLs are stored without their query on purpose. A media URL cannot
+    afford that: on YouTube the video id *is* the query, and an anchor that
+    cannot reopen the video is not an anchor. Known tracking parameters are
+    dropped instead, so the stored link stays as small as it can be.
+    """
+    try:
+        parsed = urlsplit(value.strip())
+    except ValueError:
+        return ""
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        return ""
+    retained = [
+        (name, item)
+        for name, item in parse_qsl(parsed.query, keep_blank_values=False)
+        if name.lower() not in _TRACKING_PARAMETERS and not name.lower().startswith("utm_")
+    ]
+    query = urlencode(retained[:8])
+    return urlunsplit((parsed.scheme, parsed.netloc, parsed.path, query, ""))[:2000]
+
+
 def _clean_source_url(value: str) -> str:
     try:
         parsed = urlsplit(value.strip())
@@ -188,10 +278,24 @@ def _merge_encounters(
     *,
     limit: int,
 ) -> tuple[VocabularyEncounter, ...]:
-    signature = (candidate.context.casefold(), candidate.source_url.casefold())
+    signature = _encounter_signature(candidate)
     retained = [
         encounter
         for encounter in existing
-        if (encounter.context.casefold(), encounter.source_url.casefold()) != signature
+        if _encounter_signature(encounter) != signature
     ]
     return tuple([*retained, candidate][-limit:])
+
+
+def _encounter_signature(encounter: VocabularyEncounter) -> tuple[str, str, int]:
+    """What makes two sightings the same sighting.
+
+    The timecode is part of it: hearing an expression twice in one video at two
+    different moments is two pieces of evidence, not a duplicate — even when the
+    line happens to read identically.
+    """
+    return (
+        encounter.context.casefold(),
+        encounter.source_url.casefold(),
+        encounter.media.start_ms if encounter.media is not None else -1,
+    )

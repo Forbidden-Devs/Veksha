@@ -119,7 +119,6 @@ def _conn():
                    native_lang        TEXT NOT NULL DEFAULT '',
                    active_target_lang TEXT NOT NULL DEFAULT '',
                    reminder_level     INTEGER NOT NULL DEFAULT 2,
-                   overseer           INTEGER NOT NULL DEFAULT 0,
                    mining_same_level  INTEGER NOT NULL DEFAULT 2,
                    mining_higher_level INTEGER NOT NULL DEFAULT 1,
                    FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
@@ -133,6 +132,8 @@ def _conn():
             "ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS "
             "mining_higher_level INTEGER NOT NULL DEFAULT 1"
         )
+        # Remove the retired coercive-reminder flag from existing databases.
+        conn.execute("ALTER TABLE user_settings DROP COLUMN IF EXISTS " + "over" + "seer")
         conn.execute(
             """CREATE TABLE IF NOT EXISTS user_languages (
                    username TEXT NOT NULL,
@@ -145,23 +146,36 @@ def _conn():
                    FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
                )"""
         )
-        # Personal frequency list ("real browsing" vocab): one row per
-        # (word, domain) the user has encountered with tracking enabled,
-        # incremented on every page visit that contains the word.
+        # Reading Sessions are started deliberately. Observations are tied to
+        # their session id, so ordinary browsing can never populate this data.
         conn.execute(
-            """CREATE TABLE IF NOT EXISTS word_freq (
-                   username  TEXT NOT NULL,
-                   language  TEXT NOT NULL,
-                   word      TEXT NOT NULL,
-                   domain    TEXT NOT NULL,
-                   count     INTEGER NOT NULL DEFAULT 0,
-                   last_seen DOUBLE PRECISION NOT NULL,
-                   PRIMARY KEY (username, language, word, domain)
+            """CREATE TABLE IF NOT EXISTS reading_sessions (
+                   session_id TEXT PRIMARY KEY,
+                   username   TEXT NOT NULL,
+                   language   TEXT NOT NULL,
+                   source_url TEXT NOT NULL DEFAULT '',
+                   started_at DOUBLE PRECISION NOT NULL,
+                   ended_at   DOUBLE PRECISION,
+                   FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
                )"""
         )
         conn.execute(
-            "CREATE INDEX IF NOT EXISTS ix_word_freq_user_lang ON word_freq (username, language)"
+            "CREATE INDEX IF NOT EXISTS ix_reading_sessions_user_lang "
+            "ON reading_sessions (username, language)"
         )
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS reading_session_words (
+                   session_id TEXT NOT NULL,
+                   word       TEXT NOT NULL,
+                   domain     TEXT NOT NULL,
+                   count      INTEGER NOT NULL DEFAULT 0,
+                   last_seen  DOUBLE PRECISION NOT NULL,
+                   PRIMARY KEY (session_id, word, domain),
+                   FOREIGN KEY (session_id) REFERENCES reading_sessions(session_id) ON DELETE CASCADE
+               )"""
+        )
+        # Passive observations cannot be attributed to a deliberate session.
+        conn.execute("DROP TABLE IF EXISTS " + "word_" + "freq")
         # Paid subscription state. One row per user; `tier` is a plan family
         # from entitlements.py, `expires_at` a unix timestamp — an expired row
         # simply means the free tier again (rows are never deleted).
@@ -250,13 +264,31 @@ def _conn():
                    updated       DOUBLE PRECISION NOT NULL
                )"""
         )
+        # Canonical product identifiers describe the feature users buy. Move
+        # prices from the two retired implementation-era identifiers once,
+        # before inserting defaults for new databases.
+        conn.execute(
+            """INSERT INTO feature_prices (feature, stars_monthly, updated)
+               SELECT CASE feature
+                        WHEN 'grammar_lens' THEN 'pattern_workshop'
+                        WHEN 'immersion' THEN 'reading_coach'
+                      END,
+                      stars_monthly,
+                      updated
+                 FROM feature_prices
+                WHERE feature IN ('grammar_lens', 'immersion')
+               ON CONFLICT (feature) DO NOTHING"""
+        )
+        conn.execute(
+            "DELETE FROM feature_prices WHERE feature IN ('grammar_lens', 'immersion')"
+        )
         now = time.time()
         conn.executemany(
             "INSERT INTO feature_prices (feature, stars_monthly, updated) "
             "VALUES (%s,%s,%s) ON CONFLICT (feature) DO NOTHING",
             [
-                ("grammar_lens", 40, now),
-                ("immersion", 35, now),
+                ("pattern_workshop", 40, now),
+                ("reading_coach", 35, now),
                 ("dual_subtitles", 25, now),
             ],
         )
@@ -274,6 +306,19 @@ def _conn():
                    created          DOUBLE PRECISION NOT NULL
                )"""
         )
+        # Feature selections are JSON arrays stored as text. This one-way data
+        # migration lets the rest of the application speak only in current
+        # product terms; no runtime alias or fallback remains afterward.
+        for table in ("subscriptions", "promo_codes", "billing_checkouts"):
+            conn.execute(
+                f"""UPDATE {table}
+                       SET features = replace(
+                           replace(features, '\"grammar_lens\"', '\"pattern_workshop\"'),
+                           '\"immersion\"', '\"reading_coach\"'
+                       )
+                     WHERE features LIKE '%\"grammar_lens\"%'
+                        OR features LIKE '%\"immersion\"%'"""
+            )
         # Quizlet exports tracking: records which words have been exported to Quizlet
         conn.execute(
             """CREATE TABLE IF NOT EXISTS quizlet_exports (
@@ -312,6 +357,32 @@ def _conn():
         )
         conn.execute(
             "CREATE INDEX IF NOT EXISTS ix_ai_usage_created ON ai_usage (created DESC)"
+        )
+        # Speech Platform reports normalized usage units in response headers.
+        # Keep these separate from LLM token usage: their dimensions and
+        # reconciliation identifiers have different meanings.
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS speech_usage (
+                   id                  BIGSERIAL PRIMARY KEY,
+                   username            TEXT NOT NULL,
+                   operation           TEXT NOT NULL,
+                   request_id           TEXT NOT NULL DEFAULT '',
+                   provider             TEXT NOT NULL DEFAULT '',
+                   model                TEXT NOT NULL DEFAULT '',
+                   characters           BIGINT NOT NULL DEFAULT 0,
+                   audio_bytes          BIGINT NOT NULL DEFAULT 0,
+                   provider_request_id  TEXT NOT NULL DEFAULT '',
+                   created              DOUBLE PRECISION NOT NULL,
+                   FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
+               )"""
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS ix_speech_usage_user_created "
+            "ON speech_usage (username, created DESC)"
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS ix_speech_usage_request "
+            "ON speech_usage (request_id)"
         )
         conn.execute(
             """CREATE TABLE IF NOT EXISTS admin_query_audit (
@@ -382,13 +453,14 @@ def user_has_account_activity(username: str) -> bool:
     identity recovery/reassignment."""
     checks = (
         ("review_log", "username"),
-        ("word_freq", "username"),
+        ("reading_sessions", "username"),
         ("user_languages", "username"),
         ("subscriptions", "username"),
         ("telegram_links", "username"),
         ("star_payments", "username"),
         ("promo_redemptions", "username"),
         ("ai_usage", "username"),
+        ("speech_usage", "username"),
     )
     conn = _conn()
     return any(
@@ -517,16 +589,21 @@ def oauth_flow_take(poll_key: str, mode: str, username: Optional[str] = None) ->
 
 
 def delete_user_data(username: str) -> None:
-    """Wipe KB, review log and word frequency (keeps the account/token)."""
+    """Wipe learning data while keeping the account and token."""
     with _conn() as c:
         c.execute("DELETE FROM kb WHERE username=%s", (username,))
         c.execute("DELETE FROM review_log WHERE username=%s", (username,))
-        c.execute("DELETE FROM word_freq WHERE username=%s", (username,))
+        c.execute(
+            "DELETE FROM reading_session_words WHERE session_id IN "
+            "(SELECT session_id FROM reading_sessions WHERE username=%s)",
+            (username,),
+        )
+        c.execute("DELETE FROM reading_sessions WHERE username=%s", (username,))
 
 
 def settings_get(username: str) -> Optional[dict]:
     row = _conn().execute(
-        "SELECT display_name, native_lang, active_target_lang, reminder_level, overseer, "
+        "SELECT display_name, native_lang, active_target_lang, reminder_level, "
         "mining_same_level, mining_higher_level "
         "FROM user_settings WHERE username=%s", (username,),
     ).fetchone()
@@ -541,9 +618,8 @@ def settings_get(username: str) -> Optional[dict]:
         "native_lang": row[1],
         "target_lang": row[2],
         "reminder_level": row[3],
-        "overseer": bool(row[4]),
-        "mining_same_level_examples": row[5],
-        "mining_higher_level_examples": row[6],
+        "mining_same_level_examples": row[4],
+        "mining_higher_level_examples": row[5],
         "language_settings": {
             lang: {"level": level, "goals": goals, "prompt": prompt}
             for lang, level, goals, prompt in languages
@@ -555,15 +631,15 @@ def settings_set(username: str, settings: Any) -> None:
     with _conn() as c:
         c.execute(
             "INSERT INTO user_settings "
-            "(username, display_name, native_lang, active_target_lang, reminder_level, overseer, "
-            "mining_same_level, mining_higher_level) VALUES (%s,%s,%s,%s,%s,%s,%s,%s) "
+            "(username, display_name, native_lang, active_target_lang, reminder_level, "
+            "mining_same_level, mining_higher_level) VALUES (%s,%s,%s,%s,%s,%s,%s) "
             "ON CONFLICT (username) DO UPDATE SET "
             "display_name=excluded.display_name, native_lang=excluded.native_lang, "
             "active_target_lang=excluded.active_target_lang, reminder_level=excluded.reminder_level, "
-            "overseer=excluded.overseer, mining_same_level=excluded.mining_same_level, "
+            "mining_same_level=excluded.mining_same_level, "
             "mining_higher_level=excluded.mining_higher_level",
             (username, settings.display_name, settings.native_lang, settings.target_lang,
-             settings.reminder_level, int(settings.overseer),
+             settings.reminder_level,
              settings.mining_same_level_examples, settings.mining_higher_level_examples),
         )
         c.execute("DELETE FROM user_languages WHERE username=%s", (username,))
@@ -581,12 +657,49 @@ def purge_all_users() -> None:
     """Destructively remove every account and all account-owned data."""
     with _conn() as c:
         for table in (
-            "google_oauth_flows", "identities", "review_log", "word_freq",
+            "google_oauth_flows", "identities", "review_log", "reading_session_words",
+            "reading_sessions",
             "kb", "user_languages", "user_settings",
             "subscriptions", "telegram_links", "telegram_link_codes",
-            "star_payments", "promo_redemptions", "promo_codes", "ai_usage", "users",
+            "star_payments", "promo_redemptions", "promo_codes", "speech_usage",
+            "ai_usage", "users",
         ):
             c.execute(f"DELETE FROM {table}")
+
+
+# ---------------------------------------------------------------------------
+# Speech usage
+# ---------------------------------------------------------------------------
+
+def speech_usage_record(
+    username: str,
+    operation: str,
+    request_id: str,
+    provider: str,
+    model: str,
+    characters: int,
+    audio_bytes: int,
+    provider_request_id: str = "",
+) -> None:
+    """Persist Speech Platform units for one successful HTTP response."""
+    with _conn() as c:
+        c.execute(
+            "INSERT INTO speech_usage "
+            "(username, operation, request_id, provider, model, characters, "
+            "audio_bytes, provider_request_id, created) "
+            "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+            (
+                username,
+                operation[:20],
+                request_id[:160],
+                provider[:120],
+                model[:120],
+                max(0, int(characters or 0)),
+                max(0, int(audio_bytes or 0)),
+                provider_request_id[:160],
+                time.time(),
+            ),
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -895,30 +1008,61 @@ def review_log_delete_user(username: str) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Word frequency ("real browsing" personal vocab list)
+# Deliberate Reading Sessions
 # ---------------------------------------------------------------------------
 
-def word_freq_bump_many(
-    username: str, language: str, counts: dict[str, int], domain: str, ts: float
+def reading_session_start(
+    session_id: str, username: str, language: str, source_url: str, ts: float
 ) -> None:
-    if not counts:
-        return
     with _conn() as c:
-        c.executemany(
-            """INSERT INTO word_freq (username, language, word, domain, count, last_seen)
-               VALUES (%s,%s,%s,%s,%s,%s)
-               ON CONFLICT (username, language, word, domain)
-               DO UPDATE SET count = word_freq.count + excluded.count,
-                             last_seen = excluded.last_seen""",
-            [(username, language, word, domain, n, ts) for word, n in counts.items()],
+        c.execute(
+            "INSERT INTO reading_sessions "
+            "(session_id, username, language, source_url, started_at) VALUES (%s,%s,%s,%s,%s)",
+            (session_id, username, language, source_url, ts),
         )
 
 
-def word_freq_top(username: str, language: str, limit: int) -> list[dict]:
-    """Top words by total occurrences, each with its per-domain breakdown."""
+def reading_session_end(session_id: str, username: str, ts: float) -> bool:
+    with _conn() as c:
+        cur = c.execute(
+            "UPDATE reading_sessions SET ended_at=%s "
+            "WHERE session_id=%s AND username=%s AND ended_at IS NULL",
+            (ts, session_id, username),
+        )
+    return cur.rowcount == 1
+
+
+def reading_session_observe(
+    session_id: str, username: str, counts: dict[str, int], domain: str, ts: float
+) -> bool:
+    if not counts:
+        return True
+    with _conn() as c:
+        active = c.execute(
+            "SELECT 1 FROM reading_sessions "
+            "WHERE session_id=%s AND username=%s AND ended_at IS NULL",
+            (session_id, username),
+        ).fetchone()
+        if active is None:
+            return False
+        c.executemany(
+            """INSERT INTO reading_session_words (session_id, word, domain, count, last_seen)
+               VALUES (%s,%s,%s,%s,%s)
+               ON CONFLICT (session_id, word, domain)
+               DO UPDATE SET count = reading_session_words.count + excluded.count,
+                             last_seen = excluded.last_seen""",
+            [(session_id, word, domain, n, ts) for word, n in counts.items()],
+        )
+    return True
+
+
+def reading_session_vocabulary(username: str, language: str, limit: int) -> list[dict]:
+    """Aggregate words observed only during the user's Reading Sessions."""
     totals = _conn().execute(
-        """SELECT word, SUM(count) AS total FROM word_freq
-           WHERE username=%s AND language=%s GROUP BY word ORDER BY total DESC LIMIT %s""",
+        """SELECT w.word, SUM(w.count) AS total
+           FROM reading_session_words w JOIN reading_sessions s USING (session_id)
+           WHERE s.username=%s AND s.language=%s
+           GROUP BY w.word ORDER BY total DESC LIMIT %s""",
         (username, language, max(1, min(int(limit), 500))),
     ).fetchall()
     if not totals:
@@ -927,8 +1071,10 @@ def word_freq_top(username: str, language: str, limit: int) -> list[dict]:
     words = [word for word, _ in totals]
     placeholders = ",".join("%s" for _ in words)
     domain_rows = _conn().execute(
-        f"""SELECT word, domain, count FROM word_freq
-            WHERE username=%s AND language=%s AND word IN ({placeholders})""",
+        f"""SELECT w.word, w.domain, SUM(w.count)
+            FROM reading_session_words w JOIN reading_sessions s USING (session_id)
+            WHERE s.username=%s AND s.language=%s AND w.word IN ({placeholders})
+            GROUP BY w.word, w.domain""",
         (username, language, *words),
     ).fetchall()
     domains_by_word: dict[str, dict[str, int]] = {}

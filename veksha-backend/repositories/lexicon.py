@@ -22,6 +22,15 @@ from learning_core_v2.acquisition import (
     VocabularyEncounter,
     lexical_item_id,
 )
+from learning_core_v2.subtitle_study import MediaAnchor
+from learning_core_v2.skills import (
+    NEUTRAL_CONFIDENCE,
+    SKILLS,
+    Skill,
+    SkillProfile,
+    SkillState,
+    record_attempt,
+)
 
 
 log = logging.getLogger(__name__)
@@ -126,13 +135,53 @@ class LexiconRepository:
     def known_count(self) -> int:
         return sum(item.status == "known" for item in self._items)
 
-    def apply_review_result(
-        self, item: LexicalItem, outcome: str, task_type: str = ""
+    def record_skill_attempt(
+        self, item: LexicalItem, skill: Skill, rating_name: str, *, now: float | None = None
     ) -> LexicalItem:
-        rating = fsrs.outcome_to_rating(outcome)
+        """Fold one graded answer into the sense's per-skill confidence.
+
+        Corrective tasks call this without touching the FSRS schedule: a repair
+        proves something about the skill, not about when the sense is next due.
+        """
+        if skill not in SKILLS:
+            raise ValueError("unknown practice skill")
+        timestamp = time.time() if now is None else now
+        updated = replace(
+            item,
+            skills=item.skills.with_state(
+                skill,
+                record_attempt(item.skills.state(skill), rating_name, now=timestamp),  # type: ignore[arg-type]
+            ),
+        )
+        self.replace(updated)
+        return updated
+
+    def apply_review_result(
+        self,
+        item: LexicalItem,
+        outcome: str,
+        task_type: str = "",
+        *,
+        rating_name: str = "",
+        skill: Skill | None = None,
+    ) -> LexicalItem:
+        """Reschedule a sense from one answer.
+
+        `rating_name` carries a graded Again/Hard/Good/Easy when the caller has
+        one; surfaces that only know a verdict fall back to mapping `outcome`.
+        """
+        rating = (
+            fsrs.rating_from_name(rating_name)
+            if rating_name
+            else fsrs.outcome_to_rating(outcome)
+        )
         if rating is None:
             return item
         now = time.time()
+        if skill is not None:
+            item = self.record_skill_attempt(
+                item, skill, fsrs.rating_name(rating), now=now
+            )
         schedule = item.schedule
         if schedule.stability > 0 and schedule.last_review_at > 0:
             elapsed_days = max(0.0, (now - schedule.last_review_at) / 86400)
@@ -229,6 +278,7 @@ def _item_from_dict(data: dict) -> LexicalItem:
                 context=str(value.get("context", "")),
                 source_url=str(value.get("source_url", "")),
                 observed_at=float(value.get("observed_at", 0.0) or 0.0),
+                media=_media_from_dict(value.get("media")),
             )
             for value in data.get("encounters", [])
             if isinstance(value, dict)
@@ -243,6 +293,7 @@ def _item_from_dict(data: dict) -> LexicalItem:
             last_review_at=float(schedule.get("last_review_at", 0.0) or 0.0),
             lapses=max(0, int(schedule.get("lapses", 0) or 0)),
         ),
+        skills=_skills_from_dict(data.get("skills")),
         extra_data=str(data.get("extra_data", "")),
         sentence_mining=(
             data.get("sentence_mining")
@@ -265,6 +316,7 @@ def _item_to_dict(item: LexicalItem) -> dict:
                 "context": value.context,
                 "source_url": value.source_url,
                 "observed_at": value.observed_at,
+                **({"media": _media_to_dict(value.media)} if value.media else {}),
             }
             for value in item.encounters
         ],
@@ -278,8 +330,88 @@ def _item_to_dict(item: LexicalItem) -> dict:
             "last_review_at": item.schedule.last_review_at,
             "lapses": item.schedule.lapses,
         },
+        "skills": _skills_to_dict(item.skills),
         "extra_data": item.extra_data,
         "sentence_mining": item.sentence_mining or {},
+    }
+
+
+def _media_from_dict(data: object) -> MediaAnchor | None:
+    """Read a stored timecode. Words saved from a page simply have none."""
+    if not isinstance(data, dict):
+        return None
+    media_key = str(data.get("media_key", ""))
+    if not media_key:
+        return None
+    start = max(0, int(data.get("start_ms", 0) or 0))
+    return MediaAnchor(
+        media_key=media_key,
+        media_url=str(data.get("media_url", "")),
+        start_ms=start,
+        end_ms=max(start, int(data.get("end_ms", 0) or 0)),
+        line_text=str(data.get("line_text", "")),
+        line_translation=str(data.get("line_translation", "")),
+        language=str(data.get("language", "")),
+        speaker=str(data.get("speaker", "")),
+        audio_url=str(data.get("audio_url", "")),
+    )
+
+
+def _media_to_dict(anchor: MediaAnchor) -> dict:
+    return {
+        "media_key": anchor.media_key,
+        "media_url": anchor.media_url,
+        "start_ms": anchor.start_ms,
+        "end_ms": anchor.end_ms,
+        "line_text": anchor.line_text,
+        "line_translation": anchor.line_translation,
+        "language": anchor.language,
+        "speaker": anchor.speaker,
+        "audio_url": anchor.audio_url,
+    }
+
+
+def _skills_from_dict(data: object) -> SkillProfile:
+    """Read a stored skill profile; anything missing starts neutral.
+
+    Senses written before the Adaptive Practice Planner have no `skills` key at
+    all, which is exactly the neutral profile — they enter the planner ranked
+    by their FSRS schedule instead of as failures.
+    """
+    if not isinstance(data, dict):
+        return SkillProfile()
+    profile = SkillProfile()
+    for skill in SKILLS:
+        state = data.get(skill)
+        if not isinstance(state, dict):
+            continue
+        profile = profile.with_state(
+            skill,
+            SkillState(
+                attempts=max(0, int(state.get("attempts", 0) or 0)),
+                errors=max(0, int(state.get("errors", 0) or 0)),
+                streak=max(0, int(state.get("streak", 0) or 0)),
+                last_practiced_at=float(state.get("last_practiced_at", 0.0) or 0.0),
+                confidence=min(
+                    1.0,
+                    max(0.0, float(state.get("confidence", NEUTRAL_CONFIDENCE))),
+                ),
+            ),
+        )
+    return profile
+
+
+def _skills_to_dict(profile: SkillProfile) -> dict:
+    return {
+        skill: {
+            "attempts": state.attempts,
+            "errors": state.errors,
+            "streak": state.streak,
+            "last_practiced_at": state.last_practiced_at,
+            "confidence": state.confidence,
+        }
+        for skill, state in profile.as_mapping().items()
+        if state.attempts > 0
     }
 
 

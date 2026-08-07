@@ -1,6 +1,6 @@
 """cefr.py — shared CEFR band helpers.
 
-Used by the rewritten immersion adapter and Reading Coach so the level-to-band
+Used by Reading Coach so the level-to-band
 mapping and ordering live in exactly one place.
 """
 from __future__ import annotations

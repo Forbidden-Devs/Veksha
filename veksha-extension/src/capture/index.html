@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Veksha · Translate area</title>
+    <script type="module" src="./main.ts"></script>
+  </head>
+  <body>
+    <main class="capture-shell">
+      <header>
+        <div><strong>VEKSHA</strong><span id="capture-title">Translate area</span></div>
+        <p id="capture-hint">Drag across the text you want to translate.</p>
+      </header>
+      <section class="capture-workspace">
+        <div class="capture-image-wrap" id="image-wrap">
+          <img id="capture-image" alt="Captured page" draggable="false" />
+          <div class="capture-selection" id="selection" hidden></div>
+        </div>
+        <aside class="capture-result" id="result" hidden>
+          <label id="source-label">Recognized text</label>
+          <pre id="recognized"></pre>
+          <label id="translation-label">Translation</label>
+          <pre id="translation"></pre>
+          <small id="provider"></small>
+          <button id="copy" type="button">Copy translation</button>
+        </aside>
+      </section>
+      <footer>
+        <span id="status"></span>
+        <button id="reset" type="button" hidden>Choose again</button>
+        <button id="translate" type="button" disabled>Translate selection</button>
+      </footer>
+    </main>
+  </body>
+</html>

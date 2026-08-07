@@ -2,123 +2,43 @@ import { useState } from "react";
 import { useT } from "../../shared/i18n";
 import { LANGUAGES } from "../../shared/languages";
 
-interface LevelSetupResult {
-  level: string;
-  goals: string;
-  prompt: string;
-}
+interface LevelSetupResult { level: string; goals: string; prompt: string }
+const LEVELS = ["a1", "a1_a2", "a2", "a2_b1", "b1", "b1_b2", "b2", "b2_c1", "c1", "c1_c2", "c2"];
 
-export function LevelSetupScreen({
-  initialValues,
-  targetLang,
-  onComplete,
-  onBack,
-}: {
+export function LevelSetupScreen({ initialValues, targetLang, onComplete, onBack }: {
   initialValues?: LevelSetupResult;
   targetLang: string;
-  onComplete: (opts: LevelSetupResult) => Promise<void>;
+  onComplete: (result: LevelSetupResult) => Promise<void>;
   onBack: () => void;
 }) {
   const t = useT();
-  const [level, setLevel] = useState(initialValues?.level ?? "");
-  const [goals, setGoals] = useState(initialValues?.goals ?? "");
-  const [prompt, setPrompt] = useState(initialValues?.prompt ?? "");
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const targetName = LANGUAGES.find((language) => language.code === targetLang)?.name ?? targetLang.toUpperCase();
+  const [form, setForm] = useState<LevelSetupResult>(initialValues ?? { level: "", goals: "", prompt: "" });
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const language = LANGUAGES.find((item) => item.code === targetLang)?.name ?? targetLang.toUpperCase();
 
-  // CEFR grade scale (labels are universal codes — no translation needed).
-  const LEVELS = [
-    { value: "a1", label: "A1" },
-    { value: "a1_a2", label: "A1/A2" },
-    { value: "a2", label: "A2" },
-    { value: "a2_b1", label: "A2/B1" },
-    { value: "b1", label: "B1" },
-    { value: "b1_b2", label: "B1/B2" },
-    { value: "b2", label: "B2" },
-    { value: "b2_c1", label: "B2/C1" },
-    { value: "c1", label: "C1" },
-    { value: "c1_c2", label: "C1/C2" },
-    { value: "c2", label: "C2" },
-  ];
-
-  async function handleContinue() {
-    if (!level) { setError(t.settings_err_no_level); return; }
-    setError(null);
-    setLoading(true);
-    try {
-      await onComplete({ level, goals, prompt });
-    } catch (err) {
-      // Keep the user on the final onboarding step instead of opening a
-      // partially configured profile with missing/incorrect languages.
-      setError(`${t.settings_err_save}: ${(err as Error).message}`);
-      setLoading(false);
-    }
+  async function submit(event: React.FormEvent): Promise<void> {
+    event.preventDefault();
+    if (!form.level) return setError(t.settings_err_no_level);
+    setBusy(true);
+    setError("");
+    try { await onComplete(form); }
+    catch (reason) { setError(`${t.settings_err_save}: ${(reason as Error).message}`); setBusy(false); }
   }
 
   return (
-    <section className="screen screen-settings">
-      <div className="lang-pick-header">
-        <button className="onboarding-back" type="button" onClick={onBack} disabled={loading}>
-          <span aria-hidden="true">←</span> {t.common_back}
-        </button>
-        <div className="logo-badge">Ve</div>
-        <h1 className="lang-pick-title">{t.level_setup_title}</h1>
-        <div className="lang-code">{targetName}</div>
-        <p className="lang-pick-subtitle">{t.level_setup_subtitle}</p>
-      </div>
-
-      <div className="settings-body">
-        <label className="field-label" htmlFor="ls-level">{t.settings_level}</label>
-        <select
-          id="ls-level"
-          className="select-input"
-          value={level}
-          onChange={(e) => setLevel(e.target.value)}
-        >
-          <option value="" disabled>{t.settings_level_placeholder}</option>
-          {LEVELS.map((l) => (
-            <option key={l.value} value={l.value}>{l.label}</option>
-          ))}
-        </select>
-
-        <label className="field-label" htmlFor="ls-goals">
-          {t.settings_goals} <span className="optional-tag">({t.level_setup_optional})</span>
-        </label>
-        <textarea
-          id="ls-goals"
-          className="textarea-input"
-          rows={2}
-          placeholder={t.settings_goals_placeholder}
-          value={goals}
-          onChange={(e) => setGoals(e.target.value)}
-        />
-
-        <label className="field-label" htmlFor="ls-prompt">
-          {t.settings_prompt_label} <span className="optional-tag">({t.level_setup_optional})</span>
-        </label>
-        <textarea
-          id="ls-prompt"
-          className="textarea-input"
-          rows={2}
-          placeholder={t.settings_prompt_placeholder}
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-        />
-
-        {error && <p className="onboarding-error">{error}</p>}
-      </div>
-
-      <div className="settings-footer">
-        <button
-          className="btn btn-gradient btn-block"
-          disabled={loading}
-          onClick={handleContinue}
-          type="button"
-        >
-          {loading ? t.app_loading : t.target_lang_start}
-        </button>
-      </div>
+    <section className="setup-surface" aria-labelledby="setup-level-title">
+      <button className="setup-back" type="button" onClick={onBack} disabled={busy}>← {t.common_back}</button>
+      <form className="setup-card setup-card-wide" onSubmit={(event) => void submit(event)}>
+        <p className="setup-kicker">{language}</p>
+        <h1 id="setup-level-title">{t.level_setup_title}</h1>
+        <p>{t.level_setup_subtitle}</p>
+        <label className="setup-field"><span>{t.settings_level}</span><select value={form.level} onChange={(event) => setForm({ ...form, level: event.target.value })}><option value="">{t.settings_level_placeholder}</option>{LEVELS.map((level) => <option value={level} key={level}>{level.replace("_", "/").toUpperCase()}</option>)}</select></label>
+        <label className="setup-field"><span>{t.settings_goals} · {t.level_setup_optional}</span><textarea rows={2} value={form.goals} onChange={(event) => setForm({ ...form, goals: event.target.value })} placeholder={t.settings_goals_placeholder} /></label>
+        <label className="setup-field"><span>{t.settings_prompt_label} · {t.level_setup_optional}</span><textarea rows={2} value={form.prompt} onChange={(event) => setForm({ ...form, prompt: event.target.value })} placeholder={t.settings_prompt_placeholder} /></label>
+        {error && <p className="setup-error" role="alert">{error}</p>}
+        <button className="setup-primary" type="submit" disabled={busy}>{busy ? t.app_loading : t.target_lang_start}</button>
+      </form>
     </section>
   );
 }

@@ -124,13 +124,13 @@ STRINGS: dict[str, dict[str, str]] = {
 
 FEATURE_NAMES = {
     "en": {
-        "grammar_lens": "Grammar Memory",
-        "immersion": "Page immersion",
+        "grammar_lens": "Pattern Workshop",
+        "immersion": "Reading Coach",
         "dual_subtitles": "Dual subtitles",
     },
     "ru": {
-        "grammar_lens": "Grammar Memory",
-        "immersion": "Погружение",
+        "grammar_lens": "Pattern Workshop",
+        "immersion": "Reading Coach",
         "dual_subtitles": "Двойные субтитры",
     },
 }

@@ -84,7 +84,8 @@ async def privacy_policy() -> str:
     <li>authentication tokens and, for optional Google sign-in, the Google
       profile name and email address returned by Google;</li>
     <li>selected text, page text, subtitle text, OCR results, and the domain
-      of the current website;</li>
+      of the current website, and an image crop when the user explicitly
+      invokes area translation;</li>
     <li>chat messages, saved vocabulary, training answers, learning history,
       language preferences, goals, settings, and feature state;</li>
     <li>AI feature usage records, including the feature, model, timestamp, and
@@ -105,8 +106,10 @@ async def privacy_policy() -> str:
   <h2>Information sharing and service providers</h2>
   <p>The extension sends the information required for a requested feature to
   the Veksha production service. Text submitted for translation, explanation,
-  chat, grammar, immersion, lesson, subtitle, OCR-related, or training
+  chat, grammar, Reading Coach, lesson, subtitle, OCR-related, or training
   features may be processed by OpenAI's API to generate the requested result.
+  User-selected image crops may first be processed by Google Cloud Vision for
+  text recognition; OpenAI vision is used when primary OCR is unavailable.
   An infrastructure hosting provider processes the service's runtime and
   stored account data. Optional Google authentication is processed by Google.
   Optional subscription billing is processed through Telegram. These
@@ -115,12 +118,14 @@ async def privacy_policy() -> str:
 
   <h2>Browser permissions and local storage</h2>
   <p>Veksha accesses page content only to provide features the user enables or
-  invokes, such as selection translation, immersion, grammar analysis,
-  subtitle tools, vocabulary frequency, reminders, and OCR. The extension
+  invokes, such as selection translation, Reading Coach analysis, grammar analysis,
+  subtitle tools, deliberately started Reading Sessions, reminders, and OCR. The extension
   stores an authentication token, account identifier, preferences, and
   feature state in local browser extension storage so it can work across
-  sessions. OCR JavaScript, WebAssembly, and language assets are packaged
-  locally with the extension; Veksha does not download or execute remote code.</p>
+  sessions. Reading passages used for a comprehension question are kept in
+  temporary server memory for up to 15 minutes and removed after the answer is
+  checked; they are not added to the learning database. Area captures are kept temporarily in extension session memory, consumed
+  once by the capture workspace, and are not written to browser storage.</p>
 
   <h2>Retention and security</h2>
   <p>Local extension data remains in the browser until the user clears the

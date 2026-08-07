@@ -1,4 +1,4 @@
-"""Bounded in-process cache for Grammar Memory analysis drafts."""
+"""Bounded in-process cache for Pattern Workshop analysis drafts."""
 
 from __future__ import annotations
 

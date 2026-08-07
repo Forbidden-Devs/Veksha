@@ -3,7 +3,7 @@ api/debug.py — debug commands (development only; mounted only when
 VEKSHA_DEBUG_API is enabled, see main.py).
 
   POST /api/debug/reset             — wipe the current user's data (KB + history)
-  POST /api/debug/simulate-training — mark random words/topic as reviewed
+  POST /api/debug/simulate-training — mark random words/goal as reviewed
   POST /api/debug/advance-day       — shift all reviews one day closer
 """
 from __future__ import annotations
@@ -11,6 +11,7 @@ from __future__ import annotations
 import logging
 import random
 import time
+import uuid
 from dataclasses import replace
 
 from fastapi import APIRouter
@@ -18,6 +19,14 @@ from fastapi import APIRouter
 import db
 from auth import CurrentUser
 from config import REMINDER_MIN_WORDS, SCHEDULER_INTERVAL_MINUTES
+from learning_core_v2.goal import (
+    GoalRoute,
+    GoalStep,
+    RecordEvidence,
+    StepEvaluation,
+    StepMaterial,
+    StepSection,
+)
 from storage import drop_storage, get_storage
 
 log = logging.getLogger(__name__)
@@ -36,7 +45,7 @@ async def api_debug_reset(username: CurrentUser) -> dict:
 
 @router.post("/api/debug/simulate-training")
 async def api_debug_simulate_training(username: CurrentUser) -> dict:
-    """Apply a successful training result to up to 15 random active words and one topic."""
+    """Apply a successful training result to up to 15 random active words and one goal."""
     storage = get_storage(username)
     active_items = [
         item for item in storage.lexicon.all() if item.status == "learning"
@@ -45,37 +54,47 @@ async def api_debug_simulate_training(username: CurrentUser) -> dict:
     for item in selected_items:
         storage.lexicon.apply_review_result(item, "correct", task_type="debug_simulate")
 
-    topic_names = sorted(t.name for t in storage.lessons.topics())
-    topic_name = random.choice(topic_names) if topic_names else None
-    if topic_name:
-        lesson_topic = storage.lessons.find(topic_name)
-        if lesson_topic:
-            units = list(lesson_topic.units)
-            if units:
-                index = random.randrange(len(units))
-                units[index] = replace(
-                    units[index], mastery=min(1.0, units[index].mastery * 0.4 + 0.6)
-                )
-            storage.lessons.put(
-                replace(lesson_topic, units=tuple(units), last_reviewed_at=time.time())
+    framed = [goal for goal in storage.goals.all() if goal.framed]
+    goal = random.choice(framed) if framed else None
+    if goal is not None:
+        # Fabricate one convincing answer against the goal's own next plan, so
+        # the simulated run exercises the real routing rather than a shortcut.
+        plan = goal.next_plan or GoalRoute().plan(goal)
+        if plan is not None:
+            step = GoalStep(
+                step_id=str(uuid.uuid4()),
+                criterion_id=plan.criterion_id,
+                activity=plan.activity,
+                reason=plan.reason,
+                material=StepMaterial("Simulated", "", (StepSection("Simulated", text="—"),)),
+                question="Simulated question",
             )
+            goal = RecordEvidence(GoalRoute()).execute(
+                goal,
+                step,
+                StepEvaluation("correct", "transfers_confidently", "Simulated"),
+                observed_at=time.time(),
+                answer="Simulated answer",
+                elapsed_seconds=30.0,
+            )
+            storage.goals.put(goal)
 
     storage.save()
     log.info(
-        "[debug/simulate-training] user=%r words=%d topic=%r",
-        username, len(selected_items), topic_name,
+        "[debug/simulate-training] user=%r words=%d goal=%r",
+        username, len(selected_items), goal.statement if goal else None,
     )
     return {
         "ok": True,
         "words_updated": len(selected_items),
-        "topic_updated": topic_name,
+        "goal_updated": goal.statement if goal else None,
     }
 
 
 @router.post("/api/debug/advance-day")
 async def api_debug_advance_day(username: CurrentUser) -> dict:
     """Move every scheduled word review one day closer, then return reminder state."""
-    from api.settings import _due_word_names, _topic_needing_review
+    from api.settings import _due_word_names, _goal_needing_review
 
     storage = get_storage(username)
     shifted = 0
@@ -103,12 +122,12 @@ async def api_debug_advance_day(username: CurrentUser) -> dict:
         storage.save()
     due_words = storage.lexicon.due_count()
     due_word_names = _due_word_names(storage)
-    due_topic = _topic_needing_review(storage)
+    due_goal = _goal_needing_review(storage)
     reminder = {
         "due_words": due_words,
         "due_word_names": due_word_names,
-        "due_topic": due_topic,
-        "should_remind": due_words >= REMINDER_MIN_WORDS or due_topic is not None,
+        "due_goal": due_goal,
+        "should_remind": due_words >= REMINDER_MIN_WORDS or due_goal is not None,
         "poll_interval_minutes": SCHEDULER_INTERVAL_MINUTES,
     }
     log.info(

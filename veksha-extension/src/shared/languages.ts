@@ -6,33 +6,21 @@ export interface Language {
 // Keep the most commonly selected languages first. The remaining entries are
 // every other ISO 639-1 language, so adding a language is no longer limited to
 // the original starter set.
-const FEATURED_LANGUAGES: Language[] = [
-  { code: "en", name: "English" },
-  { code: "ru", name: "Russian" },
-  { code: "es", name: "Spanish" },
-  { code: "fr", name: "French" },
-  { code: "de", name: "German" },
-  { code: "it", name: "Italian" },
-  { code: "pt", name: "Portuguese" },
-  { code: "pl", name: "Polish" },
-  { code: "uk", name: "Ukrainian" },
-  { code: "tr", name: "Turkish" },
-  { code: "ar", name: "Arabic" },
-  { code: "he", name: "Hebrew" },
-  { code: "zh", name: "Chinese" },
-  { code: "ja", name: "Japanese" },
-  { code: "ko", name: "Korean" },
-  { code: "hi", name: "Hindi" },
-  { code: "nl", name: "Dutch" },
-  { code: "sv", name: "Swedish" },
-  { code: "fi", name: "Finnish" },
-  { code: "cs", name: "Czech" },
-  { code: "el", name: "Greek" },
-  { code: "ka", name: "Georgian" },
-  { code: "vi", name: "Vietnamese" },
-  { code: "th", name: "Thai" },
-  { code: "id", name: "Indonesian" },
-];
+const FEATURED_LANGUAGE_PAIRS = [
+  ["en", "English"], ["ru", "Russian"], ["es", "Spanish"],
+  ["fr", "French"], ["de", "German"], ["it", "Italian"],
+  ["pt", "Portuguese"], ["pl", "Polish"], ["uk", "Ukrainian"],
+  ["tr", "Turkish"], ["ar", "Arabic"], ["he", "Hebrew"],
+  ["zh", "Chinese"], ["ja", "Japanese"], ["ko", "Korean"],
+  ["hi", "Hindi"], ["nl", "Dutch"], ["sv", "Swedish"],
+  ["fi", "Finnish"], ["cs", "Czech"], ["el", "Greek"],
+  ["ka", "Georgian"], ["vi", "Vietnamese"], ["th", "Thai"],
+  ["id", "Indonesian"],
+] as const;
+
+const FEATURED_LANGUAGES: Language[] = FEATURED_LANGUAGE_PAIRS.map(
+  ([code, name]) => ({ code, name }),
+);
 
 // Explicit names keep the picker stable across browsers and ICU versions.
 // Intl.DisplayNames used to produce surprising aliases for a few entries

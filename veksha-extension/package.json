@@ -5,10 +5,14 @@
   "type": "module",
   "scripts": {
     "sync-assets": "node scripts/sync-assets.mjs",
-    "predev": "npm run sync-assets",
-    "dev": "node scripts/build.mjs chrome --watch --binary \"/Applications/Brave Browser.app/Contents/MacOS/Brave Browser\"",
+    "predev": "npm run predev:zen",
+    "dev": "npm run dev:zen",
+    "predev:chrome": "npm run sync-assets",
+    "dev:chrome": "node scripts/build.mjs chrome --watch",
+    "predev:brave": "npm run sync-assets",
+    "dev:brave": "node scripts/build.mjs chrome --watch --app brave",
     "predev:zen": "npm run sync-assets",
-    "dev:zen": "node scripts/build.mjs firefox --watch --binary \"/Applications/Zen.app/Contents/MacOS/zen\"",
+    "dev:zen": "node scripts/build.mjs firefox --watch --app zen",
     "predev:firefox": "npm run sync-assets",
     "dev:firefox": "node scripts/build.mjs firefox --watch",
     "prebuild:chrome": "npm run sync-assets",
@@ -17,16 +21,16 @@
     "build:firefox": "node scripts/build.mjs firefox",
     "build": "npm run build:chrome && npm run build:firefox",
     "typecheck": "tsc --noEmit",
+    "test:architecture": "node --test scripts/legacy-ui.test.mjs",
     "test:version": "node --test scripts/set-version.test.mjs",
     "version:check": "node scripts/set-version.mjs --check",
     "version:set": "node scripts/set-version.mjs",
-    "check": "npm run typecheck && npm run test:version && npm run version:check && npm run build",
+    "check": "npm run typecheck && npm run test:architecture && npm run test:version && npm run version:check && npm run build",
     "release": "node scripts/package-release.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "tesseract.js": "^7.0.0"
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.279",

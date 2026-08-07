@@ -4,9 +4,10 @@ import { onStorageKeyChanged, runtimeSend, storageGet } from "./platform";
 export const BACKEND_URL = CONFIG.BACKEND_URL;
 import type {
   KBSummaryData,
-  LessonTopicSummary,
+  LearningGoalSummary,
   RemindersData,
   SettingsData,
+  SkillProgress,
   TranslateResponse,
   WordEntry,
 } from "./types";
@@ -15,10 +16,10 @@ import type {
 // Auth token
 //
 // The bearer token is issued once by POST /api/auth/register and stored in
-// chrome.storage.local. Every context (popup, content script, background,
-// offscreen) reads it lazily from storage and caches it in-module.
-// The legacy `username` parameters on the functions below are kept so call
-// sites stay unchanged — the server derives the user from the token.
+// chrome.storage.local. Every context (popup, content script, background)
+// reads it lazily from storage and caches it in-module.
+// Identity never travels in request bodies or query strings: the server
+// derives the account exclusively from the bearer token.
 // ---------------------------------------------------------------------------
 
 let _token: string | null = null;
@@ -55,12 +56,19 @@ async function _authHeaders(): Promise<Record<string, string>> {
 // the page's privileges and get blocked by the site's CSP (connect-src), and
 // Chrome subjects them to the page's CORS. They are proxied through the
 // background (VEKSHA_API_FETCH), which has extension privileges. Extension
-// pages (popup/offscreen/background itself) and the web app fetch directly.
+// pages (popup/background itself) and the web app fetch directly.
 // ---------------------------------------------------------------------------
 
 const IS_CONTENT_SCRIPT =
   typeof chrome !== "undefined" && !!chrome.runtime?.id &&
   typeof location !== "undefined" && /^https?:$/.test(location.protocol);
+
+export function canRequestSpeech(): boolean {
+  // Content scripts keep the local Web Speech fallback: direct cross-origin
+  // requests can be blocked by the host page CSP, while popup/web contexts
+  // can safely stream binary audio from the authenticated Veksha backend.
+  return !IS_CONTENT_SCRIPT && typeof fetch !== "undefined";
+}
 
 interface ProxiedFetchResult {
   ok: boolean;
@@ -93,11 +101,11 @@ async function _request(
   try {
     const res = await fetch(`${CONFIG.BACKEND_URL}${path}`, { ...init, signal: controller.signal });
     return { ok: res.ok, status: res.status, text: await res.text() };
-  } catch (err) {
-    if ((err as Error).name === "AbortError") {
+  } catch (error) {
+    if (controller.signal.aborted) {
       throw new Error(`${path} timed out after ${Math.round(timeoutMs / 1000)}s`);
     }
-    throw err;
+    throw error;
   } finally {
     clearTimeout(timer);
   }
@@ -146,6 +154,38 @@ async function _get<T>(path: string, params?: Record<string, string>): Promise<T
     headers: await _authHeaders(),
   }, 30_000);
   return _parse<T>(path, res);
+}
+
+export async function synthesizeSpeech(
+  text: string,
+  language: string,
+  operationId: string,
+): Promise<Blob> {
+  if (!canRequestSpeech()) throw new Error("Backend speech is unavailable in this context");
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 65_000);
+  try {
+    const res = await fetch(`${CONFIG.BACKEND_URL}/api/speech/synthesize`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...(await _authHeaders()) },
+      body: JSON.stringify({
+        text,
+        language,
+        operation_id: operationId,
+        quality: "balanced",
+      }),
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      const detail = await res.text().catch(() => "");
+      throw new Error(`/api/speech/synthesize -> HTTP ${res.status}: ${detail.slice(0, 300)}`);
+    }
+    // Keep the response binary end-to-end. In particular, never inflate audio
+    // into base64 just to move it between Veksha layers.
+    return await res.blob();
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -223,7 +263,7 @@ export function getBillingStatus(): Promise<BillingStatus> {
 }
 
 export interface BillingFeature {
-  id: "grammar_lens" | "immersion" | "dual_subtitles";
+  id: "pattern_workshop" | "reading_coach" | "dual_subtitles";
   stars_monthly: number;
 }
 
@@ -260,7 +300,6 @@ export function redeemPromoCode(code: string): Promise<PromoRedeemResult> {
 // ---------------------------------------------------------------------------
 
 export function translate(
-  username: string,
   text: string,
   sourceLang: string,
   targetLang: string,
@@ -275,7 +314,6 @@ export function translate(
 }
 
 export async function quickTranslate(
-  username: string,
   text: string,
   sourceLang: string,
   targetLang: string,
@@ -329,19 +367,6 @@ export async function decideVocabularyInboxItem(
   return result;
 }
 
-export interface ImmersionSentence {
-  text: string;
-  cefr: string;
-  translation: string;
-}
-
-export function analyzeImmersion(
-  username: string,
-  blocks: string[]
-): Promise<{ blocks: { sentences: ImmersionSentence[] }[] }> {
-  return _post("/api/immersion/analyze", { blocks }, 45_000);
-}
-
 export interface ReadingCoachObstacle {
   term: string;
   occurrences: number;
@@ -358,6 +383,10 @@ export interface ReadingCoachResult {
   verdict: "ideal" | "too_easy" | "too_hard" | "close";
   confidence: "low" | "high";
   unique_terms: number;
+  lexical_cefr: string;
+  structure_cefr: string;
+  average_sentence_words: number;
+  long_sentence_ratio: number;
   obstacles: ReadingCoachObstacle[];
 }
 
@@ -374,6 +403,32 @@ export function prepareReadingCoach(
     text,
     terms,
     source_url: sourceUrl,
+  }, 45_000);
+}
+
+export interface ReadingParagraphHelp {
+  original: string;
+  translation: string;
+  explanation: string;
+}
+
+export function helpReadingParagraph(text: string): Promise<ReadingParagraphHelp> {
+  return _post("/api/reading-coach/paragraph-help", { text }, 45_000);
+}
+
+export function createReadingQuestion(
+  text: string,
+): Promise<{ question_id: string; question: string }> {
+  return _post("/api/reading-coach/comprehension/question", { text }, 45_000);
+}
+
+export function checkReadingAnswer(
+  questionId: string,
+  answer: string,
+): Promise<{ outcome: "correct" | "vague" | "incorrect" | "garbage"; feedback: string }> {
+  return _post("/api/reading-coach/comprehension/check", {
+    question_id: questionId,
+    answer,
   }, 45_000);
 }
 
@@ -397,48 +452,60 @@ export interface GrammarAnnotation {
   explanation: string;
 }
 
-export interface GrammarBlockAnalysis {
+export interface PatternWorkshopChoice extends GrammarAnnotation {
+  index: number;
+  contrast_example: string;
+  challenge_prompt: string;
+}
+
+export interface PatternWorkshopDraft {
+  draft_id: string;
+  text: string;
   segments: GrammarSegment[];
-  annotations: GrammarAnnotation[];
+  patterns: PatternWorkshopChoice[];
 }
 
-export function analyzeGrammarLens(
-  blocks: string[],
-  sourceUrl = "",
-): Promise<{ blocks: GrammarBlockAnalysis[]; remembered: number }> {
-  return _post("/api/grammar-lens/analyze", { blocks, source_url: sourceUrl }, 45_000);
-}
-
-export interface GrammarMemoryEncounter {
-  example: string;
-  source_url: string;
-  observed_at: number;
-}
-
-export interface GrammarMemoryItem {
+export interface PatternWorkshopSkill {
   item_id: string;
   category: GrammarCategory;
   label: string;
   explanation: string;
   status: "learning" | "mastered";
-  seen_count: number;
-  first_seen_at: number;
-  last_seen_at: number;
-  encounters: GrammarMemoryEncounter[];
+  practice_count: number;
 }
 
-export function getGrammarMemory(): Promise<{ items: GrammarMemoryItem[] }> {
-  return _get("/api/grammar-memory");
+export function analyzePatternWorkshop(text: string, sourceUrl = ""): Promise<PatternWorkshopDraft> {
+  return _post("/api/pattern-workshop/analyze", { text, source_url: sourceUrl }, 45_000);
 }
 
-export function setGrammarMemoryStatus(
-  itemId: string,
-  status: "learning" | "mastered",
-): Promise<GrammarMemoryItem> {
-  return _post(`/api/grammar-memory/${encodeURIComponent(itemId)}/status`, { status });
+export function completePatternWorkshop(
+  draftId: string,
+  patternIndex: number,
+  answer: string,
+): Promise<PatternWorkshopSkill> {
+  return _post("/api/pattern-workshop/complete", {
+    draft_id: draftId,
+    pattern_index: patternIndex,
+    answer,
+  });
 }
 
-export interface VocabFrequencyEntry {
+export function createPatternErrorDraft(input: {
+  source: "training" | "ai_correction" | "text_check";
+  original: string;
+  correction: string;
+  category: GrammarCategory;
+  label: string;
+  explanation?: string;
+}): Promise<PatternWorkshopDraft> {
+  return _post("/api/pattern-workshop/error-drafts", input);
+}
+
+export function getPatternWorkshopSkills(): Promise<PatternWorkshopSkill[]> {
+  return _get("/api/pattern-workshop/skills");
+}
+
+export interface ReadingVocabularyEntry {
   word: string;
   count: number;
   domains: Record<string, number>;
@@ -446,12 +513,24 @@ export interface VocabFrequencyEntry {
   in_dictionary: boolean;
 }
 
-export function trackVocabFrequency(text: string, domain: string): Promise<{ tracked: number }> {
-  return _post("/api/vocab_frequency/track", { text, domain }, 15_000);
+export function startReadingSession(sourceUrl: string): Promise<{ session_id: string; started_at: number }> {
+  return _post("/api/reading-sessions", { source_url: sourceUrl });
 }
 
-export function getVocabFrequencyTop(limit = 100): Promise<{ words: VocabFrequencyEntry[] }> {
-  return _get("/api/vocab_frequency/top", { limit: String(limit) });
+export function observeReadingSession(
+  sessionId: string,
+  text: string,
+  domain: string,
+): Promise<{ observed: number }> {
+  return _post("/api/reading-sessions/observe", { session_id: sessionId, text, domain }, 15_000);
+}
+
+export function endReadingSession(sessionId: string): Promise<{ ok: boolean }> {
+  return _post("/api/reading-sessions/end", { session_id: sessionId });
+}
+
+export function getReadingVocabulary(limit = 100): Promise<{ words: ReadingVocabularyEntry[] }> {
+  return _get("/api/reading-sessions/vocabulary", { limit: String(limit) });
 }
 
 export interface SubtitleAlignmentGroup {
@@ -491,8 +570,297 @@ export function subtitleTranslateBatch(
   }, 45_000);
 }
 
+// ---------------------------------------------------------------------------
+// Subtitle study sessions
+//
+// The backend derives every line id from (media_key, start_ms, text), so the
+// client always sends cues and never invents an id of its own.
+// ---------------------------------------------------------------------------
+
+export interface StudyCue {
+  start_ms: number;
+  end_ms: number;
+  text: string;
+  translation?: string;
+  speaker?: string;
+}
+
+export interface StudyDisplay {
+  show_original: boolean;
+  show_translation: boolean;
+  reveal_on_tap: boolean;
+  auto_pause: boolean;
+}
+
+export interface StudyAnchor {
+  media_key: string;
+  media_url: string;
+  start_ms: number;
+  end_ms: number;
+  line_text: string;
+  line_translation: string;
+  language: string;
+  speaker: string;
+}
+
+export interface StudySession {
+  session_id: string;
+  media_key: string;
+  media_title: string;
+  display: StudyDisplay;
+  check_interval: number;
+  cursor_line_id: string;
+  cursor_ms: number;
+  lines_watched: number;
+  lines_since_check: number;
+  checks_asked: number;
+  checks_passed: number;
+  saved_items: number;
+  check_due: boolean;
+  resumed: boolean;
+}
+
+export interface StudyLineStat {
+  line_id: string;
+  start_ms: number;
+  replays: number;
+  slowed: number;
+  errors: number;
+  saves: number;
+  difficulty: number;
+}
+
+export interface StudySummary {
+  session_id: string;
+  media_key: string;
+  media_title: string;
+  lines_watched: number;
+  checks_asked: number;
+  checks_passed: number;
+  saved_items: number;
+  accuracy: number;
+  hardest: StudyLineStat[];
+}
+
+export interface StudyFragment {
+  line_id: string;
+  start_ms: number;
+  end_ms: number;
+  playback_rate: number;
+  repeats: number;
+  looping: boolean;
+}
+
+export interface StudyCheck {
+  check_id: string;
+  kind: string;
+  line_id: string;
+  question: string;
+  options: string[];
+  anchor: StudyAnchor;
+}
+
+export interface StudyCheckResult {
+  outcome: string;
+  passed: boolean;
+  feedback: string;
+  expected_answer: string;
+  display: StudyDisplay | null;
+}
+
+export interface StudySense {
+  item_id: string;
+  term: string;
+  translation: string;
+  transcription: string;
+  status: string;
+  encounter_count: number;
+  latest_context: string;
+}
+
+export interface StudySenses {
+  term: string;
+  language: string;
+  known_senses: StudySense[];
+  suggestion: StudySense | null;
+  needs_disambiguation: boolean;
+}
+
+export interface StudySavedWord {
+  item_id: string;
+  term: string;
+  translation: string;
+  status: string;
+  encounter_count: number;
+  anchor: StudyAnchor;
+}
+
+export interface StudyCloze {
+  line_id: string;
+  prompt: string;
+  answer: string;
+  first_letter: string;
+  letter_count: number;
+  blank_count: number;
+  translation: string;
+  anchor: StudyAnchor;
+}
+
+export interface StudyMediaRef {
+  media_key: string;
+  media_url?: string;
+  media_title?: string;
+}
+
+export function studyStartSession(
+  media: StudyMediaRef,
+  display?: StudyDisplay,
+  checkInterval = 5,
+): Promise<StudySession> {
+  return _post("/api/subtitle-study/session", {
+    ...media,
+    display,
+    check_interval: checkInterval,
+  }, 15_000);
+}
+
+export function studyRecordProgress(
+  sessionId: string,
+  mediaKey: string,
+  events: Array<{ kind: "watched" | "replayed"; cue: StudyCue; slowed?: boolean }>,
+): Promise<StudySession> {
+  return _post(`/api/subtitle-study/session/${encodeURIComponent(sessionId)}/progress`, {
+    media_key: mediaKey,
+    events,
+  }, 15_000);
+}
+
+export function studySetDisplay(sessionId: string, display: StudyDisplay): Promise<StudySession> {
+  return _post(`/api/subtitle-study/session/${encodeURIComponent(sessionId)}/display`, {
+    display,
+  }, 15_000);
+}
+
+export function studySessionSummary(sessionId: string): Promise<StudySummary> {
+  return _get(`/api/subtitle-study/session/${encodeURIComponent(sessionId)}/summary`);
+}
+
+export function studyCloseSession(sessionId: string): Promise<StudySummary> {
+  return _post(`/api/subtitle-study/session/${encodeURIComponent(sessionId)}/close`, {}, 15_000);
+}
+
+export function studyPlanFragment(
+  media: StudyMediaRef,
+  lines: StudyCue[],
+  cue: StudyCue,
+  options: {
+    playbackRate?: number;
+    repeats?: number;
+    mediaDurationMs?: number;
+    afterError?: boolean;
+    sessionId?: string;
+  } = {},
+): Promise<StudyFragment> {
+  return _post("/api/subtitle-study/fragment", {
+    ...media,
+    lines,
+    cue,
+    playback_rate: options.playbackRate ?? 1,
+    repeats: options.repeats ?? 1,
+    media_duration_ms: options.mediaDurationMs ?? 0,
+    after_error: options.afterError ?? false,
+    session_id: options.sessionId ?? "",
+  }, 15_000);
+}
+
+export function studyCreateCheck(
+  media: StudyMediaRef,
+  lines: StudyCue[],
+  cue: StudyCue,
+  options: { expression?: string; sessionId?: string; kind?: string } = {},
+): Promise<StudyCheck> {
+  return _post("/api/subtitle-study/comprehension/question", {
+    ...media,
+    lines,
+    cue,
+    expression: options.expression ?? "",
+    session_id: options.sessionId ?? "",
+    kind: options.kind ?? "",
+  }, 30_000);
+}
+
+export function studyCheckAnswer(
+  checkId: string,
+  answer: string,
+  sessionId = "",
+): Promise<StudyCheckResult> {
+  return _post("/api/subtitle-study/comprehension/check", {
+    check_id: checkId,
+    answer,
+    session_id: sessionId,
+  }, 30_000);
+}
+
+export function studyWordSenses(
+  media: StudyMediaRef,
+  term: string,
+  cue: StudyCue,
+): Promise<StudySenses> {
+  return _post("/api/subtitle-study/word/senses", { ...media, term, cue }, 30_000);
+}
+
+export function studySaveWord(
+  media: StudyMediaRef,
+  term: string,
+  translation: string,
+  cue: StudyCue,
+  options: { transcription?: string; sessionId?: string } = {},
+): Promise<StudySavedWord> {
+  return _post("/api/subtitle-study/word", {
+    ...media,
+    term,
+    translation,
+    transcription: options.transcription ?? "",
+    cue,
+    session_id: options.sessionId ?? "",
+  }, 20_000);
+}
+
+export function studyBuildCloze(
+  media: StudyMediaRef,
+  cue: StudyCue,
+  surface: string,
+  itemId = "",
+): Promise<StudyCloze> {
+  return _post("/api/subtitle-study/cloze", {
+    ...media,
+    cue,
+    surface,
+    item_id: itemId,
+  }, 15_000);
+}
+
 export function explain(username: string, text: string, translation: string): Promise<{ explanation: string }> {
   return _post("/api/explain", { text, translation });
+}
+
+export interface ImageRegionTranslation {
+  recognized_text: string;
+  translation: string;
+  detected_source_lang: string | null;
+  provider: "google" | "openai";
+}
+
+export function translateImageRegion(
+  imageDataUrl: string,
+  sourceLang: string,
+  targetLang: string,
+): Promise<ImageRegionTranslation> {
+  return _post("/api/ocr/translate-region", {
+    image_data_url: imageDataUrl,
+    source_lang: sourceLang,
+    target_lang: targetLang,
+  }, 60_000);
 }
 
 export function getReminders(username: string): Promise<RemindersData> {
@@ -515,7 +883,6 @@ export function saveSettings(
     targetLangs?: string[];
     languageSettings?: Record<string, { level: string; goals: string; prompt: string }>;
     reminderLevel?: number;
-    overseer?: boolean;
     miningSameLevelExamples?: number;
     miningHigherLevelExamples?: number;
   }
@@ -528,7 +895,6 @@ export function saveSettings(
     goals: opts.goals ?? "",
     general_prompt: opts.generalPrompt ?? "",
     reminder_level: opts.reminderLevel ?? 2,
-    overseer: opts.overseer ?? false,
   };
   if (opts.englishLevel) body.english_level = opts.englishLevel;
   if (opts.displayName?.trim()) body.display_name = opts.displayName.trim();
@@ -587,7 +953,9 @@ export function deleteKbWord(username: string, itemId: string): Promise<{ ok: bo
   return _delete("/api/kb_word", { item_id: itemId });
 }
 
-export function trainingInit(username: string): Promise<{ available_words: number }> {
+export function trainingInit(
+  username: string,
+): Promise<{ available_words: number; skills: SkillProgress[] }> {
   return _get("/api/training/init");
 }
 
@@ -595,12 +963,19 @@ export function trainingValidate(username: string, itemIds: string[]): Promise<{
   return _post("/api/training/validate", { item_ids: itemIds });
 }
 
-export function getLessonTopics(username: string): Promise<{ topics: LessonTopicSummary[] }> {
-  return _get("/api/lesson-topics");
+export function getLearningGoals(username: string): Promise<{ goals: LearningGoalSummary[] }> {
+  return _get("/api/learning-goals");
 }
 
-export function createLessonTopic(username: string, name: string): Promise<LessonTopicSummary> {
-  return _post("/api/lesson-topics", { name });
+export function createLearningGoal(
+  username: string,
+  goal: { statement: string; material?: string; material_url?: string; minutes?: number },
+): Promise<LearningGoalSummary> {
+  return _post("/api/learning-goals", goal);
+}
+
+export function deleteLearningGoal(username: string, goalId: string): Promise<{ ok: boolean }> {
+  return _delete(`/api/learning-goals/${encodeURIComponent(goalId)}`);
 }
 
 // ---------------------------------------------------------------------------

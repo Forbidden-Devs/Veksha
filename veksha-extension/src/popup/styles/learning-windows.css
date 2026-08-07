@@ -1,0 +1,935 @@
+/* Overlays (Training popup, Reminder card)                                 */
+/* ---------------------------------------------------------------------- */
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 50; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(43, 36, 56, 0.28);
+}
+ 
+.overlay-bottom {
+  align-items: flex-end;
+  background: transparent;
+  padding: 12px;
+}
+
+/* ---------------------------------------------------------------------- */ 
+/* Training overlay                                                         */
+/* ---------------------------------------------------------------------- */
+
+.training-card {
+  width: 100%;
+  background: #ffffff;
+  border-radius: 16px; 
+  box-shadow: 0 12px 40px rgba(43, 36, 56, 0.25);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+ 
+.training-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.training-progress-row { 
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.training-progress-track {
+  flex: 1; 
+  height: 6px;
+  border-radius: 999px;
+  background: var(--av-border);
+  overflow: hidden;
+}
+
+.training-progress-fill { 
+  height: 100%;
+  width: 0%;
+  background: var(--av-gradient);
+  border-radius: 999px;
+  transition: width 0.25s ease;
+}
+ 
+.training-progress-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--av-muted);
+  white-space: nowrap;
+}
+ 
+.training-body {
+  min-height: 70px;
+}
+
+.training-prompt {
+  font-size: 14px;
+  font-weight: 600; 
+  line-height: 1.5;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.training-feedback {
+  margin-top: 8px; 
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--av-surface);
+  border: 1px solid var(--av-border);
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap; 
+}
+
+.training-feedback.feedback-correct {
+  border-color: rgba(108, 182, 122, 0.35);
+  background: #f0fbf2;
+}
+ 
+.training-feedback.feedback-incorrect {
+  border-color: rgba(179, 65, 58, 0.25);
+  background: #fdf1ef;
+}
+
+.training-answer {
+  min-height: 60px; 
+}
+
+/* ---------------------------------------------------------------------- */
+/* Training window (standalone Chrome window)                               */
+/* ---------------------------------------------------------------------- */
+
+.training-window { 
+  width: 100%;
+  height: 100%;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+} 
+
+.training-window-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #ffffff; 
+  border-bottom: 1px solid var(--av-border);
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.training-window-title {
+  font-size: 15px; 
+  font-weight: 800;
+}
+
+.training-window-body {
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column; 
+  gap: 10px;
+}
+
+.training-window-status {
+  font-size: 13px;
+  color: var(--av-muted);
+  text-align: center; 
+  margin: 6px 0;
+}
+
+.training-window-error {
+  color: var(--av-error);
+}
+ 
+.training-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  padding: 28px 16px 8px; 
+}
+
+.training-empty-icon {
+  font-size: 40px;
+  line-height: 1;
+}
+ 
+.training-empty .training-window-status {
+  line-height: 1.55;
+  max-width: 320px;
+}
+
+.training-empty .btn {
+  max-width: 220px; 
+}
+
+.training-answer-area {
+  position: relative;
+}
+
+/* "vague" feedback colour (between correct and incorrect) */ 
+.feedback-vague {
+  border-color: rgba(200, 160, 50, 0.35);
+  background: #fdfbf0;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Adaptive Practice Planner                                                */ 
+/* ---------------------------------------------------------------------- */
+
+/* Per-skill confidence, one bar per tracked skill. */
+.practice-skillbar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px; 
+  padding: 8px 14px 0;
+}
+
+.practice-skillbar-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px; 
+  min-width: 0;
+}
+
+.practice-skillbar-name {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase; 
+  letter-spacing: 0.03em;
+  color: var(--av-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+ 
+.practice-skillbar-track {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--av-border);
+  overflow: hidden;
+}
+ 
+.practice-skillbar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--av-gradient);
+  transition: width 0.25s ease;
+}
+ 
+/* A skill with no answers yet shows its neutral start, not a score. */
+.practice-skillbar-fill.is-untested {
+  background: var(--av-border);
+}
+
+.practice-task-meta {
+  display: flex; 
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.practice-skill-tag {
+  padding: 4px 9px; 
+  border-radius: 999px;
+  background: var(--m-surface-2);
+  color: var(--m-dim);
+  font-size: 11px;
+  font-weight: 700;
+}
+ 
+.practice-repair-tag {
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(200, 160, 50, 0.16);
+  color: #8a6a12;
+  font-size: 11px;
+  font-weight: 700; 
+}
+
+.practice-why {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--av-muted); 
+}
+
+.practice-replay {
+  align-self: flex-start;
+  font-size: 12px;
+  padding: 6px 12px;
+} 
+
+.practice-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+ 
+.practice-option {
+  justify-content: flex-start;
+  text-align: left;
+  font-size: 13px;
+  line-height: 1.4;
+}
+ 
+/* A ring survives the theme's !important button fill; a border colour does not. */
+.practice-option.is-chosen {
+  font-weight: 700;
+  box-shadow: 0 0 0 2px var(--av-surface), 0 0 0 4px var(--av-accent);
+}
+
+.practice-hint-btn { 
+  font-size: 12px;
+}
+
+.practice-hint {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px dashed var(--av-border); 
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--av-muted);
+}
+
+/* The feedback panel is pre-wrap for the model's own line breaks; the rows
+   added below it are ordinary blocks and must not inherit that. Themes flip 
+   this panel to a dark fill, so these rows tint the inherited text colour
+   instead of naming one that only reads on a light background. */
+.practice-feedback {
+  white-space: normal;
+}
+
+.practice-feedback-text { 
+  white-space: pre-wrap;
+}
+
+.practice-expected,
+.practice-error-note {
+  margin-top: 6px;
+  font-size: 12px; 
+  line-height: 1.5;
+}
+
+.practice-error-note {
+  color: inherit;
+  opacity: 0.8;
+  font-style: italic; 
+}
+
+/* The four FSRS ratings — the suggestion is preselected, not enforced. */
+.practice-rating {
+  display: flex;
+  flex-direction: column;
+  gap: 6px; 
+}
+
+.practice-rating-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em; 
+  color: var(--av-muted);
+}
+
+.practice-rating-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px; 
+}
+
+/* Themes repaint every .btn with !important, so each rating states its own
+   colour the same way the Anki rating row does. Selection is shown with a
+   ring and full opacity rather than a fill the theme would take back. */
+.practice-rating-btn {
+  padding: 8px 4px; 
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff !important;
+  opacity: 0.5;
+  transition: opacity 0.15s ease, box-shadow 0.15s ease;
+}
+ 
+.practice-rating-btn.rating-again { background: #a63243 !important; }
+.practice-rating-btn.rating-hard  { background: #b3813a !important; }
+.practice-rating-btn.rating-good  { background: #267a48 !important; }
+.practice-rating-btn.rating-easy  { background: #2f6fa8 !important; }
+
+.practice-rating-btn:hover { opacity: 0.8; }
+ 
+.practice-rating-btn.is-selected {
+  opacity: 1;
+  box-shadow: 0 0 0 2px var(--av-surface), 0 0 0 4px currentColor;
+}
+
+.practice-rating-hint {
+  font-size: 11px; 
+  color: var(--av-muted);
+}
+
+.practice-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 12px; 
+}
+
+.practice-summary-line {
+  margin: 0;
+  font-size: 13px;
+  text-align: center;
+  color: var(--av-muted); 
+}
+
+.practice-summary-skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center; 
+}
+
+.practice-summary-block h4 {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase; 
+  letter-spacing: 0.03em;
+  color: var(--av-muted);
+}
+
+.practice-summary-block ul {
+  margin: 0;
+  padding: 0; 
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.practice-summary-block li { 
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+}
+ 
+.practice-summary-limit {
+  font-size: 11px;
+  color: var(--av-muted);
+  text-align: right;
+}
+
+/* ---------------------------------------------------------------------- */ 
+/* Reminder card                                                            */
+/* ---------------------------------------------------------------------- */
+
+.reminder-content {
+  display: flex;
+  align-items: center;
+  gap: 14px; 
+  background: color-mix(in srgb, var(--av-surface) 94%, var(--av-accent));
+  border-radius: 4px;
+  box-shadow: 8px 8px 0 color-mix(in srgb, var(--av-accent) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--av-accent) 48%, var(--av-border));
+  border-left: 4px solid var(--av-accent);
+  padding: 16px 14px;
+  margin-bottom: 12px; 
+  width: 100%;
+}
+
+.reminder-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 3px; 
+  background: var(--av-accent);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 20px; 
+  font-weight: 900;
+  flex-shrink: 0;
+}
+
+.reminder-text {
+  flex: 1;
+  min-width: 0; 
+}
+
+.reminder-title {
+  font-size: 15px;
+  font-weight: 850;
+}
+ 
+.reminder-subtitle {
+  font-size: 12px;
+  color: var(--av-muted);
+  margin-top: 4px;
+  line-height: 1.45;
+}
+ 
+.reminder-kicker {
+  margin-bottom: 8px;
+  color: var(--av-accent);
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.14em; 
+}
+
+#reminder-card.overlay-bottom {
+  flex-direction: column;
+  align-items: stretch;
+}
+ 
+#reminder-card .btn-block {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  border-radius: 4px;
+  padding-inline: 16px;
+} 
+
+/* ---------------------------------------------------------------------- */
+/* Lesson window (full-screen overlay)                                     */
+/* ---------------------------------------------------------------------- */
+
+.lesson-overlay {
+  position: absolute; 
+  inset: 0;
+  width: 600px;
+  background: var(--av-surface);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; 
+}
+
+.lesson-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px; 
+  border-bottom: 1px solid var(--av-border);
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.lesson-header-title {
+  font-size: 15px; 
+  font-weight: 700;
+  color: var(--av-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+} 
+
+/* Block tabs — visible, numbered navigation */
+.lesson-tabs-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 8px 6px; 
+  border-bottom: 1px solid var(--av-border);
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.lesson-tabs-arrow {
+  flex-shrink: 0; 
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 9px; 
+  background: var(--av-surface);
+  color: var(--av-accent);
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.lesson-tabs-arrow:hover:not(:disabled) { 
+  background: var(--av-accent-soft);
+}
+
+.lesson-tabs-arrow:disabled {
+  opacity: 0.3;
+  cursor: default;
+} 
+
+.lesson-tabs {
+  flex: 1;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scroll-behavior: smooth; 
+  scrollbar-width: none;
+  padding: 2px;
+}
+
+.lesson-tabs::-webkit-scrollbar {
+  display: none;
+} 
+
+.lesson-tab {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 180px; 
+  padding: 6px 11px 6px 6px;
+  border: 1.5px solid var(--av-border);
+  border-radius: 11px;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+} 
+
+.lesson-tab:hover {
+  border-color: var(--av-accent);
+}
+
+.lesson-tab-num {
+  flex-shrink: 0; 
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--av-surface); 
+  color: var(--av-muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.lesson-tab-name {
+  font-size: 12px; 
+  font-weight: 600;
+  color: var(--av-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+ 
+.lesson-tab-active {
+  border-color: var(--av-accent);
+  background: var(--av-accent-soft);
+}
+
+.lesson-tab-active .lesson-tab-num {
+  background: var(--av-accent); 
+  color: #fff;
+}
+
+.lesson-tab-active .lesson-tab-name {
+  color: var(--av-accent);
+}
+ 
+/* "Block X of N" indicator */
+.lesson-block-indicator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  background: #fff; 
+  border-bottom: 1px solid var(--av-border);
+  flex-shrink: 0;
+}
+
+.lesson-block-indicator-label {
+  font-size: 11.5px;
+  font-weight: 600; 
+  color: var(--av-muted);
+  white-space: nowrap;
+}
+
+.lesson-block-indicator-track {
+  flex: 1;
+  height: 4px; 
+  background: var(--av-border);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.lesson-block-indicator-fill {
+  height: 100%; 
+  background: var(--av-gradient);
+  border-radius: 99px;
+  transition: width 0.3s;
+}
+
+/* Scrollable content */
+.lesson-content-scroll { 
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 14px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+} 
+
+.lesson-content-card {
+  background: #fff;
+  border: 1.5px solid var(--av-border);
+  border-radius: 14px;
+  padding: 14px 16px;
+} 
+
+.lesson-block-title {
+  font-size: 15px;
+  font-weight: 800;
+  margin: 0 0 8px;
+  color: var(--av-ink);
+} 
+
+.lesson-block-intro {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--av-ink);
+  margin: 0 0 12px;
+} 
+
+.lesson-section {
+  margin-bottom: 12px;
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+ 
+.lesson-section-hl {
+  background: var(--av-accent-soft);
+}
+
+.lesson-section-header {
+  display: flex;
+  align-items: center; 
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.lesson-section-icon {
+  font-size: 16px;
+  line-height: 1; 
+}
+
+.lesson-section-header strong {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--av-ink);
+} 
+
+.lesson-section-items {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px; 
+}
+
+.lesson-section-items li {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--av-ink);
+} 
+
+.lesson-section-text {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--av-ink);
+  margin: 0;
+} 
+
+/* Hint that scrolling further opens the next block */
+.lesson-scroll-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px; 
+  padding: 6px 0 2px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--av-muted);
+  opacity: 0.8;
+}
+ 
+/* Practice — a visually separate panel pinned at the bottom */
+.lesson-practice-card {
+  margin: 0 12px 12px;
+  padding: 12px 14px 14px;
+  border: 1.5px solid var(--av-border);
+  border-radius: 16px;
+  background: var(--av-accent-soft); 
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.lesson-practice-head { 
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.lesson-practice-title { 
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--av-accent);
+} 
+
+.lesson-practice-icon {
+  font-size: 15px;
+  line-height: 1;
+}
+
+.lesson-practice-hint { 
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--av-muted);
+  white-space: nowrap;
+}
+
+.lesson-practice-progress { 
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lesson-question {
+  font-size: 13.5px; 
+  font-weight: 600;
+  color: var(--av-ink);
+  line-height: 1.45;
+  margin: 0;
+}
+
+.lesson-center { 
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 24px; 
+  text-align: center;
+}
+
+.lesson-status {
+  font-size: 13px;
+  color: var(--av-muted);
+} 
+
+.lesson-status-error {
+  color: var(--av-error);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Debug screen                                                             */ 
+/* ---------------------------------------------------------------------- */
+
+.menu-item-debug {
+  color: var(--av-muted);
+  border-top: 1px solid var(--av-border);
+  margin-top: 4px;
+} 
+
+.debug-info-block {
+  background: var(--av-surface);
+  border: 1px solid var(--av-border);
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex; 
+  flex-direction: column;
+  gap: 6px;
+}
+
+.debug-info-row {
+  display: flex;
+  justify-content: space-between; 
+  gap: 8px;
+  font-size: 12px;
+}
+
+.debug-info-label {
+  color: var(--av-muted);
+  font-weight: 600; 
+  flex-shrink: 0;
+}
+
+.debug-info-value {
+  color: var(--av-ink);
+  text-align: right;
+  word-break: break-all; 
+}
+
+.debug-command-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--av-surface); 
+  border: 1px solid var(--av-border);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+.debug-command-info {
+  flex: 1; 
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.debug-command-name {
+  font-size: 13px; 
+  font-weight: 700;
+  color: var(--av-ink);
+}
+
+.debug-command-desc {
+  font-size: 11px;
+  color: var(--av-muted); 
+  line-height: 1.4;
+}
+
+.debug-command-btn {
+  flex-shrink: 0;
+  background: #fdeaf1;
+  color: var(--av-error); 
+  border: 1px solid rgba(179, 65, 58, 0.2);
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 8px;
+}
+ 
+.debug-command-btn:hover:not(:disabled) {
+  background: #f9d6d4;
+}
+
+.debug-result-ok {
+  font-size: 12px;
+  color: #2d7a3a; 
+  margin: 0;
+}
+
+/* ---------------------------------------------------------------------- */

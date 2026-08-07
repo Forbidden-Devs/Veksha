@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import os
 from collections.abc import Mapping
+from dataclasses import dataclass
 from functools import lru_cache
 from typing import Any
 
@@ -13,22 +14,32 @@ from learning_core_v2.catalog_translation import TranslateCatalog
 from learning_core_v2.dictionary import EnrichDictionaryEntry
 from learning_core_v2.explanation import ExplainText
 from learning_core_v2.grammar_analysis import AnalyzeGrammar
-from learning_core_v2.immersion import AnalyzeImmersion
-from learning_core_v2.lesson import (
-    BuildLessonQuestion,
-    CheckLessonAnswer,
-    PrepareLesson,
+from learning_core_v2.goal import (
+    BuildGoalStep,
+    CheckGoalAnswer,
+    CloseGoal,
+    FrameGoal,
+    GoalRoute,
 )
 from learning_core_v2.phrase_mining import MinePhraseVocabulary
-from learning_core_v2.practice import BuildPracticeTask, CheckPracticeAnswer
+from learning_core_v2.practice import (
+    BuildPracticeTask,
+    CheckPracticeAnswer,
+    PracticePlanner,
+    PracticeQueue,
+)
+from learning_core_v2.reading_coach import BuildReadingQuestion, CheckReadingAnswer
 from learning_core_v2.sentence_mining import BuildSentenceMiningCard
 from learning_core_v2.subtitles import TranslateSubtitles
+from learning_core_v2.subtitle_study import (
+    BuildComprehensionCheck,
+    CheckComprehensionAnswer,
+)
 from learning_core_v2.translation import TranslateText, VocabularySink
 from storage import UserStorage
 from usage_context import get_usage_user
 
 from .openai_responses import OpenAIResponsesLanguageProvider
-from .immersion import CachedImmersionProvider
 from .grammar import CachedGrammarProvider
 from .practice import RandomChoiceSource, UuidIdentifierSource
 from .subtitles import CachedSubtitleTranslator
@@ -137,24 +148,49 @@ def build_catalog_translator() -> TranslateCatalog:
     return TranslateCatalog(provider)
 
 
+def build_practice_planner(queue: PracticeQueue) -> PracticePlanner:
+    return PracticePlanner(queue, RandomChoiceSource())
+
+
 def build_practice_services() -> tuple[BuildPracticeTask, CheckPracticeAnswer]:
     provider = _provider("VEKSHA_CORE_V2_TRAINING_MODEL", "gpt-5.6-terra")
-    builder = BuildPracticeTask(provider, RandomChoiceSource(), UuidIdentifierSource())
-    return builder, CheckPracticeAnswer(provider)
+    return BuildPracticeTask(provider, UuidIdentifierSource()), CheckPracticeAnswer(provider)
 
 
-def build_lesson_services() -> tuple[
-    PrepareLesson, BuildLessonQuestion, CheckLessonAnswer
-]:
+@dataclass(frozen=True, slots=True)
+class GoalServices:
+    """Everything one goal-oriented lesson session needs."""
+
+    framer: FrameGoal
+    route: GoalRoute
+    step_builder: BuildGoalStep
+    answer_checker: CheckGoalAnswer
+    closer: CloseGoal
+
+
+def build_goal_services() -> GoalServices:
     provider = _provider("VEKSHA_CORE_V2_LESSON_MODEL", "gpt-5.6-terra")
-    return (
-        PrepareLesson(provider),
-        BuildLessonQuestion(provider, UuidIdentifierSource()),
-        CheckLessonAnswer(provider),
+    return GoalServices(
+        framer=FrameGoal(provider),
+        route=GoalRoute(),
+        step_builder=BuildGoalStep(provider, UuidIdentifierSource()),
+        answer_checker=CheckGoalAnswer(provider),
+        closer=CloseGoal(provider),
     )
 
 
-@lru_cache(maxsize=1)
-def build_immersion_analyzer() -> AnalyzeImmersion:
-    provider = _provider("VEKSHA_CORE_V2_IMMERSION_MODEL", "gpt-5.6-luna")
-    return AnalyzeImmersion(CachedImmersionProvider(provider))
+def build_reading_comprehension_services() -> tuple[
+    BuildReadingQuestion, CheckReadingAnswer
+]:
+    provider = _provider("VEKSHA_CORE_V2_READING_MODEL", "gpt-5.6-luna")
+    return BuildReadingQuestion(provider), CheckReadingAnswer(provider)
+
+
+def build_subtitle_study_services() -> tuple[
+    BuildComprehensionCheck, CheckComprehensionAnswer
+]:
+    provider = _provider("VEKSHA_CORE_V2_SUBTITLE_STUDY_MODEL", "gpt-5.6-luna")
+    return (
+        BuildComprehensionCheck(provider, UuidIdentifierSource()),
+        CheckComprehensionAnswer(provider),
+    )

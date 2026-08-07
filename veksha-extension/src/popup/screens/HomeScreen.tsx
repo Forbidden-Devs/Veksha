@@ -17,21 +17,13 @@ import {
 } from "../../shared/aiBlocklist";
 import { useApp } from "../App";
 
-/**
- * HomeScreen — Metro start screen with a compact feature tile grid.
- *
- * Layout (mirrors the paper sketch):
- *   [dictionary] [topics] [training] [immersion]
- *   [dual subs] [grammar] [CI meter] [my words]
- *   [statistics] [settings] [          language          ]
- */
+/** HomeScreen — launch surface for learning tools and page-level controls. */
 
 const Icons = {
   dictionary: <svg viewBox="0 0 24 24"><path d="M4 5.5A3.5 3.5 0 0 1 7.5 2H11v17H7.5A3.5 3.5 0 0 0 4 22V5.5Z"/><path d="M20 5.5A3.5 3.5 0 0 0 16.5 2H13v17h3.5A3.5 3.5 0 0 1 20 22V5.5Z"/></svg>,
   topics: <svg viewBox="0 0 24 24"><path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>,
   training: <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="m15 9 5-5M16 4h4v4"/></svg>,
-  immersion: <svg viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/><circle cx="12" cy="12" r="3.5"/></svg>,
-  ciMeter: <svg viewBox="0 0 24 24"><path d="M4 18a8 8 0 0 1 16 0"/><path d="M12 18l4.5-6"/><circle cx="12" cy="18" r="1.2"/></svg>,
+  readingCoach: <svg viewBox="0 0 24 24"><path d="M4 18a8 8 0 0 1 16 0"/><path d="M12 18l4.5-6"/><circle cx="12" cy="18" r="1.2"/></svg>,
   stats: <svg viewBox="0 0 24 24"><path d="M5 20V10h4v10M10 20V4h4v16M15 20v-7h4v7M3 20h18"/></svg>,
   settings: <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6 1.7 1.7 0 0 0 10 3v-.2h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z"/></svg>,
   language: <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.2 2.5 3.3 5.5 3.3 9S14.2 18.5 12 21c-2.2-2.5-3.3-5.5-3.3-9S9.8 5.5 12 3Z"/></svg>,
@@ -40,6 +32,7 @@ const Icons = {
   myWords: <svg viewBox="0 0 24 24"><path d="M4 19V6a2 2 0 0 1 2-2h11l3 3v12a1 1 0 0 1-1 1H6a2 2 0 0 1-2-2Z"/><path d="M8 9h8M8 13h5"/></svg>,
   quizlet: <svg viewBox="0 0 24 24"><path d="M5 5h7v7H5V5zm7 0h7v7h-7V5zM5 12h7v7H5v-7zm7 0h7v7h-7v-7z"/></svg>,
   aiBlock: <svg viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.7 2.8 8.1 7 10 4.2-1.9 7-5.3 7-10V6l-7-3Z"/><path d="m8 16 8-8"/><circle cx="9" cy="9" r="1"/><circle cx="15" cy="15" r="1"/></svg>,
+  capture: <svg viewBox="0 0 24 24"><path d="M4 9V5a1 1 0 0 1 1-1h4M15 4h4a1 1 0 0 1 1 1v4M20 15v4a1 1 0 0 1-1 1h-4M9 20H5a1 1 0 0 1-1-1v-4"/><path d="M8 12h8M12 8v8"/></svg>,
 };
 
 export function HomeScreen() {
@@ -47,15 +40,14 @@ export function HomeScreen() {
   const t = useT();
   const [counts, setCounts] = useState<{ words: number; due: number } | null>(null);
   const [settings, setSettings] = useState<SettingsData | null>(null);
-  const [ciMeterOn, setCiMeterOn] = useState(false);
-  const [grammarLensOn, setGrammarLensOn] = useState(false);
-  const [immersionOn, setImmersionOn] = useState(false);
-  const [vocabFreqOn, setVocabFreqOn] = useState(false);
+  const [readingCoachOn, setReadingCoachOn] = useState(false);
+  const [readingSessionOn, setReadingSessionOn] = useState(false);
   const [dualSubsEnabled, setDualSubsEnabled] = useState(false);
+  const [subtitleStudyOn, setSubtitleStudyOn] = useState(false);
   const [activeUrl, setActiveUrl] = useState("");
   const [aiBlocklist, setAiBlocklist] = useState<AiBlocklist>({ sites: [], pages: [], allowedPages: [] });
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
-  const [featureGuide, setFeatureGuide] = useState<"immersion" | "ci_meter" | "dual_subtitles" | "grammar_memory" | "my_words" | null>(null);
+  const [featureGuide, setFeatureGuide] = useState<"reading_coach" | "dual_subtitles" | "pattern_workshop" | "my_words" | null>(null);
   const [quickText, setQuickText] = useState("");
   const [quickResult, setQuickResult] = useState<string | null>(null);
   const [quickVocabularyMode, setQuickVocabularyMode] = useState<"saved" | "suggested">("saved");
@@ -87,7 +79,7 @@ export function HomeScreen() {
     setQuickError(false);
     setQuickResult(null);
     try {
-      const result = await api.quickTranslate(username, text, nativeLang, targetLang, true);
+      const result = await api.quickTranslate(text, nativeLang, targetLang, true);
       setQuickResult(result.translation);
       setQuickVocabularyMode(result.vocabulary_mode ?? "saved");
       const [kb, reminders] = await Promise.all([
@@ -104,27 +96,16 @@ export function HomeScreen() {
 
   useEffect(() => {
     storageGet([
-      CONFIG.STORAGE_KEY_CI_METER,
-      CONFIG.STORAGE_KEY_GRAMMAR_LENS,
-      CONFIG.STORAGE_KEY_IMMERSION,
-      CONFIG.STORAGE_KEY_VOCAB_FREQ,
+      CONFIG.STORAGE_KEY_READING_COACH,
+      CONFIG.STORAGE_KEY_READING_SESSION,
       CONFIG.STORAGE_KEY_DUAL_SUBS_FEATURE,
-      CONFIG.STORAGE_KEY_DUAL_SUBS,
+      CONFIG.STORAGE_KEY_SUBTITLE_STUDY,
       CONFIG.STORAGE_KEY_AI_BLOCKLIST,
     ]).then((result) => {
-      setCiMeterOn(Boolean(result[CONFIG.STORAGE_KEY_CI_METER]));
-      setGrammarLensOn(Boolean(result[CONFIG.STORAGE_KEY_GRAMMAR_LENS]));
-      setImmersionOn(Boolean(result[CONFIG.STORAGE_KEY_IMMERSION]));
-      setVocabFreqOn(Boolean(result[CONFIG.STORAGE_KEY_VOCAB_FREQ]));
-      const storedDualSubsFeature = result[CONFIG.STORAGE_KEY_DUAL_SUBS_FEATURE];
-      const legacyDualSubsEnabled = Boolean(result[CONFIG.STORAGE_KEY_DUAL_SUBS]);
-      const dualSubsFeatureEnabled = storedDualSubsFeature === undefined
-        ? legacyDualSubsEnabled
-        : Boolean(storedDualSubsFeature);
-      setDualSubsEnabled(dualSubsFeatureEnabled);
-      if (storedDualSubsFeature === undefined && legacyDualSubsEnabled) {
-        storageSet({ [CONFIG.STORAGE_KEY_DUAL_SUBS_FEATURE]: true });
-      }
+      setReadingCoachOn(Boolean(result[CONFIG.STORAGE_KEY_READING_COACH]));
+      setReadingSessionOn(Boolean(result[CONFIG.STORAGE_KEY_READING_SESSION]));
+      setDualSubsEnabled(Boolean(result[CONFIG.STORAGE_KEY_DUAL_SUBS_FEATURE]));
+      setSubtitleStudyOn(Boolean(result[CONFIG.STORAGE_KEY_SUBTITLE_STUDY]));
       setAiBlocklist(normalizeAiBlocklist(result[CONFIG.STORAGE_KEY_AI_BLOCKLIST]));
     });
     if (isExtension) {
@@ -150,14 +131,14 @@ export function HomeScreen() {
     void updateAiBlocklist(next);
   }
 
-  async function toggleCiMeter() {
-    const next = !ciMeterOn;
-    setCiMeterOn(next);
-    await storageSet({ [CONFIG.STORAGE_KEY_CI_METER]: next });
+  async function toggleReadingCoach() {
+    const next = !readingCoachOn;
+    setReadingCoachOn(next);
+    await storageSet({ [CONFIG.STORAGE_KEY_READING_COACH]: next });
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       if (tab?.id) {
-        await chrome.tabs.sendMessage(tab.id, { type: "VEKSHA_TOGGLE_CI_METER", enabled: next });
+        await chrome.tabs.sendMessage(tab.id, { type: "VEKSHA_TOGGLE_READING_COACH", enabled: next });
       }
     } catch {
       // Restricted pages cannot receive content-script messages; the saved
@@ -165,63 +146,51 @@ export function HomeScreen() {
     }
   }
 
-  async function toggleGrammarLens() {
-    const next = !grammarLensOn;
-    if (next && !(await requirePremiumFeature("grammar_lens", t.grammar_memory_title))) return;
-    setGrammarLensOn(next);
-    if (next) setImmersionOn(false);
-    await storageSet({
-      [CONFIG.STORAGE_KEY_GRAMMAR_LENS]: next,
-      ...(next ? { [CONFIG.STORAGE_KEY_IMMERSION]: false } : {}),
-    });
+  async function openAreaTranslation() {
     try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (tab?.id) {
-        if (next) await chrome.tabs.sendMessage(tab.id, { type: "VEKSHA_TOGGLE_IMMERSION", enabled: false });
-        await chrome.tabs.sendMessage(tab.id, { type: "VEKSHA_TOGGLE_GRAMMAR_LENS", enabled: next });
-      }
+      await chrome.runtime.sendMessage({ type: "VEKSHA_START_REGION_CAPTURE" });
     } catch {
-      // The saved preference is applied on the next regular page.
-    }
-  }
-
-  async function toggleImmersion() {
-    const next = !immersionOn;
-    if (next && !(await requirePremiumFeature("immersion", t.nav_immersion))) return;
-    setImmersionOn(next);
-    if (next) setGrammarLensOn(false);
-    try {
-      await storageSet({
-        [CONFIG.STORAGE_KEY_IMMERSION]: next,
-        ...(next ? { [CONFIG.STORAGE_KEY_GRAMMAR_LENS]: false } : {}),
-      });
-    } catch {
-      setImmersionOn(!next);
-      if (next) setGrammarLensOn(grammarLensOn);
-      return;
-    }
-    try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (tab?.id) {
-        if (next) await chrome.tabs.sendMessage(tab.id, { type: "VEKSHA_TOGGLE_GRAMMAR_LENS", enabled: false });
-        await chrome.tabs.sendMessage(tab.id, { type: "VEKSHA_TOGGLE_IMMERSION", enabled: next });
-      }
-    } catch {
-      // Restricted pages apply the saved preference on the next regular page.
+      // Browser-protected pages cannot be captured; keep the popup responsive.
     }
   }
 
   async function toggleDualSubtitles() {
     const next = !dualSubsEnabled;
     if (next && !(await requirePremiumFeature("dual_subtitles", t.settings_dual_subtitles))) return;
+    const studyWas = subtitleStudyOn;
     setDualSubsEnabled(next);
+    // A study session has no translated track to work with once dual subtitles
+    // are off, so it goes with them — the mirror of switching them on together.
+    if (!next) setSubtitleStudyOn(false);
     try {
       await storageSet({
         [CONFIG.STORAGE_KEY_DUAL_SUBS_FEATURE]: next,
-        ...(next ? { [CONFIG.STORAGE_KEY_DUAL_SUBS]: true } : {}),
+        [CONFIG.STORAGE_KEY_DUAL_SUBS_VISIBLE]: next,
+        ...(!next ? { [CONFIG.STORAGE_KEY_SUBTITLE_STUDY]: false } : {}),
       });
     } catch {
       setDualSubsEnabled(!next);
+      setSubtitleStudyOn(studyWas);
+    }
+  }
+
+  async function toggleSubtitleStudy() {
+    const next = !subtitleStudyOn;
+    if (next && !(await requirePremiumFeature("dual_subtitles", t.settings_subtitle_study))) return;
+    setSubtitleStudyOn(next);
+    try {
+      // The study session needs a translated track to hide, so switching it on
+      // switches dual subtitles on with it.
+      await storageSet({
+        [CONFIG.STORAGE_KEY_SUBTITLE_STUDY]: next,
+        ...(next ? {
+          [CONFIG.STORAGE_KEY_DUAL_SUBS_FEATURE]: true,
+          [CONFIG.STORAGE_KEY_DUAL_SUBS_VISIBLE]: true,
+        } : {}),
+      });
+      if (next) setDualSubsEnabled(true);
+    } catch {
+      setSubtitleStudyOn(!next);
     }
   }
 
@@ -243,7 +212,6 @@ export function HomeScreen() {
       targetLangs: languages,
       languageSettings: settings.language_settings,
       reminderLevel: settings.reminder_level,
-      overseer: settings.overseer,
     });
     setSettings(updated);
     setLangPair(next, nativeLang);
@@ -252,7 +220,7 @@ export function HomeScreen() {
   if (!isExtension) {
     const languageName = LANGUAGES.find((lang) => lang.code === targetLang)?.name ?? targetLang.toUpperCase();
     return (
-      <section className="screen screen-home web-home">
+      <section className="screen launchpad web-home">
         <div className="web-home-hero">
           <div className="web-home-kicker">{languageName} · {targetLang.toUpperCase()}</div>
           <h1>{t.home_hero_title.replace("|", " ")}</h1>
@@ -266,7 +234,7 @@ export function HomeScreen() {
               autoCapitalize="none"
               autoComplete="off"
               maxLength={500}
-              aria-label={t.chat_mode_translate}
+              aria-label={t.translator_title}
             />
             <button type="submit" disabled={!quickText.trim() || quickLoading}>
               {quickLoading ? "…" : "→"}
@@ -303,8 +271,8 @@ export function HomeScreen() {
         </div>
 
         <div className="web-action-grid">
-          <button onClick={() => navigateTo("translator")}><span>{Icons.dictionary}</span><strong>{t.chat_mode_translate}</strong></button>
-          <button onClick={() => navigateTo("topics")}><span>{Icons.topics}</span><strong>{t.nav_topics}</strong><small>{t.sub_topics}</small></button>
+          <button onClick={() => navigateTo("translator")}><span>{Icons.dictionary}</span><strong>{t.translator_title}</strong></button>
+          <button onClick={() => navigateTo("goals")}><span>{Icons.topics}</span><strong>{t.lesson_goals_kicker}</strong><small>{t.lesson_goals_hint}</small></button>
           <button onClick={() => navigateTo("statistics")}><span>{Icons.stats}</span><strong>{t.nav_stats}</strong></button>
           <button onClick={() => navigateTo("settings", { settingsMode: "menu" })}><span>{Icons.settings}</span><strong>{t.nav_settings}</strong></button>
         </div>
@@ -319,63 +287,45 @@ export function HomeScreen() {
   }
 
   return (
-    <section className="screen screen-home">
-      <div className="m-tiles">
-        <button className="m-tile" onClick={() => navigateTo("dictionary")}>
-          <span className="m-tile-icon">{Icons.dictionary}</span>
-          <span className="m-tile-label">{t.dictionary_title}</span>
+    <section className="screen launchpad">
+      <div className="capability-grid">
+        <button className="capability-card capability-card-primary" onClick={openTraining}>
+          <span className="capability-card-icon">{Icons.training}</span>
+          {counts !== null && counts.due > 0 && <span className="capability-card-badge">{counts.due}</span>}
+          <span className="capability-card-label">{t.nav_training}</span>
         </button>
-        <button className="m-tile" onClick={() => navigateTo("topics")}>
-          <span className="m-tile-icon">{Icons.topics}</span>
-          <span className="m-tile-label">{t.nav_topics}</span>
+        <button className="capability-card" onClick={() => navigateTo("goals")}>
+          <span className="capability-card-icon">{Icons.topics}</span>
+          <span className="capability-card-label">{t.lesson_goals_kicker}</span>
         </button>
-        <button className="m-tile" onClick={openTraining}>
-          <span className="m-tile-icon">{Icons.training}</span>
-          {counts !== null && counts.due > 0 && <span className="m-tile-badge">{counts.due}</span>}
-          <span className="m-tile-label">{t.nav_training}</span>
+        <button className="capability-card" onClick={() => navigateTo("dictionary")}>
+          <span className="capability-card-icon">{Icons.dictionary}</span>
+          <span className="capability-card-label">{t.dictionary_title}</span>
         </button>
-        {isExtension ? (
-          <div className="m-feature-guide-wrap">
-            <button
-              className={`m-tile m-feature-tile ${aiBlocked ? "is-blocked" : immersionOn ? "is-on" : "is-off"}`}
-              onClick={toggleImmersion}
-              disabled={aiBlocked}
-              aria-pressed={immersionOn}
-            >
-              <span className="m-tile-icon">{Icons.immersion}</span>
-              <span className="m-tile-label">{t.nav_immersion}</span>
-              <span className="m-feature-state">
-                <i aria-hidden="true" />
-                {aiBlocked ? t.feature_blocked : immersionOn ? t.feature_enabled : t.feature_disabled}
-              </span>
-            </button>
-            <button
-              type="button"
-              className="m-feature-guide-button"
-              aria-label={`${t.feature_guide_open}: ${t.nav_immersion}`}
-              title={t.feature_guide_open}
-              onClick={() => setFeatureGuide("immersion")}
-            >?</button>
-          </div>
-        ) : <div className="m-tile m-tile-ghost" aria-hidden="true" />}
         {isExtension && (
-          <div className="m-feature-guide-wrap">
+          <button className="capability-card" onClick={openAreaTranslation}>
+            <span className="capability-card-icon">{Icons.capture}</span>
+            <span className="capability-card-label">{t.ocr_translate_area}</span>
+          </button>
+        )}
+        {isExtension && (
+          <div className="capability-control">
             <button
-              className={`m-tile m-feature-tile ${aiBlocked ? "is-blocked" : dualSubsEnabled ? "is-on" : "is-off"}`}
+              className={`capability-card capability-toggle ${aiBlocked ? "is-blocked" : dualSubsEnabled ? "is-on" : "is-off"}`}
               onClick={toggleDualSubtitles}
               disabled={aiBlocked}
               aria-pressed={dualSubsEnabled}
             >
-              <span className="m-tile-icon">{Icons.dualSubtitles}</span>
-              <span className="m-tile-label">{t.settings_dual_subtitles}</span>
-              <span className="m-feature-state">
+              <span className="capability-card-icon">{Icons.dualSubtitles}</span>
+              <span className="capability-card-label">{t.settings_dual_subtitles}</span>
+              <span className="capability-state">
                 <i aria-hidden="true" />
                 {aiBlocked ? t.feature_blocked : dualSubsEnabled ? t.feature_enabled : t.feature_disabled}
               </span>
             </button>
             <button
               type="button"
-              className="m-feature-guide-button"
+              className="capability-help"
               aria-label={`${t.feature_guide_open}: ${t.settings_dual_subtitles}`}
               title={t.feature_guide_open}
               onClick={() => setFeatureGuide("dual_subtitles")}
@@ -383,69 +333,85 @@ export function HomeScreen() {
           </div>
         )}
         {isExtension && (
-          <div className="m-feature-guide-wrap">
+          <div className="capability-control">
             <button
-              className={`m-tile m-feature-tile ${aiBlocked ? "is-blocked" : grammarLensOn ? "is-on" : "is-off"}`}
-              onClick={toggleGrammarLens}
+              className={`capability-card capability-toggle ${aiBlocked ? "is-blocked" : subtitleStudyOn ? "is-on" : "is-off"}`}
+              onClick={toggleSubtitleStudy}
               disabled={aiBlocked}
-              aria-pressed={grammarLensOn}
+              aria-pressed={subtitleStudyOn}
             >
-              <span className="m-tile-icon">{Icons.grammar}</span>
-              <span className="m-tile-label">{t.grammar_memory_title}</span>
-              <span className="m-feature-state">
+              <span className="capability-card-icon">{Icons.dualSubtitles}</span>
+              <span className="capability-card-label">{t.settings_subtitle_study}</span>
+              <span className="capability-state">
                 <i aria-hidden="true" />
-                {aiBlocked ? t.feature_blocked : grammarLensOn ? t.feature_enabled : t.feature_disabled}
+                {aiBlocked ? t.feature_blocked : subtitleStudyOn ? t.feature_enabled : t.feature_disabled}
+              </span>
+            </button>
+          </div>
+        )}
+        {isExtension && (
+          <div className="capability-control">
+            <button
+              className={`capability-card ${aiBlocked ? "is-blocked" : ""}`}
+              onClick={() => setFeatureGuide("pattern_workshop")}
+              disabled={aiBlocked}
+            >
+              <span className="capability-card-icon">{Icons.grammar}</span>
+              <span className="capability-card-label">{t.pattern_workshop_title}</span>
+              <span className="capability-state">
+                <i aria-hidden="true" />
+                {aiBlocked ? t.feature_blocked : t.pattern_workshop_select_hint}
               </span>
             </button>
             <button
               type="button"
-              className="m-feature-guide-button"
-              aria-label={`${t.feature_guide_open}: ${t.grammar_memory_title}`}
+              className="capability-help"
+              aria-label={`${t.feature_guide_open}: ${t.pattern_workshop_title}`}
               title={t.feature_guide_open}
-              onClick={() => setFeatureGuide("grammar_memory")}
+              onClick={() => setFeatureGuide("pattern_workshop")}
             >?</button>
           </div>
         )}
         {isExtension && (
-          <div className="m-feature-guide-wrap">
+          <div className="capability-control">
             <button
-              className={`m-tile m-feature-tile ${aiBlocked ? "is-blocked" : ciMeterOn ? "is-on" : "is-off"}`}
-              onClick={toggleCiMeter}
+              className={`capability-card capability-toggle ${aiBlocked ? "is-blocked" : readingCoachOn ? "is-on" : "is-off"}`}
+              onClick={toggleReadingCoach}
               disabled={aiBlocked}
-              aria-pressed={ciMeterOn}
+              aria-pressed={readingCoachOn}
             >
-              <span className="m-tile-icon">{Icons.ciMeter}</span>
-              <span className="m-tile-label">{t.ci_meter_off}</span>
-              <span className="m-feature-state">
+              <span className="capability-card-icon">{Icons.readingCoach}</span>
+              <span className="capability-card-label">{t.ci_meter_off}</span>
+              <span className="capability-state">
                 <i aria-hidden="true" />
-                {aiBlocked ? t.feature_blocked : ciMeterOn ? t.feature_enabled : t.feature_disabled}
+                {aiBlocked ? t.feature_blocked : readingCoachOn ? t.feature_enabled : t.feature_disabled}
               </span>
             </button>
             <button
               type="button"
-              className="m-feature-guide-button"
+              className="capability-help"
               aria-label={`${t.feature_guide_open}: ${t.ci_meter_off}`}
               title={t.feature_guide_open}
-              onClick={() => setFeatureGuide("ci_meter")}
+              onClick={() => setFeatureGuide("reading_coach")}
             >?</button>
           </div>
         )}
         {isExtension && (
-          <div className="m-feature-guide-wrap">
+          <div className="capability-control">
             <button
-              className={`m-tile m-feature-tile m-feature-destination ${vocabFreqOn ? "is-on" : "is-off"}`}
+              className={`capability-card capability-toggle capability-destination ${readingSessionOn ? "is-on" : "is-off"}`}
               onClick={() => navigateTo("myWords")}
             >
-              <span className="m-tile-icon">{Icons.myWords}</span>
-              <span className="m-tile-label">{t.my_words_title}</span>
-              <span className="m-feature-state">
+              <span className="capability-card-icon">{Icons.myWords}</span>
+              <span className="capability-card-label">{t.my_words_title}</span>
+              <span className="capability-state">
                 <i aria-hidden="true" />
-                {vocabFreqOn ? t.feature_enabled : t.feature_disabled}
+                {readingSessionOn ? t.feature_enabled : t.feature_disabled}
               </span>
             </button>
             <button
               type="button"
-              className="m-feature-guide-button"
+              className="capability-help"
               aria-label={`${t.feature_guide_open}: ${t.my_words_title}`}
               title={t.feature_guide_open}
               onClick={() => setFeatureGuide("my_words")}
@@ -455,34 +421,34 @@ export function HomeScreen() {
 
         {isExtension && (
           <button
-            className={`m-tile m-feature-tile m-ai-block-tile ${aiBlocked ? "is-on" : "is-off"}`}
+            className={`capability-card capability-toggle capability-privacy ${aiBlocked ? "is-on" : "is-off"}`}
             onClick={() => setBlockDialogOpen(true)}
             disabled={!aiBlockAvailable}
           >
-            <span className="m-tile-icon">{Icons.aiBlock}</span>
-            <span className="m-tile-label">{t.ai_block_title}</span>
-            <span className="m-feature-state"><i aria-hidden="true" />{aiBlocked ? t.ai_block_enabled : t.feature_disabled}</span>
+            <span className="capability-card-icon">{Icons.aiBlock}</span>
+            <span className="capability-card-label">{t.ai_block_title}</span>
+            <span className="capability-state"><i aria-hidden="true" />{aiBlocked ? t.ai_block_enabled : t.feature_disabled}</span>
           </button>
         )}
 
-        <button className="m-tile" onClick={() => navigateTo("quizlet")}>
-          <span className="m-tile-icon">{Icons.quizlet}</span>
-          <span className="m-tile-label">Quizlet</span>
+        <button className="capability-card" onClick={() => navigateTo("quizlet")}>
+          <span className="capability-card-icon">{Icons.quizlet}</span>
+          <span className="capability-card-label">Quizlet</span>
         </button>
 
-        <button className="m-tile m-tile-stats" onClick={() => navigateTo("statistics")}>
-          <span className="m-tile-icon">{Icons.stats}</span>
-          <span className="m-tile-label">{t.nav_stats}</span>
-          <span className="m-tile-badge">{counts?.words ?? "…"}</span>
+        <button className="capability-card capability-card-stats" onClick={() => navigateTo("statistics")}>
+          <span className="capability-card-icon">{Icons.stats}</span>
+          <span className="capability-card-label">{t.nav_stats}</span>
+          <span className="capability-card-badge">{counts?.words ?? "…"}</span>
         </button>
-        <button className="m-tile" onClick={() => navigateTo("settings", { settingsMode: "menu" })}>
-          <span className="m-tile-icon">{Icons.settings}</span>
-          <span className="m-tile-label">{t.nav_settings}</span>
+        <button className="capability-card" onClick={() => navigateTo("settings", { settingsMode: "menu" })}>
+          <span className="capability-card-icon">{Icons.settings}</span>
+          <span className="capability-card-label">{t.nav_settings}</span>
         </button>
-        <button className="m-tile m-tile-wide m-tile-alt" onClick={switchTargetLanguage} disabled={!settings || (settings.target_langs?.length ?? 1) < 2}>
-          <span className="m-tile-icon">{Icons.language}</span>
-          <span className="m-tile-badge">{targetLang.toUpperCase()}</span>
-          <span className="m-tile-label">{LANGUAGES.find((lang) => lang.code === targetLang)?.name ?? targetLang}</span>
+        <button className="capability-card capability-card-wide capability-card-alt" onClick={switchTargetLanguage} disabled={!settings || (settings.target_langs?.length ?? 1) < 2}>
+          <span className="capability-card-icon">{Icons.language}</span>
+          <span className="capability-card-badge">{targetLang.toUpperCase()}</span>
+          <span className="capability-card-label">{LANGUAGES.find((lang) => lang.code === targetLang)?.name ?? targetLang}</span>
         </button>
       </div>
       {blockDialogOpen && (
@@ -510,64 +476,50 @@ export function HomeScreen() {
           >
             <button className="feature-guide-close" onClick={() => setFeatureGuide(null)} aria-label={t.feature_guide_close}>×</button>
             <span className="feature-guide-icon" aria-hidden="true">
-              {featureGuide === "ci_meter"
-                ? Icons.ciMeter
-                : featureGuide === "grammar_memory"
+              {featureGuide === "reading_coach"
+                ? Icons.readingCoach
+                : featureGuide === "pattern_workshop"
                   ? Icons.grammar
                 : featureGuide === "dual_subtitles"
                   ? Icons.dualSubtitles
-                  : featureGuide === "immersion"
-                    ? Icons.immersion
-                    : Icons.myWords}
+                  : Icons.myWords}
             </span>
             <h2 id="feature-guide-title">
-              {featureGuide === "ci_meter"
+              {featureGuide === "reading_coach"
                 ? t.reading_coach_guide_title
-                : featureGuide === "grammar_memory"
-                  ? t.grammar_memory_guide_title
+                : featureGuide === "pattern_workshop"
+                  ? t.pattern_workshop_guide_title
                 : featureGuide === "dual_subtitles"
                   ? t.dual_subtitles_guide_title
-                  : featureGuide === "immersion"
-                    ? t.nav_immersion
-                    : t.my_words_title}
+                  : t.my_words_title}
             </h2>
             <p className="feature-guide-intro">
-              {featureGuide === "ci_meter"
+              {featureGuide === "reading_coach"
                 ? t.reading_coach_guide_intro
-                : featureGuide === "grammar_memory"
-                  ? t.grammar_memory_guide_intro
+                : featureGuide === "pattern_workshop"
+                  ? t.pattern_workshop_guide_intro
                 : featureGuide === "dual_subtitles"
                   ? t.dual_subtitles_guide_intro
-                  : featureGuide === "immersion"
-                    ? t.imm_modal_sub
-                    : t.my_words_intro}
+                  : t.my_words_intro}
             </p>
             <ol>
-              {(featureGuide === "ci_meter"
+              {(featureGuide === "reading_coach"
                 ? [t.reading_coach_guide_step_1, t.reading_coach_guide_step_2, t.reading_coach_guide_step_3]
-                : featureGuide === "grammar_memory"
-                  ? [t.grammar_memory_guide_step_1, t.grammar_memory_guide_step_2, t.grammar_memory_guide_step_3]
+                : featureGuide === "pattern_workshop"
+                  ? [t.pattern_workshop_guide_step_1, t.pattern_workshop_guide_step_2, t.pattern_workshop_guide_step_3]
                 : featureGuide === "dual_subtitles"
                   ? [t.dual_subtitles_guide_step_1, t.dual_subtitles_guide_step_2, t.dual_subtitles_guide_step_3]
-                  : featureGuide === "immersion"
-                    ? [
-                        `${t.imm_card1_title}. ${t.imm_card1_desc}`,
-                        `${t.imm_card2_title}. ${t.imm_card2_desc}`,
-                        `${t.imm_card3_title}. ${t.imm_card3_desc}`,
-                      ]
-                    : [t.my_words_guide_step_1, t.my_words_guide_step_2, t.my_words_guide_step_3]
+                  : [t.my_words_guide_step_1, t.my_words_guide_step_2, t.my_words_guide_step_3]
               ).map((step, index) => <li key={index}>{step}</li>)}
             </ol>
             <p className="feature-guide-tip">
-              {featureGuide === "ci_meter"
+              {featureGuide === "reading_coach"
                 ? t.reading_coach_guide_tip
-                : featureGuide === "grammar_memory"
-                  ? t.grammar_memory_guide_tip
+                : featureGuide === "pattern_workshop"
+                  ? t.pattern_workshop_guide_tip
                 : featureGuide === "dual_subtitles"
                   ? t.dual_subtitles_guide_tip
-                  : featureGuide === "immersion"
-                    ? t.immersion_hint
-                    : t.my_words_guide_tip}
+                  : t.my_words_guide_tip}
             </p>
             <button className="btn btn-gradient btn-block" type="button" onClick={() => setFeatureGuide(null)}>
               {t.feature_guide_close}

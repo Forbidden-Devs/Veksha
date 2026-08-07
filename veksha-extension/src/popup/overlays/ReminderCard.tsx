@@ -1,17 +1,17 @@
-import { useEffect, useState } from "react";
-import * as api from "../../shared/api";
+import { useEffect, useMemo, useState } from "react";
+import { getReminders } from "../../shared/api";
 import { useT } from "../../shared/i18n";
 import type { Strings } from "../../shared/i18n/strings";
 import type { RemindersData } from "../../shared/types";
 import { useApp } from "../App";
 
 function buildSubtitle(d: RemindersData, t: Strings): string {
-  const parts: string[] = [];
-  if (d.due_words > 0) parts.push(t.reminder_words.replace("{n}", String(d.due_words)));
-  if (d.due_topic) parts.push(`${t.reminder_topic}: "${d.due_topic}"`);
-  return parts.length
-    ? t.reminder_have.replace("{items}", parts.join(" and "))
-    : t.reminder_subtitle_default;
+  const wordReview = d.due_words > 0
+    ? t.reminder_words.replace("{n}", String(d.due_words))
+    : "";
+  const goalReview = d.due_goal ? `${t.reminder_topic}: "${d.due_goal}"` : "";
+  const due = [wordReview, goalReview].filter(Boolean);
+  return due.length ? t.reminder_have.replace("{items}", due.join(" and ")) : t.reminder_subtitle_default;
 }
 
 export function ReminderCard() {
@@ -20,8 +20,17 @@ export function ReminderCard() {
   const [data, setData] = useState<RemindersData | null>(null);
 
   useEffect(() => {
-    api.getReminders(username).then(setData).catch(() => {});
+    const controller = new AbortController();
+    void getReminders(username)
+      .then((response) => { if (!controller.signal.aborted) setData(response); })
+      .catch(() => undefined);
+    return () => controller.abort();
   }, [username]);
+
+  const subtitle = useMemo(
+    () => data ? buildSubtitle(data, t) : t.reminder_subtitle_default,
+    [data, t],
+  );
 
   function handleStartTraining() {
     closeReminder();
@@ -29,15 +38,13 @@ export function ReminderCard() {
   }
 
   return (
-    <div className="overlay overlay-bottom" id="reminder-card">
-      <div className="reminder-kicker">VEKSHA / 01</div>
+    <aside className="overlay overlay-bottom" id="reminder-card" aria-labelledby="practice-reminder-title">
+      <p className="reminder-kicker">VEKSHA / PRACTICE</p>
       <div className="reminder-content">
-        <div className="reminder-icon" aria-hidden="true">V</div>
-        <div className="reminder-text">
-          <div className="reminder-title">{t.reminder_title}</div>
-          <div className="reminder-subtitle">
-            {data ? buildSubtitle(data, t) : t.reminder_subtitle_default}
-          </div>
+        <span className="reminder-icon" aria-hidden="true">V</span>
+        <div className="reminder-text" aria-live="polite">
+          <strong className="reminder-title" id="practice-reminder-title">{t.reminder_title}</strong>
+          <p className="reminder-subtitle">{subtitle}</p>
         </div>
         <button className="icon-btn" aria-label={t.reminder_dismiss} onClick={closeReminder}>
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -45,9 +52,9 @@ export function ReminderCard() {
           </svg>
         </button>
       </div>
-      <button className="btn btn-gradient btn-block" onClick={handleStartTraining}>
+      <button type="button" className="btn btn-gradient btn-block" onClick={handleStartTraining}>
         <span>{t.reminder_start}</span><span aria-hidden="true">↗</span>
       </button>
-    </div>
+    </aside>
   );
 }

@@ -1,4 +1,4 @@
-"""Repository for persisted Grammar Memory items."""
+"""Repository for persisted Pattern Workshop items."""
 
 from __future__ import annotations
 
@@ -35,7 +35,7 @@ class GrammarMemoryRepository:
             None,
         )
         if index is None:
-            raise ValueError("grammar memory item not found")
+            raise ValueError("pattern skill not found")
         self._items[index] = updated
 
     def replace_all(self, items: Iterable[GrammarMemoryItem]) -> None:

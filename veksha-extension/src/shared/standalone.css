@@ -1,27 +1,34 @@
-/*
- * Overrides applied only to standalone extension windows
- * (training, lesson). Loaded after popup.css to reset popup-specific sizing.
- */
-
-html, body, #root {
-  width: 100% !important;
-  height: 100% !important;
-  overflow: hidden;
+:root {
+  color-scheme: light dark;
 }
 
-/* Training window fills the whole Chrome popup window */
-.training-window {
-  position: relative !important;
-  width: 100% !important;
-  height: 100% !important;
-  box-shadow: none !important;
-  border-radius: 0 !important;
-  border: none !important;
+html,
+body,
+#root {
+  block-size: 100%;
+  inline-size: 100%;
+  margin: 0;
+  overflow: clip;
 }
 
-/* Lesson overlay fills the whole Chrome popup window */
-.lesson-overlay {
-  position: relative !important;
-  width: 100% !important;
-  height: 100% !important;
+#root > .training-window,
+#root > .lesson-overlay {
+  position: static;
+  box-sizing: border-box;
+  inline-size: 100%;
+  block-size: 100%;
+  max-inline-size: none;
+  max-block-size: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.standalone-message {
+  display: grid;
+  min-height: 100vh;
+  padding: 24px;
+  place-items: center;
+  color: var(--m-dim, #6f6a62);
+  font: 600 14px/1.5 system-ui, sans-serif;
 }

@@ -32,7 +32,7 @@ the deployed web origin in the backend's `CORS_ALLOW_ORIGINS`.
   caches, UI flags).
 - Trainings/lessons: the extension popup injects them into the active tab;
   on the web they render as in-app overlays (see `webOverlay` in `App.tsx`).
-- Page capture, immersion, dual subtitles, Grammar Memory, browsing frequency,
+- Page capture, Reading Coach, dual subtitles, Pattern Workshop, Reading Sessions,
   OCR and AI blocking stay extension-only.
 - Tutorial screenshots fall back to placeholders (images are not bundled).
 - Google sign-in/linking lets the PWA and extension open the same account.

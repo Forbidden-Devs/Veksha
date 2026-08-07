@@ -2,8 +2,8 @@ import { FormEvent, useCallback, useMemo, useState } from "react";
 import { AdminApiError, adminApi, type AdminOverview, type DatabaseQueryResult, type PromoDraft } from "./api";
 
 const FEATURE_NAMES: Record<string, string> = {
-  grammar_lens: "Reading Coach и Grammar Memory",
-  immersion: "Погружение в страницу",
+  grammar_lens: "Reading Coach и Pattern Workshop",
+  immersion: "Reading Coach",
   dual_subtitles: "Двойные субтитры",
 };
 
@@ -22,10 +22,10 @@ const OPERATION_NAMES: Record<string, string> = {
   review_block_content: "Проверка урока",
   generate_lesson_question: "Вопрос урока",
   check_lesson_answer: "Проверка ответа урока",
-  grammar_lens_analyze: "Grammar Memory",
+  grammar_lens_analyze: "Pattern Workshop",
   dualsub: "Перевод субтитров",
   dualsub_batch: "Пакет субтитров",
-  immersion_analyze: "Погружение",
+  immersion_analyze: "Старый анализ чтения",
 };
 
 const emptyPromo: PromoDraft = {

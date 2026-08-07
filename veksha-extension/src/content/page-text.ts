@@ -1,9 +1,8 @@
 /**
  * page-text.ts — shared page-text filtering rules.
  *
- * Used by immersion.ts (continuous viewport scanning) and cimeter.ts /
- * vocabfreq.ts (one-shot whole-page sampling) so the "what counts as
- * readable content" rules live in one place.
+ * Used by Reading Coach and deliberately started Reading Sessions so the
+ * "what counts as readable content" rules live in one place.
  */
 
 export const SKIP_TAGS = new Set([
@@ -13,7 +12,7 @@ export const SKIP_TAGS = new Set([
 
 // Our own injected UI — never read text inside it.
 export const SKIP_CLOSEST =
-  ".veksha-popup, .veksha-icon, .veksha-aggressive-reminder, .av-yt-layer, .av-imm, .av-grammar, [data-av-skip]";
+  ".vk-assistant-card, .vk-selection-tools, .veksha-pattern-workshop, #veksha-page-workspace, .av-yt-layer, .av-imm, [data-av-skip]";
 
 export function isVisible(el: Element, margin = 0): boolean {
   const rect = el.getBoundingClientRect();
@@ -34,8 +33,8 @@ function isReadable(text: string, minChars: number): boolean {
 }
 
 /** One-shot whole-page text sample, up to `budget` chars, for features that
- *  analyze a page once (CI Meter, vocab frequency) rather than continuously
- *  (immersion.ts). */
+ *  analyze a page once (Reading Coach, Reading Session) rather than continuously
+ */
 export function sampleText(budget: number, minChars = 40): string {
   const parts: string[] = [];
   let total = 0;
