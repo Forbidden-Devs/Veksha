@@ -5,6 +5,8 @@ import { speakText } from "../../shared/speech";
 import type { WordEntry } from "../../shared/types";
 import { useApp } from "../App";
 import { AnkiCards } from "./AnkiCards";
+import { TranscriptionHint } from "../components/TranscriptionHint";
+import type { TranscriptionMode } from "../../shared/types";
 
 type DictionarySort = "az" | "za" | "newest" | "oldest";
 
@@ -22,9 +24,15 @@ export function DictionaryScreen() {
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const miningRequest = useRef(0);
+  const [transcriptionMode, setTranscriptionMode] = useState<TranscriptionMode>("standard");
 
   useEffect(() => {
-    api.getKbWords(username).then((result) => setWords(result.words)).catch(() => setWords([]));
+    Promise.all([api.getKbWords(username), api.getSettings(username)])
+      .then(([result, settings]) => {
+        setWords(result.words);
+        setTranscriptionMode(settings.writing_system?.transcription_mode ?? "standard");
+      })
+      .catch(() => setWords([]));
   }, [username, targetLang]);
 
   const visibleWords = useMemo(() => {
@@ -88,7 +96,7 @@ export function DictionaryScreen() {
   }
 
   if (cardsOpen && words) {
-    return <section className="screen screen-statistics dictionary-screen"><AnkiCards username={username} words={words} onClose={() => setCardsOpen(false)} /></section>;
+    return <section className="screen screen-statistics dictionary-screen"><AnkiCards username={username} words={words} transcriptionMode={transcriptionMode} onClose={() => setCardsOpen(false)} /></section>;
   }
 
   return (
@@ -134,7 +142,7 @@ export function DictionaryScreen() {
                 onClick={() => isSelected ? setSelectedWord(null) : void openMiningCard(word)}
               >
                 <strong className="word-list-name">{word.name}</strong>
-                <span className="dictionary-inline-transcription">{word.transcription || "…"}</span>
+                <TranscriptionHint text={word.transcription} mode={transcriptionMode} className="dictionary-inline-transcription" />
                 <span className="dictionary-row-translation">{word.translation || "…"}</span>
                 <div className="dictionary-word-actions">
                   <button type="button" className="icon-btn" onClick={(event) => { event.stopPropagation(); void openMiningCard(word); }} aria-label={t.sentence_mining_title}>✨</button>

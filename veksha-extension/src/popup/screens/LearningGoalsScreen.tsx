@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import * as api from "../../shared/api";
 import { useT } from "../../shared/i18n";
-import type { LearningGoalSummary } from "../../shared/types";
+import type { LearningGoalSummary, SettingsData } from "../../shared/types";
+import { getLanguageName } from "../../shared/languages";
 import { useApp } from "../App";
 
 const MINUTE_CHOICES = [10, 15, 25];
@@ -16,10 +17,15 @@ export function LearningGoalsScreen() {
   const [minutes, setMinutes] = useState(MINUTE_CHOICES[1]);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState("");
+  const [settings, setSettings] = useState<SettingsData | null>(null);
+  const [alphabetCreating, setAlphabetCreating] = useState(false);
 
   useEffect(() => {
-    api.getLearningGoals(username)
-      .then((response) => setGoals(response.goals))
+    Promise.all([api.getLearningGoals(username), api.getSettings(username)])
+      .then(([response, loadedSettings]) => {
+        setGoals(response.goals);
+        setSettings(loadedSettings);
+      })
       .catch(() => setError(t.lesson_goals_load_failed));
   }, [t.lesson_goals_load_failed, username]);
 
@@ -41,8 +47,61 @@ export function LearningGoalsScreen() {
     }
   }
 
+  async function startAlphabetCourse() {
+    const currentSettings = settings;
+    const writing = currentSettings?.writing_system;
+    if (!currentSettings || !writing?.course_available || alphabetCreating) return;
+    const existing = goals?.find((goal) => goal.kind === "alphabet" && !goal.achieved);
+    if (existing) {
+      openLesson({ goalId: existing.goal_id }, existing.statement);
+      return;
+    }
+    setAlphabetCreating(true);
+    setError("");
+    try {
+      const statement = t.literacy_course_goal
+        .replace("{language}", getLanguageName(currentSettings.target_lang))
+        .replace("{script}", writing.script_name);
+      const created = await api.createLearningGoal(username, {
+        statement,
+        minutes: 15,
+        kind: "alphabet",
+      });
+      openLesson({ goalId: created.goal_id }, created.statement);
+    } catch {
+      setError(t.literacy_course_failed);
+      setAlphabetCreating(false);
+    }
+  }
+
   return (
     <section className="screen learning-goals">
+      {settings?.writing_system?.course_available && (
+        <aside className={`literacy-course literacy-course-${settings.writing_system.literacy_stage}`}>
+          <div className="literacy-course-copy">
+            <span className="goal-composer-kicker">{t.literacy_course_kicker}</span>
+            <h2>{t.literacy_course_title}</h2>
+            <p>
+              {settings.writing_system.literacy_stage === "mastered"
+                ? t.literacy_course_mastered
+                : settings.writing_system.kind === "latin_extended" || settings.writing_system.kind === "script_variant"
+                  ? t.literacy_course_variant_desc
+                  : t.literacy_course_new_desc}
+            </p>
+          </div>
+          {settings.writing_system.literacy_stage !== "mastered" ? (
+            <button type="button" disabled={alphabetCreating} onClick={() => void startAlphabetCourse()}>
+              {alphabetCreating
+                ? t.translator_working
+                : settings.writing_system.literacy_stage === "learning"
+                  ? t.literacy_course_continue
+                  : t.literacy_course_start}
+            </button>
+          ) : (
+            <span className="literacy-course-done">✓ {t.literacy_course_done}</span>
+          )}
+        </aside>
+      )}
       <header className="goal-composer">
         <span className="goal-composer-kicker">{t.lesson_goals_kicker}</span>
         <h2>{t.lesson_goals_prompt}</h2>

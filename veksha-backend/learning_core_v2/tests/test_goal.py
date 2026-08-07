@@ -123,6 +123,14 @@ def test_a_goal_must_be_stated_before_it_can_be_worked_on():
     assert not goal.framed
 
 
+def test_alphabet_course_does_not_collide_with_a_regular_goal():
+    regular = state_goal("Learn the alphabet", PROFILE)
+    course = state_goal("Learn the alphabet", PROFILE, kind="alphabet")
+
+    assert regular.goal_id != course.goal_id
+    assert course.kind == "alphabet"
+
+
 @pytest.mark.asyncio
 async def test_framing_turns_a_wish_into_ordered_checkable_criteria():
     goal = await FrameGoal(StubAuthor()).execute(state_goal("Learn Past Perfect", PROFILE))

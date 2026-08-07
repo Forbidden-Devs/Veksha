@@ -9,6 +9,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import api.auth as auth_api  # noqa: E402
 import api.settings as settings_api  # noqa: E402
+import api.goal_v2 as goal_api  # noqa: E402
 import db  # noqa: E402
 
 
@@ -39,3 +40,18 @@ def test_active_target_is_persisted_first_for_new_profile():
     assert stored is not None
     assert stored["target_lang"] == "de"
     assert list(stored["language_settings"]) == ["de", "en"]
+    assert response.writing_system is not None
+    assert response.writing_system.kind == "new_alphabet"
+    assert stored["language_settings"]["de"]["literacy_stage"] == "not_started"
+
+    goal = asyncio.run(goal_api.api_create_goal(
+        goal_api.CreateGoalRequest(
+            statement="Learn to read German using the Latin alphabet",
+            kind="alphabet",
+        ),
+        account.username,
+    ))
+    assert goal.kind == "alphabet"
+    stored = db.settings_get(account.username)
+    assert stored is not None
+    assert stored["language_settings"]["de"]["literacy_stage"] == "learning"

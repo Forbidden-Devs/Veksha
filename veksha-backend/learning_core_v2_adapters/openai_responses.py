@@ -725,7 +725,10 @@ class OpenAIResponsesLanguageProvider:
                 "it, 3 for telling it apart from a near neighbour, and 4 for producing "
                 "it in a new situation. Include exactly one depth-4 criterion. When "
                 "source material is supplied, anchor the criteria to what it actually "
-                "contains. Keep the whole set reachable inside the stated minutes."
+                "contains. For an alphabet or writing-system objective, build criteria "
+                "from symbol recognition and sound association through reading fresh "
+                "words without romanization; do not turn it into a general vocabulary "
+                "lesson. Keep the whole set reachable inside the stated minutes."
             ),
             user_data={
                 "goal": request.statement,
@@ -763,7 +766,11 @@ class OpenAIResponsesLanguageProvider:
                 "matching the activity, answerable in a few sentences, without "
                 "revealing its answer or duplicating previous_questions. For "
                 "find_in_material and any activity with source material, use the "
-                "learner's own text rather than invented examples."
+                "learner's own text rather than invented examples. Follow "
+                "transcription_mode: always adds a concise romanization or pronunciation "
+                "cue beside new learning-language forms, on_demand avoids putting it in "
+                "the main task, and standard uses the normal language-course treatment. "
+                "The final unaided check must never include transcription."
             ),
             user_data={
                 "goal": request.goal,
@@ -1402,6 +1409,9 @@ def _profile_data(profile: LearnerProfile) -> dict[str, Any]:
         "native_language": profile.native_language,
         "learning_language": profile.learning_language,
         "available_minutes": profile.minutes,
+        "writing_support": profile.writing_support,
+        "script_name": profile.script_name,
+        "transcription_mode": profile.transcription_mode,
     }
 
 

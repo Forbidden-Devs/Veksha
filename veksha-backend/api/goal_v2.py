@@ -12,6 +12,7 @@ import json
 import logging
 import time
 import uuid
+from typing import Literal
 
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, Field
@@ -38,6 +39,7 @@ from learning_core_v2_adapters.openai_responses import LanguageProviderError
 from learning_core_v2_adapters.runtime import build_goal_services
 from repositories.goals import material_to_dict
 from storage import UserStorage, get_storage, learner_profile
+from writing_systems import writing_system_profile
 
 
 log = logging.getLogger(__name__)
@@ -73,6 +75,7 @@ class GoalSummary(BaseModel):
     has_material: bool
     criteria: list[CriterionView]
     last_worked_at: float | None = None
+    kind: Literal["standard", "alphabet"] = "standard"
 
 
 class GoalListResponse(BaseModel):
@@ -84,6 +87,7 @@ class CreateGoalRequest(BaseModel):
     material: str = Field("", max_length=MAX_MATERIAL_CHARS)
     material_url: str = Field("", max_length=2000)
     minutes: int = Field(DEFAULT_MINUTES, ge=MIN_MINUTES, le=MAX_MINUTES)
+    kind: Literal["standard", "alphabet"] = "standard"
 
 
 def _criterion_views(goal: LearningGoal) -> list[CriterionView]:
@@ -120,7 +124,21 @@ def _summary(goal: LearningGoal) -> GoalSummary:
         has_material=goal.material.present,
         criteria=_criterion_views(goal),
         last_worked_at=goal.last_worked_at,
+        kind=goal.kind,
     )
+
+
+def _set_literacy_stage(storage: UserStorage, stage: str) -> None:
+    language = storage.settings.target_lang
+    if not language:
+        return
+    current = storage.settings.language_settings.get(language, {})
+    storage.settings.language_settings[language] = {
+        "level": current.get("level", ""),
+        "goals": current.get("goals", ""),
+        "prompt": current.get("prompt", ""),
+        "literacy_stage": stage,
+    }
 
 
 @router.get("/api/learning-goals", response_model=GoalListResponse)
@@ -134,6 +152,18 @@ async def api_list_goals(username: CurrentUser) -> GoalListResponse:
 async def api_create_goal(req: CreateGoalRequest, username: CurrentUser) -> GoalSummary:
     """State a goal. Framing it into criteria happens when the session opens."""
     storage = get_storage(username)
+    if req.kind == "alphabet":
+        writing = writing_system_profile(
+            storage.settings.native_lang,
+            storage.settings.target_lang,
+            storage.settings.english_level,
+            storage.settings.literacy_stage,
+        )
+        if not writing.course_available:
+            raise HTTPException(
+                status_code=422,
+                detail="An alphabet course is not available for this language pair.",
+            )
     profile = _profile(storage, minutes=req.minutes)
     try:
         goal = state_goal(
@@ -141,12 +171,15 @@ async def api_create_goal(req: CreateGoalRequest, username: CurrentUser) -> Goal
             profile,
             material=_material(req.material, req.material_url),
             created_at=time.time(),
+            kind=req.kind,
         )
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
     existing = storage.goals.find(goal.goal_id)
     if existing is None:
+        if goal.kind == "alphabet":
+            _set_literacy_stage(storage, "learning")
         storage.goals.put(goal)
         storage.save()
         return _summary(goal)
@@ -169,6 +202,9 @@ def _profile(storage: UserStorage, *, minutes: int = DEFAULT_MINUTES) -> Learner
         native_language=base.native_language,
         learning_language=base.learning_language,
         minutes=max(MIN_MINUTES, min(MAX_MINUTES, minutes)),
+        writing_support=base.writing_support,
+        script_name=base.script_name,
+        transcription_mode=base.transcription_mode,
     )
 
 
@@ -325,6 +361,9 @@ async def goal_ws(websocket: WebSocket) -> None:
             return
         closed = True
         _harvest(storage, goal)
+        if goal_achieved(goal) and goal.kind == "alphabet":
+            _set_literacy_stage(storage, "mastered")
+            storage.save()
         try:
             report = await services.closer.execute(goal)
         except (LanguageProviderError, ValueError) as exc:

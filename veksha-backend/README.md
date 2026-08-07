@@ -317,6 +317,15 @@ commit, so the learner can override the suggestion.
 through this article" — rather than from a topic sliced into a fixed list of
 blocks.
 
+Writing-system support is derived from the native/learning language pair in
+`writing_systems.py`. A genuinely new alphabet receives an alphabet-course
+offer and full transcription scaffolding at beginner levels; Latin diacritics
+and language-specific additions to a familiar script receive a shorter route.
+Completing the alphabet goal moves transcription to on-demand mode without
+removing it. Literacy progress is stored per learning language in
+`user_languages.literacy_stage`. Chinese and Japanese are deliberately marked
+unsupported by this shared scheme until they have language-specific designs.
+
 **Checkable criteria.** "Learn Past Perfect" is not a stop condition. `FrameGoal`
 turns the wish into ordered criteria the learner can demonstrate in one answer
 — recognize the form, explain the sequence, tell it apart from Past Simple, use

@@ -157,12 +157,17 @@ def _optional_float(value: object) -> float | None:
 def _goal_from_dict(data: dict, fallback: LearnerProfile) -> LearningGoal:
     statement = " ".join(str(data.get("statement", "")).split())[:200]
     profile = _profile_from_dict(data, fallback)
+    kind = "alphabet" if data.get("kind") == "alphabet" else "standard"
     criteria = _criteria_from_list(data.get("criteria"))
     known = {item.criterion_id for item in criteria}
     return LearningGoal(
-        goal_id=str(data.get("goal_id") or goal_id_for(statement, profile.learning_language)),
+        goal_id=str(
+            data.get("goal_id")
+            or goal_id_for(statement, profile.learning_language, kind)
+        ),
         statement=statement,
         profile=profile,
+        kind=kind,
         material=GoalMaterial(
             text=str(data.get("material_text") or ""),
             source_url=str(data.get("material_url") or ""),
@@ -208,6 +213,11 @@ def _profile_from_dict(data: dict, fallback: LearnerProfile) -> LearnerProfile:
             data.get("learning_language") or fallback.learning_language
         ),
         minutes=max(1, minutes),
+        writing_support=str(data.get("writing_support") or fallback.writing_support),
+        script_name=str(data.get("script_name") or fallback.script_name),
+        transcription_mode=str(
+            data.get("transcription_mode") or fallback.transcription_mode
+        ),
     )
 
 
@@ -279,10 +289,14 @@ def _goal_to_dict(goal: LearningGoal) -> dict:
     return {
         "goal_id": goal.goal_id,
         "statement": goal.statement,
+        "kind": goal.kind,
         "proficiency": goal.profile.proficiency,
         "native_language": goal.profile.native_language,
         "learning_language": goal.profile.learning_language,
         "minutes": goal.profile.minutes,
+        "writing_support": goal.profile.writing_support,
+        "script_name": goal.profile.script_name,
+        "transcription_mode": goal.profile.transcription_mode,
         "material_text": goal.material.text,
         "material_url": goal.material.source_url,
         "criteria": [

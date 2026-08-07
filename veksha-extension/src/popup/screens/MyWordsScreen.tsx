@@ -5,6 +5,8 @@ import { CONFIG } from "../../shared/config";
 import { useT } from "../../shared/i18n";
 import { storageGet, storageSet } from "../../shared/platform";
 import { useApp } from "../App";
+import { TranscriptionHint } from "../components/TranscriptionHint";
+import type { TranscriptionMode } from "../../shared/types";
 
 function topDomain(domains: Record<string, number>): string {
   const entries = Object.entries(domains);
@@ -13,7 +15,7 @@ function topDomain(domains: Record<string, number>): string {
 }
 
 export function MyWordsScreen() {
-  const { username } = useApp();
+  const { username, targetLang } = useApp();
   const t = useT();
   const [session, setSession] = useState<{ sessionId: string; startedAt: number } | null>(null);
   const [words, setWords] = useState<ReadingVocabularyEntry[] | null>(null);
@@ -23,6 +25,7 @@ export function MyWordsScreen() {
   const [suggestions, setSuggestions] = useState<VocabularyInboxItem[] | null>(null);
   const [decidingItem, setDecidingItem] = useState<string | null>(null);
   const [inboxError, setInboxError] = useState(false);
+  const [transcriptionMode, setTranscriptionMode] = useState<TranscriptionMode>("standard");
 
   useEffect(() => {
     storageGet([CONFIG.STORAGE_KEY_READING_SESSION]).then((result) => {
@@ -34,6 +37,9 @@ export function MyWordsScreen() {
   }, []);
 
   useEffect(() => {
+    api.getSettings(username)
+      .then((settings) => setTranscriptionMode(settings.writing_system?.transcription_mode ?? "standard"))
+      .catch(() => {});
     api.getReadingVocabulary().then((result) => setWords(result.words)).catch(() => setWords([]));
     let active = true;
     const refreshInbox = () => {
@@ -51,7 +57,7 @@ export function MyWordsScreen() {
       active = false;
       window.clearInterval(timer);
     };
-  }, [session]);
+  }, [session, targetLang, username]);
 
   async function decideSuggestion(
     item: VocabularyInboxItem,
@@ -122,7 +128,7 @@ export function MyWordsScreen() {
             <div className="vocabulary-inbox-copy">
               <div className="vocabulary-inbox-term">
                 <strong>{item.term}</strong>
-                {item.transcription && <span>{item.transcription}</span>}
+                <TranscriptionHint text={item.transcription} mode={transcriptionMode} />
               </div>
               <div className="vocabulary-inbox-translation">{item.translation}</div>
               {item.latest_context && (

@@ -113,6 +113,17 @@
   "lesson_cause_unknown_term": "Незнакомое слово помешало ответить",
   "lesson_criteria_done": "Выполнено {n} из {total}",
   "lesson_criteria_title": "Чтобы достичь этой цели",
+  "literacy_course_continue": "Продолжить курс алфавита",
+  "literacy_course_done": "Подсказки для чтения теперь необязательны",
+  "literacy_course_failed": "Не удалось запустить курс алфавита. Попробуйте ещё раз.",
+  "literacy_course_goal": "Научиться читать на языке {language}, используя {script}",
+  "literacy_course_kicker": "Система письма",
+  "literacy_course_latin_desc": "Короткий маршрут по дополнительным буквам, диакритике и звуковым различиям этого языка.",
+  "literacy_course_mastered": "Вы завершили маршрут по системе письма. Подсказки произношения остаются доступными по запросу.",
+  "literacy_course_new_desc": "Изучите символы и их звучание, затем перейдите от примеров с подсказками к чтению без транскрипции.",
+  "literacy_course_start": "Начать курс алфавита",
+  "literacy_course_title": "Сначала научимся читать",
+  "literacy_course_variant_desc": "Короткий маршрут по дополнительным буквам, знакам и звуковым различиям этого языка.",
   "lesson_err_connect": "Не удалось подключиться к серверу.",
   "lesson_err_lost": "Соединение потеряно.",
   "lesson_err_no_goal": "Цель не указана.",
@@ -457,5 +468,7 @@
   "vocabulary_inbox_known": "Я это знаю",
   "vocabulary_inbox_learn": "Учить",
   "vocabulary_inbox_seen": "Встречалось: {n}×",
-  "vocabulary_inbox_title": "Из ваших переводов"
+  "vocabulary_inbox_title": "Из ваших переводов",
+  "transcription_hide": "Скрыть подсказку произношения",
+  "transcription_show": "Показать подсказку произношения"
 }

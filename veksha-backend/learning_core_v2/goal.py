@@ -35,6 +35,7 @@ from typing import Literal, Protocol
 
 
 Outcome = Literal["correct", "vague", "incorrect", "garbage"]
+GoalKind = Literal["standard", "alphabet"]
 
 #: Why an answer came out the way it did. The route repairs the *cause*, so a
 #: learner who knows the rule but forgets to apply it is not re-taught the rule.
@@ -191,6 +192,9 @@ class LearnerProfile:
     native_language: str
     learning_language: str
     minutes: int = DEFAULT_MINUTES
+    writing_support: str = "standard"
+    script_name: str = ""
+    transcription_mode: str = "standard"
 
     def __post_init__(self) -> None:
         if self.minutes < 1:
@@ -297,6 +301,7 @@ class LearningGoal:
     goal_id: str
     statement: str
     profile: LearnerProfile
+    kind: GoalKind = "standard"
     material: GoalMaterial = GoalMaterial()
     criteria: tuple[SuccessCriterion, ...] = ()
     evidence: tuple[Evidence, ...] = ()
@@ -672,13 +677,18 @@ def _dominant_cause(observed: Sequence[Evidence]) -> DifficultyCause | None:
 # ---------------------------------------------------------------------------
 
 
-def goal_id_for(statement: str, learning_language: str) -> str:
+def goal_id_for(
+    statement: str, learning_language: str, kind: GoalKind = "standard"
+) -> str:
+    parts = [
+        " ".join(statement.split()).casefold(),
+        learning_language.strip().lower().replace("_", "-"),
+    ]
+    if kind != "standard":
+        parts.append(kind)
     canonical = "\x1f".join(
         unicodedata.normalize("NFKC", part)
-        for part in (
-            " ".join(statement.split()).casefold(),
-            learning_language.strip().lower().replace("_", "-"),
-        )
+        for part in parts
     )
     return str(uuid.uuid5(_GOAL_NAMESPACE, canonical))
 
@@ -689,6 +699,7 @@ def state_goal(
     *,
     material: GoalMaterial = GoalMaterial(),
     created_at: float = 0.0,
+    kind: GoalKind = "standard",
 ) -> LearningGoal:
     """Create an unframed goal — a stated result with no criteria yet."""
     cleaned = " ".join(statement.split())
@@ -697,9 +708,10 @@ def state_goal(
     if len(cleaned) > 200:
         raise ValueError("a learning goal is too long")
     return LearningGoal(
-        goal_id=goal_id_for(cleaned, profile.learning_language),
+        goal_id=goal_id_for(cleaned, profile.learning_language, kind),
         statement=cleaned,
         profile=profile,
+        kind=kind,
         material=_clean_material(material),
         created_at=created_at,
     )

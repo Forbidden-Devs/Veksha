@@ -41,6 +41,11 @@ from learning_core_v2_adapters.runtime import (
 )
 from models import VALID_ENGLISH_LEVELS, UserSettings
 from storage import UserStorage, get_storage
+from writing_systems import (
+    WritingSystemProfile,
+    normalize_literacy_stage,
+    writing_system_profile,
+)
 
 log = logging.getLogger(__name__)
 
@@ -74,6 +79,7 @@ class SettingsResponse(BaseModel):
     mining_same_level_examples: int = 2
     mining_higher_level_examples: int = 1
     is_onboarded: bool = False
+    writing_system: WritingSystemProfile | None = None
 
 
 class RemindersResponse(BaseModel):
@@ -234,11 +240,23 @@ def _due_word_names(storage: UserStorage, limit: int = 8) -> list[str]:
 
 def _settings_response(storage: UserStorage) -> SettingsResponse:
     s = storage.settings
-    language_settings = dict(s.language_settings)
+    language_settings = {
+        lang: {
+            **prefs,
+            "literacy_stage": writing_system_profile(
+                s.native_lang,
+                lang,
+                prefs.get("level", ""),
+                prefs.get("literacy_stage", ""),
+            ).literacy_stage,
+        }
+        for lang, prefs in s.language_settings.items()
+    }
     language_settings.setdefault(s.target_lang, {
         "level": s.english_level or "",
         "goals": s.goals,
         "prompt": s.general_prompt,
+        "literacy_stage": s.literacy_stage,
     })
     return SettingsResponse(
         # Accounts created before the id/display-name split have no
@@ -255,6 +273,12 @@ def _settings_response(storage: UserStorage) -> SettingsResponse:
         mining_same_level_examples=s.mining_same_level_examples,
         mining_higher_level_examples=s.mining_higher_level_examples,
         is_onboarded=s.is_onboarded(),
+        writing_system=writing_system_profile(
+            s.native_lang,
+            s.target_lang,
+            s.english_level,
+            s.literacy_stage,
+        ),
     )
 
 
@@ -306,11 +330,23 @@ async def api_post_settings(req: SettingsRequest, username: CurrentUser) -> Sett
     ]
     language_settings = dict(storage.settings.language_settings)
     if req.language_settings is not None:
-        for lang, prefs in req.language_settings.items():
+        normalized_settings: dict[str, dict[str, str]] = {}
+        for lang, source_prefs in req.language_settings.items():
+            prefs = dict(source_prefs)
             profile_level = prefs.get("level", "")
             if profile_level and profile_level not in VALID_ENGLISH_LEVELS:
                 raise HTTPException(status_code=400, detail=f"Invalid level for {lang}.")
-        language_settings.update(req.language_settings)
+            profile = writing_system_profile(
+                req.native_lang,
+                lang,
+                profile_level,
+                prefs.get("literacy_stage", ""),
+            )
+            prefs["literacy_stage"] = normalize_literacy_stage(
+                prefs.get("literacy_stage", ""), default=profile.literacy_stage
+            )
+            normalized_settings[lang] = prefs
+        language_settings.update(normalized_settings)
     language_settings = {
         lang: prefs for lang, prefs in language_settings.items()
         if lang in target_langs
@@ -319,9 +355,21 @@ async def api_post_settings(req: SettingsRequest, username: CurrentUser) -> Sett
         "level": level or "",
         "goals": req.goals,
         "prompt": req.general_prompt,
+        "literacy_stage": storage.settings.literacy_stage,
     })
     for lang in target_langs:
-        language_settings.setdefault(lang, {"level": "", "goals": "", "prompt": ""})
+        language_settings.setdefault(
+            lang,
+            {"level": "", "goals": "", "prompt": "", "literacy_stage": ""},
+        )
+    for lang, prefs in language_settings.items():
+        profile = writing_system_profile(
+            req.native_lang,
+            lang,
+            prefs.get("level", ""),
+            prefs.get("literacy_stage", ""),
+        )
+        prefs["literacy_stage"] = profile.literacy_stage
     # Persist languages in the same normalized order returned to clients.
     # Keeping the active language first prevents stale insertion order from
     # making another language appear active in list-based UI.

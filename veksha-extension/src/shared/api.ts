@@ -4,6 +4,7 @@ import { onStorageKeyChanged, runtimeSend, storageGet } from "./platform";
 export const BACKEND_URL = CONFIG.BACKEND_URL;
 import type {
   KBSummaryData,
+  LanguageSettings,
   LearningGoalSummary,
   RemindersData,
   SettingsData,
@@ -881,7 +882,7 @@ export function saveSettings(
     nativeLang: string;
     targetLang: string;
     targetLangs?: string[];
-    languageSettings?: Record<string, { level: string; goals: string; prompt: string }>;
+    languageSettings?: Record<string, LanguageSettings>;
     reminderLevel?: number;
     miningSameLevelExamples?: number;
     miningHigherLevelExamples?: number;
@@ -969,7 +970,13 @@ export function getLearningGoals(username: string): Promise<{ goals: LearningGoa
 
 export function createLearningGoal(
   username: string,
-  goal: { statement: string; material?: string; material_url?: string; minutes?: number },
+  goal: {
+    statement: string;
+    material?: string;
+    material_url?: string;
+    minutes?: number;
+    kind?: "standard" | "alphabet";
+  },
 ): Promise<LearningGoalSummary> {
   return _post("/api/learning-goals", goal);
 }

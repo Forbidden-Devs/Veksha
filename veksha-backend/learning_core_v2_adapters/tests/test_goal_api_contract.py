@@ -10,6 +10,7 @@ from api import goal_v2
 from learning_core_v2.goal import (
     DiscoveredPattern,
     DiscoveredTerm,
+    Evidence,
     GoalMaterial,
     GoalReport,
     GoalRoute,
@@ -51,6 +52,13 @@ class FakeSettings:
     english_level: str = "b1"
     native_lang: str = "ru"
     target_lang: str = "en"
+    language_settings: dict = field(default_factory=lambda: {
+        "en": {"level": "b1", "goals": "", "prompt": "", "literacy_stage": "learning"}
+    })
+
+    @property
+    def literacy_stage(self):
+        return self.language_settings[self.target_lang].get("literacy_stage", "")
 
 
 @dataclass
@@ -319,6 +327,35 @@ async def test_closing_a_goal_files_what_the_lesson_surfaced(monkeypatch):
     assert [item.term for item in storage.lexicon.all()] == ["had left"]
     assert [item.status for item in storage.lexicon.all()] == ["suggested"]
     assert [item.label for item in storage.grammar.all()] == ["Past Perfect"]
+
+
+@pytest.mark.asyncio
+async def test_finishing_an_alphabet_course_makes_transcription_optional(monkeypatch):
+    criterion = SuccessCriterion("letters", "Read a fresh word", 4)
+    evidence = (
+        Evidence("letters", "apply_unaided", "correct", "transfers_confidently", "Q1", "A1"),
+        Evidence("letters", "apply_unaided", "correct", "transfers_confidently", "Q2", "A2"),
+    )
+    goal = replace(
+        state_goal("Learn the alphabet", PROFILE, kind="alphabet"),
+        criteria=(criterion,),
+        evidence=evidence,
+    )
+    settings = FakeSettings()
+    storage = FakeStorage(settings, GoalRepository([goal]))
+    install(
+        monkeypatch,
+        storage,
+        checker=RecordingChecker(StepEvaluation("correct", "unclear", "ok")),
+    )
+    socket = FakeWebSocket(
+        [{"type": "init", "goal_id": goal.goal_id}, {"type": "next_step"}]
+    )
+
+    await goal_v2.goal_ws(socket)
+
+    assert settings.literacy_stage == "mastered"
+    assert socket.sent[-1]["type"] == "summary"
 
 
 @pytest.mark.asyncio

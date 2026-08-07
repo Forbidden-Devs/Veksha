@@ -141,10 +141,15 @@ def _conn():
                    level    TEXT NOT NULL,
                    goals    TEXT NOT NULL DEFAULT '',
                    prompt   TEXT NOT NULL DEFAULT '',
+                   literacy_stage TEXT NOT NULL DEFAULT '',
                    position INTEGER NOT NULL,
                    PRIMARY KEY (username, lang),
                    FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
                )"""
+        )
+        conn.execute(
+            "ALTER TABLE user_languages ADD COLUMN IF NOT EXISTS "
+            "literacy_stage TEXT NOT NULL DEFAULT ''"
         )
         # Reading Sessions are started deliberately. Observations are tied to
         # their session id, so ordinary browsing can never populate this data.
@@ -622,7 +627,7 @@ def settings_get(username: str) -> Optional[dict]:
     if row is None:
         return None
     languages = _conn().execute(
-        "SELECT lang, level, goals, prompt FROM user_languages "
+        "SELECT lang, level, goals, prompt, literacy_stage FROM user_languages "
         "WHERE username=%s ORDER BY position", (username,),
     ).fetchall()
     return {
@@ -633,8 +638,13 @@ def settings_get(username: str) -> Optional[dict]:
         "mining_same_level_examples": row[4],
         "mining_higher_level_examples": row[5],
         "language_settings": {
-            lang: {"level": level, "goals": goals, "prompt": prompt}
-            for lang, level, goals, prompt in languages
+            lang: {
+                "level": level,
+                "goals": goals,
+                "prompt": prompt,
+                "literacy_stage": literacy_stage,
+            }
+            for lang, level, goals, prompt, literacy_stage in languages
         },
     }
 
@@ -656,10 +666,19 @@ def settings_set(username: str, settings: Any) -> None:
         )
         c.execute("DELETE FROM user_languages WHERE username=%s", (username,))
         c.executemany(
-            "INSERT INTO user_languages (username, lang, level, goals, prompt, position) "
-            "VALUES (%s,%s,%s,%s,%s,%s)",
+            "INSERT INTO user_languages "
+            "(username, lang, level, goals, prompt, literacy_stage, position) "
+            "VALUES (%s,%s,%s,%s,%s,%s,%s)",
             [
-                (username, lang, prefs["level"], prefs.get("goals", ""), prefs.get("prompt", ""), position)
+                (
+                    username,
+                    lang,
+                    prefs["level"],
+                    prefs.get("goals", ""),
+                    prefs.get("prompt", ""),
+                    prefs.get("literacy_stage", ""),
+                    position,
+                )
                 for position, (lang, prefs) in enumerate(settings.language_settings.items())
             ],
         )

@@ -24,12 +24,26 @@ export interface SettingsData {
   mining_same_level_examples: number;
   mining_higher_level_examples: number;
   is_onboarded: boolean;
+  writing_system?: WritingSystemProfile | null;
 }
 
 export interface LanguageSettings {
   level: string;
   goals: string;
   prompt: string;
+  literacy_stage?: LiteracyStage;
+}
+
+export type LiteracyStage = "not_started" | "learning" | "mastered";
+export type TranscriptionMode = "always" | "on_demand" | "standard";
+
+export interface WritingSystemProfile {
+  kind: "standard" | "latin_extended" | "script_variant" | "new_alphabet" | "unsupported";
+  script: string;
+  script_name: string;
+  literacy_stage: LiteracyStage;
+  transcription_mode: TranscriptionMode;
+  course_available: boolean;
 }
 
 export interface RemindersData {
@@ -267,4 +281,5 @@ export interface LearningGoalSummary {
   has_material: boolean;
   criteria: CriterionView[];
   last_worked_at: number | null;
+  kind: "standard" | "alphabet";
 }

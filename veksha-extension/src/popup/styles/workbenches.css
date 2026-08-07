@@ -176,6 +176,38 @@
   background: var(--m-surface);
 }
 
+.literacy-course {
+  margin: 14px 16px 0;
+  padding: 16px;
+  border: 1px solid color-mix(in srgb, var(--m-accent) 32%, var(--m-border));
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--m-accent) 7%, var(--m-surface));
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.literacy-course-copy { flex: 1; min-width: 0; }
+.literacy-course h2 { margin: 3px 0 5px; font-size: 17px; }
+.literacy-course p { margin: 0; color: var(--m-dim); line-height: 1.45; }
+.literacy-course > button {
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 12px;
+  padding: 10px 13px;
+  background: var(--m-accent);
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+.literacy-course > button:disabled { opacity: .65; cursor: default; }
+.literacy-course-done { color: var(--m-accent); font-weight: 700; }
+
+@media (max-width: 560px) {
+  .literacy-course { align-items: stretch; flex-direction: column; }
+  .literacy-course > button { width: 100%; }
+}
+
 .goal-composer-kicker {
   color: var(--m-accent);
   font-size: 10px;

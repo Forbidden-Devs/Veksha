@@ -7,6 +7,7 @@ import logging
 import db
 from learning_core_v2.goal import LearnerProfile
 from models import UserSettings
+from writing_systems import writing_system_profile
 from repositories import (
     GoalRepository,
     GrammarMemoryRepository,
@@ -20,10 +21,19 @@ log = logging.getLogger(__name__)
 
 def learner_profile(settings: UserSettings) -> LearnerProfile:
     """The constraints a new goal inherits from the learner's settings."""
+    writing = writing_system_profile(
+        settings.native_lang,
+        settings.target_lang,
+        settings.english_level,
+        getattr(settings, "literacy_stage", ""),
+    )
     return LearnerProfile(
         proficiency=settings.english_level or "intermediate",
         native_language=settings.native_lang or "en",
         learning_language=settings.target_lang or "en",
+        writing_support=writing.kind,
+        script_name=writing.script_name,
+        transcription_mode=writing.transcription_mode,
     )
 
 

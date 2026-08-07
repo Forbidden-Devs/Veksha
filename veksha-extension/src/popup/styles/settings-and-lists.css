@@ -438,6 +438,33 @@
   font-size: 12px;
   font-weight: 400;
 }
+
+.transcription-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+button.transcription-hint-reveal {
+  width: auto;
+  min-width: 28px;
+  padding: 2px 7px;
+  border: 1px solid var(--m-border);
+  border-radius: 999px;
+  background: var(--m-surface-2);
+  color: var(--m-accent);
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.transcription-hint-toggle {
+  padding: 0 2px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
  
 .dictionary-row-translation {
   overflow: hidden;

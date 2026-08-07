@@ -11,6 +11,7 @@ import { THEMES, type ThemeName, getTheme, previewTheme, setTheme } from "../../
 import { useApp } from "../App";
 import { normalizeAiBlocklist, siteKey, type AiBlocklist } from "../../shared/aiBlocklist";
 import { normalizeFocusSite, type FocusMode, type FocusSession } from "../../shared/focusSession";
+import type { LanguageSettings, LiteracyStage } from "../../shared/types";
 
 // Written by the background when a Google-link flow finishes after the popup 
 // has already closed (the OAuth window steals focus and kills the popup).
@@ -47,7 +48,8 @@ export function SettingsScreen() {
   const [nativeLang, setNativeLang] = useState(() => appNativeLang || detectNativeLang());
   const [targetLang, setTargetLang] = useState(() => appTargetLang || "en");
   const [targetLangs, setTargetLangs] = useState<string[]>(() => [appTargetLang || "en"]);
-  const [languageSettings, setLanguageSettings] = useState<Record<string, { level: string; goals: string; prompt: string }>>({}); 
+  const [languageSettings, setLanguageSettings] = useState<Record<string, LanguageSettings>>({});
+  const [literacyStage, setLiteracyStage] = useState<LiteracyStage | undefined>();
   const [reminderLevel, setReminderLevel] = useState(2);
   const [miningSameLevelExamples, setMiningSameLevelExamples] = useState(2);
   const [miningHigherLevelExamples, setMiningHigherLevelExamples] = useState(1);
@@ -290,6 +292,7 @@ export function SettingsScreen() {
       setTargetLang(s.target_lang || "en");
       setTargetLangs(s.target_langs?.length ? s.target_langs : [s.target_lang || "en"]);
       setLanguageSettings(s.language_settings ?? {});
+      setLiteracyStage(s.language_settings?.[s.target_lang]?.literacy_stage);
       setReminderLevel(s.reminder_level ?? 2);
       setMiningSameLevelExamples(s.mining_same_level_examples ?? 2);
       setMiningHigherLevelExamples(s.mining_higher_level_examples ?? 1);
@@ -314,7 +317,7 @@ export function SettingsScreen() {
     try {
       const updatedLanguageSettings = {
         ...languageSettings,
-        [targetLang]: { level, goals, prompt }, 
+        [targetLang]: { level, goals, prompt, literacy_stage: literacyStage },
       };
       await api.saveSettings(username, {
         displayName,
@@ -351,7 +354,7 @@ export function SettingsScreen() {
   function handleTargetLangChange(nextLang: string) { 
     const updated = {
       ...languageSettings,
-      [targetLang]: { level, goals, prompt },
+      [targetLang]: { level, goals, prompt, literacy_stage: literacyStage },
     };
     const next = updated[nextLang] ?? { level: "", goals: "", prompt: "" };
     setLanguageSettings(updated);
@@ -359,13 +362,14 @@ export function SettingsScreen() {
     setLevel(next.level);
     setGoals(next.goals);
     setPrompt(next.prompt);
+    setLiteracyStage(next.literacy_stage);
   }
 
   function handleAddTargetLang(nextLang: string) {
     if (!nextLang || nextLang === nativeLang || targetLangs.includes(nextLang)) return; 
     const updated = {
       ...languageSettings,
-      [targetLang]: { level, goals, prompt },
+      [targetLang]: { level, goals, prompt, literacy_stage: literacyStage },
       [nextLang]: { level: "", goals: "", prompt: "" },
     };
     setLanguageSettings(updated);
@@ -374,6 +378,7 @@ export function SettingsScreen() {
     setLevel("");
     setGoals("");
     setPrompt("");
+    setLiteracyStage(undefined);
     setError(null);
   }
  
@@ -383,7 +388,7 @@ export function SettingsScreen() {
     const remaining = targetLangs.filter((code) => code !== lang);
     const updated = {
       ...languageSettings,
-      [targetLang]: { level, goals, prompt }, 
+      [targetLang]: { level, goals, prompt, literacy_stage: literacyStage },
     };
     delete updated[lang];
     setTargetLangs(remaining);
@@ -396,6 +401,7 @@ export function SettingsScreen() {
       setLevel(next.level);
       setGoals(next.goals);
       setPrompt(next.prompt);
+      setLiteracyStage(next.literacy_stage);
     }
     setError(null); 
   }

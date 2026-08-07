@@ -344,7 +344,7 @@ textarea {
   .dictionary-actions .btn { min-height: 40px; }
   .dictionary-screen .word-list { padding-inline: 0; }
   .dictionary-word { grid-template-columns: minmax(78px, 1fr) minmax(86px, 1fr) auto; gap: 6px; }
-  .dictionary-inline-transcription { display: none; }
+  .dictionary-inline-transcription { display: inline-flex; }
   .dictionary-word-actions { gap: 2px; }
   .dictionary-word-actions .icon-btn { width: 32px; height: 32px; }
 

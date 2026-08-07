@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as api from "../../shared/api";
 import { useT } from "../../shared/i18n";
-import type { WordEntry } from "../../shared/types";
+import type { TranscriptionMode, WordEntry } from "../../shared/types";
+import { TranscriptionHint } from "../components/TranscriptionHint";
 
-export function AnkiCards({ username, words, onClose }: {
+export function AnkiCards({ username, words, transcriptionMode, onClose }: {
   username: string;
   words: WordEntry[];
+  transcriptionMode: TranscriptionMode;
   onClose: () => void;
 }) {
   const t = useT();
@@ -89,7 +91,7 @@ export function AnkiCards({ username, words, onClose }: {
       <div className="anki-progress">{index + 1} / {cards.length}</div>
       <div className={`anki-card${revealed ? " anki-card-revealed" : ""}`}>
         <div className="anki-front">{front}</div>
-        {revealed && <div className="anki-back">{back || "—"}{card.word.transcription && <small>{card.word.transcription}</small>}</div>}
+        {revealed && <div className="anki-back">{back || "—"}<TranscriptionHint text={card.word.transcription} mode={transcriptionMode} /></div>}
       </div>
       <div className="anki-answer-row">
         <input
