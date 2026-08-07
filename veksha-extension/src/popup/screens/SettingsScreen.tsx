@@ -229,6 +229,7 @@ export function SettingsScreen() {
       } else {
         setPromoError(
           result.error === "exhausted" ? t.settings_promo_error_exhausted 
+          : result.error === "paused" ? t.settings_promo_error_paused
           : result.error === "already_redeemed" ? t.settings_promo_error_already_redeemed
           : t.settings_promo_error_invalid,
         );

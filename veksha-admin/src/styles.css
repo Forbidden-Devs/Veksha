@@ -86,5 +86,8 @@ th, td { padding: 13px 9px; text-align: left; vertical-align: top; border-bottom
 th { color: #768179; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
 td code { color: #285c42; font-weight: 800; }
 td small { display: block; max-width: 150px; margin-top: 3px; color: #7a847d; }
+.promo-list td:last-child button { padding: 7px 10px; font-size: 12px; white-space: nowrap; }
+.promo-list .promo-resume { color: #fff; border-color: #397553; background: #397553; }
+.promo-list .promo-pause { color: #8a4b25; border-color: #dfc2aa; background: #fff8f2; }
 @media (max-width: 850px) { .price-grid, .promo-layout, .usage-layout, .database-layout { grid-template-columns: 1fr; } .metric-grid { grid-template-columns: 1fr 1fr; } .app-shell { width: min(100% - 24px, 680px); } .usage-breakdown { display: none; } }
 @media (max-width: 520px) { header, .section-heading { align-items: flex-start; } header { flex-direction: column; } .form-grid, .metric-grid { grid-template-columns: 1fr; } .login-card { padding: 27px; } }

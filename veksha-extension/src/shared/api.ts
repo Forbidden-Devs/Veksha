@@ -285,7 +285,7 @@ export interface PromoRedeemResult {
   ok: boolean;
   tier: "free" | "premium";
   expires_at: number | null;
-  error: "invalid" | "exhausted" | "already_redeemed" | null;
+  error: "invalid" | "paused" | "exhausted" | "already_redeemed" | null;
 }
 
 /** Redeem a manually-issued promo code for a temporary Premium grant.

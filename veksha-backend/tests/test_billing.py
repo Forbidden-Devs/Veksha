@@ -255,11 +255,27 @@ def test_subscription_can_be_cancelled():
 # Promo codes
 # ---------------------------------------------------------------------------
 
-def _create_promo(code: str, days: float, max_redemptions: int = 1, secret: str = ADMIN_SECRET) -> dict:
-    return asyncio.run(billing.api_billing_promo_create(
+def _set_promo_paused(code: str, paused: bool, secret: str = ADMIN_SECRET) -> dict:
+    return asyncio.run(billing.api_billing_promo_pause(
+        code, billing.PromoPauseRequest(paused=paused),
+        x_veksha_admin_secret=secret,
+    ))
+
+
+def _create_promo(
+    code: str,
+    days: float,
+    max_redemptions: int = 1,
+    secret: str = ADMIN_SECRET,
+    start: bool = True,
+) -> dict:
+    created = asyncio.run(billing.api_billing_promo_create(
         billing.PromoCreateRequest(code=code, days=days, max_redemptions=max_redemptions),
         x_veksha_admin_secret=secret,
     ))
+    if start:
+        _set_promo_paused(code, False, secret)
+    return created
 
 
 def _redeem_promo(code: str, username: str) -> billing.PromoRedeemResponse:
@@ -277,13 +293,15 @@ def test_promo_create_requires_admin_secret():
 
 
 def test_admin_overview_returns_prices_and_promos():
-    _create_promo("OVERVIEW", 14, max_redemptions=3)
+    created = _create_promo("OVERVIEW", 14, max_redemptions=3, start=False)
+    assert created["paused"] is True
     out = asyncio.run(billing.api_billing_admin_overview(
         x_veksha_admin_secret=ADMIN_SECRET,
     ))
     assert {row["feature"] for row in out["features"]} == entitlements.PREMIUM_FEATURES
     promo = next(row for row in out["promos"] if row["code"] == "OVERVIEW")
     assert promo["days"] == 14 and promo["max_redemptions"] == 3
+    assert promo["paused"] is True
     assert "all_time" in out["ai_usage"] and "users" in out["ai_usage"]
 
 
@@ -313,6 +331,7 @@ def test_promo_can_grant_selected_features_only():
         ),
         x_veksha_admin_secret=ADMIN_SECRET,
     ))
+    _set_promo_paused("GRAMMARONLY", False)
     out = _redeem_promo("GRAMMARONLY", username)
     assert out.ok is True
     assert entitlements.features_of_user(username) == ["pattern_workshop"]
@@ -356,6 +375,37 @@ def test_promo_redeem_unknown_code():
     out = _redeem_promo("DOES-NOT-EXIST", username)
     assert out.ok is False and out.error == "invalid"
     assert entitlements.subscription_of(username) == ("free", None)
+
+
+def test_promo_pause_blocks_redemption_until_resumed():
+    _create_promo("PAUSEME", 7)
+    username = _user("promo_paused")
+
+    paused = _set_promo_paused("pauseme", True)
+    assert paused == {"ok": True, "code": "PAUSEME", "paused": True}
+    rejected = _redeem_promo("PAUSEME", username)
+    assert rejected.ok is False and rejected.error == "paused"
+    promo = next(row for row in db.promo_codes_get() if row["code"] == "PAUSEME")
+    assert promo["redemptions"] == 0
+
+    resumed = _set_promo_paused("PAUSEME", False)
+    assert resumed["paused"] is False
+    assert _redeem_promo("PAUSEME", username).ok is True
+
+
+def test_promo_pause_requires_admin_secret_and_existing_code():
+    _create_promo("PAUSEAUTH", 7)
+    try:
+        _set_promo_paused("PAUSEAUTH", True, secret="wrong")
+        assert False, "expected 401"
+    except HTTPException as e:
+        assert e.status_code == 401
+
+    try:
+        _set_promo_paused("MISSING-PAUSE", True)
+        assert False, "expected 404"
+    except HTTPException as e:
+        assert e.status_code == 404
 
 
 def test_promo_create_duplicate_code_is_409():

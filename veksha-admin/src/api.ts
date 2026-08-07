@@ -9,6 +9,7 @@ export type PromoCode = {
   days: number;
   max_redemptions: number;
   redemptions: number;
+  paused: boolean;
   features: string[];
   created: number;
   note: string;
@@ -102,6 +103,12 @@ export const adminApi = {
       method: "POST",
       body: JSON.stringify({ ...draft, code: normalizedCode(draft.code) }),
     }),
+  setPromoPaused: (secret: string, code: string, paused: boolean) =>
+    request<{ ok: boolean; code: string; paused: boolean }>(
+      `/api/billing/promo/${encodeURIComponent(normalizedCode(code))}/pause`,
+      secret,
+      { method: "PUT", body: JSON.stringify({ paused }) },
+    ),
   databaseQuery: (secret: string, databaseSecret: string, sql: string) =>
     request<DatabaseQueryResult>("/api/admin/database/query", secret, {
       method: "POST",

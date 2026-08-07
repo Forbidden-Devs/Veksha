@@ -196,9 +196,17 @@ curl -X POST $API/api/billing/promo/create \
   -d '{"code": "BETA30", "days": 30, "max_redemptions": 20, "features": ["pattern_workshop"]}'
 ```
 
-Users redeem it once each via `POST /api/billing/promo/redeem` (Bearer
-token, body `{"code": "..."}`) for `days` of the selected features. Omit
-`features` when creating a promo to grant all paid features.
+New promo codes start paused. Launch one from the admin panel or with:
+
+```
+curl -X PUT $API/api/billing/promo/BETA30/pause \
+  -H "X-Veksha-Admin-Secret: $ADMIN_API_SECRET" -H "Content-Type: application/json" \
+  -d '{"paused": false}'
+```
+
+Users can then redeem it once each via `POST /api/billing/promo/redeem`
+(Bearer token, body `{"code": "..."}`) for `days` of the selected features.
+Omit `features` when creating a promo to grant all paid features.
 
 Change a monthly feature price for future checkouts with the admin endpoint:
 
@@ -257,6 +265,7 @@ api/                  routers (one file per domain)
 | `POST /api/billing/promo/redeem` | redeem a promo code for temporary Premium |
 | `GET /api/billing/plans`, `POST /api/billing/telegram/webhook` | companion-bot API (shared secret) |
 | `POST /api/billing/promo/create` | mint a promo code (admin shared secret) |
+| `PUT /api/billing/promo/{code}/pause` | pause or resume a promo code (admin shared secret) |
 | `GET /api/billing/admin/overview` | read feature prices and recent promo codes (admin shared secret) |
 | `PUT /api/billing/features/{feature}/price` | change a feature price (admin shared secret) |
 | `GET /api/i18n/{lang}`, `POST /api/i18n/translate` | UI string catalogues |

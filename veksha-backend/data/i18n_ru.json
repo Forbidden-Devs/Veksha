@@ -294,5 +294,6 @@
   "training_new_word": "Новое слово",
   "training_next": "Далее →",
   "training_placeholder": "Ваш ответ...",
-  "training_title": "Тренировка"
+  "training_title": "Тренировка",
+  "settings_promo_error_paused": "Этот промокод временно приостановлен."
 }

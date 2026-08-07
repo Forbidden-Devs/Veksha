@@ -132,6 +132,22 @@ export default function App() {
     }
   }
 
+  async function setPromoPaused(code: string, paused: boolean) {
+    setBusy(true);
+    try {
+      await adminApi.setPromoPaused(secret, code, paused);
+      setOverview((current) => current ? {
+        ...current,
+        promos: current.promos.map((item) => item.code === code ? { ...item, paused } : item),
+      } : current);
+      setMessage(paused ? `Промокод ${code} приостановлен` : `Промокод ${code} запущен`);
+    } catch (error) {
+      setMessage(readableError(error));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function queryDatabase(event: FormEvent) {
     event.preventDefault();
     if (!databaseSecret.trim() || !databaseSql.trim()) return;
@@ -270,8 +286,8 @@ export default function App() {
       </form>
 
       <div className="panel promo-list"><div className="section-heading"><div><p className="eyebrow">ИСТОРИЯ</p><h2>Последние промокоды</h2></div><span>{overview.promos.length}</span></div>
-        {overview.promos.length === 0 ? <p className="empty">Промокодов пока нет</p> : <div className="table-wrap"><table><thead><tr><th>Код</th><th>Доступ</th><th>Срок</th><th>Использовано</th></tr></thead><tbody>
-          {overview.promos.map((item) => <tr key={item.code}><td><code>{item.code}</code><small>{item.note}</small></td><td>{item.features.length ? item.features.map((id) => FEATURE_NAMES[id] || id).join(", ") : "Все функции"}</td><td>{item.days} дн.</td><td>{item.redemptions} / {item.max_redemptions}</td></tr>)}
+        {overview.promos.length === 0 ? <p className="empty">Промокодов пока нет</p> : <div className="table-wrap"><table><thead><tr><th>Код</th><th>Доступ</th><th>Срок</th><th>Использовано</th><th>Управление</th></tr></thead><tbody>
+          {overview.promos.map((item) => <tr key={item.code}><td><code>{item.code}</code><small>{item.note}</small></td><td>{item.features.length ? item.features.map((id) => FEATURE_NAMES[id] || id).join(", ") : "Все функции"}</td><td>{item.days} дн.</td><td>{item.redemptions} / {item.max_redemptions}</td><td><button className={item.paused ? "promo-resume" : "promo-pause"} disabled={busy} onClick={() => void setPromoPaused(item.code, !item.paused)}>{item.paused ? "Запустить" : "Приостановить"}</button></td></tr>)}
         </tbody></table></div>}
       </div>
     </section>
