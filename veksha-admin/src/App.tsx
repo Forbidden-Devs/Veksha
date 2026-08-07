@@ -1,13 +1,32 @@
 import { FormEvent, useCallback, useMemo, useState } from "react";
-import { AdminApiError, adminApi, type AdminOverview, type DatabaseQueryResult, type PromoDraft } from "./api";
+import { AdminApiError, adminApi, type AdminOverview, type DatabaseQueryResult, type LocalizationStatus, type PromoDraft } from "./api";
 
 const FEATURE_NAMES: Record<string, string> = {
+  pattern_workshop: "Мастерская конструкций",
+  reading_coach: "Помощник по чтению",
+  dual_subtitles: "Двойные субтитры",
   grammar_lens: "Reading Coach и Pattern Workshop",
   immersion: "Reading Coach",
-  dual_subtitles: "Двойные субтитры",
 };
 
 const OPERATION_NAMES: Record<string, string> = {
+  core_v2_dictionary_lookup: "Словарная карточка",
+  core_v2_explain: "Объяснение перевода",
+  core_v2_goal_check: "Проверка ответа по цели",
+  core_v2_goal_framing: "Формулировка учебной цели",
+  core_v2_goal_step: "Следующий шаг урока",
+  core_v2_goal_summary: "Итоги урока",
+  core_v2_grammar_memory: "Разбор грамматики",
+  core_v2_phrase_mining: "Слова из фразы",
+  core_v2_practice_check: "Проверка упражнения",
+  core_v2_practice_task: "Подготовка упражнения",
+  core_v2_sentence_mining: "Примеры для слова",
+  core_v2_subtitles: "Перевод субтитров",
+  core_v2_translate: "Перевод текста",
+  reading_coach_check: "Проверка ответа помощника по чтению",
+  reading_coach_question: "Вопрос помощника по чтению",
+  subtitle_study_check: "Проверка ответа по субтитрам",
+  subtitle_study_question: "Вопрос по субтитрам",
   generate_tutor_task: "Задание тренировки",
   check_synonym_appropriate: "Проверка синонима",
   get_reverse_translations: "Обратный перевод",
@@ -63,6 +82,12 @@ function formatCell(value: unknown): string {
   return String(value);
 }
 
+function operationName(code: string): string {
+  if (OPERATION_NAMES[code]) return OPERATION_NAMES[code];
+  const locale = code.match(/^core_v2_i18n_([a-z-]+)$/)?.[1];
+  return locale ? `Локализация интерфейса: ${locale.toUpperCase()}` : code;
+}
+
 export default function App() {
   const [secret, setSecret] = useState("");
   const [overview, setOverview] = useState<AdminOverview | null>(null);
@@ -75,16 +100,22 @@ export default function App() {
   const [databaseResult, setDatabaseResult] = useState<DatabaseQueryResult | null>(null);
   const [databaseBusy, setDatabaseBusy] = useState(false);
   const [databaseError, setDatabaseError] = useState("");
+  const [localization, setLocalization] = useState<LocalizationStatus | null>(null);
 
   const load = useCallback(async (authSecret: string) => {
     setBusy(true);
     setMessage("");
     try {
-      const data = await adminApi.overview(authSecret);
+      const [data, i18nStatus] = await Promise.all([
+        adminApi.overview(authSecret),
+        adminApi.i18nStatus(authSecret).catch(() => null),
+      ]);
       setOverview(data);
+      setLocalization(i18nStatus);
       setPrices(Object.fromEntries(data.features.map((item) => [item.feature, item.stars_monthly])));
     } catch (error) {
       setOverview(null);
+      setLocalization(null);
       setMessage(readableError(error));
     } finally {
       setBusy(false);
@@ -153,6 +184,7 @@ export default function App() {
     if (!databaseSecret.trim() || !databaseSql.trim()) return;
     setDatabaseBusy(true);
     setDatabaseError("");
+    setLocalization(null);
     try {
       setDatabaseResult(await adminApi.databaseQuery(secret, databaseSecret.trim(), databaseSql));
     } catch (error) {
@@ -220,7 +252,7 @@ export default function App() {
 
         <div className="panel operation-list">
           <p className="eyebrow">ФУНКЦИИ</p><h3>Основные потребители</h3>
-          {overview.ai_usage.operations.length === 0 ? <p className="empty">Данных пока нет</p> : <div className="compact-list">{overview.ai_usage.operations.slice(0, 6).map((item) => <div key={`${item.call_name}:${item.model}`}><span><b>{OPERATION_NAMES[item.call_name] || item.call_name}</b><small>{item.model} · {formatNumber(item.requests)} запр.</small></span><strong>{formatNumber(item.total_tokens)}</strong></div>)}</div>}
+          {overview.ai_usage.operations.length === 0 ? <p className="empty">Данных пока нет</p> : <div className="compact-list">{overview.ai_usage.operations.slice(0, 6).map((item) => <div key={`${item.call_name}:${item.model}`}><span><b>{operationName(item.call_name)}</b><small>{item.model} · {formatNumber(item.requests)} запр.</small></span><strong>{formatNumber(item.total_tokens)}</strong></div>)}</div>}
         </div>
       </div>
 
@@ -229,6 +261,15 @@ export default function App() {
         {overview.ai_usage.users.length === 0 ? <p className="empty">Статистика появится после первого AI-запроса</p> : <div className="table-wrap"><table><thead><tr><th>Пользователь</th><th>Запросы</th><th>Входящие</th><th>Исходящие</th><th>Всего токенов</th><th>Последняя активность</th></tr></thead><tbody>
           {overview.ai_usage.users.map((item) => <tr key={item.username}><td><strong>{item.display_name}</strong>{item.display_name !== item.username && <small>{item.username}</small>}</td><td>{formatNumber(item.requests)}</td><td>{formatNumber(item.prompt_tokens)}</td><td>{formatNumber(item.completion_tokens)}</td><td><strong>{formatNumber(item.total_tokens)}</strong></td><td>{formatDate(item.last_used)}</td></tr>)}
         </tbody></table></div>}
+      </div>
+    </section>
+
+    <section>
+      <div className="section-heading"><div><p className="eyebrow">LOCALIZATION</p><h2>Покрытие интерфейса</h2></div><span className="period-label">Источник: {localization?.source_keys ?? "…"} строк</span></div>
+      <div className="panel table-wrap">
+        {!localization ? <p className="empty">Статус каталогов недоступен</p> : <table><thead><tr><th>Язык</th><th>Уровень</th><th>Покрытие</th><th>Отсутствует</th><th>Устарело</th><th>Статус</th></tr></thead><tbody>
+          {localization.locales.map((item) => <tr key={item.locale}><td><strong>{item.locale.toUpperCase()}</strong></td><td>{item.tier === "required" ? "Основной" : "Beta"}</td><td>{item.translated} / {item.total}</td><td>{item.missing}</td><td>{item.stale}</td><td><strong>{item.complete ? "Готов" : "Нужен перевод"}</strong>{item.untracked > 0 && <small>Без истории: {item.untracked}</small>}</td></tr>)}
+        </tbody></table>}
       </div>
     </section>
 
@@ -262,7 +303,6 @@ export default function App() {
       <div className="section-heading"><div><p className="eyebrow">КАТАЛОГ</p><h2>Стоимость функций</h2></div><strong>{monthlyTotal} ⭐ / месяц за всё</strong></div>
       <div className="price-grid">
         {overview.features.map((item) => <article className="price-card" key={item.feature}>
-          <span className="feature-code">{item.feature}</span>
           <h3>{FEATURE_NAMES[item.feature] || item.feature}</h3>
           <label className="price-input"><input type="number" min="1" step="1" value={prices[item.feature] ?? item.stars_monthly} onChange={(e) => setPrices({ ...prices, [item.feature]: Number(e.target.value) })} /><span>⭐ / месяц</span></label>
           <button disabled={busy || prices[item.feature] === item.stars_monthly} onClick={() => void savePrice(item.feature)}>Сохранить цену</button>

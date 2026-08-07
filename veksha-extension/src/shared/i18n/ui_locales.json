@@ -1,0 +1,5 @@
+{
+  "schema_version": 1,
+  "required": ["en", "ru"],
+  "beta": ["ar", "cs", "de", "el", "es", "fi", "fr", "hi", "id", "it", "ja", "ka", "nl", "pl", "pt", "th", "tr", "uk", "vi"]
+}

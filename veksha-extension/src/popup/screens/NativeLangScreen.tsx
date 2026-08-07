@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { useI18n, useT } from "../../shared/i18n";
+import { useState } from "react";
+import { useT } from "../../shared/i18n";
 import { LANGUAGES } from "../../shared/languages";
 import { LanguagePicker } from "../components/LanguagePicker";
 
@@ -12,27 +12,8 @@ function detectBrowserLang(): string {
 
 export function NativeLangScreen({ initialLang, onContinue }: { initialLang?: string; onContinue: (lang: string) => Promise<void> }) {
   const t = useT();
-  const { lang, switchLanguage } = useI18n();
   const [selected, setSelected] = useState<string>(() => initialLang ?? detectBrowserLang());
   const [loading, setLoading] = useState(false);
-  // Once the user has clicked a tile, their choice owns the selection.
-  const touchedRef = useRef(false);
-
-  // Until then, keep the preselected tile in sync with the interface language
-  // (the provider resolves it async from storage / browser detection).
-  useEffect(() => {
-    if (!touchedRef.current && lang && LANG_OPTIONS.some((l) => l.code === lang)) {
-      setSelected(lang);
-    }
-  }, [lang]);
-
-  /** Tile click: select AND switch the surrounding interface right away,
-   *  so the screen itself greets the user in the language they just chose. */
-  function pick(code: string) {
-    touchedRef.current = true;
-    setSelected(code);
-    switchLanguage(code).catch(() => {});
-  }
 
   async function handleContinue() {
     setLoading(true);
@@ -48,7 +29,7 @@ export function NativeLangScreen({ initialLang, onContinue }: { initialLang?: st
       emptyLabel={t.language_search_no_results}
       options={LANG_OPTIONS}
       selectedCodes={new Set([selected])}
-      onSelect={pick}
+      onSelect={setSelected}
       footer={
         <button
           className="btn btn-gradient btn-block"

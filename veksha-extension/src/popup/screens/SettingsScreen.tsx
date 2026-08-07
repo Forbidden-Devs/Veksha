@@ -2,9 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import * as api from "../../shared/api";
 import { GoogleMark } from "../../shared/GoogleMark";
 import { useI18n, useT } from "../../shared/i18n";
+import { UI_LOCALES } from "../../shared/i18n/locales";
 import { CONFIG } from "../../shared/config";
 import { googleLinkAccount } from "../../shared/googleAuth";
-import { LANGUAGES } from "../../shared/languages"; 
+import { LANGUAGES, getLanguageName } from "../../shared/languages";
 import { isExtension, storageGet, storageRemove, storageSet } from "../../shared/platform";
 import { THEMES, type ThemeName, getTheme, previewTheme, setTheme } from "../../shared/theme";
 import { useApp } from "../App";
@@ -26,7 +27,7 @@ function detectNativeLang(): string {
 
 export function SettingsScreen() {
   const { username, settingsMode, navigateTo, openSubscription, setLangPair, signOut, targetLang: appTargetLang, nativeLang: appNativeLang } = useApp(); 
-  const { switchLanguage } = useI18n();
+  const { lang, switchLanguage } = useI18n();
   const t = useT();
 
   const [displayName, setDisplayName] = useState("");
@@ -339,7 +340,6 @@ export function SettingsScreen() {
       previewTheme(theme);
 
       setLangPair(targetLang, nativeLang);
-      await switchLanguage(nativeLang);
       navigateTo("home");
     } catch (err) { 
       setError(`${t.settings_err_save}: ${(err as Error).message}`);
@@ -410,7 +410,7 @@ export function SettingsScreen() {
       <header className="menu-header">
         <span className="menu-title">{t.settings_title}</span>
         {!isOnboarding && (
-          <button className="icon-btn" aria-label="Close" style={{ marginLeft: "auto" }} onClick={() => navigateTo("home")}> 
+          <button className="icon-btn" aria-label={t.content_close} style={{ marginLeft: "auto" }} onClick={() => navigateTo("home")}>
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M18 6L6 18M6 6l12 12" />
             </svg>
@@ -429,6 +429,17 @@ export function SettingsScreen() {
 
         {!isOnboarding && (
           <>
+            <label className="field-label" htmlFor="settings-interface-lang">{t.settings_interface_language}</label>
+            <select
+              id="settings-interface-lang"
+              className="select-input"
+              value={lang}
+              onChange={(event) => void switchLanguage(event.target.value)}
+            >
+              {UI_LOCALES.map((code) => (
+                <option key={code} value={code}>{getLanguageName(code, lang)}</option>
+              ))}
+            </select>
             <label className="field-label">{t.settings_theme}</label>
             <div className="theme-swatches">
               {THEMES.map((name) => ( 
@@ -464,7 +475,7 @@ export function SettingsScreen() {
           onChange={(e) => setNativeLang(e.target.value)}
         >
           {LANG_OPTIONS.filter((l) => l.code === nativeLang || !targetLangs.includes(l.code)).map((l) => (
-            <option key={l.code} value={l.code}>{l.name}</option>
+            <option key={l.code} value={l.code}>{getLanguageName(l.code, lang)}</option>
           ))}
         </select> 
 
@@ -478,12 +489,12 @@ export function SettingsScreen() {
                   <div className={`settings-language-item${code === targetLang ? " is-active" : ""}`} key={code}>
                     <button type="button" className="settings-language-select" onClick={() => handleTargetLangChange(code)}>
                       <span className="settings-language-code">{code.toUpperCase()}</span>
-                      <span>{language?.name ?? code}</span>
+                      <span>{getLanguageName(language?.code ?? code, lang)}</span>
                     </button>
                     <button 
                       type="button"
                       className="settings-language-remove"
-                      aria-label={`${t.settings_remove_language}: ${language?.name ?? code}`}
+                      aria-label={`${t.settings_remove_language}: ${getLanguageName(language?.code ?? code, lang)}`}
                       title={t.settings_remove_language}
                       disabled={targetLangs.length <= 1}
                       onClick={() => handleRemoveTargetLang(code)}
@@ -502,7 +513,7 @@ export function SettingsScreen() {
             >
               <option value="">＋ {t.settings_add_language}</option>
               {LANG_OPTIONS.filter((l) => l.code !== nativeLang && !targetLangs.includes(l.code)).map((l) => ( 
-                <option key={l.code} value={l.code}>{l.name}</option>
+                <option key={l.code} value={l.code}>{getLanguageName(l.code, lang)}</option>
               ))}
             </select>
           </>
@@ -516,7 +527,7 @@ export function SettingsScreen() {
           onChange={(e) => handleTargetLangChange(e.target.value)}
         >
           {LANG_OPTIONS.filter((l) => targetLangs.includes(l.code)).map((l) => ( 
-            <option key={l.code} value={l.code}>{l.name}</option>
+            <option key={l.code} value={l.code}>{getLanguageName(l.code, lang)}</option>
           ))}
         </select>
 

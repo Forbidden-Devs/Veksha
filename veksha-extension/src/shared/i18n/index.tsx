@@ -1,18 +1,18 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { LANGUAGES } from "../languages";
 import { storageGet, storageSet } from "../platform";
 import { catalogFor } from "./catalogs";
+import { normalizeUiLocale } from "./locales";
 import { EN, type Strings } from "./strings";
 
-const CURRENT_LANG_KEY = "vk_i18n_current";
+export const UI_LOCALE_STORAGE_KEY = "vk_i18n_current";
 
 function detectBrowserLang(): string {
   const raw = (navigator.languages?.[0] ?? navigator.language ?? "en").slice(0, 2).toLowerCase();
-  return LANGUAGES.some((language) => language.code === raw) ? raw : "en";
+  return normalizeUiLocale(raw);
 }
 
 export function loadStaticCatalog(language: string): Promise<Strings> {
-  return Promise.resolve(catalogFor(language || "en"));
+  return Promise.resolve(catalogFor(normalizeUiLocale(language)));
 }
 
 interface I18nCtx {
@@ -42,16 +42,16 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [t, setT] = useState<Strings>(EN);
 
   useEffect(() => {
-    void storageGet([CURRENT_LANG_KEY]).then((values) => {
-      const selected = String(values[CURRENT_LANG_KEY] ?? detectBrowserLang());
+    void storageGet([UI_LOCALE_STORAGE_KEY]).then((values) => {
+      const selected = normalizeUiLocale(String(values[UI_LOCALE_STORAGE_KEY] ?? detectBrowserLang()));
       setLang(selected);
       setT(catalogFor(selected));
     });
   }, []);
 
   const switchLanguage = useCallback(async (next: string): Promise<void> => {
-    const selected = next || "en";
-    await storageSet({ [CURRENT_LANG_KEY]: selected });
+    const selected = normalizeUiLocale(next);
+    await storageSet({ [UI_LOCALE_STORAGE_KEY]: selected });
     setLang(selected);
     setT(catalogFor(selected));
   }, []);

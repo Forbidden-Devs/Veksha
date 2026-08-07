@@ -29,3 +29,20 @@ describe("adminApi.setPromoPaused", () => {
     );
   });
 });
+
+describe("adminApi.i18nStatus", () => {
+  it("loads catalogue coverage with the admin credential", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(
+      JSON.stringify({ schema_version: 1, source_keys: 459, locales: [] }),
+      { status: 200, headers: { "Content-Type": "application/json" } },
+    ));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await adminApi.i18nStatus("secret");
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://127.0.0.1:8000/api/admin/i18n/status",
+      expect.objectContaining({ headers: expect.objectContaining({ "X-Veksha-Admin-Secret": "secret" }) }),
+    );
+  });
+});

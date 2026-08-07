@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useT } from "../../shared/i18n";
-import { LANGUAGES } from "../../shared/languages";
+import { useI18n, useT } from "../../shared/i18n";
+import { getLanguageName } from "../../shared/languages";
 
 interface LevelSetupResult { level: string; goals: string; prompt: string }
 const LEVELS = ["a1", "a1_a2", "a2", "a2_b1", "b1", "b1_b2", "b2", "b2_c1", "c1", "c1_c2", "c2"];
@@ -12,10 +12,11 @@ export function LevelSetupScreen({ initialValues, targetLang, onComplete, onBack
   onBack: () => void;
 }) {
   const t = useT();
+  const { lang } = useI18n();
   const [form, setForm] = useState<LevelSetupResult>(initialValues ?? { level: "", goals: "", prompt: "" });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const language = LANGUAGES.find((item) => item.code === targetLang)?.name ?? targetLang.toUpperCase();
+  const language = getLanguageName(targetLang, lang);
 
   async function submit(event: React.FormEvent): Promise<void> {
     event.preventDefault();

@@ -535,6 +535,11 @@
 .my-words-screen {
   padding: 8px 18px 18px;
   gap: 12px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
 }
  
 .my-words-screen .word-list {
@@ -667,7 +672,9 @@
 }
 
 .my-words-list {
+  flex: 0 0 auto;
   min-height: 0;
+  overflow: visible;
   padding: 4px 14px 12px !important;
   border-radius: 16px; 
   background: var(--m-surface);

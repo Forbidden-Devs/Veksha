@@ -5,8 +5,10 @@
 import { copyFileSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { syncI18n } from "../../veksha-extension/scripts/sync-i18n.mjs";
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
+syncI18n();
 const extSource = join(root, "..", "veksha-extension", "source");
 
 const publicSource = join(root, "public", "source");

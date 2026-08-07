@@ -46,20 +46,18 @@ export class SelectionAssistant {
     document.addEventListener("pointermove", this.rememberPointer, { capture: true, passive: true });
     document.addEventListener("contextmenu", this.rememberPointer, { capture: true });
     document.addEventListener("mouseup", this.handleSelection);
-    document.addEventListener("pointerdown", this.handleOutsidePointer, true);
+    document.addEventListener("click", this.handleOutsideClick, true);
     document.addEventListener("keydown", this.handleKey, true);
-    window.addEventListener("resize", this.close);
-    window.addEventListener("scroll", this.close, { passive: true });
+    window.addEventListener("resize", this.keepCardInViewport, { passive: true });
   }
 
   dispose(): void {
     document.removeEventListener("pointermove", this.rememberPointer, true);
     document.removeEventListener("contextmenu", this.rememberPointer, true);
     document.removeEventListener("mouseup", this.handleSelection);
-    document.removeEventListener("pointerdown", this.handleOutsidePointer, true);
+    document.removeEventListener("click", this.handleOutsideClick, true);
     document.removeEventListener("keydown", this.handleKey, true);
-    window.removeEventListener("resize", this.close);
-    window.removeEventListener("scroll", this.close);
+    window.removeEventListener("resize", this.keepCardInViewport);
     this.close();
   }
 
@@ -98,9 +96,18 @@ export class SelectionAssistant {
     });
   };
 
-  private readonly handleOutsidePointer = (event: PointerEvent): void => {
+  private readonly handleOutsideClick = (event: MouseEvent): void => {
     if (eventBelongsToAssistant(event.target) || eventBelongsToVideoStudy(event.target)) return;
     this.close();
+  };
+
+  private readonly keepCardInViewport = (): void => {
+    if (!this.card) return;
+    const rect = this.card.getBoundingClientRect();
+    const maxLeft = Math.max(12, window.innerWidth - rect.width - 12);
+    const maxTop = Math.max(12, window.innerHeight - Math.min(rect.height, window.innerHeight - 24) - 12);
+    this.card.style.left = `${Math.min(maxLeft, Math.max(12, rect.left))}px`;
+    this.card.style.top = `${Math.min(maxTop, Math.max(12, rect.top))}px`;
   };
 
   private readonly handleKey = (event: KeyboardEvent): void => {
@@ -146,8 +153,10 @@ export class SelectionAssistant {
     card.className = "vk-assistant-card";
     card.setAttribute("role", "dialog");
     card.setAttribute("aria-label", this.session.t("content_translate", "Translate selection"));
-    card.style.left = `${Math.min(window.innerWidth - PANEL_WIDTH - 12, Math.max(12, x))}px`;
-    card.style.top = `${Math.min(window.innerHeight - 260, Math.max(12, y))}px`;
+    const maxLeft = Math.max(12, window.innerWidth - PANEL_WIDTH - 12);
+    const maxTop = Math.max(12, window.innerHeight - 260);
+    card.style.left = `${Math.min(maxLeft, Math.max(12, x))}px`;
+    card.style.top = `${Math.min(maxTop, Math.max(12, y))}px`;
 
     const header = document.createElement("header");
     const brand = document.createElement("span");

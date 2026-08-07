@@ -139,7 +139,7 @@ export function DictionaryScreen() {
                 <div className="dictionary-word-actions">
                   <button type="button" className="icon-btn" onClick={(event) => { event.stopPropagation(); void openMiningCard(word); }} aria-label={t.sentence_mining_title}>✨</button>
                   <button type="button" className="icon-btn" onClick={(event) => { event.stopPropagation(); speakText(word.name, targetLang); }} aria-label={t.translator_listen}>🔊</button>
-                  <button type="button" className="icon-btn" onClick={(event) => { event.stopPropagation(); remove(word.item_id); }} aria-label="Delete">🗑️</button>
+                  <button type="button" className="icon-btn" onClick={(event) => { event.stopPropagation(); remove(word.item_id); }} aria-label={t.ai_block_remove}>🗑️</button>
                 </div>
               </div>
               {isSelected && (

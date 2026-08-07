@@ -1,5 +1,6 @@
 import { useMemo, useState, type ReactNode } from "react";
-import type { Language } from "../../shared/languages";
+import { useI18n } from "../../shared/i18n";
+import { getLanguageName, type Language } from "../../shared/languages";
 
 interface LanguagePickerProps {
   title: string;
@@ -14,14 +15,21 @@ interface LanguagePickerProps {
 }
 
 export function LanguagePicker(props: LanguagePickerProps) {
+  const { lang } = useI18n();
   const [query, setQuery] = useState("");
   const matches = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase();
-    if (!needle) return props.options;
-    return props.options.filter(({ code, name }) => (
-      code.includes(needle) || name.toLocaleLowerCase().includes(needle)
+    const localized = props.options.map((language) => ({
+      ...language,
+      localizedName: getLanguageName(language.code, lang),
+    }));
+    if (!needle) return localized;
+    return localized.filter(({ code, name, localizedName }) => (
+      code.includes(needle)
+      || name.toLocaleLowerCase().includes(needle)
+      || localizedName.toLocaleLowerCase().includes(needle)
     ));
-  }, [props.options, query]);
+  }, [lang, props.options, query]);
 
   return (
     <section className="screen screen-lang-pick">
@@ -40,7 +48,7 @@ export function LanguagePicker(props: LanguagePickerProps) {
         onChange={({ currentTarget }) => setQuery(currentTarget.value)}
       />
       <div className="lang-pick-grid">
-        {matches.map(({ code, name }) => {
+        {matches.map(({ code, localizedName }) => {
           const chosen = props.selectedCodes.has(code);
           return (
             <button
@@ -50,7 +58,7 @@ export function LanguagePicker(props: LanguagePickerProps) {
               aria-pressed={chosen}
               onClick={() => props.onSelect(code)}
             >
-              <span className="lang-card-name">{name}</span>
+              <span className="lang-card-name">{localizedName}</span>
             </button>
           );
         })}
