@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import * as api from "../../shared/api";
 import { CONFIG } from "../../shared/config";
-import { useT } from "../../shared/i18n";
-import { LANGUAGES } from "../../shared/languages";
+import { useI18n, useT } from "../../shared/i18n";
+import { getLanguageName } from "../../shared/languages";
 import { isExtension, storageGet, storageSet } from "../../shared/platform";
 import type { SettingsData } from "../../shared/types";
 import {
@@ -38,6 +38,7 @@ const Icons = {
 export function HomeScreen() {
   const { username, navigateTo, openTraining, requirePremiumFeature, targetLang, nativeLang, setLangPair } = useApp();
   const t = useT();
+  const { lang } = useI18n();
   const [counts, setCounts] = useState<{ words: number; due: number } | null>(null);
   const [settings, setSettings] = useState<SettingsData | null>(null);
   const [readingCoachOn, setReadingCoachOn] = useState(false);
@@ -218,7 +219,7 @@ export function HomeScreen() {
   }
 
   if (!isExtension) {
-    const languageName = LANGUAGES.find((lang) => lang.code === targetLang)?.name ?? targetLang.toUpperCase();
+    const languageName = getLanguageName(targetLang, lang);
     return (
       <section className="screen launchpad web-home">
         <div className="web-home-hero">
@@ -254,7 +255,7 @@ export function HomeScreen() {
               </small>
             </button>
           )}
-          {quickError && <p className="web-quick-error">Translation unavailable. Try again.</p>}
+          {quickError && <p className="web-quick-error">{t.translator_failed}</p>}
         </div>
 
         <div className="web-today-grid">
@@ -275,6 +276,8 @@ export function HomeScreen() {
           <button onClick={() => navigateTo("goals")}><span>{Icons.topics}</span><strong>{t.lesson_goals_kicker}</strong><small>{t.lesson_goals_hint}</small></button>
           <button onClick={() => navigateTo("statistics")}><span>{Icons.stats}</span><strong>{t.nav_stats}</strong></button>
           <button onClick={() => navigateTo("settings", { settingsMode: "menu" })}><span>{Icons.settings}</span><strong>{t.nav_settings}</strong></button>
+          <button onClick={() => navigateTo("myWords")}><span>{Icons.myWords}</span><strong>{t.my_words_title}</strong><small>{t.my_words_intro}</small></button>
+          <button onClick={() => navigateTo("quizlet")}><span>{Icons.quizlet}</span><strong>Quizlet</strong><small>{t.quizlet_import_desc}</small></button>
         </div>
 
         <button className="web-language-switch" onClick={switchTargetLanguage} disabled={!settings || (settings.target_langs?.length ?? 1) < 2}>
@@ -448,13 +451,13 @@ export function HomeScreen() {
         <button className="capability-card capability-card-wide capability-card-alt" onClick={switchTargetLanguage} disabled={!settings || (settings.target_langs?.length ?? 1) < 2}>
           <span className="capability-card-icon">{Icons.language}</span>
           <span className="capability-card-badge">{targetLang.toUpperCase()}</span>
-          <span className="capability-card-label">{LANGUAGES.find((lang) => lang.code === targetLang)?.name ?? targetLang}</span>
+          <span className="capability-card-label">{getLanguageName(targetLang, lang)}</span>
         </button>
       </div>
       {blockDialogOpen && (
         <div className="ai-block-dialog-backdrop" role="presentation" onMouseDown={() => setBlockDialogOpen(false)}>
           <div className="ai-block-dialog" role="dialog" aria-modal="true" aria-labelledby="ai-block-title" onMouseDown={(event) => event.stopPropagation()}>
-            <button className="ai-block-dialog-close" onClick={() => setBlockDialogOpen(false)} aria-label="Close">×</button>
+            <button className="ai-block-dialog-close" onClick={() => setBlockDialogOpen(false)} aria-label={t.content_close}>×</button>
             <span className="ai-block-dialog-icon">{Icons.aiBlock}</span>
             <h2 id="ai-block-title">{t.ai_block_title}</h2>
             <div className="ai-block-dialog-actions">

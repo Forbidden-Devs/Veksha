@@ -63,6 +63,8 @@
   width: min(360px, calc(100vw - 24px));
   max-height: min(520px, calc(100vh - 24px));
   overflow: hidden auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
   border: 1px solid color-mix(in srgb, var(--m-accent-2) 36%, var(--m-border));
   border-radius: 18px;
   background: var(--m-surface);
@@ -71,11 +73,15 @@
 }
 
 .vk-assistant-card header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 11px 12px;
   border-bottom: 1px solid var(--m-border);
+  background: var(--m-surface);
 }
 
 .vk-assistant-card header span {
@@ -106,21 +112,26 @@
 }
 
 .vk-assistant-card > q {
-  display: -webkit-box;
+  display: block;
+  max-height: min(180px, 28vh);
   margin: 0;
   padding: 13px 15px 8px;
-  overflow: hidden;
+  overflow: hidden auto;
+  overscroll-behavior: contain;
   color: var(--m-dim);
   font-size: 11px;
   font-style: normal;
   line-height: 1.45;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .vk-assistant-result {
   min-height: 54px;
+  max-height: min(220px, 36vh);
   padding: 8px 15px 14px;
+  overflow: hidden auto;
+  overscroll-behavior: contain;
   color: var(--m-fg);
   font-size: 17px;
   font-weight: 720;
@@ -133,10 +144,15 @@
 .vk-assistant-result.is-error, .vk-assistant-details.is-error { color: var(--m-error); }
 
 .vk-assistant-card footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
   display: flex;
   justify-content: flex-end;
   gap: 7px;
   padding: 10px 12px 12px;
+  border-top: 1px solid var(--m-border);
+  background: var(--m-surface);
 }
 
 .vk-assistant-card footer button {
@@ -154,8 +170,11 @@
 .vk-assistant-card footer button:disabled { cursor: default; opacity: .4; }
 
 .vk-assistant-details {
+  max-height: min(200px, 30vh);
   margin: 0 12px 4px;
   padding: 11px;
+  overflow: hidden auto;
+  overscroll-behavior: contain;
   border-radius: 11px;
   background: var(--m-surface-2);
   color: var(--m-fg);

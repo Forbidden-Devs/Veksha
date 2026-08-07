@@ -22,10 +22,7 @@ const FEATURED_LANGUAGES: Language[] = FEATURED_LANGUAGE_PAIRS.map(
   ([code, name]) => ({ code, name }),
 );
 
-// Explicit names keep the picker stable across browsers and ICU versions.
-// Intl.DisplayNames used to produce surprising aliases for a few entries
-// (for example, "Akan" for Twi) and may fall back to a two-letter code in
-// stripped-down browser runtimes.
+// Explicit English names are stable fallbacks for browsers with reduced ICU.
 const LANGUAGE_NAMES: Record<string, string> = {
   aa: "Afar",
   ab: "Abkhazian",
@@ -217,10 +214,17 @@ const ISO_639_1_CODES = Object.keys(LANGUAGE_NAMES);
 
 const featuredCodes = new Set(FEATURED_LANGUAGES.map(({ code }) => code));
 
-export function getLanguageName(code: string): string {
-  return FEATURED_LANGUAGES.find((language) => language.code === code)?.name
+export function getLanguageName(code: string, locale = "en"): string {
+  const fallback = FEATURED_LANGUAGES.find((language) => language.code === code)?.name
     ?? LANGUAGE_NAMES[code]
     ?? code.toUpperCase();
+  if (code === "auto" || locale.toLowerCase().startsWith("en")) return fallback;
+  try {
+    const localized = new Intl.DisplayNames([locale], { type: "language" }).of(code);
+    return localized && localized.toLowerCase() !== code.toLowerCase() ? localized : fallback;
+  } catch {
+    return fallback;
+  }
 }
 
 const OTHER_LANGUAGES = ISO_639_1_CODES

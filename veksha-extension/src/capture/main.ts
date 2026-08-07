@@ -2,7 +2,7 @@ import "../shared/palette.css";
 import "./style.css";
 import { getSettings, translateImageRegion } from "../shared/api";
 import { CONFIG } from "../shared/config";
-import { loadStaticCatalog } from "../shared/i18n";
+import { loadStaticCatalog, UI_LOCALE_STORAGE_KEY } from "../shared/i18n";
 
 type Point = { x: number; y: number };
 type Box = { left: number; top: number; width: number; height: number };
@@ -112,11 +112,12 @@ resetButton.addEventListener("click", () => {
 
 async function initialize(): Promise<void> {
   const stored = await chrome.storage.local.get([
-    CONFIG.STORAGE_KEY_USERNAME, CONFIG.STORAGE_KEY_NATIVE_LANG, CONFIG.STORAGE_KEY_LANG_PAIR, "vk_theme",
+    CONFIG.STORAGE_KEY_USERNAME, CONFIG.STORAGE_KEY_NATIVE_LANG, CONFIG.STORAGE_KEY_LANG_PAIR,
+    UI_LOCALE_STORAGE_KEY, "vk_theme",
   ]);
   document.documentElement.dataset.vekshaTheme = String(stored.vk_theme ?? "light");
   const nativeLang = String(stored[CONFIG.STORAGE_KEY_NATIVE_LANG] ?? "en");
-  strings = await loadStaticCatalog(nativeLang) as unknown as Record<string, string>;
+  strings = await loadStaticCatalog(String(stored[UI_LOCALE_STORAGE_KEY] ?? navigator.language)) as unknown as Record<string, string>;
   targetLang = nativeLang;
   const username = String(stored[CONFIG.STORAGE_KEY_USERNAME] ?? "");
   if (username) {
@@ -142,5 +143,5 @@ async function initialize(): Promise<void> {
 }
 
 void initialize().catch(() => {
-  status.textContent = "The captured page is no longer available. Start again from the context menu.";
+  status.textContent = t("ocr_capture_expired", "The captured page is no longer available. Start again from the context menu.");
 });

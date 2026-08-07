@@ -14,8 +14,10 @@ import {
 } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { syncI18n } from "./sync-i18n.mjs";
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
+syncI18n();
 
 const sourceDir = join(root, "source");
 // Recreate the generated dirs from scratch so files deleted from source/

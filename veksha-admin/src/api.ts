@@ -54,6 +54,21 @@ export type DatabaseQueryResult = {
   duration_ms: number;
 };
 
+export type LocalizationStatus = {
+  schema_version: number;
+  source_keys: number;
+  locales: Array<{
+    locale: string;
+    tier: "required" | "beta";
+    total: number;
+    translated: number;
+    missing: number;
+    stale: number;
+    untracked: number;
+    complete: boolean;
+  }>;
+};
+
 export type PromoDraft = {
   code: string;
   days: number;
@@ -115,4 +130,6 @@ export const adminApi = {
       headers: { "X-Veksha-Database-Secret": databaseSecret },
       body: JSON.stringify({ sql }),
     }),
+  i18nStatus: (secret: string) =>
+    request<LocalizationStatus>("/api/admin/i18n/status", secret),
 };

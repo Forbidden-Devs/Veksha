@@ -1,7 +1,7 @@
 import { getSettings } from "../shared/api";
 import { isAiBlocked, normalizeAiBlocklist } from "../shared/aiBlocklist";
 import { CONFIG } from "../shared/config";
-import { loadStaticCatalog } from "../shared/i18n";
+import { loadStaticCatalog, UI_LOCALE_STORAGE_KEY } from "../shared/i18n";
 
 export interface PageFeaturePolicy {
   blocked: boolean;
@@ -49,11 +49,12 @@ export class PageSession {
   }
 
   async refreshProfile(): Promise<void> {
-    const stored = await chrome.storage.local.get([CONFIG.STORAGE_KEY_NATIVE_LANG]);
+    const stored = await chrome.storage.local.get([CONFIG.STORAGE_KEY_NATIVE_LANG, UI_LOCALE_STORAGE_KEY]);
     const fallback = (stored[CONFIG.STORAGE_KEY_NATIVE_LANG] as string | undefined) ?? browserLanguage();
+    const interfaceLocale = String(stored[UI_LOCALE_STORAGE_KEY] ?? browserLanguage());
     this.nativeLang = fallback;
     this.translationState.targetLang = fallback;
-    await this.loadCatalogue(fallback);
+    await this.loadCatalogue(interfaceLocale);
 
     try {
       const username = await this.getUsername();
@@ -62,7 +63,6 @@ export class PageSession {
       this.nativeLang = settings.native_lang || fallback;
       this.studiedLang = settings.target_lang || "";
       this.translationState.targetLang = this.nativeLang;
-      if (this.nativeLang !== fallback) await this.loadCatalogue(this.nativeLang);
     } catch {
       // Local language remains usable while the account API is unavailable.
     }

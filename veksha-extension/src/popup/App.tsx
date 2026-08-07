@@ -202,7 +202,7 @@ async function loadSavedUiState(): Promise<SavedUiState | null> {
 }
 
 export default function App() {
-  const { t, switchLanguage } = useI18n();
+  const { t } = useI18n();
 
   // undefined = still checking storage; null = no user (show onboarding)
   const [username, setUsername] = useState<string | null | undefined>(undefined);
@@ -351,7 +351,6 @@ export default function App() {
       const settings = await api.getSettings(name);
       if (settings.native_lang) {
         setNativeLang(settings.native_lang);
-        switchLanguage(settings.native_lang).catch(() => {});
       }
       if (settings.target_lang) setTargetLang(settings.target_lang);
       const destination = settings.is_onboarded ? saved?.screen ?? "home" : "settings";
@@ -370,12 +369,11 @@ export default function App() {
     }
   }
 
-  // Step 1: native language selected → wait for translation → show username screen
+  // The native language controls translations, not the interface locale.
   async function handleNativeLangSelected(lang: string): Promise<void> {
     setPendingNativeLang(lang);
     setNativeLang(lang);
     storageSet({ [CONFIG.STORAGE_KEY_NATIVE_LANG]: lang });
-    await switchLanguage(lang);
     setObStep("username");
   }
 
@@ -610,7 +608,7 @@ export default function App() {
             {screen !== "home" && (
               <button
                 className="workspace-back"
-                aria-label="Back"
+                aria-label={t.common_back}
                 onClick={() => navigateTo(
                   screen === "subscription" && subscriptionIntent.mode !== "add" ? "settings" : "home",
                 )}
@@ -641,7 +639,7 @@ export default function App() {
         </div>
 
         {!isExtension && (
-          <nav className="web-bottom-nav" aria-label="Primary navigation">
+          <nav className="web-bottom-nav" aria-label={t.menu_title}>
             <button className={screen === "home" ? "is-active" : ""} onClick={() => navigateTo("home")}>
               <span aria-hidden="true">⌂</span><small>Veksha</small>
             </button>

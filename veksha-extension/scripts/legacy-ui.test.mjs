@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
@@ -66,6 +66,13 @@ test("translation is modeled as a workbench, not a conversation", () => {
   const translator = source("src/popup/screens/TranslatorScreen.tsx");
   assert.match(translator, /TranslationSheet/);
   assert.doesNotMatch(translator, /ChatMessage|ChatInput|ChatMessages|msg-user|msg-bot/);
+});
+
+test("web-only navigation uses the same current learning surfaces", () => {
+  const home = source("src/popup/screens/HomeScreen.tsx");
+  assert.match(home, /navigateTo\("myWords"\)/);
+  assert.match(home, /navigateTo\("quizlet"\)/);
+  assert.doesNotMatch(home, /Translation unavailable\. Try again\./);
 });
 
 test("lessons begin from an explicit learning objective", () => {
@@ -141,6 +148,17 @@ test("the page assistant boots through the new runtime", () => {
   assert.match(runtime, /SelectionAssistant/);
   assert.match(overlay, /vk-page-window/);
   assert.doesNotMatch(overlay, /av-overlay-auto|veksha-overlay-host/);
+});
+
+test("translated content stays available while the page scrolls", () => {
+  const assistant = source("src/content/selection-assistant.ts");
+  const contentStyles = source("src/content/content.css");
+  const shellStyles = source("src/popup/styles/shell.css");
+
+  assert.doesNotMatch(assistant, /addEventListener\("scroll", this\.close/);
+  assert.match(contentStyles, /\.vk-assistant-card > q[\s\S]*?overflow: hidden auto/);
+  assert.match(contentStyles, /\.vk-assistant-result[\s\S]*?overflow: hidden auto/);
+  assert.match(shellStyles, /\.capability-card-label[\s\S]*?white-space: normal/);
 });
 
 test("retired OCR implementation and coercive reminder code are absent", () => {
@@ -249,10 +267,13 @@ test("Reading Sessions replace passive browsing observation", () => {
   const runtime = source("src/content/page-runtime.ts");
   const reader = source("src/content/reading-session.ts");
   const words = source("src/popup/screens/MyWordsScreen.tsx");
+  const styles = source("src/popup/styles/settings-and-lists.css");
   assert.match(words, /startReadingSession/);
   assert.match(words, /endReadingSession/);
   assert.match(reader, /sessionId/);
   assert.match(runtime, /VEKSHA_READING_SESSION_CHANGED/);
+  assert.match(styles, /\.my-words-screen\s*\{[\s\S]*?overflow-y: auto/);
+  assert.match(styles, /\.my-words-list\s*\{[\s\S]*?flex: 0 0 auto[\s\S]*?overflow: visible/);
   assert.doesNotMatch(`${runtime}\n${reader}\n${words}`, /TOGGLE_VOCAB|vocabfreq/i);
 });
 
@@ -273,4 +294,30 @@ test("localization uses bundled static catalogues", () => {
   assert.match(runtime, /catalogFor/);
   assert.match(catalogs, /i18n_ru\.json/);
   assert.doesNotMatch(runtime, /fetch\(|\/api\/i18n\/translate|fillMissingKeys/);
+  assert.match(source("src/shared/languages.ts"), /Intl\.DisplayNames/);
+  assert.match(source("src/shared/i18n/locales.ts"), /normalizeUiLocale/);
+  assert.doesNotMatch(source("src/popup/screens/NativeLangScreen.tsx"), /switchLanguage/);
+});
+
+test("bundled catalogues stay in sync with the reviewed sources", () => {
+  const reviewedDirectory = path.join(root, "..", "veksha-backend", "data");
+  for (const name of readdirSync(reviewedDirectory).filter((entry) => /^i18n_[a-z-]+\.json$/.test(entry))) {
+    assert.equal(
+      source(`src/shared/i18n/catalogs/${name}`),
+      readFileSync(path.join(reviewedDirectory, name), "utf8"),
+      name,
+    );
+  }
+  assert.equal(
+    source("src/shared/i18n/ui_locales.json"),
+    readFileSync(path.join(reviewedDirectory, "ui_locales.json"), "utf8"),
+  );
+});
+
+test("container builds include or safely reuse localization inputs", () => {
+  const webDockerfile = readFileSync(path.join(root, "..", "veksha-web", "Dockerfile"), "utf8");
+  const syncScript = source("scripts/sync-i18n.mjs");
+  assert.match(webDockerfile, /COPY veksha-extension\/scripts\/sync-i18n\.mjs/);
+  assert.match(webDockerfile, /COPY veksha-backend\/data\/i18n_\*\.json/);
+  assert.match(syncScript, /if \(!existsSync\(reviewedDir\)\)/);
 });

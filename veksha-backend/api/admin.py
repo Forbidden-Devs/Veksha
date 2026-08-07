@@ -12,10 +12,19 @@ from pydantic import BaseModel, Field
 
 import config
 import db
+import localization_catalogs
 from api.billing import admin_auth
 
 log = logging.getLogger(__name__)
 router = APIRouter()
+
+
+@router.get("/api/admin/i18n/status")
+async def api_admin_i18n_status(
+    x_veksha_admin_secret: Optional[str] = Header(None),
+) -> dict[str, Any]:
+    await admin_auth(x_veksha_admin_secret)
+    return localization_catalogs.catalogue_statuses()
 
 
 class DatabaseQueryRequest(BaseModel):
