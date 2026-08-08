@@ -183,6 +183,9 @@ test("the page translation card is draggable and expands for explanations", () =
 test("goal lessons recover when their WebSocket closes mid-session", () => {
   const lesson = source("src/popup/overlays/GoalWindow.tsx");
 
+  assert.match(lesson, /HEARTBEAT_INTERVAL_MS\s*=\s*20_000/);
+  assert.match(lesson, /setInterval[\s\S]*?type:\s*"ping"/);
+  assert.match(lesson, /clearInterval\(heartbeatTimer\)/);
   assert.match(lesson, /ws\.onclose\s*=\s*recoverConnection/);
   assert.match(lesson, /ws\.onerror\s*=\s*recoverConnection/);
   assert.match(lesson, /reconnectAttempts\s*>=\s*2/);

@@ -203,6 +203,33 @@ async def test_a_new_goal_is_framed_before_the_first_step(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_heartbeat_keeps_a_reading_step_session_alive(monkeypatch):
+    storage = FakeStorage(FakeSettings(), GoalRepository())
+    install(
+        monkeypatch,
+        storage,
+        checker=RecordingChecker(StepEvaluation("correct", "unclear", "ok")),
+    )
+    socket = FakeWebSocket(
+        [
+            {"type": "ping"},
+            {"type": "init", "statement": "Понять алфавит"},
+            {"type": "next_step"},
+            {"type": "ping"},
+        ]
+    )
+
+    await goal_v2.goal_ws(socket)
+
+    assert [message["type"] for message in socket.sent] == [
+        "pong",
+        "goal",
+        "step",
+        "pong",
+    ]
+
+
+@pytest.mark.asyncio
 async def test_the_next_step_follows_from_the_answer_not_a_fixed_list(monkeypatch):
     goal = replace(
         state_goal("Понять Past Perfect", PROFILE, material=GoalMaterial("Он ушёл.")),

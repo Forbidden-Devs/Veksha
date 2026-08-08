@@ -21,6 +21,11 @@ import type {
 
 type Phase = "framing" | "planning" | "asking" | "checking" | "feedback" | "summary" | "error";
 
+// Keep lesson sockets active while the learner reads. Some proxies close an
+// otherwise healthy WebSocket after roughly a minute of silence; reconnecting
+// would initialize a fresh server session and replace the unanswered step.
+const HEARTBEAT_INTERVAL_MS = 20_000;
+
 interface StepResult {
   outcome: TrainingOutcome;
   cause: DifficultyCause;
@@ -101,6 +106,12 @@ export function GoalWindow({
     let cancelled = false;
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
     let reconnectAttempts = 0;
+    const heartbeatTimer = setInterval(() => {
+      const ws = wsRef.current;
+      if (ws?.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: "ping" }));
+      }
+    }, HEARTBEAT_INTERVAL_MS);
 
     async function connect() {
       try {
@@ -160,6 +171,7 @@ export function GoalWindow({
 
     return () => {
       cancelled = true;
+      clearInterval(heartbeatTimer);
       if (reconnectTimer !== null) clearTimeout(reconnectTimer);
       wsRef.current?.close();
       wsRef.current = null;

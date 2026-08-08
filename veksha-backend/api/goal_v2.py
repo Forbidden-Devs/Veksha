@@ -403,7 +403,13 @@ async def goal_ws(websocket: WebSocket) -> None:
 
             message_type = message.get("type")
 
-            if message_type == "init":
+            if message_type == "ping":
+                # Application-level traffic prevents idle proxy timeouts while
+                # the learner is reading a lesson step. A response also lets
+                # intermediaries see traffic in both directions.
+                await websocket.send_json({"type": "pong"})
+
+            elif message_type == "init":
                 profile = _profile(
                     storage, minutes=_minutes(message.get("minutes"))
                 )
