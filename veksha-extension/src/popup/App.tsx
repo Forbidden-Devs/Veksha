@@ -369,8 +369,12 @@ export default function App() {
         setNativeLang(settings.native_lang);
       }
       if (settings.target_lang) setTargetLang(settings.target_lang);
-      const destination = settings.is_onboarded ? saved?.screen ?? "home" : "settings";
-      const mode = settings.is_onboarded ? saved?.settingsMode ?? "menu" : "onboarding";
+      const hasValidLanguagePair = settings.is_onboarded
+        && Boolean(settings.native_lang)
+        && Boolean(settings.target_lang)
+        && settings.native_lang !== settings.target_lang;
+      const destination = hasValidLanguagePair ? saved?.screen ?? "home" : "settings";
+      const mode = hasValidLanguagePair ? saved?.settingsMode ?? "menu" : "onboarding";
       setSettingsMode(mode);
       setScreen(destination);
       setInitialRouteReady(true);
@@ -572,9 +576,14 @@ export default function App() {
   }, [username]);
 
   useEffect(() => {
-    if (isExtension || !username || !initialRouteReady || webShortcutHandled.current) return;
+    if (!username || !initialRouteReady || webShortcutHandled.current) return;
     webShortcutHandled.current = true;
     const action = new URLSearchParams(window.location.search).get("open");
+    if (action === "translator") {
+      setScreen("translator");
+      return;
+    }
+    if (isExtension) return;
     if (action === "dictionary") setScreen("dictionary");
     if (action === "training") void openTraining();
   }, [username, initialRouteReady, openTraining]);

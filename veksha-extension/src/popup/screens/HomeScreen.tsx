@@ -16,11 +16,13 @@ import {
   type AiBlocklist,
 } from "../../shared/aiBlocklist";
 import { useApp } from "../App";
+import { appendTranscript, VoiceInputButton } from "../components/VoiceInputButton";
 
 /** HomeScreen — launch surface for learning tools and page-level controls. */
 
 const Icons = {
   dictionary: <svg viewBox="0 0 24 24"><path d="M4 5.5A3.5 3.5 0 0 1 7.5 2H11v17H7.5A3.5 3.5 0 0 0 4 22V5.5Z"/><path d="M20 5.5A3.5 3.5 0 0 0 16.5 2H13v17h3.5A3.5 3.5 0 0 1 20 22V5.5Z"/></svg>,
+  translator: <svg viewBox="0 0 24 24"><path d="M4 6h10M9 3v3c0 4-2 7-5 9M6 10c1.5 2 3.2 3.5 5 4.5M14 12l5 9M16 17h6"/></svg>,
   topics: <svg viewBox="0 0 24 24"><path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>,
   training: <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="m15 9 5-5M16 4h4v4"/></svg>,
   readingCoach: <svg viewBox="0 0 24 24"><path d="M4 18a8 8 0 0 1 16 0"/><path d="M12 18l4.5-6"/><circle cx="12" cy="18" r="1.2"/></svg>,
@@ -237,6 +239,10 @@ export function HomeScreen() {
               maxLength={500}
               aria-label={t.translator_title}
             />
+            <VoiceInputButton
+              disabled={quickLoading}
+              onTranscript={(text) => setQuickText((current) => appendTranscript(current, text, 500))}
+            />
             <button type="submit" disabled={!quickText.trim() || quickLoading}>
               {quickLoading ? "…" : "→"}
             </button>
@@ -304,6 +310,10 @@ export function HomeScreen() {
         <button className="capability-card" onClick={() => navigateTo("dictionary")}>
           <span className="capability-card-icon">{Icons.dictionary}</span>
           <span className="capability-card-label">{t.dictionary_title}</span>
+        </button>
+        <button className="capability-card" onClick={() => navigateTo("translator")}>
+          <span className="capability-card-icon">{Icons.translator}</span>
+          <span className="capability-card-label">{t.translator_title}</span>
         </button>
         {isExtension && (
           <button className="capability-card" onClick={openAreaTranslation}>

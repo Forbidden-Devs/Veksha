@@ -203,6 +203,28 @@ textarea {
 
 .web-quick-add button:disabled { opacity: .46; }
 
+.web-quick-add .voice-input-wrap {
+  align-self: center;
+  margin-right: 4px;
+}
+
+.web-quick-add .voice-input-button {
+  width: 38px;
+  min-width: 38px;
+  height: 38px;
+  border: 1px solid var(--m-border);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--m-accent);
+  font-size: 13px;
+}
+
+.web-quick-add .voice-input-button.is-recording {
+  border-color: var(--m-error);
+  background: color-mix(in srgb, var(--m-error) 12%, transparent);
+  color: var(--m-error);
+}
+
 .web-quick-result {
   display: flex;
   align-items: center;

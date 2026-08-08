@@ -20,6 +20,7 @@ import { createSessionSocket, type SessionSocket } from "../../shared/wsProxy";
 import { OverlayHeader } from "../components/OverlayHeader";
 import { RichText } from "../components/RichText";
 import { feedbackTone } from "../components/trainingPresentation";
+import { appendTranscript, VoiceInputButton } from "../components/VoiceInputButton";
 import type {
   FsrsRating,
   PracticeReason,
@@ -400,6 +401,10 @@ export function PracticePlannerWindow({
                     }
                   }}
                   disabled={!isAsking}
+                />
+                <VoiceInputButton
+                  disabled={!isAsking}
+                  onTranscript={(text) => setAnswer((current) => appendTranscript(current, text, 5000))}
                 />
               </div>
             )}

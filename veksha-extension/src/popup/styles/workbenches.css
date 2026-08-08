@@ -43,6 +43,16 @@
   background: var(--m-accent);
 }
 
+.voice-input-setup {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-left: 3px solid var(--m-accent-2);
+  background: color-mix(in srgb, var(--m-accent-2) 10%, var(--m-surface));
+  color: var(--m-fg);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .translator-source {
   padding: 16px;
   border-left: 3px solid var(--m-accent);

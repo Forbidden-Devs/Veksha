@@ -189,6 +189,43 @@ export async function synthesizeSpeech(
   }
 }
 
+export interface SpeechTranscript {
+  text: string;
+  language: string | null;
+  language_confidence: number | null;
+  words: Array<{ text: string; start: number; end: number; speaker: string | null }>;
+}
+
+export async function transcribeSpeech(
+  audio: Blob,
+  operationId: string,
+  language?: string,
+): Promise<SpeechTranscript> {
+  if (!canRequestSpeech()) throw new Error("Backend speech is unavailable in this context");
+  const form = new FormData();
+  form.append("audio", audio, "recording.wav");
+  form.append("operation_id", operationId);
+  if (language) form.append("language", language);
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 65_000);
+  try {
+    const res = await fetch(`${CONFIG.BACKEND_URL}/api/speech/transcribe`, {
+      method: "POST",
+      headers: await _authHeaders(),
+      body: form,
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      const detail = await res.text().catch(() => "");
+      throw new Error(`/api/speech/transcribe -> HTTP ${res.status}: ${detail.slice(0, 300)}`);
+    }
+    return await res.json() as SpeechTranscript;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Auth
 // ---------------------------------------------------------------------------

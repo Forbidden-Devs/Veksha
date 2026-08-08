@@ -55,4 +55,8 @@ class UserSettings:
         return self.language_settings.get(self.target_lang, {}).get("literacy_stage", "")
 
     def is_onboarded(self) -> bool:
-        return bool(self.native_lang and self.target_lang)
+        return bool(
+            self.native_lang
+            and self.target_lang
+            and self.native_lang != self.target_lang
+        )

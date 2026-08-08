@@ -3,6 +3,7 @@ import * as api from "../../shared/api";
 import { useT } from "../../shared/i18n";
 import { canSpeak, speakText } from "../../shared/speech";
 import { useApp } from "../App";
+import { appendTranscript, VoiceInputButton } from "../components/VoiceInputButton";
 
 interface TranslationSheet {
   source: string;
@@ -26,6 +27,8 @@ export function TranslatorScreen() {
   const [working, setWorking] = useState(false);
   const [explaining, setExplaining] = useState(false);
   const [error, setError] = useState("");
+  const isVoiceSetup = typeof location !== "undefined"
+    && new URLSearchParams(location.search).get("voice_setup") === "1";
 
   async function translate() {
     const source = draft.trim();
@@ -80,6 +83,10 @@ export function TranslatorScreen() {
         <RemindersButton username={username} onOpen={openReminder} />
       </div>
 
+      {isVoiceSetup && (
+        <p className="voice-input-setup" role="status">{t.voice_input_setup_hint}</p>
+      )}
+
       <div className="translator-source">
         <label htmlFor="translator-draft">{t.translator_source_label}</label>
         <textarea
@@ -99,6 +106,10 @@ export function TranslatorScreen() {
         <div className="translator-source-footer">
           <span>{draft.length}/5000</span>
           <div>
+            <VoiceInputButton
+              disabled={working}
+              onTranscript={(text) => setDraft((current) => appendTranscript(current, text, 5000))}
+            />
             {(draft || sheet.translated) && (
               <button type="button" className="translator-secondary" onClick={reset}>
                 {t.translator_clear}
