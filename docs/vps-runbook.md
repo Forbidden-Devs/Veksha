@@ -130,7 +130,7 @@ Compose с `--no-build` и ждёт healthcheck. Текущая версия д�
 
 ```bash
 ./ops/vps/smoke-test.sh \
-  https://app-staging.example.com \
+  https://staging.example.com \
   https://api-staging.example.com \
   "$(git rev-parse HEAD)"
 ```
