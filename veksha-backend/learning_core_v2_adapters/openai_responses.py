@@ -727,8 +727,11 @@ class OpenAIResponsesLanguageProvider:
                 "source material is supplied, anchor the criteria to what it actually "
                 "contains. For an alphabet or writing-system objective, build criteria "
                 "from symbol recognition and sound association through reading fresh "
-                "words without romanization; do not turn it into a general vocabulary "
-                "lesson. Keep the whole set reachable inside the stated minutes."
+                "words without romanization; include forming representative symbols "
+                "by hand and finding them on the target-language keyboard when those "
+                "skills are relevant to this writing system. Do not turn it into a "
+                "general vocabulary lesson. Keep the whole set reachable inside the "
+                "stated minutes."
             ),
             user_data={
                 "goal": request.statement,
@@ -770,7 +773,25 @@ class OpenAIResponsesLanguageProvider:
                 "transcription_mode: always adds a concise romanization or pronunciation "
                 "cue beside new learning-language forms, on_demand avoids putting it in "
                 "the main task, and standard uses the normal language-course treatment. "
-                "The final unaided check must never include transcription."
+                "The final unaided check must never include transcription. For "
+                "writing-system lessons, distinguish three separate facts: the printed "
+                "shape, handwriting or stroke construction, and pronunciation; never "
+                "imply that a visual feature itself changes the sound. For every pair "
+                "in compare_forms, explicitly explain both the visible difference and "
+                "the pronunciation difference, including when sound depends on position, "
+                "tone, vowel, or another context. Describe each glyph relative to the "
+                "other glyph in that exact pair. Do not use vague locations such as "
+                "'upper loop' or 'bottom-right loop' unless that feature is visibly true "
+                "for the displayed Unicode forms; mention font or handwriting variation "
+                "when it can change the description. Silently check that every listed "
+                "pair is covered before returning. For handwrite_form, ask the learner "
+                "to write a small set on paper or a touchscreen and self-check named "
+                "structural or stroke cues. For type_on_keyboard, show an exact short "
+                "target to enter with the target-language layout and do not accept "
+                "romanization as a substitute. If learner_reported_issue is present, "
+                "this is a replacement for a disputed task: directly correct that "
+                "specific omission, ambiguity, or factual problem instead of merely "
+                "rephrasing the rejected task."
             ),
             user_data={
                 "goal": request.goal,
@@ -780,6 +801,7 @@ class OpenAIResponsesLanguageProvider:
                 "required_demand": request.demand,
                 "reason": request.reason,
                 "previous_questions": request.previous_questions,
+                "learner_reported_issue": request.learner_reported_issue,
                 "observed_gaps": [
                     {
                         "criterion": gap.statement,

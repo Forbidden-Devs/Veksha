@@ -117,10 +117,16 @@ class FakeFramer:
 class RecordingStepBuilder:
     def __init__(self):
         self.plans = []
+        self.previous_questions = []
+        self.reported_issues = []
         self.count = 0
 
-    async def execute(self, goal, plan, *, previous_questions=()):
+    async def execute(
+        self, goal, plan, *, previous_questions=(), learner_reported_issue=""
+    ):
         self.plans.append(plan)
+        self.previous_questions.append(tuple(previous_questions))
+        self.reported_issues.append(learner_reported_issue)
         self.count += 1
         return GoalStep(
             step_id=f"step-{self.count}",
@@ -318,6 +324,34 @@ async def test_off_task_input_is_not_written_into_the_evidence(monkeypatch):
     # The step stays open, so the learner answers it again.
     assert len(checker.calls) == 2
     assert storage.goals.find(goal.goal_id).evidence == ()
+
+
+@pytest.mark.asyncio
+async def test_a_challenged_step_is_replaced_without_counting_against_the_learner(monkeypatch):
+    goal = replace(state_goal("Понять тайское письмо", PROFILE), criteria=CRITERIA)
+    storage = FakeStorage(FakeSettings(), GoalRepository([goal]))
+    checker = RecordingChecker(StepEvaluation("incorrect", "unclear", "Нет"))
+    builder = install(monkeypatch, storage, checker=checker)
+    socket = FakeWebSocket(
+        [
+            {"type": "init", "goal_id": goal.goal_id},
+            {"type": "next_step"},
+            {
+                "type": "challenge_step",
+                "step_id": "step-1",
+                "issue": "Во второй паре не объяснено произношение.",
+            },
+        ]
+    )
+
+    await goal_v2.goal_ws(socket)
+
+    assert [message["type"] for message in socket.sent] == ["goal", "step", "step"]
+    assert socket.sent[-1]["step_id"] == "step-2"
+    assert "REJECTED TASK: Вопрос 1" == builder.previous_questions[-1][-1]
+    assert builder.reported_issues[-1] == "Во второй паре не объяснено произношение."
+    assert storage.goals.find(goal.goal_id).evidence == ()
+    assert checker.calls == []
 
 
 @pytest.mark.asyncio

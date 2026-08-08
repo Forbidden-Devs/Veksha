@@ -96,6 +96,8 @@ export function GoalWindow({
   const [budget, setBudget] = useState({ minutes: 0, spent: 0 });
   const [resumed, setResumed] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [challengeOpen, setChallengeOpen] = useState(false);
+  const [challengeReason, setChallengeReason] = useState("");
 
   const wsRef = useRef<SessionSocket | null>(null);
   const stepRef = useRef<GoalStep | null>(null);
@@ -204,6 +206,8 @@ export function GoalWindow({
       setStep(next);
       setAnswer("");
       setResult(null);
+      setChallengeOpen(false);
+      setChallengeReason("");
       setPhase("asking");
       scrollRef.current?.scrollTo({ top: 0 });
       setTimeout(() => answerRef.current?.focus(), 50);
@@ -245,6 +249,17 @@ export function GoalWindow({
   function finishEarly() {
     setPhase("planning");
     send({ type: "finish" });
+  }
+
+  function challengeStep() {
+    if (!stepRef.current || !challengeReason.trim() || phaseRef.current !== "asking") return;
+    if (send({
+      type: "challenge_step",
+      step_id: stepRef.current.step_id,
+      issue: challengeReason.trim(),
+    })) {
+      setPhase("planning");
+    }
   }
 
   const isAsking = phase === "asking";
@@ -403,6 +418,48 @@ export function GoalWindow({
               <p className="lesson-question"><RichText text={step.question} /></p>
             )}
 
+            {step && isAsking && (
+              <div className="goal-challenge">
+                {!challengeOpen ? (
+                  <button
+                    type="button"
+                    className="goal-challenge-toggle"
+                    onClick={() => setChallengeOpen(true)}
+                  >
+                    {t.lesson_challenge_task}
+                  </button>
+                ) : (
+                  <>
+                    <textarea
+                      className="textarea-input goal-challenge-input"
+                      rows={2}
+                      maxLength={500}
+                      placeholder={t.lesson_challenge_hint}
+                      value={challengeReason}
+                      onChange={e => setChallengeReason(e.target.value)}
+                    />
+                    <div className="goal-challenge-actions">
+                      <button
+                        type="button"
+                        className="goal-challenge-toggle"
+                        onClick={() => { setChallengeOpen(false); setChallengeReason(""); }}
+                      >
+                        {t.common_back}
+                      </button>
+                      <button
+                        type="button"
+                        className="goal-challenge-submit"
+                        disabled={!challengeReason.trim()}
+                        onClick={challengeStep}
+                      >
+                        {t.lesson_challenge_replace}
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
             {result && (
               <div className={`training-feedback ${feedbackTone(result.outcome)}`}>
                 {causeLabel && <span className="goal-cause-chip">{causeLabel}</span>}
@@ -503,6 +560,8 @@ function ACTIVITY_LABEL(t: T, activity: ActivityKind): string {
     paraphrase: t.lesson_activity_paraphrase,
     create_example: t.lesson_activity_create_example,
     role_reply: t.lesson_activity_role_reply,
+    handwrite_form: t.lesson_activity_handwrite_form,
+    type_on_keyboard: t.lesson_activity_type_on_keyboard,
     apply_unaided: t.lesson_activity_apply_unaided,
   };
   return labels[activity] ?? "";

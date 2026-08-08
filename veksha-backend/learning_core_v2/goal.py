@@ -60,6 +60,8 @@ ActivityKind = Literal[
     "paraphrase",             # restate in the learner's own words
     "create_example",         # build a fresh example unaided by a template
     "role_reply",             # answer in role, inside the goal's situation
+    "handwrite_form",         # form symbols by hand and check their structure
+    "type_on_keyboard",       # locate and type symbols with the target layout
     "apply_unaided",          # final application with no scaffolding at all
 ]
 
@@ -98,6 +100,8 @@ ACTIVITY_DEMAND: dict[ActivityKind, Demand] = {
     "paraphrase": "analytic",
     "create_example": "productive",
     "role_reply": "productive",
+    "handwrite_form": "productive",
+    "type_on_keyboard": "productive",
     "apply_unaided": "productive",
 }
 
@@ -110,7 +114,13 @@ _DEMAND_RANK: dict[Demand, int] = {"receptive": 0, "analytic": 1, "productive": 
 _BY_DEMAND: dict[Demand, tuple[ActivityKind, ...]] = {
     "receptive": ("find_in_material", "explain_example"),
     "analytic": ("compare_forms", "correct_error", "predict_continuation", "paraphrase"),
-    "productive": ("create_example", "role_reply", "apply_unaided"),
+    "productive": (
+        "create_example",
+        "role_reply",
+        "handwrite_form",
+        "type_on_keyboard",
+        "apply_unaided",
+    ),
 }
 
 #: Where to look next when a tier runs out of unused activities: sideways
@@ -419,6 +429,7 @@ class StepRequest:
     profile: LearnerProfile
     previous_questions: tuple[str, ...] = ()
     observed_gaps: tuple[GoalGap, ...] = ()
+    learner_reported_issue: str = ""
 
     @property
     def demand(self) -> Demand:
@@ -874,6 +885,16 @@ class GoalRoute:
         assert deepest is not None
         if progress[deepest.criterion_id].status != "met":
             return RoutePlan(deepest.criterion_id, "create_example", "raise_demand")
+        if goal.kind == "alphabet" and goal.profile.writing_support != "standard":
+            completed = {
+                item.activity
+                for item in goal.evidence_for(deepest.criterion_id)
+                if item.outcome == "correct"
+            }
+            if "handwrite_form" not in completed:
+                return RoutePlan(deepest.criterion_id, "handwrite_form", "consolidate")
+            if "type_on_keyboard" not in completed:
+                return RoutePlan(deepest.criterion_id, "type_on_keyboard", "consolidate")
         return RoutePlan(deepest.criterion_id, "apply_unaided", "final_check")
 
     # -- activity selection ------------------------------------------------
@@ -908,6 +929,8 @@ class GoalRoute:
     def _available(self, goal: LearningGoal, activity: ActivityKind) -> bool:
         if activity == "find_in_material":
             return goal.material.present
+        if activity in {"handwrite_form", "type_on_keyboard"}:
+            return goal.kind == "alphabet" and goal.profile.writing_support != "standard"
         return True
 
 
@@ -929,6 +952,7 @@ class BuildGoalStep:
         plan: RoutePlan,
         *,
         previous_questions: Sequence[str] = (),
+        learner_reported_issue: str = "",
     ) -> GoalStep:
         criterion = goal.criterion(plan.criterion_id)
         if criterion is None:
@@ -943,6 +967,7 @@ class BuildGoalStep:
                 profile=goal.profile,
                 previous_questions=tuple(previous_questions),
                 observed_gaps=gaps(goal),
+                learner_reported_issue=" ".join(learner_reported_issue.split())[:500],
             )
         )
         question = " ".join(draft.question.split())

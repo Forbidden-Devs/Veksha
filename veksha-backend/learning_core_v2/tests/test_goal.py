@@ -268,6 +268,33 @@ def test_the_last_question_is_an_unaided_application():
     assert not goal_achieved(goal)
 
 
+def test_alphabet_course_checks_handwriting_and_keyboard_before_final_reading():
+    writing_profile = LearnerProfile(
+        "A1", "ru", "th", writing_support="new_alphabet", script_name="Thai script"
+    )
+    proof = tuple(
+        answered("c4", "correct", "transfers_confidently", activity)
+        for activity in ("create_example", "role_reply")
+    )
+    goal = a_goal(evidence=proof, kind="alphabet", profile=writing_profile)
+
+    handwriting = GoalRoute().plan(goal)
+    assert handwriting == RoutePlan("c4", "handwrite_form", "consolidate")
+
+    goal = replace(
+        goal,
+        evidence=(*goal.evidence, answered("c4", "correct", "unclear", "handwrite_form")),
+    )
+    keyboard = GoalRoute().plan(goal)
+    assert keyboard == RoutePlan("c4", "type_on_keyboard", "consolidate")
+
+    goal = replace(
+        goal,
+        evidence=(*goal.evidence, answered("c4", "correct", "unclear", "type_on_keyboard")),
+    )
+    assert GoalRoute().plan(goal) == RoutePlan("c4", "apply_unaided", "final_check")
+
+
 def test_the_goal_closes_only_after_an_unaided_success():
     goal = a_goal(
         evidence=(

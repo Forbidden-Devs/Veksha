@@ -522,6 +522,54 @@ async def goal_ws(websocket: WebSocket) -> None:
                 if goal_achieved(goal) or time_exhausted(goal):
                     await send_summary()
 
+            elif message_type == "challenge_step":
+                if goal is None:
+                    await fail("Lesson is not initialized.")
+                    continue
+                step = open_steps.pop(str(message.get("step_id", "")), None)
+                if step is None:
+                    await fail("Lesson step expired.")
+                    continue
+                issue = " ".join(str(message.get("issue", "")).split())[:500]
+                if not issue:
+                    open_steps[step.step_id] = step
+                    await fail("Please describe what is wrong with the task.")
+                    continue
+
+                # A challenged task is never evidence about the learner. Rebuild the
+                # same pedagogical move while giving the author the exact objection and
+                # the rejected question, so the replacement addresses it explicitly.
+                plan = goal.next_plan or services.route.plan(goal)
+                if plan is None:
+                    await send_summary()
+                    continue
+                revision_context = (
+                    *asked[-5:],
+                    f"REJECTED TASK: {step.question}",
+                )
+                try:
+                    replacement = await services.step_builder.execute(
+                        goal,
+                        plan,
+                        previous_questions=revision_context,
+                        learner_reported_issue=issue,
+                    )
+                except (LanguageProviderError, ValueError) as exc:
+                    log.warning("challenged goal step could not be revised: %s", exc)
+                    open_steps[step.step_id] = step
+                    await fail("Revised step unavailable.")
+                    continue
+
+                log.info(
+                    "learner challenged lesson step %s (%s)",
+                    step.step_id,
+                    step.activity,
+                )
+                open_steps[replacement.step_id] = replacement
+                asked.append(replacement.question)
+                step_started_at = time.time()
+                await websocket.send_json(_step_payload(goal, replacement))
+
             elif message_type == "finish":
                 if goal is None:
                     await fail("Lesson is not initialized.")

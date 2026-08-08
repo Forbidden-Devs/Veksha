@@ -337,6 +337,7 @@ async def test_goal_step_maps_structured_sections_and_reports_the_gaps():
             material=GoalMaterial("Once he had left, the room went quiet."),
             profile=LearnerProfile("b1", "ru", "en"),
             observed_gaps=(GoalGap("c1", "Узнать форму", "gap", "missed_signal"),),
+            learner_reported_issue="Во второй паре не объяснено произношение.",
         )
     )
 
@@ -345,6 +346,10 @@ async def test_goal_step_maps_structured_sections_and_reports_the_gaps():
     sent = json.loads(transport.calls[0]["payload"]["input"])
     assert sent["activity"] == "explain_example"
     assert sent["required_demand"] == "receptive"
+    assert sent["learner_reported_issue"] == "Во второй паре не объяснено произношение."
+    instructions = transport.calls[0]["payload"]["instructions"]
+    assert "For every pair in compare_forms" in instructions
+    assert "directly correct that specific omission" in instructions
     assert sent["observed_gaps"] == [
         {"criterion": "Узнать форму", "status": "gap", "difficulty": "missed_signal"}
     ]

@@ -195,6 +195,8 @@ export type ActivityKind =
   | "paraphrase"
   | "create_example"
   | "role_reply"
+  | "handwrite_form"
+  | "type_on_keyboard"
   | "apply_unaided";
 
 export type CriterionStatus = "untested" | "gap" | "emerging" | "implied" | "met";
