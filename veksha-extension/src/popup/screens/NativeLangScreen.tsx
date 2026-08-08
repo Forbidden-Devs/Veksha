@@ -10,7 +10,15 @@ function detectBrowserLang(): string {
   return LANG_OPTIONS.some((l) => l.code === raw) ? raw : "en";
 }
 
-export function NativeLangScreen({ initialLang, onContinue }: { initialLang?: string; onContinue: (lang: string) => Promise<void> }) {
+export function NativeLangScreen({
+  initialLang,
+  onContinue,
+  onBack,
+}: {
+  initialLang?: string;
+  onContinue: (lang: string) => Promise<void>;
+  onBack: () => void;
+}) {
   const t = useT();
   const [selected, setSelected] = useState<string>(() => initialLang ?? detectBrowserLang());
   const [loading, setLoading] = useState(false);
@@ -24,12 +32,16 @@ export function NativeLangScreen({ initialLang, onContinue }: { initialLang?: st
   return (
     <LanguagePicker
       title={t.native_lang_title}
-      subtitle={t.native_lang_subtitle}
       searchLabel={t.settings_native_lang}
       emptyLabel={t.language_search_no_results}
       options={LANG_OPTIONS}
       selectedCodes={new Set([selected])}
       onSelect={setSelected}
+      headerAction={
+        <button className="onboarding-back" type="button" onClick={onBack} disabled={loading}>
+          <span aria-hidden="true">←</span> {t.common_back}
+        </button>
+      }
       footer={
         <button
           className="btn btn-gradient btn-block"

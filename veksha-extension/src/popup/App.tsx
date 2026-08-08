@@ -10,6 +10,7 @@ import { ReminderCard } from "./overlays/ReminderCard";
 import { PracticePlannerWindow } from "./overlays/PracticePlannerWindow";
 import { TranslatorScreen } from "./screens/TranslatorScreen";
 import { HomeScreen } from "./screens/HomeScreen";
+import { InterfaceLangScreen } from "./screens/InterfaceLangScreen";
 import { DictionaryScreen } from "./screens/DictionaryScreen";
 import { LevelSetupScreen } from "./screens/LevelSetupScreen";
 import { MyWordsScreen } from "./screens/MyWordsScreen";
@@ -88,7 +89,7 @@ interface AppActions {
 }
 
 type AppCtx = AppState & AppActions;
-type ObStep = "native_lang" | "username" | "target_lang" | "level_setup";
+type ObStep = "interface_lang" | "native_lang" | "username" | "target_lang" | "level_setup";
 
 const AppContext = createContext<AppCtx | null>(null);
 
@@ -112,6 +113,7 @@ const UI_STATE_TTL_MS = 15 * 60 * 1000;
 
 interface SavedObState {
   step: ObStep;
+  interfaceLang: string;
   nativeLang: string;
   username: string;
   displayName: string;
@@ -137,11 +139,13 @@ interface GoogleSigninHandoff {
 
 interface OnboardingStepProps {
   step: ObStep;
+  interfaceLang: string;
   nativeLang: string;
   displayName: string;
   targetLangs: string[];
   levelIndex: number;
   levelSetup: SavedObState["levelSetup"];
+  onInterface: (language: string) => Promise<void>;
   onNative: (language: string) => Promise<void>;
   onName: (name: string) => Promise<void>;
   onGoogle?: () => Promise<void>;
@@ -153,8 +157,16 @@ interface OnboardingStepProps {
 
 function renderOnboardingStep(props: OnboardingStepProps) {
   switch (props.step) {
+    case "interface_lang":
+      return <InterfaceLangScreen initialLang={props.interfaceLang} onContinue={props.onInterface} />;
     case "native_lang":
-      return <NativeLangScreen initialLang={props.nativeLang} onContinue={props.onNative} />;
+      return (
+        <NativeLangScreen
+          initialLang={props.nativeLang}
+          onContinue={props.onNative}
+          onBack={() => props.setStep("interface_lang")}
+        />
+      );
     case "username":
       return (
         <OnboardingScreen
@@ -202,7 +214,7 @@ async function loadSavedUiState(): Promise<SavedUiState | null> {
 }
 
 export default function App() {
-  const { t } = useI18n();
+  const { t, lang: interfaceLang, switchLanguage } = useI18n();
 
   // undefined = still checking storage; null = no user (show onboarding)
   const [username, setUsername] = useState<string | null | undefined>(undefined);
@@ -237,7 +249,8 @@ export default function App() {
   const [nativeLang, setNativeLang] = useState(detected);
 
   // Onboarding sub-steps (only used when username === null)
-  const [obStep, setObStep] = useState<ObStep>("native_lang");
+  const [obStep, setObStep] = useState<ObStep>("interface_lang");
+  const [pendingInterfaceLang, setPendingInterfaceLang] = useState(detected);
   const [pendingNativeLang, setPendingNativeLang] = useState(detected);
   const [pendingUsername, setPendingUsername] = useState("");
   const [pendingDisplayName, setPendingDisplayName] = useState("");
@@ -277,6 +290,7 @@ export default function App() {
         await storageRemove([CONFIG.STORAGE_KEY_GOOGLE_SIGNIN_RESULT]);
         if (googleHandoff.created) {
           if (saved?.ob) {
+            setPendingInterfaceLang(saved.ob.interfaceLang ?? detected);
             setPendingNativeLang(saved.ob.nativeLang);
             setNativeLang(saved.ob.nativeLang);
             setPendingTargetLangs(saved.ob.targetLangs ?? []);
@@ -300,6 +314,7 @@ export default function App() {
       // checked before the signed-in route.
       if (saved?.ob && !(stored && token && saved.ob.step === "username" && !saved.ob.username)) {
         const ob = saved.ob;
+        setPendingInterfaceLang(ob.interfaceLang ?? detected);
         setPendingNativeLang(ob.nativeLang);
         setNativeLang(ob.nativeLang);
         setPendingUsername(ob.username);
@@ -333,6 +348,7 @@ export default function App() {
         ? {
             ob: {
               step: obStep,
+              interfaceLang: pendingInterfaceLang,
               nativeLang: pendingNativeLang,
               username: pendingUsername,
               displayName: pendingDisplayName,
@@ -344,7 +360,7 @@ export default function App() {
         : {}),
     };
     sessionSet({ [UI_STATE_KEY]: state });
-  }, [username, screen, settingsMode, obStep, pendingNativeLang, pendingUsername, pendingDisplayName, pendingTargetLangs, pendingLevelSetup, pendingLevelIndex]);
+  }, [username, screen, settingsMode, obStep, pendingInterfaceLang, pendingNativeLang, pendingUsername, pendingDisplayName, pendingTargetLangs, pendingLevelSetup, pendingLevelIndex]);
 
   async function routeAfterUsername(name: string, saved?: SavedUiState | null) {
     try {
@@ -367,6 +383,14 @@ export default function App() {
       setScreen("home");
       setInitialRouteReady(true);
     }
+  }
+
+  // The interface locale is an explicit first-run choice and remains separate
+  // from the language used for translations.
+  async function handleInterfaceLangSelected(lang: string): Promise<void> {
+    await switchLanguage(lang);
+    setPendingInterfaceLang(lang);
+    setObStep("native_lang");
   }
 
   // The native language controls translations, not the interface locale.
@@ -407,7 +431,8 @@ export default function App() {
     setPendingTargetLangs([]);
     setPendingLevelSetup({});
     setPendingLevelIndex(0);
-    setObStep("native_lang");
+    setPendingInterfaceLang(interfaceLang);
+    setObStep("interface_lang");
     setScreen("home");
     setUsername(null);
   }
@@ -564,11 +589,13 @@ export default function App() {
       <div className="app">
         {renderOnboardingStep({
           step: obStep,
+          interfaceLang: pendingInterfaceLang,
           nativeLang: pendingNativeLang,
           displayName: pendingDisplayName,
           targetLangs: pendingTargetLangs,
           levelIndex: pendingLevelIndex,
           levelSetup: pendingLevelSetup,
+          onInterface: handleInterfaceLangSelected,
           onNative: handleNativeLangSelected,
           onName: handleUsernameEntered,
           onGoogle: CONFIG.GOOGLE_CLIENT_ID ? handleGoogleSignIn : undefined,

@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { storageGet, storageSet } from "../platform";
 import { catalogFor } from "./catalogs";
 import { normalizeUiLocale } from "./locales";
@@ -18,6 +18,7 @@ export function loadStaticCatalog(language: string): Promise<Strings> {
 interface I18nCtx {
   t: Strings;
   lang: string;
+  previewLanguage: (lang: string) => void;
   switchLanguage: (lang: string) => Promise<void>;
 }
 
@@ -40,9 +41,18 @@ export function useI18n(): I18nCtx {
 export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLang] = useState("en");
   const [t, setT] = useState<Strings>(EN);
+  const hasLocalSelection = useRef(false);
+
+  const previewLanguage = useCallback((next: string): void => {
+    const selected = normalizeUiLocale(next);
+    hasLocalSelection.current = true;
+    setLang(selected);
+    setT(catalogFor(selected));
+  }, []);
 
   useEffect(() => {
     void storageGet([UI_LOCALE_STORAGE_KEY]).then((values) => {
+      if (hasLocalSelection.current) return;
       const selected = normalizeUiLocale(String(values[UI_LOCALE_STORAGE_KEY] ?? detectBrowserLang()));
       setLang(selected);
       setT(catalogFor(selected));
@@ -52,11 +62,13 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   const switchLanguage = useCallback(async (next: string): Promise<void> => {
     const selected = normalizeUiLocale(next);
     await storageSet({ [UI_LOCALE_STORAGE_KEY]: selected });
-    setLang(selected);
-    setT(catalogFor(selected));
-  }, []);
+    previewLanguage(selected);
+  }, [previewLanguage]);
 
-  const context = useMemo<I18nCtx>(() => ({ t, lang, switchLanguage }), [lang, switchLanguage, t]);
+  const context = useMemo<I18nCtx>(
+    () => ({ t, lang, previewLanguage, switchLanguage }),
+    [lang, previewLanguage, switchLanguage, t],
+  );
 
   return (
     <I18nContext.Provider value={context}>{children}</I18nContext.Provider>

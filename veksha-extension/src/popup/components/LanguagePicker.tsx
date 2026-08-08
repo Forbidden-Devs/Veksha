@@ -4,7 +4,7 @@ import { getLanguageName, type Language } from "../../shared/languages";
 
 interface LanguagePickerProps {
   title: string;
-  subtitle: string;
+  subtitle?: string;
   searchLabel: string;
   emptyLabel: string;
   options: Language[];
@@ -37,7 +37,7 @@ export function LanguagePicker(props: LanguagePickerProps) {
         {props.headerAction}
         <div className="logo-badge" aria-hidden="true">Ve</div>
         <h1 className="lang-pick-title">{props.title}</h1>
-        <p className="lang-pick-subtitle">{props.subtitle}</p>
+        {props.subtitle && <p className="lang-pick-subtitle">{props.subtitle}</p>}
       </header>
       <input
         className="text-input lang-pick-search"
