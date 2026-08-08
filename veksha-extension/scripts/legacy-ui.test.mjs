@@ -243,6 +243,12 @@ test("region translation uses a clean capture workspace", () => {
   assert.doesNotMatch(capture, /tesseract|offscreen/i);
 });
 
+test("custom backend builds normalize API URLs", () => {
+  const config = source("src/shared/config.ts");
+
+  assert.match(config, /\.replace\(\/\\\/\+\$\/, ""\)/);
+});
+
 test("practice runs through the Adaptive Practice Planner, not a training window", () => {
   const planner = source("src/popup/overlays/PracticePlannerWindow.tsx");
   const app = source("src/popup/App.tsx");

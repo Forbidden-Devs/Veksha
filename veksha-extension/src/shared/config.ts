@@ -1,10 +1,14 @@
+const PRODUCTION_BACKEND_URL = "https://api.veksha.app";
+const backendUrl = (
+  import.meta.env.VITE_BACKEND_URL
+  || (__DEV_BUILD__ ? "http://127.0.0.1:8000" : PRODUCTION_BACKEND_URL)
+).replace(/\/+$/, "");
+
 export const CONFIG = {
-  // Watch builds talk to the local FastAPI process. Production/store builds
-  // keep the public HTTPS origin; __DEV_BUILD__ is injected by Vite.
-  // The standalone web build can point previews/staging at another backend
-  // through VITE_BACKEND_URL. Extension builds keep their fixed dev/prod pair.
-  BACKEND_URL: import.meta.env.VITE_BACKEND_URL
-    || (__DEV_BUILD__ ? "http://127.0.0.1:8000" : "https://api.veksha.app"),
+  // VITE_BACKEND_URL selects preview/staging. Normalize it once because all
+  // API paths begin with "/" and a trailing slash would produce //api/...;
+  // the staging proxy deliberately returns 404 for those paths.
+  BACKEND_URL: backendUrl,
   // Public Google OAuth client id ("Web application" type). Authentication
   // itself runs through the backend HTTPS callback; this value only enables
   // the UI and must match the backend's GOOGLE_CLIENT_ID.
