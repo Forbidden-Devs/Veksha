@@ -53,7 +53,13 @@ def configure_http(application: FastAPI) -> None:
         CORSMiddleware,
         allow_origins=CORS_ALLOW_ORIGINS,
         allow_methods=("GET", "POST", "PUT", "DELETE", "OPTIONS"),
-        allow_headers=("Authorization", "Content-Type", "X-Veksha-Admin-Secret", "X-Veksha-Bot-Secret"),
+        allow_headers=(
+            "Authorization",
+            "Content-Type",
+            "X-Veksha-Admin-Secret",
+            "X-Veksha-Bot-Secret",
+            "X-Veksha-Database-Secret",
+        ),
     )
 
 
